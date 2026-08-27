@@ -1,0 +1,213 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id             String          @id @default(cuid())
+  name           String
+  username       String?         @unique
+  pin            String          // 4-digit fast security PIN for workstation & manager overrides
+  role           String          @default("CASHIER") // Role: CASHIER, MANAGER, OWNER
+  avatar         String?
+  active         Boolean         @default(true)
+  createdOrders  Order[]         @relation("CreatedByUser")
+  modifiedOrders Order[]         @relation("ModifiedByUser")
+  riderOrders    Order[]         @relation("OrderRider")
+  auditLogs      OrderAuditLog[]
+  shiftsOpened   RegisterShift[] @relation("ShiftOpenedBy")
+  shiftsClosed   RegisterShift[] @relation("ShiftClosedBy")
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+}
+
+model Customer {
+  id            String   @id @default(cuid())
+  phone         String   @unique
+  phoneNumber   String?  @unique
+  name          String
+  email         String?
+  address       String?
+  deliveryNotes String?
+  notes         String?
+  loyaltyPoints Int      @default(0)
+  vipTier       String   @default("BRONZE") // BRONZE, SILVER, GOLD, PLATINUM
+  totalVisits   Int      @default(0)
+  totalSpent    Float    @default(0)
+  orders        Order[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Category {
+  id        String     @id @default(cuid())
+  title     String     @unique
+  slug      String     @unique
+  icon      String?
+  active    Boolean    @default(true)
+  menuItems MenuItem[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model MenuItem {
+  id              String      @id @default(cuid())
+  title           String
+  price           Float
+  imageUrl        String      @default("")
+  description     String?
+  categoryId      String
+  category        Category    @relation(fields: [categoryId], references: [id])
+  active          Boolean     @default(true)
+  preparationTime Int         @default(10)
+  flavors         String      @default("[]") // JSON string of available flavors
+  options         String      @default("[]") // JSON string of modifiers
+  orderItems      OrderItem[]
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+model Order {
+  id             String          @id @default(cuid())
+  orderNumber    String          @unique
+  customerId     String?
+  customer       Customer?       @relation(fields: [customerId], references: [id])
+  status         String          @default("PUNCHED") // Status: PENDING, PUNCHED, CANCELLED, MODIFIED, COMPLETED
+  orderType      String          @default("DINE_IN") // Type: DINE_IN, TAKEAWAY, DELIVERY
+  paymentStatus  String          @default("PAID")    // Status: PAID, UNPAID, REFUNDED
+  paymentMethod  String          @default("CASH")    // Method: CASH, CARD, ONLINE
+  tableNumber    String?
+  deliveryDriver String?
+  assignedRiderId String?
+  assignedRider  User?           @relation("OrderRider", fields: [assignedRiderId], references: [id])
+  cashierName    String?         @default("Cashier")
+  
+  subtotal       Float           @default(0)
+  tax            Float           @default(0)
+  discount       Float           @default(0)
+  tip            Float           @default(0)
+  deliveryFee    Float           @default(0)
+  total          Float           @default(0)
+  totalAmount    Float           @default(0)
+
+  createdById    String?
+  createdBy      User?           @relation("CreatedByUser", fields: [createdById], references: [id])
+  modifiedById   String?
+  modifiedBy     User?           @relation("ModifiedByUser", fields: [modifiedById], references: [id])
+  
+  items          OrderItem[]
+  auditLogs      OrderAuditLog[]
+  
+  notes          String?
+  deliveryNotes  String?
+  preOrder       Boolean         @default(false)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@index([createdAt])
+  @@index([status])
+  @@index([createdById])
+}
+
+model OrderItem {
+  id         String    @id @default(cuid())
+  orderId    String
+  order      Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItemId String?
+  menuItem   MenuItem? @relation(fields: [menuItemId], references: [id])
+  name       String
+  price      Float
+  quantity   Int       @default(1)
+  flavor     String?
+  modifiers  String    @default("[]") // JSON list of add-ons
+  itemNote   String?
+  notes      String?   // Alias for item note
+  createdAt  DateTime  @default(now())
+
+  @@index([orderId])
+}
+
+model OrderAuditLog {
+  id            String   @id @default(cuid())
+  orderId       String
+  order         Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  action        String   // PUNCHED, MODIFIED, CANCELLED, REPRINTED, REFUNDED
+  reason        String?  // Mandatory reason when modified or cancelled
+  performedById String?
+  performedBy   User?    @relation(fields: [performedById], references: [id])
+  managerName   String   @default("Manager")
+  previousData  String?  // JSON snapshot of previous state
+  newData       String?  // JSON snapshot of new state
+  createdAt     DateTime @default(now())
+}
+
+model RegisterShift {
+  id                   String        @id @default(cuid())
+  shiftNumber          String        @unique
+  openedById           String?
+  openedBy             User?         @relation("ShiftOpenedBy", fields: [openedById], references: [id])
+  closedById           String?
+  closedBy             User?         @relation("ShiftClosedBy", fields: [closedById], references: [id])
+  cashierName          String        @default("Cashier")
+  startingFloat        Float         @default(0)
+  startingPettyCash    Float         @default(0)
+  totalSales           Float         @default(0)
+  cashSales            Float         @default(0)
+  cardSales            Float         @default(0)
+  totalTips            Float         @default(0)
+  cashInDrawerExpected Float         @default(0)
+  expectedCash         Float         @default(0)
+  actualCashInDrawer   Float?
+  actualCash           Float?
+  cashDifference       Float?
+  shortageOverage      Float?
+  floatRetained        Float?        @default(0)
+  lockerDeposit        Float?        @default(0)
+  denominationBreakdown String       @default("{}") // JSON denomination breakdown
+  transactionsCount    Int           @default(0)
+  status               String        @default("open") // open, closed
+  notes                String?
+  openedAt             DateTime      @default(now())
+  closedAt             DateTime?
+  audits               ShiftAudit[]
+}
+
+model ShiftAudit {
+  id                    String        @id @default(cuid())
+  shiftId               String
+  shift                 RegisterShift @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+  userId                String?
+  cashierName           String
+  startTime             DateTime
+  endTime               DateTime      @default(now())
+  startingPettyCash     Float         @default(0)
+  totalSales            Float         @default(0)
+  cashSales             Float         @default(0)
+  cardSales             Float         @default(0)
+  expectedCash          Float         @default(0)
+  actualCash            Float         @default(0)
+  shortageOverage       Float         @default(0)
+  floatRetained         Float         @default(0)
+  lockerDeposit         Float         @default(0)
+  denominationBreakdown String        @default("{}") // JSON string: { "5000": 2, "1000": 10, "500": 5, ... }
+  notes                 String?
+  status                String        @default("closed")
+  createdAt             DateTime      @default(now())
+
+  @@index([startTime, endTime])
+  @@index([shiftId])
+}
+
+model Outlet {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  address   String?
+  phone     String?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

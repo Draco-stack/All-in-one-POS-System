@@ -1,0 +1,8 @@
+{
+  "name": "All in one POS System",
+  "description": "Commercial All-in-One POS System for Restaurants & Retail with Multi-Shift Management, Customer Loyalty, Order Dispatching, and Direct Printing",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

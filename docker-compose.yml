@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  # ---------------------------------------------------------
+  # POS Backend Application
+  # ---------------------------------------------------------
+  pos-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pos_app_production
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env.production
+    environment:
+      # Override the DB URL specifically for docker-compose networking
+      - DATABASE_URL=postgresql://pos_user:pos_password_prod@db:5432/pos_db_prod?schema=public
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # ---------------------------------------------------------
+  # PostgreSQL Database
+  # ---------------------------------------------------------
+  db:
+    image: postgres:15-alpine
+    container_name: pos_postgres_production
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: pos_user
+      POSTGRES_PASSWORD: pos_password_prod
+      POSTGRES_DB: pos_db_prod
+    ports:
+      - "5432:5432"
+    volumes:
+      - pos_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pos_user -d pos_db_prod"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pos_db_data:
