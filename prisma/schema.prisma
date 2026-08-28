@@ -82,6 +82,8 @@ model Order {
   paymentMethod  String          @default("CASH")    // Method: CASH, CARD, ONLINE
   tableNumber    String?
   deliveryDriver String?
+  serverId       String?
+  serverName     String?
   assignedRiderId String?
   assignedRider  User?           @relation("OrderRider", fields: [assignedRiderId], references: [id])
   cashierName    String?         @default("Cashier")
@@ -207,6 +209,16 @@ model Outlet {
   name      String   @unique
   address   String?
   phone     String?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Table {
+  id        String   @id @default(cuid())
+  number    String   @unique
+  capacity  Int      @default(4)
+  status    String   @default("AVAILABLE") // AVAILABLE, OCCUPIED, RESERVED
   active    Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

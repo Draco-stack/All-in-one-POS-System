@@ -74,6 +74,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
     setPosOrderType,
     setPosDeliveryDriver,
     setPosTableNumber,
+    setPosServer,
     setPosDiscountPercent,
     setPosTipAmount,
     setPosPaymentMethod,
@@ -96,6 +97,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
     currentShift,
     users,
     outlets,
+    tables,
   } = useRestaurant();
 
   const [, startTransition] = useTransition();
@@ -309,6 +311,19 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
       playErrorSound();
       showToast('⚠️ Cannot place an empty order. Tap items from the menu.');
       return;
+    }
+
+    if (posCart.orderType === 'dine_in') {
+      if (!posCart.tableNumber) {
+        playErrorSound();
+        showToast('⚠️ Please select a Table for Dine-In order.');
+        return;
+      }
+      if (!posCart.serverId) {
+        playErrorSound();
+        showToast('⚠️ Please select a Server for Dine-In order.');
+        return;
+      }
     }
 
     setIsPunching(true);
@@ -701,6 +716,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
           {/* Row 2: Order Type & Source */}
           <div className="flex items-center gap-1">
             <div className="flex rounded overflow-hidden shrink-0 border border-stone-700">
+              <button onClick={() => setPosOrderType('dine_in')} className={`px-2 py-1 text-xs font-bold transition cursor-pointer ${posCart.orderType === 'dine_in' ? 'bg-amber-600 text-white' : 'bg-[#222222] text-stone-400 hover:bg-[#333333]'}`}>DineIn</button>
               <button onClick={() => setPosOrderType('takeaway')} className={`px-2 py-1 text-xs font-bold transition cursor-pointer ${posCart.orderType === 'takeaway' ? 'bg-[#333333] text-white' : 'bg-[#222222] text-stone-400 hover:bg-[#333333]'}`}>TakeAway</button>
               <button onClick={() => setPosOrderType('delivery')} className={`px-2 py-1 text-xs font-bold transition cursor-pointer ${posCart.orderType === 'delivery' ? 'bg-[#1e7e4a] text-white' : 'bg-[#222222] text-stone-400 hover:bg-[#333333]'}`}>Delivery</button>
             </div>
@@ -769,6 +785,38 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
             <button onClick={() => setShowDiscountPrompt(true)} className="flex-1 bg-[#1e7e4a] hover:bg-[#137333] text-white font-bold text-[11px] py-1.5 px-2 rounded cursor-pointer transition text-center shadow-xs truncate">Discount {posCart.discountPercent > 0 ? `${(cartSubtotal * (posCart.discountPercent / 100)).toFixed(0)}(${posCart.discountPercent}%)` : '0(0%)'}</button>
             <button onClick={() => setShowChargesPrompt(true)} className="flex-1 bg-[#1e7e4a] hover:bg-[#137333] text-white font-bold text-[11px] py-1.5 px-2 rounded cursor-pointer transition text-center shadow-xs truncate">Charges {posCart.tipAmount || 0}</button>
           </div>
+          {posCart.orderType === 'dine_in' && (
+            <div className="flex gap-1.5 w-full">
+              <select
+                value={posCart.tableNumber || ''}
+                onChange={(e) => setPosTableNumber(e.target.value)}
+                className="flex-1 bg-[#222222] border border-stone-700 rounded px-2 py-1.5 text-[11px] text-white focus:outline-none focus:border-[#1e7e4a] cursor-pointer"
+              >
+                <option value="">Select Table (Required)</option>
+                {tables.filter(t => t.active !== false).map(t => (
+                  <option key={t.id} value={t.number}>Table {t.number} ({t.capacity} Pax)</option>
+                ))}
+              </select>
+
+              <select
+                value={posCart.serverId || ''}
+                onChange={(e) => {
+                  const matched = users.find(u => u.id === e.target.value);
+                  if (matched) {
+                    setPosServer(matched.id, matched.name);
+                  } else {
+                    setPosServer('', '');
+                  }
+                }}
+                className="flex-1 bg-[#222222] border border-stone-700 rounded px-2 py-1.5 text-[11px] text-white focus:outline-none focus:border-[#1e7e4a] cursor-pointer"
+              >
+                <option value="">Select Server (Required)</option>
+                {users.filter(u => u.role === 'server' && u.active !== false).map(s => (
+                  <option key={s.id} value={s.id}>{s.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
           {posCart.orderType === 'delivery' && (
             <select
               value={posCart.deliveryDriver || ''}

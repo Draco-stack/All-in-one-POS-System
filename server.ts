@@ -298,6 +298,9 @@ app.post('/api/orders', async (req, res) => {
       paymentMethod,
       preOrder,
       notes,
+      tableNumber,
+      serverId,
+      serverName,
     } = req.body;
 
     const orderNumber = clientOrderNum || `ORD-${Math.floor(1000 + Math.random() * 9000)}`;
@@ -369,6 +372,9 @@ app.post('/api/orders', async (req, res) => {
         customerId,
         deliveryDriver: resolvedDriverName || undefined,
         assignedRiderId: resolvedRiderId || undefined,
+        tableNumber: tableNumber || undefined,
+        serverId: serverId || undefined,
+        serverName: serverName || undefined,
         notes: notes || '',
         deliveryNotes: deliveryNotes || '',
         preOrder: !!preOrder,
@@ -726,6 +732,80 @@ app.post('/api/shifts/close', async (req, res) => {
   }
 });
 
+// ==========================================
+// TABLE MANAGEMENT API
+// ==========================================
+app.get('/api/tables', async (req, res) => {
+  try {
+    const tables = await prisma.table.findMany({
+      orderBy: { number: 'asc' },
+    });
+    return res.json(tables);
+  } catch (err) {
+    console.error('Failed to get tables:', err);
+    return res.status(500).json({ error: 'Failed to retrieve tables' });
+  }
+});
+
+app.post('/api/tables', async (req, res) => {
+  try {
+    const { number, capacity } = req.body;
+    if (!number) {
+      return res.status(400).json({ error: 'Table number is required' });
+    }
+    const cleanNumber = String(number).trim();
+    const existing = await prisma.table.findFirst({
+      where: { number: cleanNumber }
+    });
+    if (existing) {
+      return res.status(400).json({ error: 'Table already exists' });
+    }
+    const table = await prisma.table.create({
+      data: {
+        number: cleanNumber,
+        capacity: Number(capacity) || 4,
+        status: 'AVAILABLE',
+        active: true,
+      }
+    });
+    return res.json(table);
+  } catch (err) {
+    console.error('Failed to create table:', err);
+    return res.status(500).json({ error: 'Failed to create table' });
+  }
+});
+
+app.delete('/api/tables/:id', async (req, res) => {
+  try {
+    await prisma.table.delete({
+      where: { id: req.params.id }
+    });
+    return res.json({ success: true });
+  } catch (err) {
+    console.error('Failed to delete table:', err);
+    return res.status(500).json({ error: 'Failed to delete table' });
+  }
+});
+
+app.patch('/api/tables/:id', async (req, res) => {
+  try {
+    const { number, capacity, status, active } = req.body;
+    const table = await prisma.table.update({
+      where: { id: req.params.id },
+      data: {
+        number: number !== undefined ? String(number).trim() : undefined,
+        capacity: capacity !== undefined ? Number(capacity) : undefined,
+        status: status !== undefined ? String(status) : undefined,
+        active: active !== undefined ? Boolean(active) : undefined,
+      }
+    });
+    return res.json(table);
+  } catch (err) {
+    console.error('Failed to update table:', err);
+    return res.status(500).json({ error: 'Failed to update table' });
+  }
+});
+
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error('Unhandled error:', err);
   res.status(500).json({ error: 'Internal Server Error' });
@@ -802,6 +882,9 @@ function transformOrder(o: any) {
     changeGiven: 0,
     deliveryDriver: o.deliveryDriver || (o.assignedRider ? o.assignedRider.name : undefined),
     assignedRiderId: o.assignedRiderId || (o.assignedRider ? o.assignedRider.id : undefined),
+    tableNumber: o.tableNumber || undefined,
+    serverId: o.serverId || undefined,
+    serverName: o.serverName || undefined,
     paymentMethod: (o.paymentMethod || 'cash').toString().toLowerCase(),
     paymentStatus: (o.paymentStatus || 'paid').toString().toLowerCase(),
     cashierName: o.cashierName ?? 'Cashier',

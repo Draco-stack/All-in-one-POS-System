@@ -74,6 +74,7 @@ interface RestaurantContextType {
   clearPosCart: () => void;
   setPosOrderType: (type: OrderType) => void;
   setPosTableNumber: (table: string) => void;
+  setPosServer: (serverId: string, serverName: string) => void;
   setPosDeliveryDriver: (driver: string) => void;
   setPosDiscountPercent: (discount: number) => void;
   setPosTipAmount: (tip: number) => void;
@@ -127,6 +128,12 @@ interface RestaurantContextType {
   // Inventory Stock
   stockItems: InventoryStockItem[];
   updateStockQuantity: (id: string, newStock: number) => void;
+
+  // Tables
+  tables: { id: string; number: string; capacity: number; status: string; active: boolean }[];
+  addTable: (number: string, capacity: number) => Promise<void>;
+  deleteTable: (id: string) => Promise<void>;
+  updateTableStatus: (id: string, status: string) => Promise<void>;
 
   // Calculations
   cartSubtotal: number;
@@ -427,6 +434,10 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     'Elena Scott',
   ]);
 
+  const [tables, setTables] = useState<{ id: string; number: string; capacity: number; status: string; active: boolean }[]>(() =>
+    loadFromStorage('pos_tables_cache', [])
+  );
+
   // Synchronize state changes to localStorage
   useEffect(() => { saveToStorage('pos_users_cache', users); }, [users]);
   useEffect(() => { saveToStorage('pos_current_user', currentUser); }, [currentUser]);
@@ -439,6 +450,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   useEffect(() => { saveToStorage('pos_parked_orders_cache', parkedOrders); }, [parkedOrders]);
   useEffect(() => { saveToStorage('pos_customers_cache', customers); }, [customers]);
   useEffect(() => { saveToStorage('pos_stock_cache', stockItems); }, [stockItems]);
+  useEffect(() => { saveToStorage('pos_tables_cache', tables); }, [tables]);
 
   // Dynamically compute list of active delivery drivers from users with role 'rider'
   const deliveryDrivers = useMemo(() => {
@@ -553,6 +565,19 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         }
       }
     } catch (e) {}
+
+    // 0.5. Fetch Tables
+    try {
+      const res = await fetch('/api/tables');
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          setTables(data);
+        }
+      }
+    } catch (e) {
+      console.warn('Tables fetch fallback to cache:', e);
+    }
 
     // 1. Fetch Users
     try {
@@ -700,6 +725,61 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     const interval = setInterval(syncFromServer, 15000);
     return () => clearInterval(interval);
   }, [syncFromServer]);
+
+  // Table handlers wired to real Prisma DB
+  const addTable = async (number: string, capacity: number) => {
+    try {
+      const res = await fetch('/api/tables', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ number, capacity }),
+      });
+      if (res.ok) {
+        const table = await res.json();
+        setTables((prev) => [...prev, table]);
+        showToast(`✓ Table "${number}" added successfully to database!`);
+      } else {
+        const data = await res.json();
+        showToast(`⚠️ ${data.error || 'Failed to create table'}`);
+      }
+    } catch (err) {
+      console.error('Failed to create table:', err);
+      showToast('❌ Server error while creating table');
+    }
+  };
+
+  const deleteTable = async (id: string) => {
+    try {
+      const res = await fetch(`/api/tables/${id}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        setTables((prev) => prev.filter((t) => t.id !== id));
+        showToast('✓ Table removed from database.');
+      } else {
+        showToast('⚠️ Failed to delete table');
+      }
+    } catch (err) {
+      console.error('Failed to delete table:', err);
+      showToast('❌ Server error while deleting table');
+    }
+  };
+
+  const updateTableStatus = async (id: string, status: string) => {
+    try {
+      const res = await fetch(`/api/tables/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setTables((prev) => prev.map((t) => (t.id === id ? updated : t)));
+      }
+    } catch (err) {
+      console.error('Failed to update table status:', err);
+    }
+  };
 
   // Staff handlers wired to real Prisma DB
   const addNewUser = async (user: Omit<UserAccount, 'id' | 'createdAt'>) => {
@@ -1057,6 +1137,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   const setPosOrderType = (orderType: OrderType) => setPosCart((prev) => ({ ...prev, orderType }));
   const setPosTableNumber = (tableNumber: string) => setPosCart((prev) => ({ ...prev, tableNumber }));
+  const setPosServer = (serverId: string, serverName: string) => setPosCart((prev) => ({ ...prev, serverId, serverName }));
   const setPosDeliveryDriver = (deliveryDriver: string) => setPosCart((prev) => ({ ...prev, deliveryDriver }));
   const setPosDiscountPercent = (discountPercent: number) => setPosCart((prev) => ({ ...prev, discountPercent }));
   const setPosTipAmount = (tipAmount: number) => setPosCart((prev) => ({ ...prev, tipAmount }));
@@ -1283,6 +1364,8 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       cashierId: currentUser.id,
       createdById: currentUser.id,
       terminalId: 'POS-MAIN-01',
+      serverId: posCart.serverId,
+      serverName: posCart.serverName,
       createdAt: new Date().toISOString(),
     };
 
@@ -1695,6 +1778,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         clearPosCart,
         setPosOrderType,
         setPosTableNumber,
+        setPosServer,
         setPosDeliveryDriver,
         setPosDiscountPercent,
         setPosTipAmount,
@@ -1727,6 +1811,10 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         closeShift,
         stockItems,
         updateStockQuantity,
+        tables,
+        addTable,
+        deleteTable,
+        updateTableStatus,
         cartSubtotal,
         cartTax,
         cartDeliveryFee,

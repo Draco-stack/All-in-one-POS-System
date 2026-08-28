@@ -26,7 +26,7 @@ export async function addUser(req: Request, res: Response): Promise<Response> {
     }
 
     const roleUpper = (role || 'CASHIER').toString().toUpperCase();
-    const validRoles = ['CASHIER', 'MANAGER', 'OWNER', 'RIDER', 'KITCHEN', 'ADMIN'];
+    const validRoles = ['CASHIER', 'MANAGER', 'OWNER', 'RIDER', 'KITCHEN', 'ADMIN', 'SERVER'];
     if (!validRoles.includes(roleUpper)) {
       return res.status(400).json({ error: `Invalid role. Allowed roles: ${validRoles.join(', ')}` });
     }

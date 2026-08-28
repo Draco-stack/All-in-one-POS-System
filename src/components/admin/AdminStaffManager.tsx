@@ -239,6 +239,8 @@ export const AdminStaffManager: React.FC = () => {
                               ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
                               : u.role === 'rider'
                               ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
+                              : u.role === 'server'
+                              ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
                               : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
                           }`}
                         >
@@ -276,6 +278,8 @@ export const AdminStaffManager: React.FC = () => {
                             ? 'bg-purple-950/60 text-purple-300 border-purple-500/30'
                             : u.role === 'rider'
                             ? 'bg-cyan-950/60 text-cyan-300 border-cyan-500/30'
+                            : u.role === 'server'
+                            ? 'bg-indigo-950/60 text-indigo-300 border-indigo-500/30'
                             : 'bg-emerald-950/60 text-emerald-300 border-emerald-500/30'
                         }`}
                       >
@@ -506,6 +510,7 @@ export const AdminStaffManager: React.FC = () => {
                   >
                     <option value="cashier">Cashier (POS Operator)</option>
                     <option value="manager">Manager (Shift Supervisor)</option>
+                    <option value="server">Server / Waiter (Dine-In)</option>
                     <option value="rider">Rider (Delivery Fleet)</option>
                     {currentUser.role === 'owner' && <option value="owner">Owner (Full Administrator)</option>}
                   </select>

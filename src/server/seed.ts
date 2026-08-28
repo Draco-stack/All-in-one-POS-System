@@ -51,6 +51,13 @@ export async function seedDatabaseIfNeeded() {
             role: 'RIDER',
             active: true,
           },
+          {
+            name: 'Ali Raza',
+            username: 'server_ali',
+            pin: '4444',
+            role: 'SERVER',
+            active: true,
+          },
         ],
       });
     } else {
@@ -83,6 +90,36 @@ export async function seedDatabaseIfNeeded() {
           ],
         });
       }
+    }
+
+    // Ensure default servers exist if missing
+    const serverCount = await prisma.user.count({ where: { role: 'SERVER' } });
+    if (serverCount === 0) {
+      console.log('[Seed] Seeding default server user...');
+      await prisma.user.create({
+        data: {
+          name: 'Ali Raza',
+          username: 'server_ali',
+          pin: '4444',
+          role: 'SERVER',
+          active: true,
+        },
+      });
+    }
+
+    // Seed default Tables if missing
+    const tableCount = await prisma.table.count();
+    if (tableCount === 0) {
+      console.log('[Seed] Seeding default tables...');
+      await prisma.table.createMany({
+        data: [
+          { number: 'Table 1', capacity: 2 },
+          { number: 'Table 2', capacity: 4 },
+          { number: 'Table 3', capacity: 4 },
+          { number: 'Table 4', capacity: 6 },
+          { number: 'Table 5', capacity: 8 },
+        ],
+      });
     }
 
     // 2. Seed Categories & Menu Items if none exist

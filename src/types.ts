@@ -88,6 +88,8 @@ export interface PosCartState {
   orderType: OrderType;
   tableNumber?: string;
   deliveryDriver?: string;
+  serverId?: string;
+  serverName?: string;
   discountPercent?: number;
   tipAmount?: number;
   paymentMethod: PaymentMethod;
@@ -129,6 +131,8 @@ export interface Order {
   items: OrderItemRecord[];
   customer?: Customer;
   deliveryDriver?: string;
+  serverId?: string;
+  serverName?: string;
   outlet?: string;
   branchName?: string;
   subtotal: number;
@@ -245,7 +249,7 @@ export interface OrderAuditLogRecord {
   createdAt: string;
 }
 
-export type UserRole = 'admin' | 'manager' | 'cashier' | 'kitchen' | 'owner' | 'rider';
+export type UserRole = 'admin' | 'manager' | 'cashier' | 'kitchen' | 'owner' | 'rider' | 'server';
 
 export interface UserAccount {
   id: string;
