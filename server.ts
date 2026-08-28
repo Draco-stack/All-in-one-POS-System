@@ -11,8 +11,7 @@ import {
   deleteMenuItem,
 } from './src/server/controllers/adminController';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const appDir = typeof __dirname !== 'undefined' ? __dirname : path.dirname(fileURLToPath(import.meta.url));
 
 const app = express();
 app.use(express.json());
@@ -727,15 +726,20 @@ app.post('/api/shifts/close', async (req, res) => {
   }
 });
 
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error('Unhandled error:', err);
+  res.status(500).json({ error: 'Internal Server Error' });
+});
+
 async function startServer() {
   const PORT = 3000;
 
   await seedDatabaseIfNeeded();
 
   if (process.env.NODE_ENV === 'production') {
-    app.use(express.static(path.join(__dirname, 'dist')));
+    app.use(express.static(path.join(appDir, 'dist')));
     app.get('*', (req, res) => {
-      res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+      res.sendFile(path.join(appDir, 'dist', 'index.html'));
     });
   } else {
     const vite = await createViteServer({
@@ -755,11 +759,6 @@ startServer().catch((err) => {
 });
 
 export default app;
-
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error('Unhandled error:', err);
-  res.status(500).json({ error: 'Internal Server Error' });
-});
 
 function transformOrder(o: any) {
   const rawStatus = (o.status || 'pending').toString().toLowerCase();
