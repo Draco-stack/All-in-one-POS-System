@@ -147,7 +147,7 @@ export const AdminRidersFleet: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <Truck className="w-6 h-6 text-[#00897b]" />
+            <Truck className="w-6 h-6 text-emerald-400" />
             <h2 className="text-xl font-black text-white uppercase tracking-wider">
               Rider Fleet & Delivery Performance
             </h2>
@@ -165,13 +165,13 @@ export const AdminRidersFleet: React.FC = () => {
               placeholder="Search rider..."
               value={searchFilter}
               onChange={(e) => setSearchFilter(e.target.value)}
-              className="pl-8 pr-3 py-2 bg-stone-900 border border-stone-800 rounded-xl text-xs text-white placeholder-stone-500 focus:outline-none focus:border-[#00897b]"
+              className="pl-8 pr-3 py-2 bg-stone-900/80 border border-white/10 rounded-xl text-xs text-white placeholder-stone-500 focus:outline-none focus:border-emerald-500 transition shadow-inner"
             />
           </div>
 
           <button
             onClick={() => setIsAddRiderOpen(true)}
-            className="px-4 py-2 bg-[#00897b] hover:bg-[#00796b] text-white text-xs font-bold rounded-xl flex items-center gap-1.5 shadow-md shadow-[#00897b]/20 transition cursor-pointer"
+            className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 shadow-[0_0_15px_rgba(16,185,129,0.25)] hover:scale-[1.02] active:scale-95 transition-all duration-200 cursor-pointer border border-emerald-500/30"
           >
             <Plus className="w-4 h-4" />
             Add Rider
@@ -181,7 +181,7 @@ export const AdminRidersFleet: React.FC = () => {
 
       {/* Fleet KPI Summary Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        <div className="bg-stone-900 border border-stone-800 rounded-2xl p-4 shadow-sm">
+        <div className="bg-gradient-to-b from-stone-900/90 to-[#141414]/90 backdrop-blur-md border border-white/10 rounded-2xl p-4 shadow-lg">
           <div className="flex items-center justify-between text-stone-400 text-[11px] font-semibold mb-1">
             <span>Active Fleet</span>
             <UserCheck className="w-4 h-4 text-cyan-400" />
@@ -190,7 +190,7 @@ export const AdminRidersFleet: React.FC = () => {
           <div className="text-[10px] text-stone-500 mt-1">Registered delivery riders</div>
         </div>
 
-        <div className="bg-stone-900 border border-stone-800 rounded-2xl p-4 shadow-sm">
+        <div className="bg-gradient-to-b from-stone-900/90 to-[#141414]/90 backdrop-blur-md border border-white/10 rounded-2xl p-4 shadow-lg">
           <div className="flex items-center justify-between text-stone-400 text-[11px] font-semibold mb-1">
             <span>Total Assigned</span>
             <Package className="w-4 h-4 text-stone-300" />
@@ -199,7 +199,7 @@ export const AdminRidersFleet: React.FC = () => {
           <div className="text-[10px] text-stone-500 mt-1">All time dispatches</div>
         </div>
 
-        <div className="bg-stone-900 border border-stone-800 rounded-2xl p-4 shadow-sm">
+        <div className="bg-gradient-to-b from-stone-900/90 to-[#141414]/90 backdrop-blur-md border border-white/10 rounded-2xl p-4 shadow-lg">
           <div className="flex items-center justify-between text-stone-400 text-[11px] font-semibold mb-1">
             <span>In Transit</span>
             <Clock className="w-4 h-4 text-amber-400" />
@@ -208,7 +208,7 @@ export const AdminRidersFleet: React.FC = () => {
           <div className="text-[10px] text-stone-500 mt-1">Currently on delivery</div>
         </div>
 
-        <div className="bg-stone-900 border border-stone-800 rounded-2xl p-4 shadow-sm">
+        <div className="bg-gradient-to-b from-stone-900/90 to-[#141414]/90 backdrop-blur-md border border-white/10 rounded-2xl p-4 shadow-lg">
           <div className="flex items-center justify-between text-stone-400 text-[11px] font-semibold mb-1">
             <span>Delivered</span>
             <CheckCircle className="w-4 h-4 text-emerald-400" />
@@ -217,7 +217,7 @@ export const AdminRidersFleet: React.FC = () => {
           <div className="text-[10px] text-stone-500 mt-1">Fulfilled successfully</div>
         </div>
 
-        <div className="bg-stone-900 border border-stone-800 rounded-2xl p-4 shadow-sm">
+        <div className="bg-gradient-to-b from-stone-900/90 to-[#141414]/90 backdrop-blur-md border border-white/10 rounded-2xl p-4 shadow-lg">
           <div className="flex items-center justify-between text-stone-400 text-[11px] font-semibold mb-1">
             <span>Cancelled / Void</span>
             <XCircle className="w-4 h-4 text-red-400" />
@@ -226,12 +226,12 @@ export const AdminRidersFleet: React.FC = () => {
           <div className="text-[10px] text-stone-500 mt-1">Unfulfilled runs</div>
         </div>
 
-        <div className="bg-stone-900 border border-stone-800 rounded-2xl p-4 shadow-sm">
+        <div className="bg-gradient-to-b from-stone-900/90 to-[#141414]/90 backdrop-blur-md border border-white/10 rounded-2xl p-4 shadow-lg">
           <div className="flex items-center justify-between text-stone-400 text-[11px] font-semibold mb-1">
             <span>Delivered Cash</span>
-            <DollarSign className="w-4 h-4 text-[#00897b]" />
+            <DollarSign className="w-4 h-4 text-emerald-400" />
           </div>
-          <div className="text-lg font-bold text-[#00897b] font-mono truncate">
+          <div className="text-lg font-bold text-emerald-400 font-mono truncate">
             PKR {fleetTotals.totalRevenue.toLocaleString()}
           </div>
           <div className="text-[10px] text-stone-500 mt-1">{fleetTotals.overallSuccessRate}% success rate</div>
@@ -243,11 +243,11 @@ export const AdminRidersFleet: React.FC = () => {
         {displayedRiders.map((rider) => (
           <div
             key={rider.id}
-            className="bg-stone-900 border border-stone-800 rounded-2xl p-5 shadow-sm flex flex-col justify-between hover:border-stone-700 transition"
+            className="bg-gradient-to-b from-stone-900/90 to-[#141414]/90 backdrop-blur-md border border-white/10 rounded-2xl p-5 shadow-lg flex flex-col justify-between hover:border-white/20 transition-all duration-200"
           >
             <div>
               {/* Rider Header */}
-              <div className="flex items-start justify-between border-b border-stone-800/80 pb-3 mb-3">
+              <div className="flex items-start justify-between border-b border-white/5 pb-3 mb-3">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-lg">
                     🛵
@@ -270,7 +270,7 @@ export const AdminRidersFleet: React.FC = () => {
                 </div>
 
                 <div className="text-right">
-                  <span className="px-2.5 py-1 bg-stone-950 border border-stone-800 text-stone-300 text-xs font-mono font-bold rounded-lg block">
+                  <span className="px-2.5 py-1 bg-stone-950/80 border border-white/10 text-stone-300 text-xs font-mono font-bold rounded-lg block shadow-inner">
                     {rider.stats.total} Orders
                   </span>
                   <span className="text-[10px] text-stone-500 font-mono mt-0.5 block">
@@ -281,7 +281,7 @@ export const AdminRidersFleet: React.FC = () => {
 
               {/* Success Rate Progress Bar */}
               <div className="mb-4">
-                <div className="w-full bg-stone-950 h-1.5 rounded-full overflow-hidden flex">
+                <div className="w-full bg-stone-950/80 h-1.5 rounded-full overflow-hidden flex border border-white/5">
                   <div
                     className="bg-emerald-500 h-full transition-all"
                     style={{
@@ -317,7 +317,7 @@ export const AdminRidersFleet: React.FC = () => {
 
               {/* Metrics Breakdown */}
               <div className="grid grid-cols-3 gap-2 mb-4">
-                <div className="bg-stone-950 rounded-xl p-2.5 text-center border border-stone-800/80">
+                <div className="bg-stone-950/80 rounded-xl p-2.5 text-center border border-white/5 shadow-inner">
                   <div className="text-[10px] text-stone-400 font-semibold mb-0.5 uppercase tracking-wider">
                     In Transit
                   </div>
@@ -325,7 +325,7 @@ export const AdminRidersFleet: React.FC = () => {
                     {rider.stats.inProgress}
                   </div>
                 </div>
-                <div className="bg-stone-950 rounded-xl p-2.5 text-center border border-stone-800/80">
+                <div className="bg-stone-950/80 rounded-xl p-2.5 text-center border border-white/5 shadow-inner">
                   <div className="text-[10px] text-emerald-400 font-semibold mb-0.5 uppercase tracking-wider">
                     Delivered
                   </div>
@@ -333,7 +333,7 @@ export const AdminRidersFleet: React.FC = () => {
                     {rider.stats.delivered}
                   </div>
                 </div>
-                <div className="bg-stone-950 rounded-xl p-2.5 text-center border border-stone-800/80">
+                <div className="bg-stone-950/80 rounded-xl p-2.5 text-center border border-white/5 shadow-inner">
                   <div className="text-[10px] text-red-400 font-semibold mb-0.5 uppercase tracking-wider">
                     Cancelled
                   </div>
@@ -344,9 +344,9 @@ export const AdminRidersFleet: React.FC = () => {
               </div>
 
               {/* Delivered Revenue */}
-              <div className="flex items-center justify-between px-3 py-2 bg-stone-950/60 rounded-xl border border-stone-800/60 text-xs mb-3">
+              <div className="flex items-center justify-between px-3 py-2 bg-stone-950/60 rounded-xl border border-white/5 text-xs mb-3 shadow-inner">
                 <span className="text-stone-400">Total Delivered Revenue:</span>
-                <span className="font-bold text-[#00897b] font-mono">
+                <span className="font-bold text-emerald-400 font-mono">
                   PKR {rider.stats.deliveredRevenue.toLocaleString()}
                 </span>
               </div>
@@ -362,14 +362,14 @@ export const AdminRidersFleet: React.FC = () => {
               </div>
               <div className="overflow-y-auto max-h-36 space-y-1.5 pr-1 no-scrollbar">
                 {rider.assignedOrders.length === 0 ? (
-                  <div className="text-stone-500 text-xs italic text-center py-4 bg-stone-950/40 rounded-xl border border-stone-800/40">
+                  <div className="text-stone-500 text-xs italic text-center py-4 bg-stone-950/40 rounded-xl border border-white/5">
                     No delivery dispatches assigned yet.
                   </div>
                 ) : (
                   rider.assignedOrders.slice(0, 5).map((ord) => (
                     <div
                       key={ord.id}
-                      className="flex justify-between items-center bg-stone-950 rounded-xl p-2 border border-stone-800/80 text-xs"
+                      className="flex justify-between items-center bg-stone-950/80 rounded-xl p-2 border border-white/5 text-xs shadow-inner"
                     >
                       <div className="flex flex-col min-w-0 pr-2">
                         <span className="font-mono text-white font-bold text-[11px]">
@@ -404,7 +404,7 @@ export const AdminRidersFleet: React.FC = () => {
         ))}
 
         {displayedRiders.length === 0 && (
-          <div className="col-span-full py-16 text-center border border-stone-800 border-dashed rounded-2xl bg-stone-900/40">
+          <div className="col-span-full py-16 text-center border border-white/10 border-dashed rounded-2xl bg-stone-900/40 backdrop-blur-md">
             <Truck className="w-10 h-10 text-stone-600 mx-auto mb-3" />
             <div className="text-stone-300 font-bold text-sm">No Riders Found</div>
             <div className="text-xs text-stone-500 mt-1 max-w-sm mx-auto">
@@ -412,7 +412,7 @@ export const AdminRidersFleet: React.FC = () => {
             </div>
             <button
               onClick={() => setIsAddRiderOpen(true)}
-              className="mt-4 px-4 py-2 bg-[#00897b] hover:bg-[#00796b] text-white text-xs font-bold rounded-xl inline-flex items-center gap-1.5 transition cursor-pointer shadow-md shadow-[#00897b]/20"
+              className="mt-4 px-4 py-2 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white text-xs font-bold rounded-xl inline-flex items-center gap-1.5 transition-all duration-200 cursor-pointer shadow-[0_0_15px_rgba(16,185,129,0.25)] hover:scale-[1.02] active:scale-95 border border-emerald-500/30"
             >
               <Plus className="w-4 h-4" />
               Add First Rider
@@ -423,16 +423,16 @@ export const AdminRidersFleet: React.FC = () => {
 
       {/* Add Rider Modal */}
       {isAddRiderOpen && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-stone-900 border border-stone-800 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl animate-in fade-in zoom-in-95">
-            <div className="p-4 border-b border-stone-800 flex items-center justify-between bg-stone-950">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-gradient-to-b from-stone-900 to-[#141414] border border-white/10 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl animate-in fade-in zoom-in-95">
+            <div className="p-4 border-b border-white/10 flex items-center justify-between bg-stone-950/80">
               <div className="flex items-center gap-2">
-                <Truck className="w-5 h-5 text-[#00897b]" />
+                <Truck className="w-5 h-5 text-emerald-400" />
                 <h4 className="text-sm font-bold text-white">Register New Delivery Rider</h4>
               </div>
               <button
                 onClick={() => setIsAddRiderOpen(false)}
-                className="p-1 rounded-lg text-stone-400 hover:text-white hover:bg-stone-800 cursor-pointer"
+                className="p-1 rounded-lg text-stone-400 hover:text-white hover:bg-stone-800 transition cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -456,7 +456,7 @@ export const AdminRidersFleet: React.FC = () => {
                   placeholder="e.g. Bilal Ahmed"
                   value={newRiderName}
                   onChange={(e) => setNewRiderName(e.target.value)}
-                  className="w-full px-3 py-2 bg-stone-950 border border-stone-800 rounded-xl text-xs text-white focus:outline-none focus:border-[#00897b]"
+                  className="w-full px-3 py-2 bg-stone-950/80 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500 transition shadow-inner"
                 />
               </div>
 
@@ -467,7 +467,7 @@ export const AdminRidersFleet: React.FC = () => {
                 <select
                   value={newRiderOutlet}
                   onChange={(e) => setNewRiderOutlet(e.target.value)}
-                  className="w-full px-3 py-2 bg-stone-950 border border-stone-800 rounded-xl text-xs text-white focus:outline-none focus:border-[#00897b]"
+                  className="w-full px-3 py-2 bg-stone-950/80 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500 transition shadow-inner"
                 >
                   <option value="Main Branch">Main Branch</option>
                   {outlets.map((o) => (
@@ -478,17 +478,17 @@ export const AdminRidersFleet: React.FC = () => {
                 </select>
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-4 border-t border-stone-800">
+              <div className="flex items-center justify-end gap-2 pt-4 border-t border-white/10">
                 <button
                   type="button"
                   onClick={() => setIsAddRiderOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-300 text-xs font-semibold transition cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-stone-800/80 hover:bg-stone-700 text-stone-300 text-xs font-semibold transition-all duration-200 cursor-pointer border border-white/10 hover:border-white/20 active:scale-95"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-[#00897b] hover:bg-[#00796b] text-white text-xs font-bold transition cursor-pointer shadow-md shadow-[#00897b]/20"
+                  className="px-5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white text-xs font-bold transition-all duration-200 cursor-pointer shadow-[0_0_15px_rgba(16,185,129,0.25)] hover:scale-[1.02] active:scale-95 border border-emerald-500/30"
                 >
                   Register Rider
                 </button>

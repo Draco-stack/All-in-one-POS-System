@@ -33,6 +33,13 @@ export const ShiftCloseModal: React.FC<ShiftCloseModalProps> = ({
     currentShift?.startingFloat || currentShift?.openingFloat || 2000
   );
 
+  // Sync petty cash with current shift
+  React.useEffect(() => {
+    if (currentShift && isOpen) {
+      setPettyCash(currentShift.startingFloat || currentShift.openingFloat || 0);
+    }
+  }, [currentShift, isOpen]);
+
   // Banknotes and Coins Counter Matrix
   const [denomCounts, setDenomCounts] = useState<DenominationCounts>({
     5000: 0,
@@ -74,47 +81,56 @@ export const ShiftCloseModal: React.FC<ShiftCloseModalProps> = ({
   }, [denomCounts, coinsAmount]);
 
   // Strict User-ID Cashout Accountability (Till Management)
-  // Calculate expected cash EXCLUSIVELY from orders created by the logged-in user's account
+  // Calculate expected cash from orders created during this shift with robust fallback
   const userShiftOrders = useMemo(() => {
     if (!currentShift) return [];
-    const shiftStartTime = new Date(currentShift.openedAt || Date.now() - 24 * 60 * 60 * 1000).getTime();
-    return orders.filter((o) => {
-      if (o.status === 'cancelled' || o.status === 'refunded') return false;
-      const orderTime = new Date(o.createdAt).getTime();
-      if (orderTime < shiftStartTime) return false;
-
-      // Strict user ID matching - Match against the user who OPENED the shift
-      const shiftOwnerId = currentShift.openedBy || currentShift.openedById || currentShift.cashierId || currentUser.id;
-      const shiftOwnerName = currentShift.cashierName || currentUser.name;
-
-      const matchesId = o.createdById ? o.createdById === shiftOwnerId : false;
-      const matchesCashierId = o.cashierId ? o.cashierId === shiftOwnerId : false;
-      const matchesName = o.cashierName && shiftOwnerName ? o.cashierName.toLowerCase() === shiftOwnerName.toLowerCase() : false;
-
-      return matchesId || matchesCashierId || matchesName;
+    const shiftStartTime = currentShift.openedAt ? new Date(currentShift.openedAt).getTime() : 0;
+    const shiftEndTime = currentShift.closedAt ? new Date(currentShift.closedAt).getTime() : null;
+    
+    // First: Filter orders generated during this shift session
+    let validOrders = orders.filter((o) => {
+      if (o.status === 'cancelled' || o.status === 'refunded' || o.paymentStatus === 'refunded') return false;
+      const orderTime = o.createdAt ? new Date(o.createdAt).getTime() : Date.now();
+      // Allow 2-minute clock skew buffer
+      if (shiftStartTime > 0 && orderTime < (shiftStartTime - 120000)) return false;
+      if (shiftEndTime && orderTime > (shiftEndTime + 120000)) return false;
+      return true;
     });
+
+    // Fallback: If no orders match the tight timestamp window and shift is open, include all active non-cancelled orders
+    if (validOrders.length === 0 && orders.length > 0 && !shiftEndTime) {
+      validOrders = orders.filter((o) => o.status !== 'cancelled' && o.status !== 'refunded' && o.paymentStatus !== 'refunded');
+    }
+
+    return validOrders;
   }, [orders, currentShift, currentUser]);
 
   const userCashSales = useMemo(() => {
     return userShiftOrders
-      .filter((o) => o.paymentMethod === 'cash')
-      .reduce((sum, o) => sum + (o.total || 0), 0);
+      .filter((o) => {
+        const pm = (o.paymentMethod || 'cash').toLowerCase();
+        return pm === 'cash' || pm === 'cod' || pm === 'cash_on_delivery' || (!pm.includes('card') && !pm.includes('online') && !pm.includes('pos'));
+      })
+      .reduce((sum, o) => sum + (Number(o.total) || Number(o.subtotal) || 0), 0);
   }, [userShiftOrders]);
 
   const userCardSales = useMemo(() => {
     return userShiftOrders
-      .filter((o) => o.paymentMethod === 'card' || o.paymentMethod === 'online')
-      .reduce((sum, o) => sum + (o.total || 0), 0);
+      .filter((o) => {
+        const pm = (o.paymentMethod || '').toLowerCase();
+        return pm.includes('card') || pm.includes('online') || pm.includes('pos') || pm.includes('bank') || pm.includes('digital');
+      })
+      .reduce((sum, o) => sum + (Number(o.total) || Number(o.subtotal) || 0), 0);
   }, [userShiftOrders]);
 
   const userTotalSales = useMemo(() => {
-    return userShiftOrders.reduce((sum, o) => sum + (o.total || 0), 0);
+    return userShiftOrders.reduce((sum, o) => sum + (Number(o.total) || Number(o.subtotal) || 0), 0);
   }, [userShiftOrders]);
 
   const openingFloatVal = currentShift?.openingFloat || currentShift?.startingFloat || pettyCash || 0;
-  const cashSalesVal = userShiftOrders.length > 0 ? userCashSales : (currentShift?.cashSales || 0);
-  const cardSalesVal = userShiftOrders.length > 0 ? userCardSales : (currentShift?.cardSales || 0);
-  const totalSalesVal = userShiftOrders.length > 0 ? userTotalSales : (currentShift?.totalGrossSales || cashSalesVal + cardSalesVal);
+  const cashSalesVal = userCashSales || (currentShift?.cashSales || 0);
+  const cardSalesVal = userCardSales || (currentShift?.cardSales || 0);
+  const totalSalesVal = userTotalSales || (currentShift?.totalGrossSales || (cashSalesVal + cardSalesVal));
 
   // Expected cash in drawer = Opening Float/Petty Cash + User's Own Account Cash Sales
   const expectedCashInDrawer = openingFloatVal + cashSalesVal;
@@ -337,29 +353,33 @@ export const ShiftCloseModal: React.FC<ShiftCloseModalProps> = ({
                 </p>
               </div>
 
-              <div className="bg-stone-950 p-3 rounded-xl border border-stone-800">
-                <span className="text-[10px] uppercase font-bold text-stone-400">System Expected Cash</span>
-                <p className="text-base font-black text-cyan-400 font-mono mt-0.5">
-                  PKR {expectedCashInDrawer.toLocaleString()}
-                </p>
-              </div>
+              {['admin', 'manager', 'owner'].includes(currentUser.role) && (
+                <div className="bg-stone-950 p-3 rounded-xl border border-stone-800">
+                  <span className="text-[10px] uppercase font-bold text-stone-400">System Expected Cash</span>
+                  <p className="text-base font-black text-cyan-400 font-mono mt-0.5">
+                    PKR {expectedCashInDrawer.toLocaleString()}
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Petty Cash Float Adjustment */}
-            <div className="bg-stone-950/60 p-3.5 rounded-xl border border-stone-800 space-y-1.5">
+            <div className="bg-stone-950/60 p-3.5 rounded-xl border border-stone-800 space-y-1.5 opacity-80">
               <div className="flex items-center justify-between">
                 <label className="text-xs font-bold text-stone-300 flex items-center gap-1.5">
-                  <Banknote className="w-4 h-4 text-amber-400" />
+                  <Lock className="w-3.5 h-3.5 text-stone-500" />
                   Petty Cash Float / Starting Balance (PKR):
                 </label>
-                <span className="text-[11px] text-stone-500 font-mono">Declared at shift start</span>
+                <span className="text-[11px] text-amber-500 font-bold flex items-center gap-1">
+                  <Lock className="w-3 h-3" /> System Locked
+                </span>
               </div>
               <input
                 type="number"
                 min="0"
                 value={pettyCash}
-                onChange={(e) => setPettyCash(parseFloat(e.target.value) || 0)}
-                className="w-full bg-stone-900 border border-stone-800 rounded-lg px-3 py-2 text-sm font-mono font-bold text-white focus:outline-none focus:border-[#00897b]"
+                disabled
+                className="w-full bg-stone-900/40 border border-stone-800 rounded-lg px-3 py-2 text-sm font-mono font-bold text-stone-500 cursor-not-allowed select-none"
                 placeholder="e.g. 2000"
               />
             </div>
@@ -469,63 +489,65 @@ export const ShiftCloseModal: React.FC<ShiftCloseModalProps> = ({
               </div>
             </div>
 
-            {/* Reconciliation Comparison Summary Box */}
-            <div
-              className={`p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
-                isBalanced
-                  ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-300'
-                  : isOverage
-                  ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-300'
-                  : 'bg-red-950/40 border-red-500/40 text-red-300'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <div
-                  className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                    isBalanced
-                      ? 'bg-emerald-500/20 text-emerald-400'
-                      : isOverage
-                      ? 'bg-emerald-500/20 text-emerald-400'
-                      : 'bg-red-500/20 text-red-400'
-                  }`}
-                >
-                  {isBalanced ? (
-                    <CheckCircle className="w-5 h-5" />
-                  ) : (
-                    <AlertTriangle className="w-5 h-5" />
-                  )}
+            {/* Reconciliation Comparison Summary Box (Visible to Management Only) */}
+            {['admin', 'manager', 'owner'].includes(currentUser.role) && (
+              <div
+                className={`p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                  isBalanced
+                    ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-300'
+                    : isOverage
+                    ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-300'
+                    : 'bg-red-950/40 border-red-500/40 text-red-300'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                      isBalanced
+                        ? 'bg-emerald-500/20 text-emerald-400'
+                        : isOverage
+                        ? 'bg-emerald-500/20 text-emerald-400'
+                        : 'bg-red-500/20 text-red-400'
+                    }`}
+                  >
+                    {isBalanced ? (
+                      <CheckCircle className="w-5 h-5" />
+                    ) : (
+                      <AlertTriangle className="w-5 h-5" />
+                    )}
+                  </div>
+                  <div>
+                    <h4 className="font-extrabold text-sm flex items-center gap-2">
+                      {isBalanced
+                        ? 'Cash Drawer Perfectly Balanced (0 Discrepancy)'
+                        : isOverage
+                        ? `Cash Overage Detected (+PKR ${discrepancy.toLocaleString()})`
+                        : `Cash Shortage Detected (-PKR ${Math.abs(discrepancy).toLocaleString()})`}
+                    </h4>
+                    <p className="text-xs text-stone-400 mt-0.5">
+                      Physical Count: PKR {totalPhysicalCashCounted.toLocaleString()} | System Expected: PKR {expectedCashInDrawer.toLocaleString()}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h4 className="font-extrabold text-sm flex items-center gap-2">
-                    {isBalanced
-                      ? 'Cash Drawer Perfectly Balanced (0 Discrepancy)'
-                      : isOverage
-                      ? `Cash Overage Detected (+PKR ${discrepancy.toLocaleString()})`
-                      : `Cash Shortage Detected (-PKR ${Math.abs(discrepancy).toLocaleString()})`}
-                  </h4>
-                  <p className="text-xs text-stone-400 mt-0.5">
-                    Physical Count: PKR {totalPhysicalCashCounted.toLocaleString()} | System Expected: PKR {expectedCashInDrawer.toLocaleString()}
-                  </p>
-                </div>
-              </div>
 
-              <div className="text-right shrink-0">
-                <span className="text-[10px] uppercase font-bold tracking-wider text-stone-400 block">
-                  Variance
-                </span>
-                <span
-                  className={`text-xl font-black font-mono ${
-                    isBalanced
-                      ? 'text-emerald-400'
-                      : isOverage
-                      ? 'text-emerald-400'
-                      : 'text-red-400'
-                  }`}
-                >
-                  {discrepancy >= 0 ? `+PKR ${discrepancy.toLocaleString()}` : `-PKR ${Math.abs(discrepancy).toLocaleString()}`}
-                </span>
+                <div className="text-right shrink-0">
+                  <span className="text-[10px] uppercase font-bold tracking-wider text-stone-400 block">
+                    Variance
+                  </span>
+                  <span
+                    className={`text-xl font-black font-mono ${
+                      isBalanced
+                        ? 'text-emerald-400'
+                        : isOverage
+                        ? 'text-emerald-400'
+                        : 'text-red-400'
+                    }`}
+                  >
+                    {discrepancy >= 0 ? `+PKR ${discrepancy.toLocaleString()}` : `-PKR ${Math.abs(discrepancy).toLocaleString()}`}
+                  </span>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Shift Discrepancy & Handover Notes */}
             <div className="space-y-1.5">

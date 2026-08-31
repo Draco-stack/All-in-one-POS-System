@@ -126,18 +126,18 @@ export const OrderEditCancelModal: React.FC<OrderEditCancelModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
-      <div className="bg-stone-900 border border-stone-800 rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-150">
+      <div className="bg-gradient-to-b from-stone-900 to-[#121212] border border-white/10 ring-1 ring-white/10 rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
         {/* Header */}
-        <div className="p-4 border-b border-stone-800 bg-stone-950 flex items-center justify-between">
+        <div className="p-4 border-b border-white/5 bg-stone-950/60 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-400 flex items-center justify-center">
-              <Edit3 className="w-5 h-5" />
+            <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center">
+              <Edit3 className="w-4 h-4" />
             </div>
             <div>
               <h3 className="font-extrabold text-white text-base flex items-center gap-2">
                 Manage Order #{order.orderNumber}
-                <span className="text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded bg-[#00897b]/20 text-emerald-400 border border-[#00897b]/30">
+                <span className="text-[10px] uppercase font-mono font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
                   {order.status}
                 </span>
               </h3>
@@ -148,7 +148,7 @@ export const OrderEditCancelModal: React.FC<OrderEditCancelModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-stone-800 text-stone-400 hover:text-white transition cursor-pointer"
+            className="p-1.5 rounded-xl hover:bg-white/5 text-stone-400 hover:text-white transition-all cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -156,7 +156,7 @@ export const OrderEditCancelModal: React.FC<OrderEditCancelModalProps> = ({
 
         {/* Cashier Protection Warning */}
         {isCashier && (
-          <div className="bg-amber-950/40 border-b border-amber-500/30 px-4 py-2.5 flex items-center gap-2 text-xs text-amber-300">
+          <div className="bg-amber-950/40 border-b border-amber-500/20 px-4 py-2.5 flex items-center gap-2 text-xs text-amber-300">
             <ShieldCheck className="w-4 h-4 shrink-0 text-amber-400" />
             <span>
               <strong>RBAC Guardrail:</strong> Cashiers cannot modify or cancel punched tickets without Manager PIN authorization.
@@ -168,13 +168,13 @@ export const OrderEditCancelModal: React.FC<OrderEditCancelModalProps> = ({
         <div className="p-5 overflow-y-auto space-y-4 flex-1 no-scrollbar">
           <div className="space-y-2">
             <div className="flex items-center justify-between mb-2">
-              <label className="text-xs font-bold text-stone-300">Order Line Items:</label>
+              <label className="text-[10px] font-bold uppercase tracking-wider text-stone-300">Order Line Items:</label>
               {(currentUser.role === 'manager' || currentUser.role === 'owner') && (
                 <div className="flex items-center gap-2">
                   <select
                     value={selectedMenuItemToAdd}
                     onChange={(e) => handleAddItem(e.target.value)}
-                    className="bg-stone-950 border border-stone-800 text-stone-200 text-[11px] px-2.5 py-1 rounded-lg focus:outline-none focus:border-[#00897b] font-medium transition cursor-pointer"
+                    className="bg-stone-900 border border-white/10 text-stone-200 text-xs px-3 py-1 rounded-xl focus:outline-none focus:border-amber-500/50 font-medium transition cursor-pointer"
                   >
                     <option value="">+ Add Item from Menu...</option>
                     {menuItems.map((m) => (
@@ -189,20 +189,20 @@ export const OrderEditCancelModal: React.FC<OrderEditCancelModalProps> = ({
             {editedItems.map((item, idx) => (
               <div
                 key={idx}
-                className="bg-stone-950 border border-stone-800 rounded-xl p-3 flex items-center justify-between gap-3 text-xs"
+                className="bg-stone-950/80 border border-white/5 rounded-xl p-3 flex items-center justify-between gap-3 text-xs"
               >
                 <div className="flex-1 min-w-0">
                   <span className="font-bold text-white block truncate">{item.name}</span>
-                  <span className="text-[11px] text-stone-400 font-mono">
+                  <span className="text-[10px] text-stone-400 font-mono">
                     PKR {item.price.toLocaleString()} each
                   </span>
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <div className="flex items-center bg-stone-900 border border-stone-800 rounded-lg p-0.5">
+                  <div className="flex items-center bg-stone-900 border border-white/10 rounded-xl p-0.5">
                     <button
                       onClick={() => handleUpdateQty(idx, -1)}
-                      className="w-6 h-6 rounded flex items-center justify-center hover:bg-stone-800 text-stone-300 cursor-pointer"
+                      className="w-6 h-6 rounded-lg flex items-center justify-center hover:bg-stone-800 text-stone-300 cursor-pointer transition-all"
                     >
                       <Minus className="w-3 h-3" />
                     </button>
@@ -211,13 +211,13 @@ export const OrderEditCancelModal: React.FC<OrderEditCancelModalProps> = ({
                     </span>
                     <button
                       onClick={() => handleUpdateQty(idx, 1)}
-                      className="w-6 h-6 rounded flex items-center justify-center hover:bg-stone-800 text-stone-300 cursor-pointer"
+                      className="w-6 h-6 rounded-lg flex items-center justify-center hover:bg-stone-800 text-stone-300 cursor-pointer transition-all"
                     >
                       <Plus className="w-3 h-3" />
                     </button>
                   </div>
 
-                  <span className="font-mono font-bold text-emerald-400 w-20 text-right">
+                  <span className="font-mono font-bold text-emerald-400 w-24 text-right">
                     PKR {(item.price * item.quantity).toLocaleString()}
                   </span>
                 </div>
@@ -227,54 +227,54 @@ export const OrderEditCancelModal: React.FC<OrderEditCancelModalProps> = ({
 
           {/* Special Notes */}
           <div>
-            <label className="text-xs font-bold text-stone-300 block mb-1">
+            <label className="text-[10px] uppercase font-bold text-stone-300 block mb-1">
               Order Instructions & Delivery Notes:
             </label>
             <input
               type="text"
               value={editNotes}
               onChange={(e) => setEditNotes(e.target.value)}
-              className="w-full bg-stone-950 border border-stone-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#00897b]"
+              className="w-full bg-stone-900 border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-amber-500/50"
             />
           </div>
 
           {/* Financial Summary */}
-          <div className="bg-stone-950 p-4 rounded-xl border border-stone-800 space-y-1 font-mono text-xs text-stone-400">
+          <div className="bg-stone-950/80 p-4 rounded-xl border border-white/5 space-y-1 font-mono text-xs text-stone-400">
             <div className="flex justify-between">
               <span>Subtotal:</span>
-              <span className="text-white">PKR {updatedSubtotal.toLocaleString()}</span>
+              <span className="text-white font-mono">PKR {updatedSubtotal.toLocaleString()}</span>
             </div>
             <div className="flex justify-between">
               <span>Tax (16%):</span>
-              <span className="text-white">PKR {updatedTax.toLocaleString()}</span>
+              <span className="text-white font-mono">PKR {updatedTax.toLocaleString()}</span>
             </div>
-            <div className="flex justify-between font-black text-sm text-emerald-400 pt-1 border-t border-stone-800">
+            <div className="flex justify-between font-black text-sm text-emerald-400 pt-1.5 border-t border-white/5">
               <span>Updated Total:</span>
-              <span>PKR {updatedTotal.toLocaleString()}</span>
+              <span className="font-mono">PKR {updatedTotal.toLocaleString()}</span>
             </div>
           </div>
         </div>
 
         {/* Footer Actions */}
-        <div className="p-4 border-t border-stone-800 bg-stone-950 flex items-center justify-between">
+        <div className="p-4 border-t border-white/5 bg-stone-950/60 flex items-center justify-between">
           <button
             onClick={() => handleTriggerAction('cancel')}
-            className="px-4 py-2 bg-red-950/60 hover:bg-red-900 border border-red-800/60 text-red-300 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
+            className="px-4 py-2 bg-rose-950/40 hover:bg-rose-900/60 border border-rose-500/30 text-rose-300 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
           >
             <Trash2 className="w-4 h-4" />
             Cancel / Void Ticket
           </button>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             <button
               onClick={onClose}
-              className="px-4 py-2 rounded-xl text-xs font-bold text-stone-400 hover:text-white"
+              className="px-4 py-2 rounded-xl text-xs font-bold text-stone-400 hover:text-white transition-all cursor-pointer"
             >
               Close
             </button>
             <button
               onClick={() => handleTriggerAction('modify')}
-              className="px-5 py-2 bg-[#00897b] hover:bg-[#00796b] text-white rounded-xl text-xs font-bold shadow-lg flex items-center gap-1.5 cursor-pointer"
+              className="px-5 py-2 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-lg flex items-center gap-1.5 cursor-pointer transition-all border border-emerald-400/20 active:scale-95"
             >
               <CheckCircle className="w-4 h-4" />
               Save Modifications

@@ -1,0 +1,16 @@
+--- src/context/RestaurantContext.tsx
++++ src/context/RestaurantContext.tsx
+@@ -612,9 +612,12 @@
+ 
+       const cash = shiftOrders
+-        .filter((o) => o.paymentMethod === 'cash')
++        .filter((o) => (o.paymentMethod || '').toLowerCase() === 'cash')
+         .reduce((sum, o) => sum + (o.total || o.subtotal || 0), 0);
+       
+       const card = shiftOrders
+-        .filter((o) => o.paymentMethod === 'card' || o.paymentMethod === 'online')
++        .filter((o) => {
++          const pm = (o.paymentMethod || '').toLowerCase();
++          return pm === 'card' || pm === 'online';
++        })
+         .reduce((sum, o) => sum + (o.total || o.subtotal || 0), 0);

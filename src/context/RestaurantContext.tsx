@@ -25,6 +25,7 @@ import {
   INITIAL_SALES_ADJUSTMENTS,
   HistoricalShiftRecord,
 } from '../data/mockData';
+import { getAllDeliveryMockOrders } from '../data/mockDeliveryData';
 
 interface RestaurantContextType {
   outlets: string[];
@@ -45,6 +46,7 @@ interface RestaurantContextType {
   updateUserPin: (userId: string, newPin: string) => void;
   toggleUserActive: (userId: string) => void;
   deleteUser: (userId: string) => Promise<boolean>;
+  updateUser: (userId: string, updates: Partial<UserAccount>) => Promise<boolean>;
   
   // Menu & Categories
   menuItems: MenuItem[];
@@ -108,6 +110,10 @@ interface RestaurantContextType {
   editOrder: (orderId: string, updates: any) => Promise<any>;
   assignDeliveryDriver: (orderId: string, driver: string) => void;
 
+  cashDrops: any[];
+  dropRiderCash: (riderName: string, amount: number, notes?: string) => void;
+
+  addOrder: (order: Order) => void;
   activeReceiptOrder: Order | null;
   setActiveReceiptOrder: (order: Order | null) => void;
   activeDeliverySlipOrder: Order | null;
@@ -119,6 +125,7 @@ interface RestaurantContextType {
   currentShift: RegisterShift | null;
   openShift: (openingFloat: number, notes?: string) => void;
   closeShift: (actualCash: number, notes?: string) => void;
+  updatePettyCash: (newAmount: number) => void;
 
   // Sales Adjustments & Audits
   salesAdjustments: SalesAdjustmentRecord[];
@@ -160,12 +167,12 @@ const DEFAULT_EMPTY_CART: PosCartState = {
     address: '',
     notes: '',
   },
-  orderType: 'takeaway',
+  orderType: "takeaway",
+  paymentMethod: "cash",
   tableNumber: 'Table 1',
   deliveryDriver: 'Carlos Rodriguez',
   discountPercent: 0,
   tipAmount: 0,
-  paymentMethod: 'cash',
   notes: '',
 };
 
@@ -210,7 +217,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   // Staff & User State
   const [outlets, setOutlets] = useState<string[]>(() =>
-    loadFromStorage('pos_outlets_cache', ['Gulberg Branch', 'DHA Phase 5', 'F-7 Islamabad', 'Mall of Lahore'])
+    loadFromStorage('pos_outlets_cache', ['Sargodha', 'Jinnah Colony', 'Eden Garden', 'Gujrat', 'Gojra', 'Gulberg Branch', 'DHA Phase 5', 'F-7 Islamabad'])
   );
 
   const addOutlet = async (name: string) => {
@@ -416,7 +423,13 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   // POS State
   const [posCart, setPosCart] = useState<PosCartState>(DEFAULT_EMPTY_CART);
-  const [orders, setOrders] = useState<Order[]>(() => loadFromStorage('pos_orders_cache', []));
+  const [orders, setOrders] = useState<Order[]>(() => {
+    const cached = loadFromStorage<Order[]>('pos_orders_cache', []);
+    if (Array.isArray(cached) && cached.length > 0) {
+      return cached;
+    }
+    return getAllDeliveryMockOrders();
+  });
   const [parkedOrders, setParkedOrders] = useState<ParkedOrder[]>(() =>
     loadFromStorage('pos_parked_orders_cache', [])
   );
@@ -530,28 +543,121 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   }, []);
 
   // Current Register Shift
+  const [cashDrops, setCashDrops] = useState<any[]>(() =>
+    loadFromStorage('pos_cash_drops_cache', [])
+  );
+
+  useEffect(() => {
+    saveToStorage('pos_cash_drops_cache', cashDrops);
+  }, [cashDrops]);
+
+  const dropRiderCash = (riderName: string, amount: number, notes?: string) => {
+    const newDrop = {
+      id: `drop-${Date.now()}`,
+      riderName,
+      amount,
+      notes: notes || 'End of shift reconciliation drop',
+      timestamp: new Date().toISOString(),
+      receivedBy: currentUser?.name || 'Robert Vance',
+    };
+    setCashDrops((prev) => [newDrop, ...prev]);
+  };
+
+  const addOrder = (order: Order) => {
+    setOrders((prev) => [order, ...prev]);
+  };
+
   const [activeReceiptOrder, setActiveReceiptOrder] = useState<Order | null>(null);
   const [activeDeliverySlipOrder, setActiveDeliverySlipOrder] = useState<Order | null>(null);
   const [printQueueOrder, setPrintQueueOrder] = useState<Order | null>(null);
 
-  const [currentShift, setCurrentShift] = useState<RegisterShift | null>({
-    id: 'shift-101',
-    shiftNumber: 'SH-101',
-    cashierName: 'Robert Vance',
-    terminalId: 'POS-MAIN-01',
-    openedAt: new Date().toISOString(),
-    openingFloat: 5000,
-    cashSales: 0,
-    cardSales: 0,
-    otherSales: 0,
-    totalGrossSales: 0,
-    totalTax: 0,
-    totalDiscounts: 0,
-    totalTips: 0,
-    cashInDrawerExpected: 5000,
-    transactionsCount: 0,
-    status: 'open',
+  const [currentShift, setCurrentShift] = useState<RegisterShift | null>(() => {
+    const cached = loadFromStorage<RegisterShift | null>('pos_current_shift', null);
+    if (cached) return cached;
+    return {
+      id: 'shift-101',
+      shiftNumber: 'SH-101',
+      cashierName: 'Robert Vance',
+      terminalId: 'POS-MAIN-01',
+      openedAt: new Date().toISOString(),
+      openingFloat: 5000,
+      cashSales: 0,
+      cardSales: 0,
+      otherSales: 0,
+      totalGrossSales: 0,
+      totalTax: 0,
+      totalDiscounts: 0,
+      totalTips: 0,
+      cashInDrawerExpected: 5000,
+      transactionsCount: 0,
+      status: 'open',
+    };
   });
+
+  // Dynamically recalculate shift totals directly from orders as the single source of truth
+  useEffect(() => {
+    setCurrentShift((prev) => {
+      if (!prev || prev.status !== 'open') return prev;
+      
+      const shiftStartTime = prev.openedAt ? new Date(prev.openedAt).getTime() : 0;
+      const shiftEndTime = prev.closedAt ? new Date(prev.closedAt).getTime() : null;
+      
+      // Filter for active/paid orders generated during this shift session
+      let shiftOrders = orders.filter(
+        (o) =>
+          o.status !== 'cancelled' &&
+          o.status !== 'refunded' &&
+          o.paymentStatus !== 'refunded' &&
+          (!shiftStartTime || (o.createdAt ? new Date(o.createdAt).getTime() : Date.now()) >= (shiftStartTime - 120000)) &&
+          (!shiftEndTime || (o.createdAt ? new Date(o.createdAt).getTime() : Date.now()) <= (shiftEndTime + 120000))
+      );
+
+      // Fallback if timestamp-filtered orders are empty but orders exist and shift is open
+      if (shiftOrders.length === 0 && orders.length > 0 && !shiftEndTime) {
+        shiftOrders = orders.filter(
+          (o) => o.status !== 'cancelled' && o.status !== 'refunded' && o.paymentStatus !== 'refunded'
+        );
+      }
+
+      const cash = shiftOrders
+        .filter((o) => {
+          const pm = (o.paymentMethod || 'cash').toLowerCase();
+          return pm === 'cash' || pm === 'cod' || pm === 'cash_on_delivery' || (!pm.includes('card') && !pm.includes('online') && !pm.includes('pos'));
+        })
+        .reduce((sum, o) => sum + (Number(o.total) || Number(o.subtotal) || 0), 0);
+        
+      const card = shiftOrders
+        .filter((o) => {
+          const pm = (o.paymentMethod || '').toLowerCase();
+          return pm.includes('card') || pm.includes('online') || pm.includes('pos') || pm.includes('bank') || pm.includes('digital');
+        })
+        .reduce((sum, o) => sum + (Number(o.total) || Number(o.subtotal) || 0), 0);
+
+      const tax = shiftOrders.reduce((sum, o) => sum + (Number(o.tax) || 0), 0);
+      const discounts = shiftOrders.reduce((sum, o) => sum + (Number(o.discount) || 0), 0);
+      const tips = shiftOrders.reduce((sum, o) => sum + (Number(o.tip) || 0), 0);
+
+      // We maintain the original starting float value
+      const floatVal = prev.startingFloat || prev.openingFloat || 0;
+
+      return {
+        ...prev,
+        cashSales: cash,
+        cardSales: card,
+        totalGrossSales: cash + card,
+        totalTax: tax,
+        totalDiscounts: discounts,
+        totalTips: tips,
+        cashInDrawerExpected: floatVal + cash,
+        transactionsCount: shiftOrders.length,
+      };
+    });
+  }, [orders]);
+
+  // Sync current shift state changes to localStorage
+  useEffect(() => {
+    saveToStorage('pos_current_shift', currentShift);
+  }, [currentShift]);
 
   // Realtime Database & Storage Sync
   const syncFromServer = useCallback(async () => {
@@ -592,6 +698,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             pin: u.pin || '1234',
             role: (u.role || 'cashier').toLowerCase() as UserRole,
             outlet: u.outlet || 'Main Branch',
+            phone: u.phone || '',
             active: u.active !== false,
             createdAt: u.createdAt ? String(u.createdAt).split('T')[0] : '2025-01-01',
           }));
@@ -642,37 +749,6 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         const data = await res.json();
         if (Array.isArray(data)) {
           setOrders(data);
-          setCurrentShift((prev) => {
-            if (!prev || prev.status !== 'open') return prev;
-            const shiftStartTime = prev.openedAt ? new Date(prev.openedAt).getTime() : 0;
-            const shiftOrders = data.filter(
-              (o: any) =>
-                (o.status || '').toLowerCase() !== 'cancelled' &&
-                (o.status || '').toLowerCase() !== 'refunded' &&
-                (!shiftStartTime || new Date(o.createdAt).getTime() >= shiftStartTime)
-            );
-            const cash = shiftOrders
-              .filter((o: any) => o.paymentMethod === 'cash')
-              .reduce((sum: number, o: any) => sum + (o.total || o.subtotal || 0), 0);
-            const card = shiftOrders
-              .filter((o: any) => o.paymentMethod === 'card' || o.paymentMethod === 'online')
-              .reduce((sum: number, o: any) => sum + (o.total || o.subtotal || 0), 0);
-            const tax = shiftOrders.reduce((sum: number, o: any) => sum + (o.tax || 0), 0);
-            const discounts = shiftOrders.reduce((sum: number, o: any) => sum + (o.discount || 0), 0);
-            const tips = shiftOrders.reduce((sum: number, o: any) => sum + (o.tip || 0), 0);
-
-            return {
-              ...prev,
-              cashSales: cash,
-              cardSales: card,
-              totalGrossSales: cash + card,
-              totalTax: tax,
-              totalDiscounts: discounts,
-              totalTips: tips,
-              cashInDrawerExpected: (prev.openingFloat || 5000) + cash,
-              transactionsCount: shiftOrders.length,
-            };
-          });
         }
       }
     } catch (e) {}
@@ -792,6 +868,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           username: user.username,
           pin: user.pin,
           role: user.role.toUpperCase(),
+          phone: user.phone,
         }),
       });
 
@@ -805,6 +882,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           pin: user.pin,
           role: created.role.toLowerCase() as UserRole,
           outlet: user.outlet || 'Main Branch',
+          phone: created.phone || '',
           active: created.active,
           createdAt: new Date().toISOString().split('T')[0],
         };
@@ -828,6 +906,52 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     };
     setUsers((prev) => [...prev, newUser]);
     showToast(`Staff member "${user.name}" created!`);
+  };
+
+  const updateUser = async (userId: string, updates: Partial<UserAccount>): Promise<boolean> => {
+    try {
+      const payload: any = {};
+      if (updates.name !== undefined) payload.name = updates.name;
+      if (updates.role !== undefined) payload.role = updates.role.toUpperCase();
+      if (updates.phone !== undefined) payload.phone = updates.phone;
+      if (updates.pin !== undefined) payload.pin = updates.pin;
+      if (updates.active !== undefined) payload.active = updates.active;
+
+      const res = await fetch(`/api/users/${encodeURIComponent(userId)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.ok) {
+        const body = await res.json();
+        const updated = body.data;
+        setUsers((prev) =>
+          prev.map((u) =>
+            u.id === userId
+              ? {
+                  ...u,
+                  name: updated.name,
+                  role: updated.role.toLowerCase() as UserRole,
+                  phone: updated.phone || '',
+                  pin: updated.pin || u.pin,
+                  active: updated.active,
+                }
+              : u
+          )
+        );
+        showToast(`✓ Staff member "${updated.name}" updated successfully!`);
+        return true;
+      } else {
+        const errData = await res.json();
+        showToast(`⚠️ ${errData.error || 'Failed to update user'}`);
+        return false;
+      }
+    } catch (err) {
+      console.error('Error updating user on server:', err);
+      showToast('❌ Server error while updating staff info');
+      return false;
+    }
   };
 
   const updateUserPin = (userId: string, newPin: string) => {
@@ -1320,14 +1444,16 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       ? (posCart.deliveryDriver || (posCart.orderType === 'delivery' ? 'Unassigned Rider' : 'Self Pickup'))
       : undefined;
 
+    const isPaid = tenderedAmount !== undefined ? tenderedAmount > 0 : true;
+
     const newOrder: Order = {
       id: `ord-${Date.now()}`,
       orderNumber,
       type: posCart.orderType,
       orderType: posCart.orderType,
-      status: 'pending',
-      paymentStatus: 'paid',
-      paymentMethod: posCart.paymentMethod,
+      status: 'completed',
+      paymentStatus: isPaid ? 'paid' : 'unpaid',
+      paymentMethod: posCart.paymentMethod || 'cash',
       customer: {
         name: posCart.customer?.name || (posCart.orderType === 'delivery' ? 'Delivery Customer' : posCart.orderType === 'takeaway' ? 'Takeaway Customer' : 'Walk-in Customer'),
         phone: posCart.customer?.phone || '',
@@ -1362,11 +1488,11 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       notes: posCart.notes,
       cashierName: currentUser.name,
       cashierId: currentUser.id,
+      createdAt: new Date().toISOString(),
       createdById: currentUser.id,
       terminalId: 'POS-MAIN-01',
       serverId: posCart.serverId,
       serverName: posCart.serverName,
-      createdAt: new Date().toISOString(),
     };
 
     // Auto-upsert customer via backend
@@ -1401,25 +1527,6 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     setTimeout(() => {
       window.print();
     }, 500);
-
-    // Update current shift stats
-    if (currentShift && currentShift.status === 'open') {
-      setCurrentShift((prev) => {
-        if (!prev) return null;
-        const isCash = posCart.paymentMethod === 'cash';
-        return {
-          ...prev,
-          totalGrossSales: prev.totalGrossSales + cartTotal,
-          cashSales: isCash ? prev.cashSales + cartTotal : prev.cashSales,
-          cardSales: !isCash ? prev.cardSales + cartTotal : prev.cardSales,
-          totalTax: prev.totalTax + cartTax,
-          totalDiscounts: prev.totalDiscounts + cartDiscount,
-          totalTips: prev.totalTips + (posCart.tipAmount || 0),
-          cashInDrawerExpected: isCash ? prev.cashInDrawerExpected + cartTotal : prev.cashInDrawerExpected,
-          transactionsCount: prev.transactionsCount + 1,
-        };
-      });
-    }
 
     // Auto-deduct inventory
     setStockItems((prev) =>
@@ -1505,20 +1612,6 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       reason: reason || 'Manager cancellation override',
     });
 
-    if (currentShift && currentShift.status === 'open' && target) {
-      setCurrentShift((prev) => {
-        if (!prev) return null;
-        const isCash = target.paymentMethod === 'cash';
-        return {
-          ...prev,
-          totalGrossSales: Math.max(0, prev.totalGrossSales - orderAmt),
-          cashSales: isCash ? Math.max(0, prev.cashSales - orderAmt) : prev.cashSales,
-          cardSales: !isCash ? Math.max(0, prev.cardSales - orderAmt) : prev.cardSales,
-          cashInDrawerExpected: isCash ? Math.max(0, prev.cashInDrawerExpected - orderAmt) : prev.cashInDrawerExpected,
-        };
-      });
-    }
-
     // 2. Sync to backend database
     try {
       const response = await fetch(`/api/orders/${orderId}/cancel`, {
@@ -1547,7 +1640,20 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     const target = orders.find((o) => o.id === orderId);
     const oldTotal = target ? (target.total || 0) : 0;
     const newTotal = updates.total !== undefined ? updates.total : oldTotal;
-    const delta = newTotal - oldTotal;
+    const priceDelta = newTotal - oldTotal;
+    
+    // Calculate shift delta based on payment status changes
+    const wasPaid = target?.paymentStatus === 'paid';
+    const isNowPaid = updates.paymentStatus === 'paid' || (updates.paymentStatus === undefined && wasPaid);
+    
+    let shiftDelta = 0;
+    if (!wasPaid && isNowPaid) {
+      shiftDelta = newTotal; // newly cashed out
+    } else if (wasPaid && isNowPaid) {
+      shiftDelta = priceDelta; // price modified on an already paid order
+    } else if (wasPaid && !isNowPaid) {
+      shiftDelta = -oldTotal; // payment reversed
+    }
 
     // 1. Immediate optimistic local update
     setOrders((prev) =>
@@ -1557,14 +1663,14 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
               ...o,
               ...updates,
               items: updates.items || o.items,
-              status: o.status === 'completed' || o.status === 'cancelled' ? o.status : 'modified',
+              status: updates.status || (o.status === 'completed' || o.status === 'cancelled' ? o.status : 'modified'),
               updatedAt: new Date().toISOString(),
             }
           : o
       )
     );
 
-    if (target && (delta !== 0 || updates.items)) {
+    if (target && (priceDelta !== 0 || updates.items)) {
       const itemsSummary = updates.items
         ? updates.items.map((it) => `${it.quantity}x ${it.name}`).join(', ')
         : 'Modified order items';
@@ -1577,24 +1683,10 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         authorizerRole: currentUser.role,
         originalAmount: oldTotal,
         newAmount: newTotal,
-        netDelta: delta,
+        netDelta: priceDelta,
         itemsSummary,
         reason: (updates as any).reason || 'Item modification / price adjustment',
       });
-
-      if (currentShift && currentShift.status === 'open') {
-        setCurrentShift((prev) => {
-          if (!prev) return null;
-          const isCash = target.paymentMethod === 'cash';
-          return {
-            ...prev,
-            totalGrossSales: prev.totalGrossSales + delta,
-            cashSales: isCash ? prev.cashSales + delta : prev.cashSales,
-            cardSales: !isCash ? prev.cardSales + delta : prev.cardSales,
-            cashInDrawerExpected: isCash ? prev.cashInDrawerExpected + delta : prev.cashInDrawerExpected,
-          };
-        });
-      }
     }
 
     // 2. Sync to backend database
@@ -1628,7 +1720,8 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           ? {
               ...o,
               deliveryDriver: driver,
-              status: o.status === 'pending' || o.status === 'PUNCHED' || o.status === 'ready' ? 'dispatched' : o.status,
+              riderName: driver,
+              status: o.status === 'pending' || o.status === 'PUNCHED' || o.status === 'in_kitchen' || o.status === 'ready' ? 'dispatched' : o.status,
               updatedAt: new Date().toISOString(),
             }
           : o
@@ -1707,6 +1800,14 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     showToast(`Shift opened with PKR ${openingFloat.toLocaleString()} float`);
   };
 
+  const updatePettyCash = (newAmount: number) => {
+    setCurrentShift((prev) => {
+      if (!prev) return prev;
+      return { ...prev, openingFloat: newAmount, startingFloat: newAmount };
+    });
+    showToast(`Petty cash updated to PKR ${newAmount.toLocaleString()}`);
+  };
+
   const closeShift = (actualCash: number, notes?: string) => {
     if (!currentShift) return;
     const diff = actualCash - currentShift.cashInDrawerExpected;
@@ -1747,6 +1848,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     deleteOutlet,
     users,
         addNewUser,
+        updateUser,
         updateUserPin,
         toggleUserActive,
         deleteUser,
@@ -1794,6 +1896,9 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         parkCurrentOrder,
         recallParkedOrder,
         deleteParkedOrder,
+        cashDrops,
+        dropRiderCash,
+        addOrder,
         punchOrder,
         updateOrderStatus,
         refundOrder,
@@ -1809,6 +1914,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         currentShift,
         openShift,
         closeShift,
+        updatePettyCash,
         stockItems,
         updateStockQuantity,
         tables,

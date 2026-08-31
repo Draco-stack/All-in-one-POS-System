@@ -39,6 +39,7 @@ export interface ThermalReceiptProps {
   customerPhone?: string;
   deliveryAddress?: string;
   deliveryNotes?: string;
+  deliveryDriver?: string;
   items?: ReceiptItem[];
   subtotal?: number;
   tax?: number;
@@ -221,6 +222,8 @@ export const ThermalReceipt: React.FC<ThermalReceiptProps> = (props) => {
     ord.customer?.notes ||
     ord.notes ||
     '';
+  const deliveryDriver =
+    props.deliveryDriver || ord.deliveryDriver || '';
 
   const items: ReceiptItem[] = props.items || ord.items || [];
 
@@ -374,6 +377,14 @@ export const ThermalReceipt: React.FC<ThermalReceiptProps> = (props) => {
                   <span className="font-bold block">RIDER NOTES:</span>
                   <p className="m-0 italic text-[9px] leading-tight border border-dashed border-black p-1 mt-0.5 break-words">
                     {deliveryNotes}
+                  </p>
+                </div>
+              )}
+              {deliveryDriver && (
+                <div>
+                  <span className="font-bold block">ASSIGNED RIDER:</span>
+                  <p className="m-0 font-bold text-[10px] uppercase leading-tight border-2 border-black p-1 mt-0.5 bg-white break-words">
+                    {deliveryDriver}
                   </p>
                 </div>
               )}

@@ -1,17 +1,17 @@
 import express from 'express';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import { createServer as createViteServer } from 'vite';
 import prisma from './src/server/prisma';
 import { seedDatabaseIfNeeded } from './src/server/seed';
 import {
   addUser,
+  updateUser,
   deleteUser,
   addMenuItem,
   deleteMenuItem,
 } from './src/server/controllers/adminController';
 
-const appDir = typeof __dirname !== 'undefined' ? __dirname : path.dirname(fileURLToPath(import.meta.url));
+const appDir = process.cwd();
 
 const app = express();
 app.use(express.json());
@@ -31,6 +31,7 @@ app.get('/api/users', async (req, res) => {
         username: true,
         pin: true,
         role: true,
+        phone: true,
         active: true,
         createdAt: true,
         updatedAt: true,
@@ -44,6 +45,7 @@ app.get('/api/users', async (req, res) => {
   }
 });
 app.post('/api/users', addUser);
+app.patch('/api/users/:id', updateUser);
 app.delete('/api/users/:id', deleteUser);
 
 // Outlets / Branches Management
@@ -296,6 +298,7 @@ app.post('/api/orders', async (req, res) => {
       deliveryDriver,
       assignedRiderId,
       paymentMethod,
+      paymentStatus,
       preOrder,
       notes,
       tableNumber,
@@ -306,99 +309,107 @@ app.post('/api/orders', async (req, res) => {
     const orderNumber = clientOrderNum || `ORD-${Math.floor(1000 + Math.random() * 9000)}`;
 
     let customerId: string | undefined = undefined;
-    if (customer && customer.phone) {
-      const cleanPhone = String(customer.phone).trim();
-      const existingCustomer = await prisma.customer.findFirst({
-        where: {
-          OR: [
-            { phone: cleanPhone },
-            { phoneNumber: cleanPhone },
-          ],
-        },
-      });
-      if (existingCustomer) {
-        customerId = existingCustomer.id;
-        await prisma.customer.update({
-          where: { id: existingCustomer.id },
-          data: {
-            totalVisits: existingCustomer.totalVisits + 1,
-            totalSpent: existingCustomer.totalSpent + (total || 0),
-            loyaltyPoints: existingCustomer.loyaltyPoints + Math.floor((total || 0) / 100),
+
+    // Use a Prisma interactive transaction to ensure customer updates and order creation are atomic
+    const result = await prisma.$transaction(async (tx) => {
+      if (customer && customer.phone) {
+        const cleanPhone = String(customer.phone).trim();
+        const existingCustomer = await tx.customer.findFirst({
+          where: {
+            OR: [
+              { phone: cleanPhone },
+              { phoneNumber: cleanPhone },
+            ],
           },
         });
-      } else {
-        const newCust = await prisma.customer.create({
-          data: {
-            name: customer.name || 'Guest',
-            phone: cleanPhone,
-            phoneNumber: cleanPhone,
-            address: customer.address || '',
-            deliveryNotes: customer.deliveryNotes || '',
-            totalVisits: 1,
-            totalSpent: total || 0,
-            loyaltyPoints: Math.floor((total || 0) / 100),
-          },
+
+        if (existingCustomer) {
+          customerId = existingCustomer.id;
+          await tx.customer.update({
+            where: { id: existingCustomer.id },
+            data: {
+              totalVisits: existingCustomer.totalVisits + 1,
+              totalSpent: existingCustomer.totalSpent + (total || 0),
+              loyaltyPoints: existingCustomer.loyaltyPoints + Math.floor((total || 0) / 100),
+            },
+          });
+        } else {
+          const newCust = await tx.customer.create({
+            data: {
+              name: customer.name || 'Guest',
+              phone: cleanPhone,
+              phoneNumber: cleanPhone,
+              address: customer.address || '',
+              deliveryNotes: customer.deliveryNotes || '',
+              totalVisits: 1,
+              totalSpent: total || 0,
+              loyaltyPoints: Math.floor((total || 0) / 100),
+            },
+          });
+          customerId = newCust.id;
+        }
+      }
+
+      let resolvedDriverName = deliveryDriver;
+      let resolvedRiderId = assignedRiderId;
+      if (deliveryDriver && !assignedRiderId) {
+        const matchedUser = await tx.user.findFirst({
+          where: { OR: [{ id: deliveryDriver }, { name: deliveryDriver }] },
         });
-        customerId = newCust.id;
+        if (matchedUser) {
+          resolvedRiderId = matchedUser.id;
+          resolvedDriverName = matchedUser.name;
+        }
       }
-    }
 
-    let resolvedDriverName = deliveryDriver;
-    let resolvedRiderId = assignedRiderId;
-    if (deliveryDriver && !assignedRiderId) {
-      const matchedUser = await prisma.user.findFirst({
-        where: { OR: [{ id: deliveryDriver }, { name: deliveryDriver }] },
-      });
-      if (matchedUser) {
-        resolvedRiderId = matchedUser.id;
-        resolvedDriverName = matchedUser.name;
-      }
-    }
-
-    const order = await prisma.order.create({
-      data: {
-        orderNumber,
-        orderType: orderType || type || 'takeaway',
-        status: 'PUNCHED',
-        paymentMethod: (paymentMethod || 'cash').toUpperCase(),
-        subtotal: subtotal || 0,
-        tax: tax || 0,
-        discount: discount || 0,
-        tip: tip || 0,
-        deliveryFee: deliveryFee || 0,
-        total: total || 0,
-        totalAmount: total || 0,
-        cashierName: cashierName || 'Cashier',
-        customerId,
-        deliveryDriver: resolvedDriverName || undefined,
-        assignedRiderId: resolvedRiderId || undefined,
-        tableNumber: tableNumber || undefined,
-        serverId: serverId || undefined,
-        serverName: serverName || undefined,
-        notes: notes || '',
-        deliveryNotes: deliveryNotes || '',
-        preOrder: !!preOrder,
-        items: {
-          create: (items || []).map((item: any) => ({
-            menuItemId: item.menuItemId || (item.id && !item.id.startsWith('cart-') ? item.id : null),
-            name: item.name,
-            price: item.price,
-            quantity: item.quantity || 1,
-            flavor: item.flavor || '',
-            itemNote: item.itemNote || '',
-            notes: item.itemNote || '',
-            modifiers: JSON.stringify(item.modifiers || []),
-          })),
+      const order = await tx.order.create({
+        data: {
+          orderNumber,
+          orderType: orderType || type || 'takeaway',
+          status: 'PUNCHED',
+          paymentMethod: (paymentMethod || 'cash').toUpperCase(),
+          paymentStatus: (paymentStatus || 'paid').toUpperCase(),
+          subtotal: subtotal || 0,
+          tax: tax || 0,
+          discount: discount || 0,
+          tip: tip || 0,
+          deliveryFee: deliveryFee || 0,
+          total: total || 0,
+          totalAmount: total || 0,
+          cashierName: cashierName || 'Cashier',
+          customerId,
+          deliveryDriver: resolvedDriverName || undefined,
+          assignedRiderId: resolvedRiderId || undefined,
+          tableNumber: tableNumber || undefined,
+          serverId: serverId || undefined,
+          serverName: serverName || undefined,
+          notes: notes || '',
+          deliveryNotes: deliveryNotes || '',
+          preOrder: !!preOrder,
+          items: {
+            create: (items || []).map((item: any) => ({
+              menuItemId: item.menuItemId || (item.id && !item.id.startsWith('cart-') ? item.id : null),
+              name: item.name,
+              price: item.price,
+              quantity: item.quantity || 1,
+              flavor: item.flavor || '',
+              itemNote: item.itemNote || '',
+              notes: item.itemNote || '',
+              modifiers: JSON.stringify(item.modifiers || []),
+            })),
+          },
         },
-      },
-      include: {
-        customer: true,
-        items: true,
-        assignedRider: true,
-      },
+        include: {
+          customer: true,
+          items: true,
+          assignedRider: true,
+        },
+      });
+
+      return order;
     });
 
-    return res.json(transformOrder(order));
+    return res.json(transformOrder(result));
   } catch (error) {
     console.error('[Prisma] Create order error:', error);
     return res.status(500).json({ error: 'Failed to create order' });
@@ -408,7 +419,7 @@ app.post('/api/orders', async (req, res) => {
 // Update Order Status (e.g. PUNCHED -> in_kitchen -> ready -> dispatched -> completed)
 app.patch('/api/orders/:id/status', async (req, res) => {
   try {
-    const { status, riderId } = req.body;
+    const { status, riderId, paymentStatus, paymentMethod } = req.body;
     const orderId = req.params.id;
 
     const existing = await prisma.order.findFirst({
@@ -422,6 +433,12 @@ app.patch('/api/orders/:id/status', async (req, res) => {
     }
 
     const dataToUpdate: any = { status };
+    if (paymentStatus) {
+      dataToUpdate.paymentStatus = paymentStatus.toUpperCase();
+    }
+    if (paymentMethod) {
+      dataToUpdate.paymentMethod = paymentMethod.toUpperCase();
+    }
     if (riderId) {
       const user = await prisma.user.findFirst({
         where: { OR: [{ id: riderId }, { username: riderId }, { name: riderId }] },
@@ -510,7 +527,7 @@ app.post('/api/orders/:id/cancel', async (req, res) => {
 app.post('/api/orders/:id/modify', async (req, res) => {
   try {
     const { id } = req.params;
-    const { items, subtotal, tax, total, notes, reason, managerId, managerName } = req.body;
+    const { items, subtotal, tax, total, notes, reason, managerId, managerName, status, paymentStatus, paymentMethod } = req.body;
 
     const existing = await prisma.order.findFirst({
       where: {
@@ -541,7 +558,9 @@ app.post('/api/orders/:id/modify', async (req, res) => {
     const updated = await prisma.order.update({
       where: { id: existing.id },
       data: {
-        status: 'modified',
+        status: status !== undefined ? status : 'modified',
+        paymentStatus: paymentStatus !== undefined ? paymentStatus.toUpperCase() : existing.paymentStatus,
+        paymentMethod: paymentMethod !== undefined ? paymentMethod.toUpperCase() : existing.paymentMethod,
         subtotal: subtotal !== undefined ? subtotal : existing.subtotal,
         tax: tax !== undefined ? tax : existing.tax,
         total: total !== undefined ? total : existing.total,

@@ -1,0 +1,84 @@
+--- src/components/admin/AdminReportsAnalytics.tsx
++++ src/components/admin/AdminReportsAnalytics.tsx
+@@ -20,6 +20,7 @@
+ import * as XLSX from 'xlsx';
+ import { useRestaurant } from '../../context/RestaurantContext';
+ import { HistoricalShiftRecord } from '../../data/mockData';
++import { DailyFinancialSummaryThermal } from './DailyFinancialSummaryThermal';
+ 
+ export const AdminReportsAnalytics: React.FC = () => {
+   const { historicalShifts, currentShift, menuItems, orders, showToast } = useRestaurant();
+@@ -27,6 +28,49 @@
+   const [shiftSearchQuery, setShiftSearchQuery] = useState<string>('');
+   const [selectedMonth, setSelectedMonth] = useState<string>('August 2026');
++  const [isPrintingThermal, setIsPrintingThermal] = useState(false);
++
++  // Daily Summary Calculations
++  const dailySummaryData = useMemo(() => {
++    const today = new Date();
++    today.setHours(0, 0, 0, 0);
++    
++    let grossSales = 0;
++    let discounts = 0;
++    let cashSales = 0;
++    let cardSales = 0;
++    let totalOrders = 0;
++
++    orders.forEach(o => {
++      const oDate = new Date(o.createdAt);
++      if (oDate.getTime() >= today.getTime()) {
++        if (o.status === 'cancelled' || o.status === 'refunded') {
++          discounts += (o.total || o.subtotal || 0);
++        } else {
++          const amt = (o.total || o.subtotal || 0);
++          grossSales += amt;
++          totalOrders++;
++          
++          if (o.paymentMethod === 'CASH') cashSales += amt;
++          else cardSales += amt;
++        }
++      }
++    });
++
++    const netSales = grossSales - discounts;
++    
++    return {
++      dateLabel: new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
++      grossSales,
++      netSales,
++      totalOrders,
++      cogs: Math.round(grossSales * 0.32),
++      discounts,
++      cashSales,
++      cardSales,
++      shifts: allShifts.filter(s => new Date(s.openedAt).getTime() >= today.getTime() || s.status === 'open')
++    };
++  }, [orders, allShifts]);
+ 
+   // Top Selling Items Calculation
+@@ -293,10 +337,17 @@
+   };
+ 
+   const handlePrintReport = () => {
+-    window.print();
++    setIsPrintingThermal(true);
++    showToast('🖨️ Generating daily thermal summary PDF...');
++    setTimeout(() => {
++      window.print();
++      setTimeout(() => setIsPrintingThermal(false), 500);
++    }, 200);
+   };
+ 
+   return (
++    <>
++    {isPrintingThermal && <DailyFinancialSummaryThermal {...dailySummaryData} />}
+     <div className="space-y-6">
+       {/* Top Tabs */}
+       <div className="bg-gradient-to-b from-stone-900/90 to-[#141414]/90 backdrop-blur-md border border-white/10 rounded-2xl p-4.5 shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+@@ -591,5 +642,6 @@
+         </div>
+       )}
+     </div>
++    </>
+   );
+ };

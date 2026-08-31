@@ -125,12 +125,18 @@ export interface Order {
   tableNumber?: string;
   type?: OrderType;
   orderType?: OrderType;
+  source?: string;
+  sourceChannel?: 'Call Center' | 'Online' | 'POS' | 'Mobile App' | 'Website' | string;
   status: OrderStatus;
   paymentStatus: PaymentStatus;
   paymentMethod: PaymentMethod;
   items: OrderItemRecord[];
   customer?: Customer;
   deliveryDriver?: string;
+  riderName?: string;
+  riderPhone?: string;
+  riderVehicle?: string;
+  deliveryAddress?: string;
   serverId?: string;
   serverName?: string;
   outlet?: string;
@@ -146,12 +152,21 @@ export interface Order {
   changeGiven?: number;
   cashierName?: string;
   cashierId?: string;
+  punchedBy?: string;
+  deliveryElapsedMinutes?: number;
+  deliveryMinutes?: number;
   createdById?: string;
   createdAt: string;
   updatedAt?: string;
   refundReason?: string;
   cancelReason?: string;
   notes?: string;
+  timeline?: {
+    status: string;
+    timestamp: string;
+    note?: string;
+    actor?: string;
+  }[];
 }
 
 export interface ParkedOrder {
@@ -262,6 +277,7 @@ export interface UserAccount {
   avatar?: string;
   outlet?: string;
   active?: boolean;
+  phone?: string;
   createdBy?: string;
   createdAt?: string;
 }

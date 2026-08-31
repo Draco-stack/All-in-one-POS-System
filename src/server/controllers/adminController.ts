@@ -9,7 +9,7 @@ import prisma from '../prisma';
 // ============================================================================
 export async function addUser(req: Request, res: Response): Promise<Response> {
   try {
-    const { name, username, pin, role } = req.body;
+    const { name, username, pin, role, phone } = req.body;
 
     if (!name || typeof name !== 'string' || !name.trim()) {
       return res.status(400).json({ error: 'Name is required.' });
@@ -47,6 +47,7 @@ export async function addUser(req: Request, res: Response): Promise<Response> {
         username: sanitizedUsername,
         pin: pin.trim(),
         role: roleUpper,
+        phone: phone ? phone.trim() : null,
         active: true,
       },
       select: {
@@ -54,6 +55,8 @@ export async function addUser(req: Request, res: Response): Promise<Response> {
         name: true,
         username: true,
         role: true,
+        phone: true,
+        pin: true,
         active: true,
         createdAt: true,
         updatedAt: true,
@@ -69,6 +72,89 @@ export async function addUser(req: Request, res: Response): Promise<Response> {
     console.error('[adminController.addUser] Error:', error);
     return res.status(500).json({
       error: 'Failed to create user record in database.',
+      details: error.message || 'Internal database error.',
+    });
+  }
+}
+
+// ============================================================================
+// 1.5 UPDATE USER
+// Updates user details in database (name, role, phone, pin, active status)
+// ============================================================================
+export async function updateUser(req: Request, res: Response): Promise<Response> {
+  try {
+    const { id } = req.params;
+    const { name, role, phone, pin, active } = req.body;
+
+    if (!id) {
+      return res.status(400).json({ error: 'User ID is required.' });
+    }
+
+    const existingUser = await prisma.user.findUnique({
+      where: { id },
+    });
+
+    if (!existingUser) {
+      return res.status(404).json({ error: `User with ID '${id}' was not found.` });
+    }
+
+    const dataToUpdate: any = {};
+    if (name !== undefined) {
+      if (typeof name !== 'string' || !name.trim()) {
+        return res.status(400).json({ error: 'Name cannot be empty.' });
+      }
+      dataToUpdate.name = name.trim();
+    }
+
+    if (role !== undefined) {
+      const roleUpper = role.toString().toUpperCase();
+      const validRoles = ['CASHIER', 'MANAGER', 'OWNER', 'RIDER', 'KITCHEN', 'ADMIN', 'SERVER'];
+      if (!validRoles.includes(roleUpper)) {
+        return res.status(400).json({ error: `Invalid role. Allowed roles: ${validRoles.join(', ')}` });
+      }
+      dataToUpdate.role = roleUpper;
+    }
+
+    if (phone !== undefined) {
+      dataToUpdate.phone = phone ? phone.trim() : null;
+    }
+
+    if (pin !== undefined) {
+      if (typeof pin !== 'string' || !/^\d{4,6}$/.test(pin.trim())) {
+        return res.status(400).json({ error: 'PIN must be a 4 to 6 digit numeric code.' });
+      }
+      dataToUpdate.pin = pin.trim();
+    }
+
+    if (active !== undefined) {
+      dataToUpdate.active = Boolean(active);
+    }
+
+    const updated = await prisma.user.update({
+      where: { id },
+      data: dataToUpdate,
+      select: {
+        id: true,
+        name: true,
+        username: true,
+        role: true,
+        phone: true,
+        pin: true,
+        active: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: 'User updated successfully in database.',
+      data: updated,
+    });
+  } catch (error: any) {
+    console.error('[adminController.updateUser] Error:', error);
+    return res.status(500).json({
+      error: 'Failed to update user record in database.',
       details: error.message || 'Internal database error.',
     });
   }

@@ -13,6 +13,7 @@ model User {
   username       String?         @unique
   pin            String          // 4-digit fast security PIN for workstation & manager overrides
   role           String          @default("CASHIER") // Role: CASHIER, MANAGER, OWNER
+  phone          String?         // Phone number of the staff member
   avatar         String?
   active         Boolean         @default(true)
   createdOrders  Order[]         @relation("CreatedByUser")

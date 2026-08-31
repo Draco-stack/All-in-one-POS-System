@@ -12,6 +12,7 @@ import {
   ShieldCheck,
   Clock,
   Sparkles,
+  Truck,
 } from 'lucide-react';
 import { useRestaurant } from '../context/RestaurantContext';
 
@@ -40,7 +41,12 @@ export const Navigation: React.FC<NavigationProps> = ({
     (o) => o.status === 'pending' || o.status === 'in_kitchen'
   ).length;
 
+  const activeDeliveriesCount = orders.filter(
+    (o) => o.status === 'dispatched' || o.status === 'in_kitchen'
+  ).length;
+
   const navItems = [
+    { id: 'delivery', label: 'Delivery Monitoring', icon: Truck, badge: activeDeliveriesCount > 0 ? activeDeliveriesCount : undefined },
     { id: 'pos', label: 'POS Terminal', icon: Store },
     { id: 'kitchen', label: 'Kitchen & Dispatch', icon: ChefHat, badge: pendingKitchenCount > 0 ? pendingKitchenCount : undefined },
     { id: 'orders', label: 'Orders & Refunds', icon: Receipt },

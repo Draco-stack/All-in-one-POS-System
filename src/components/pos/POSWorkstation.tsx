@@ -51,12 +51,16 @@ interface POSWorkstationProps {
   onOpenUserSwitch?: () => void;
   onOpenOrdersView?: () => void;
   onOpenAdminDashboard?: () => void;
+  onOpenDeliveryMonitoring?: () => void;
+  onOpenShiftsView?: () => void;
 }
 
 export const POSWorkstation: React.FC<POSWorkstationProps> = ({
   onOpenUserSwitch,
   onOpenOrdersView,
   onOpenAdminDashboard,
+  onOpenDeliveryMonitoring,
+  onOpenShiftsView,
 }) => {
   const {
     menuItems,
@@ -130,6 +134,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
   const [selectedOutlet, setSelectedOutlet] = useState<string>('Gulberg Branch');
   const [selectedSource, setSelectedSource] = useState<string>('Pos');
   const [searchOrdersInput, setSearchOrdersInput] = useState<string>('');
+  const [orderStreamTab, setOrderStreamTab] = useState<'ongoing'|'all'>('ongoing');
   const [activeDeliveryNote, setActiveDeliveryNote] = useState<string>('');
   const [isPreOrder, setIsPreOrder] = useState<boolean>(false);
   const [bottomInputVal, setBottomInputVal] = useState<string>('0');
@@ -391,8 +396,10 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
     ) {
       nextStatus = 'in_kitchen';
     } else if (order.status === 'in_kitchen') {
-      nextStatus = order.orderType === 'delivery' ? 'dispatched' : 'ready';
-    } else if (order.status === 'dispatched' || order.status === 'ready' || order.status === 'delivered') {
+      nextStatus = 'dispatched';
+    } else if (order.status === 'ready') {
+      nextStatus = 'dispatched';
+    } else if (order.status === 'dispatched' || order.status === 'delivered') {
       handleOneClickCashout(order);
       return;
     } else {
@@ -472,13 +479,14 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
       case 'MODIFIED':
         return 'Modified';
       case 'in_kitchen':
-        return 'Cooking';
+        return 'In Kitchen';
       case 'ready':
         return 'Ready';
       case 'dispatched':
-        return 'With Rider';
+        return 'On the way';
       case 'completed':
-        return 'Completed';
+      case 'delivered':
+        return 'Delivered';
       case 'cancelled':
         return 'Cancelled';
       case 'refunded':
@@ -488,13 +496,17 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
     }
   };
 
-  // Filter Ongoing Orders for Left Section
+  // Filter Orders for Left Section based on tab
   const ongoingOrders = useMemo(() => {
     return orders.filter((o) => {
       const isOngoing = ['pending', 'PUNCHED', 'MODIFIED', 'open', 'in_kitchen', 'ready', 'dispatched'].includes(
         o.status
       );
-      if (!isOngoing) return false;
+      
+      if (orderStreamTab === 'ongoing' && !isOngoing) {
+        return false;
+      }
+      
       if (!searchOrdersInput) return true;
       const q = searchOrdersInput.toLowerCase();
       return (
@@ -504,7 +516,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
         (o.tableNumber && o.tableNumber.toLowerCase().includes(q))
       );
     });
-  }, [orders, searchOrdersInput]);
+  }, [orders, searchOrdersInput, orderStreamTab]);
 
   // Filter All Orders for Middle Section
   const middleFilteredOrders = useMemo(() => {
@@ -558,79 +570,108 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
   };
 
   return (
-    <div className="w-full h-full flex flex-row overflow-hidden bg-[#2b2b2b] text-[#E0E0E0] font-sans select-none no-scrollbar">
+    <div className="w-full h-full flex flex-row overflow-hidden bg-gradient-to-br from-stone-900 via-[#191919] to-[#111111] text-[#E0E0E0] font-sans select-none no-scrollbar">
       
       {/* ========================================================================= */}
       {/* PANE 1: LEFT SIDEBAR & ORDER STREAM (Approx 20% width)                    */}
       {/* ========================================================================= */}
-      <div className="w-[22%] xl:w-[20%] flex flex-row h-full shrink-0 border-r border-stone-800 bg-[#111111] z-10">
+      <div className="w-[22%] xl:w-[20%] flex flex-row h-full shrink-0 border-r border-white/5 bg-gradient-to-b from-[#141414] to-[#0c0c0c] z-10">
         
         {/* Far-Left Icon Strip */}
-        <div className="w-11 bg-[#1a1a1a] border-r border-stone-800 flex flex-col items-center justify-between py-2 shrink-0">
+        <div className="w-11 bg-[#161616] border-r border-white/5 flex flex-col items-center justify-between py-2.5 shrink-0 shadow-sm">
           <div className="flex flex-col items-center gap-3">
-            <div className="w-8 h-8 flex items-center justify-center font-black text-2xl text-white select-none tracking-tighter">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-stone-800 to-stone-900 border border-white/10 flex items-center justify-center font-black text-xl text-white select-none tracking-tighter shadow-md">
               H
             </div>
 
-            <button onClick={() => showToast('Support & Intercom audio connected')} title="Audio / Intercom" className="p-1 rounded text-stone-300 hover:text-white transition cursor-pointer">
-              <Headphones className="w-5 h-5 stroke-[2]" />
+            <button onClick={() => showToast('Support & Intercom audio connected')} title="Audio / Intercom" className="p-1.5 rounded-lg text-stone-400 hover:text-white hover:bg-white/5 transition-all cursor-pointer">
+              <Headphones className="w-4.5 h-4.5 stroke-[2]" />
             </button>
 
-            <button onClick={() => showToast('Terminal brightness optimized')} title="Terminal Night Mode" className="p-1 rounded text-stone-300 hover:text-white transition cursor-pointer">
-              <Moon className="w-5 h-5 fill-current" />
+            <button onClick={() => showToast('Terminal brightness optimized')} title="Terminal Night Mode" className="p-1.5 rounded-lg text-stone-400 hover:text-white hover:bg-white/5 transition-all cursor-pointer">
+              <Moon className="w-4.5 h-4.5 fill-current" />
             </button>
 
-            <button onClick={() => setIsShiftCloseOpen(true)} title="End-of-Shift Denomination Counter" className="w-8 h-8 rounded hover:bg-stone-800 flex items-center justify-center text-stone-300 transition cursor-pointer">
+            <button
+              onClick={() => {
+                if (onOpenShiftsView) {
+                  onOpenShiftsView();
+                } else {
+                  setIsShiftCloseOpen(true);
+                }
+              }}
+              title="Register Shift & Cash Drawer Reconciliation"
+              className="w-8 h-8 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 border border-emerald-500/30 flex items-center justify-center transition-all duration-200 hover:scale-105 cursor-pointer shadow-sm"
+            >
               <Calculator className="w-4 h-4" />
             </button>
 
+            {onOpenDeliveryMonitoring && (
+              <button onClick={onOpenDeliveryMonitoring} title="Open Live Delivery Monitoring System" className="w-8 h-8 rounded-xl bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 border border-blue-500/30 flex items-center justify-center transition-all duration-200 hover:scale-105 cursor-pointer shadow-sm">
+                <Truck className="w-4 h-4" />
+              </button>
+            )}
+
             {onOpenAdminDashboard && (
-              <button onClick={onOpenAdminDashboard} title="Executive Administrative Console & Sales Dashboard" className="w-8 h-8 rounded hover:bg-stone-800 flex items-center justify-center text-stone-300 transition cursor-pointer">
-                <ShieldCheck className="w-4.5 h-4.5 text-amber-400" />
+              <button onClick={onOpenAdminDashboard} title="Executive Administrative Console & Sales Dashboard" className="w-8 h-8 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 transition-all duration-200 hover:scale-105 cursor-pointer shadow-sm">
+                <ShieldCheck className="w-4.5 h-4.5" />
               </button>
             )}
 
             {onOpenUserSwitch && (
-              <button onClick={onOpenUserSwitch} title={`Active User: ${currentUser.name} (${currentUser.role})`} className="w-7 h-7 rounded-full bg-stone-700 border border-stone-600 text-white font-bold text-[10px] flex items-center justify-center cursor-pointer hover:bg-stone-600 transition">
+              <button onClick={onOpenUserSwitch} title={`Active User: ${currentUser.name} (${currentUser.role})`} className="w-7 h-7 rounded-full bg-gradient-to-tr from-stone-700 to-stone-600 border border-white/20 text-white font-bold text-[10px] flex items-center justify-center cursor-pointer hover:scale-105 transition-all shadow-sm">
                 {currentUser.name.charAt(0)}
               </button>
             )}
           </div>
 
           <div className="flex flex-col items-center gap-2">
-            <button onClick={() => showToast('Connecting to POS Live Dispatch Chat...')} title="Live Chat Support" className="w-8 h-8 rounded-full bg-[#1e7e4a] flex items-center justify-center text-white shadow-md hover:bg-[#137333] transition cursor-pointer">
+            <button onClick={() => showToast('Connecting to POS Live Dispatch Chat...')} title="Live Chat Support" className="w-8 h-8 rounded-full bg-gradient-to-r from-emerald-600 to-emerald-700 flex items-center justify-center text-white shadow-lg hover:shadow-emerald-900/40 hover:scale-105 transition-all duration-200 cursor-pointer border border-emerald-400/20">
               <MessageSquare className="w-4 h-4 fill-white" />
             </button>
           </div>
         </div>
 
         {/* Order Stream */}
-        <div className="flex-1 flex flex-col h-full bg-[#111111] overflow-hidden">
+        <div className="flex-1 flex flex-col h-full bg-transparent overflow-hidden">
           
-          <div className="flex flex-col gap-1 p-1 shrink-0 bg-[#111111]">
-            <button onClick={() => showToast('Showing all orders')} className="bg-[#1e7e4a] text-white text-[12px] font-bold px-2 py-1.5 rounded cursor-pointer w-full shadow-xs text-center border border-[#1e7e4a]">
-              Blink Co Orders
-            </button>
-
-            <div className="flex items-center gap-1">
-              <input
-                type="text"
-                placeholder="search orders"
-                value={searchOrdersInput}
-                onChange={(e) => setSearchOrdersInput(e.target.value)}
-                className="bg-[#222222] border border-stone-700 rounded px-1.5 py-1 text-xs text-white placeholder:text-stone-500 focus:outline-none focus:border-[#1e7e4a] flex-1 min-w-0"
-              />
-              <button onClick={() => { setSearchOrdersInput(''); showToast('Ongoing orders list refreshed'); }} className="bg-stone-800 hover:bg-stone-700 text-white p-1 rounded cursor-pointer shrink-0 border border-stone-700">
+          <div className="flex flex-col gap-1.5 p-2 shrink-0 bg-[#161616]/80 border-b border-white/5 backdrop-blur-xs">
+            <div className="flex bg-stone-950/80 rounded-xl p-0.5 border border-white/5 shadow-inner">
+              <button 
+                onClick={() => setOrderStreamTab('ongoing')} 
+                className={`flex-1 text-[10px] uppercase font-bold tracking-wider py-1.5 rounded-lg transition-all duration-200 cursor-pointer ${orderStreamTab === 'ongoing' ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-sm border border-emerald-400/20' : 'text-stone-400 hover:text-white'}`}
+              >
+                Ongoing
+              </button>
+              <button 
+                onClick={() => setOrderStreamTab('all')} 
+                className={`flex-1 text-[10px] uppercase font-bold tracking-wider py-1.5 rounded-lg transition-all duration-200 cursor-pointer ${orderStreamTab === 'all' ? 'bg-stone-800 text-white shadow-sm border border-white/10' : 'text-stone-400 hover:text-white'}`}
+              >
+                All Orders
+              </button>
+            </div>
+            
+            <div className="flex items-center gap-1.5">
+              <div className="relative flex-1 min-w-0">
+                <input
+                  type="text"
+                  placeholder="Search orders..."
+                  value={searchOrdersInput}
+                  onChange={(e) => setSearchOrdersInput(e.target.value)}
+                  className="w-full bg-stone-950/80 border border-white/10 rounded-xl pl-2.5 pr-2 py-1.5 text-xs text-white placeholder:text-stone-500 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 transition-all"
+                />
+              </div>
+              <button onClick={() => { setSearchOrdersInput(''); showToast('Ongoing orders list refreshed'); }} className="bg-stone-800/80 hover:bg-stone-700 text-stone-300 hover:text-white p-1.5 rounded-xl cursor-pointer shrink-0 border border-white/5 transition-all hover:scale-105">
                 <RotateCw className="w-3.5 h-3.5" />
               </button>
-              <button onClick={() => { if (onOpenOrdersView) onOpenOrdersView(); }} className="bg-[#1e7e4a] hover:bg-[#137333] text-white p-1 rounded cursor-pointer shrink-0 border border-[#1e7e4a]">
+              <button onClick={() => { if (onOpenOrdersView) onOpenOrdersView(); }} className="bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white p-1.5 rounded-xl cursor-pointer shrink-0 border border-emerald-400/20 shadow-sm transition-all hover:scale-105">
                 <LayoutDashboard className="w-3.5 h-3.5" />
               </button>
             </div>
           </div>
 
-          <div className="flex-1 flex flex-col overflow-hidden bg-[#111111]">
-            <div className="flex-1 overflow-y-auto p-1 space-y-1.5 no-scrollbar">
+          <div className="flex-1 flex flex-col overflow-hidden bg-transparent">
+            <div className="flex-1 overflow-y-auto p-2 space-y-2 no-scrollbar">
               {ongoingOrders.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center p-6 text-center text-stone-500 space-y-2">
                   <Database className="w-8 h-8 stroke-1 text-stone-700" />
@@ -645,37 +686,41 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                       onClick={() => {
                         setSelectedOrderId(ord.id);
                       }}
-                      className={`bg-[#1c1c1c] rounded p-2 text-xs transition cursor-pointer hover:border-[#1e7e4a] border ${isSelected ? 'border-[#1e7e4a] ring-1 ring-[#1e7e4a]' : 'border-stone-800'}`}
+                      className={`bg-gradient-to-b from-stone-900/90 to-stone-950/90 rounded-xl p-2.5 text-xs transition-all duration-200 cursor-pointer border ${isSelected ? 'border-emerald-500/60 ring-1 ring-emerald-500/40 bg-stone-900 shadow-lg shadow-emerald-950/20' : 'border-white/5 hover:border-emerald-500/30 hover:shadow-md'}`}
                     >
-                      <div className="flex justify-between items-center border-b border-stone-800 pb-1 mb-1">
-                        <span className="font-mono text-white font-semibold">#{ord.orderNumber.replace('ORD-', '')}</span>
-                        <span className="text-[#1e7e4a] font-bold">PKR {ord.total.toLocaleString()}</span>
+                      <div className="flex justify-between items-center border-b border-white/5 pb-1.5 mb-1.5">
+                        <span className="font-mono text-stone-200 font-bold">#{ord.orderNumber.replace('ORD-', '')}</span>
+                        <span className="text-emerald-400 font-black font-mono">PKR {ord.total.toLocaleString()}</span>
                       </div>
-                      <div className="flex items-center gap-1.5 text-[10px] text-stone-400 mb-1">
-                        <span className="capitalize">{ord.type}</span>
+                      <div className="flex items-center gap-1.5 text-[10px] text-stone-400 mb-1.5">
+                        <span className="capitalize font-medium">{ord.type.replace('_', ' ')}</span>
                         <span>•</span>
-                        <span>{ord.status}</span>
+                        <span className={`px-2 py-0.5 rounded-md font-bold text-[9px] uppercase tracking-wider ${getStatusBadgeStyle(ord.status)}`}>
+                          {getStatusLabel(ord.status)}
+                        </span>
                       </div>
-                      <div className="text-stone-300 text-[11px] truncate leading-tight mb-2">
+                      <div className="text-stone-300 text-[11px] truncate leading-tight mb-2 font-normal">
                         {ord.items.map((i) => `${i.quantity}x ${i.name}`).join(', ')}
                       </div>
-                      <div className="flex flex-wrap gap-1.5 pt-1.5 border-t border-stone-800/80">
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); setSelectedOrderId(ord.id); handleOneClickDispatch(ord); }}
-                          className="px-2 py-1 bg-blue-500/10 text-blue-400 border border-blue-500/20 hover:bg-blue-500 hover:text-white rounded text-[10px] font-bold transition flex-1"
-                        >
-                          Dispatch
-                        </button>
+                      <div className="flex flex-wrap gap-1.5 pt-2 border-t border-white/5">
+                        {ord.status !== 'dispatched' && ord.status !== 'delivered' && (
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); setSelectedOrderId(ord.id); handleOneClickDispatch(ord); }}
+                            className="px-2 py-1 bg-blue-500/10 text-blue-400 border border-blue-500/20 hover:bg-blue-500 hover:text-white rounded-lg text-[10px] font-bold tracking-wide transition-all duration-150 flex-1 hover:scale-[1.02] cursor-pointer"
+                          >
+                            {ord.status === 'pending' || ord.status === 'open' || ord.status === 'PUNCHED' ? 'To Kitchen' : 'Dispatch'}
+                          </button>
+                        )}
                         <button 
                           onClick={(e) => { e.stopPropagation(); setSelectedOrderId(ord.id); handleOneClickCashout(ord); }}
-                          className="px-2 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500 hover:text-white rounded text-[10px] font-bold transition flex-1"
+                          className="px-2 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-600 hover:text-white rounded-lg text-[10px] font-bold tracking-wide transition-all duration-150 flex-1 hover:scale-[1.02] cursor-pointer shadow-xs"
                         >
                           Cashout
                         </button>
                         {(currentUser.role === 'manager' || currentUser.role === 'owner') && (
                           <button 
                             onClick={(e) => { e.stopPropagation(); setSelectedOrderId(ord.id); handleOneClickEdit(ord); }}
-                            className="px-2 py-1 bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500 hover:text-white rounded text-[10px] font-bold transition"
+                            className="px-2 py-1 bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500 hover:text-white rounded-lg text-[10px] font-bold tracking-wide transition-all duration-150 hover:scale-[1.02] cursor-pointer"
                           >
                             Edit
                           </button>
@@ -683,7 +728,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                         {(currentUser.role === 'manager' || currentUser.role === 'owner') && (
                           <button 
                             onClick={(e) => { e.stopPropagation(); setSelectedOrderId(ord.id); handleOneClickCancel(ord.id, ord.orderNumber); }}
-                            className="px-2 py-1 bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500 hover:text-white rounded text-[10px] font-bold transition"
+                            className="px-2 py-1 bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500 hover:text-white rounded-lg text-[10px] font-bold tracking-wide transition-all duration-150 hover:scale-[1.02] cursor-pointer"
                           >
                             Cancel
                           </button>
@@ -701,26 +746,26 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
       {/* ========================================================================= */}
       {/* PANE 2: CENTER PANE (Order Construction, Approx 28% width)                */}
       {/* ========================================================================= */}
-      <div className="w-[30%] xl:w-[28%] flex flex-col h-full bg-[#111111] border-r border-stone-800 relative overflow-hidden justify-between">
-        <div className="flex flex-col p-1 gap-1 shrink-0 bg-[#1a1a1a]">
+      <div className="w-[30%] xl:w-[28%] flex flex-col h-full bg-gradient-to-b from-[#131313] to-[#0c0c0c] border-r border-white/5 relative overflow-hidden justify-between">
+        <div className="flex flex-col p-2 gap-1.5 shrink-0 bg-[#161616]/90 border-b border-white/5 backdrop-blur-xs">
           {/* Row 1: Select Outlet */}
-          <div className="flex items-center gap-1">
-            <select value={selectedOutlet} onChange={(e) => setSelectedOutlet(e.target.value)} className="bg-[#222222] border border-stone-700 rounded px-2 py-1 text-xs text-white font-semibold focus:outline-none focus:border-[#1e7e4a] flex-1 cursor-pointer">
+          <div className="flex items-center gap-1.5">
+            <select value={selectedOutlet} onChange={(e) => setSelectedOutlet(e.target.value)} className="bg-stone-950/80 border border-white/10 rounded-xl px-2.5 py-1.5 text-xs text-white font-semibold focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 flex-1 cursor-pointer transition-all">
               <option value="">Select Outlet</option>
               {outlets.map(o => <option key={o} value={o}>{o}</option>)}
             </select>
-            <button onClick={() => showToast('WhatsApp Sync Status')} className="bg-[#1e7e4a] hover:bg-[#137333] text-white p-1 rounded shrink-0 cursor-pointer"><Check className="w-4 h-4 stroke-[3]" /></button>
-            <button onClick={handleResetTicket} className="bg-[#c82333] hover:bg-[#bd2130] text-white p-1 rounded shrink-0 cursor-pointer"><X className="w-4 h-4 stroke-[3]" /></button>
+            <button onClick={() => showToast('WhatsApp Sync Status')} className="bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white p-1.5 rounded-xl shrink-0 cursor-pointer transition-all hover:scale-105 shadow-sm border border-emerald-400/20"><Check className="w-4 h-4 stroke-[3]" /></button>
+            <button onClick={handleResetTicket} className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white p-1.5 rounded-xl shrink-0 cursor-pointer transition-all hover:scale-105 shadow-sm border border-red-400/20"><X className="w-4 h-4 stroke-[3]" /></button>
           </div>
           
           {/* Row 2: Order Type & Source */}
-          <div className="flex items-center gap-1">
-            <div className="flex rounded overflow-hidden shrink-0 border border-stone-700">
-              <button onClick={() => setPosOrderType('dine_in')} className={`px-2 py-1 text-xs font-bold transition cursor-pointer ${posCart.orderType === 'dine_in' ? 'bg-amber-600 text-white' : 'bg-[#222222] text-stone-400 hover:bg-[#333333]'}`}>DineIn</button>
-              <button onClick={() => setPosOrderType('takeaway')} className={`px-2 py-1 text-xs font-bold transition cursor-pointer ${posCart.orderType === 'takeaway' ? 'bg-[#333333] text-white' : 'bg-[#222222] text-stone-400 hover:bg-[#333333]'}`}>TakeAway</button>
-              <button onClick={() => setPosOrderType('delivery')} className={`px-2 py-1 text-xs font-bold transition cursor-pointer ${posCart.orderType === 'delivery' ? 'bg-[#1e7e4a] text-white' : 'bg-[#222222] text-stone-400 hover:bg-[#333333]'}`}>Delivery</button>
+          <div className="flex items-center gap-1.5">
+            <div className="flex rounded-xl overflow-hidden shrink-0 border border-white/10 bg-stone-950/80 p-0.5 shadow-inner">
+              <button onClick={() => setPosOrderType('dine_in')} className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all duration-150 cursor-pointer ${posCart.orderType === 'dine_in' ? 'bg-gradient-to-r from-amber-600 to-amber-700 text-white shadow-sm border border-amber-400/30' : 'text-stone-400 hover:text-white'}`}>DineIn</button>
+              <button onClick={() => setPosOrderType('takeaway')} className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all duration-150 cursor-pointer ${posCart.orderType === 'takeaway' ? 'bg-gradient-to-r from-stone-700 to-stone-800 text-white shadow-sm border border-white/10' : 'text-stone-400 hover:text-white'}`}>TakeAway</button>
+              <button onClick={() => setPosOrderType('delivery')} className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all duration-150 cursor-pointer ${posCart.orderType === 'delivery' ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-sm border border-emerald-400/30' : 'text-stone-400 hover:text-white'}`}>Delivery</button>
             </div>
-            <select value={selectedSource} onChange={(e) => setSelectedSource(e.target.value)} className="bg-[#222222] border border-stone-700 rounded px-2 py-1 text-xs text-white font-semibold focus:outline-none focus:border-[#1e7e4a] flex-1 cursor-pointer">
+            <select value={selectedSource} onChange={(e) => setSelectedSource(e.target.value)} className="bg-stone-950/80 border border-white/10 rounded-xl px-2.5 py-1.5 text-xs text-white font-semibold focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 flex-1 cursor-pointer transition-all">
               <option value="Pos">Select Source</option>
               <option value="Blink Co Mobile">Blink Co Mobile</option>
               <option value="Website Web">Website Web</option>
@@ -729,49 +774,49 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
           </div>
           
           {/* Row 3: Customer Input */}
-          <div className="flex items-center gap-1">
-            <input type="text" placeholder="Search Customer Phone" value={phoneSearchInput} onChange={(e) => setPhoneSearchInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') handlePhoneLookup(undefined, true); }} className="bg-[#222222] border border-stone-700 rounded px-2 py-1 text-xs text-white placeholder:text-stone-500 focus:outline-none focus:border-[#1e7e4a] flex-1 min-w-0" />
-            <button onClick={() => setIsCustomerManageModalOpen(true)} className="bg-[#1e7e4a] hover:bg-[#137333] text-white px-2 py-1 rounded shrink-0 text-[10px] font-bold font-mono cursor-pointer">{'>'}</button>
-            <button onClick={() => handlePhoneLookup(undefined, true)} className="bg-[#1e7e4a] hover:bg-[#137333] text-white p-1 rounded shrink-0 cursor-pointer"><Search className="w-3.5 h-3.5" /></button>
+          <div className="flex items-center gap-1.5">
+            <input type="text" placeholder="Search Customer Phone" value={phoneSearchInput} onChange={(e) => setPhoneSearchInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') handlePhoneLookup(undefined, true); }} className="bg-stone-950/80 border border-white/10 rounded-xl px-2.5 py-1.5 text-xs text-white placeholder:text-stone-500 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 flex-1 min-w-0 transition-all" />
+            <button onClick={() => setIsCustomerManageModalOpen(true)} className="bg-stone-800 hover:bg-stone-700 text-white px-2.5 py-1.5 rounded-xl shrink-0 text-[11px] font-bold font-mono cursor-pointer border border-white/10 transition-all hover:scale-105">{'>'}</button>
+            <button onClick={() => handlePhoneLookup(undefined, true)} className="bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white p-1.5 rounded-xl shrink-0 cursor-pointer transition-all hover:scale-105 border border-emerald-400/20 shadow-sm"><Search className="w-3.5 h-3.5" /></button>
           </div>
           
           {/* Customer Details Display Area */}
           {customerLookupStatus === 'new' ? (
-            <div className="bg-[#111111] border border-stone-800 rounded p-1 mt-1 flex flex-col gap-1">
-               <input type="text" placeholder="Customer Name (Required)" value={posCart.customer?.name || ''} onChange={(e) => setPosCustomerField('name', e.target.value)} className="bg-[#222222] border border-stone-700 rounded px-2 py-1 text-xs text-white placeholder:text-stone-500 focus:outline-none focus:border-[#1e7e4a] w-full" />
-               <input type="text" placeholder="Address (Optional)" value={posCart.customer?.address || ''} onChange={(e) => setPosCustomerField('address', e.target.value)} className="bg-[#222222] border border-stone-700 rounded px-2 py-1 text-xs text-white placeholder:text-stone-500 focus:outline-none focus:border-[#1e7e4a] w-full" />
+            <div className="bg-stone-950/90 border border-white/5 rounded-xl p-1.5 mt-0.5 flex flex-col gap-1.5 shadow-inner">
+               <input type="text" placeholder="Customer Name (Required)" value={posCart.customer?.name || ''} onChange={(e) => setPosCustomerField('name', e.target.value)} className="bg-stone-900 border border-white/10 rounded-lg px-2 py-1 text-xs text-white placeholder:text-stone-500 focus:outline-none focus:border-emerald-500/50 w-full" />
+               <input type="text" placeholder="Address (Optional)" value={posCart.customer?.address || ''} onChange={(e) => setPosCustomerField('address', e.target.value)} className="bg-stone-900 border border-white/10 rounded-lg px-2 py-1 text-xs text-white placeholder:text-stone-500 focus:outline-none focus:border-emerald-500/50 w-full" />
             </div>
           ) : customerLookupStatus === 'found' && posCart.customer ? (
-            <div className="bg-[#111111] border border-stone-800 rounded p-1 mt-1 flex justify-between items-center">
-               <span className="font-bold text-white text-[11px] truncate ml-1">{posCart.customer.name}</span>
-               <button onClick={() => setIsCustomerModalOpen(true)} className="text-[10px] text-[#1e7e4a] hover:text-[#137333] font-bold cursor-pointer underline mr-1">View Info</button>
+            <div className="bg-stone-950/90 border border-white/5 rounded-xl p-2 mt-0.5 flex justify-between items-center shadow-inner">
+               <span className="font-bold text-white text-xs truncate ml-1">{posCart.customer.name}</span>
+               <button onClick={() => setIsCustomerModalOpen(true)} className="text-[10px] uppercase font-bold tracking-wider text-emerald-400 hover:text-emerald-300 cursor-pointer underline mr-1">View Info</button>
             </div>
           ) : null}
         </div>
 
         {/* Active Ticket Cart Items */}
-        <div className="flex-1 overflow-y-auto p-1.5 space-y-1 bg-[#111111] no-scrollbar">
+        <div className="flex-1 overflow-y-auto p-2 space-y-1.5 bg-transparent no-scrollbar">
            {posCart.items.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center p-6 text-center text-stone-600 space-y-2">
-                 <ChefHat className="w-8 h-8 stroke-1 text-stone-800" />
-                 <p className="text-xs font-semibold">Active Ticket is Empty</p>
+                 <ChefHat className="w-8 h-8 stroke-1 text-stone-700" />
+                 <p className="text-xs font-semibold text-stone-500">Active Ticket is Empty</p>
               </div>
            ) : (
               posCart.items.map((cartItem) => (
-                <div key={cartItem.id} className="bg-[#1c1c1c] border border-stone-800 rounded p-1.5 flex items-center justify-between text-xs hover:border-[#1e7e4a] transition">
-                  <div className="flex-1 min-w-0 pr-1.5">
-                    <div className="font-bold text-white truncate text-[11px]">{cartItem.name}</div>
-                    {cartItem.flavor && <div className="text-[10px] text-emerald-500 truncate">{cartItem.flavor}</div>}
-                    {cartItem.modifiers && cartItem.modifiers.length > 0 && <div className="text-[9px] text-stone-500 truncate">+{cartItem.modifiers.map(m=>m.name).join(', ')}</div>}
+                <div key={cartItem.id} className="bg-gradient-to-r from-stone-900/90 to-stone-950/90 border border-white/5 rounded-xl p-2 flex items-center justify-between text-xs hover:border-emerald-500/30 transition-all duration-200 shadow-sm">
+                  <div className="flex-1 min-w-0 pr-2">
+                    <div className="font-semibold text-stone-100 truncate text-[11px]">{cartItem.name}</div>
+                    {cartItem.flavor && <div className="text-[10px] text-emerald-400 font-medium truncate">{cartItem.flavor}</div>}
+                    {cartItem.modifiers && cartItem.modifiers.length > 0 && <div className="text-[9px] text-stone-400 truncate">+{cartItem.modifiers.map(m=>m.name).join(', ')}</div>}
                   </div>
-                  <div className="flex items-center gap-1 shrink-0">
-                    <button onClick={() => updateCartItemQty(cartItem.id, cartItem.quantity - 1)} className="w-5 h-5 rounded bg-stone-700 hover:bg-stone-600 text-white font-bold flex items-center justify-center cursor-pointer transition text-[10px]"><Minus className="w-2.5 h-2.5" /></button>
+                  <div className="flex items-center gap-1.5 shrink-0 bg-stone-950/90 border border-white/5 rounded-lg p-0.5">
+                    <button onClick={() => updateCartItemQty(cartItem.id, cartItem.quantity - 1)} className="w-5 h-5 rounded-md bg-stone-800 hover:bg-stone-700 text-white font-bold flex items-center justify-center cursor-pointer transition text-[10px]"><Minus className="w-2.5 h-2.5" /></button>
                     <span className="w-4 text-center font-mono font-bold text-white text-[11px]">{cartItem.quantity}</span>
-                    <button onClick={() => updateCartItemQty(cartItem.id, cartItem.quantity + 1)} className="w-5 h-5 rounded bg-stone-700 hover:bg-stone-600 text-white font-bold flex items-center justify-center cursor-pointer transition text-[10px]"><Plus className="w-2.5 h-2.5" /></button>
+                    <button onClick={() => updateCartItemQty(cartItem.id, cartItem.quantity + 1)} className="w-5 h-5 rounded-md bg-stone-800 hover:bg-stone-700 text-white font-bold flex items-center justify-center cursor-pointer transition text-[10px]"><Plus className="w-2.5 h-2.5" /></button>
                   </div>
-                  <div className="text-right shrink-0 pl-1.5 min-w-[50px]">
-                    <span className="font-mono font-bold text-amber-400 text-[10px] block truncate">{Number(cartItem.price * cartItem.quantity).toLocaleString()}</span>
-                    <button onClick={() => removeFromPosCart(cartItem.id)} className="text-stone-500 hover:text-red-500 text-[9px] transition cursor-pointer font-bold">X</button>
+                  <div className="text-right shrink-0 pl-2 min-w-[55px]">
+                    <span className="font-mono font-black text-emerald-400 text-xs block truncate">{Number(cartItem.price * cartItem.quantity).toLocaleString()}</span>
+                    <button onClick={() => removeFromPosCart(cartItem.id)} className="text-stone-500 hover:text-red-400 text-[10px] transition cursor-pointer font-bold mt-0.5">X</button>
                   </div>
                 </div>
               ))
@@ -779,18 +824,18 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
         </div>
 
         {/* Bottom Action Controls */}
-        <div className="p-1.5 bg-[#1a1a1a] border-t border-stone-800 space-y-1.5 shrink-0">
-          <div className="flex items-center gap-1.5">
-            <div className="w-12 bg-[#222222] border border-stone-700 rounded py-1.5 text-center font-mono font-bold text-xs text-white">0</div>
-            <button onClick={() => setShowDiscountPrompt(true)} className="flex-1 bg-[#1e7e4a] hover:bg-[#137333] text-white font-bold text-[11px] py-1.5 px-2 rounded cursor-pointer transition text-center shadow-xs truncate">Discount {posCart.discountPercent > 0 ? `${(cartSubtotal * (posCart.discountPercent / 100)).toFixed(0)}(${posCart.discountPercent}%)` : '0(0%)'}</button>
-            <button onClick={() => setShowChargesPrompt(true)} className="flex-1 bg-[#1e7e4a] hover:bg-[#137333] text-white font-bold text-[11px] py-1.5 px-2 rounded cursor-pointer transition text-center shadow-xs truncate">Charges {posCart.tipAmount || 0}</button>
+        <div className="p-2.5 bg-gradient-to-t from-[#141414] to-[#181818] border-t border-white/5 space-y-2 shrink-0 shadow-lg">
+          <div className="flex items-center gap-2">
+            <div className="w-12 bg-stone-950 border border-white/10 rounded-xl py-2 text-center font-mono font-bold text-xs text-stone-300 shadow-inner">0</div>
+            <button onClick={() => setShowDiscountPrompt(true)} className="flex-1 bg-stone-900 hover:bg-stone-800 border border-white/10 hover:border-emerald-500/30 text-stone-200 font-bold text-[11px] py-2 px-2 rounded-xl cursor-pointer transition-all duration-150 text-center shadow-sm truncate">Discount {posCart.discountPercent > 0 ? `${(cartSubtotal * (posCart.discountPercent / 100)).toFixed(0)}(${posCart.discountPercent}%)` : '0(0%)'}</button>
+            <button onClick={() => setShowChargesPrompt(true)} className="flex-1 bg-stone-900 hover:bg-stone-800 border border-white/10 hover:border-emerald-500/30 text-stone-200 font-bold text-[11px] py-2 px-2 rounded-xl cursor-pointer transition-all duration-150 text-center shadow-sm truncate">Charges {posCart.tipAmount || 0}</button>
           </div>
           {posCart.orderType === 'dine_in' && (
-            <div className="flex gap-1.5 w-full">
+            <div className="flex gap-2 w-full">
               <select
                 value={posCart.tableNumber || ''}
                 onChange={(e) => setPosTableNumber(e.target.value)}
-                className="flex-1 bg-[#222222] border border-stone-700 rounded px-2 py-1.5 text-[11px] text-white focus:outline-none focus:border-[#1e7e4a] cursor-pointer"
+                className="flex-1 bg-stone-950/80 border border-white/10 rounded-xl px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-emerald-500/50 cursor-pointer"
               >
                 <option value="">Select Table (Required)</option>
                 {tables.filter(t => t.active !== false).map(t => (
@@ -808,7 +853,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                     setPosServer('', '');
                   }
                 }}
-                className="flex-1 bg-[#222222] border border-stone-700 rounded px-2 py-1.5 text-[11px] text-white focus:outline-none focus:border-[#1e7e4a] cursor-pointer"
+                className="flex-1 bg-stone-950/80 border border-white/10 rounded-xl px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-emerald-500/50 cursor-pointer"
               >
                 <option value="">Select Server (Required)</option>
                 {users.filter(u => u.role === 'server' && u.active !== false).map(s => (
@@ -821,7 +866,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
             <select
               value={posCart.deliveryDriver || ''}
               onChange={(e) => setPosDeliveryDriver(e.target.value)}
-              className="w-full bg-[#222222] border border-stone-700 rounded px-2 py-1.5 text-[11px] text-white focus:outline-none focus:border-[#1e7e4a] cursor-pointer"
+              className="w-full bg-stone-950/80 border border-white/10 rounded-xl px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-emerald-500/50 cursor-pointer"
             >
               <option value="">Assign Rider (Optional)</option>
               {users.filter(u => u.role === 'rider').map(r => (
@@ -829,14 +874,14 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
               ))}
             </select>
           )}
-          <input type="text" placeholder="Delivery Note" value={activeDeliveryNote} onChange={(e) => setActiveDeliveryNote(e.target.value)} className="w-full bg-[#222222] border border-stone-700 rounded px-2 py-1.5 text-[11px] text-white placeholder:text-stone-500 focus:outline-none focus:border-[#1e7e4a]" />
+          <input type="text" placeholder="Delivery Note" value={activeDeliveryNote} onChange={(e) => setActiveDeliveryNote(e.target.value)} className="w-full bg-stone-950/80 border border-white/10 rounded-xl px-2.5 py-1.5 text-xs text-white placeholder:text-stone-500 focus:outline-none focus:border-emerald-500/50 transition-all" />
           <div className="flex items-center gap-2 pt-0.5">
-            <label className="flex items-center gap-1 text-[11px] text-stone-400 font-semibold cursor-pointer shrink-0">
-              <input type="checkbox" checked={isPreOrder} onChange={(e) => setIsPreOrder(e.target.checked)} className="rounded border-stone-700 bg-[#333333] text-[#1e7e4a] focus:ring-0 cursor-pointer w-3.5 h-3.5" />
+            <label className="flex items-center gap-1.5 text-[11px] text-stone-400 font-bold uppercase tracking-wider cursor-pointer shrink-0 select-none">
+              <input type="checkbox" checked={isPreOrder} onChange={(e) => setIsPreOrder(e.target.checked)} className="rounded border-white/10 bg-stone-900 text-emerald-500 focus:ring-0 cursor-pointer w-4 h-4" />
               PreOrder
             </label>
-            <button onClick={handlePlaceOrder} disabled={isPunching} className={`flex-1 bg-[#1e7e4a] hover:bg-[#137333] active:scale-[0.99] text-white font-bold text-xs py-2 px-4 rounded cursor-pointer transition shadow flex items-center justify-center gap-2 ${punchSuccessAnimation ? 'bg-emerald-600' : ''}`}>
-              {isPunching ? <span className="animate-pulse">...</span> : punchSuccessAnimation ? <span>✓ Punched!</span> : <span>Place Order ({posCart.items.length === 0 ? '0' : cartTotal.toLocaleString()})</span>}
+            <button onClick={handlePlaceOrder} disabled={isPunching} className={`flex-1 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 active:scale-95 hover:scale-[1.02] hover:shadow-[0_0_15px_rgba(16,185,129,0.3)] text-white font-black text-xs py-2.5 px-4 rounded-xl cursor-pointer transition-all duration-200 shadow-lg flex items-center justify-center gap-2 border border-emerald-400/20 ${punchSuccessAnimation ? 'from-emerald-500 to-teal-500' : ''}`}>
+              {isPunching ? <span className="animate-pulse">Punching...</span> : punchSuccessAnimation ? <span>✓ Punched!</span> : <span>Place Order ({posCart.items.length === 0 ? '0' : `PKR ${cartTotal.toLocaleString()}`})</span>}
             </button>
           </div>
         </div>
@@ -845,62 +890,64 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
       {/* ========================================================================= */}
       {/* PANE 3: RIGHT MENU GRID (Approx 50% width)                                */}
       {/* ========================================================================= */}
-      <div className="flex-1 flex flex-col h-full bg-[#111111] relative overflow-hidden border-l border-stone-800">
+      <div className="flex-1 flex flex-col h-full bg-gradient-to-b from-[#131313] to-[#0c0c0c] relative overflow-hidden border-l border-white/5">
         
         {/* Top Category Strip & Search */}
-        <div className="bg-[#1a1a1a] border-b border-stone-800 p-1.5 shrink-0">
-          <div className="flex items-center gap-1 flex-wrap">
+        <div className="bg-[#161616]/95 border-b border-white/5 p-2 shrink-0 backdrop-blur-xs shadow-sm">
+          <div className="flex items-center gap-1.5 flex-wrap">
             {['all', 'deals', 'fried', 'square_pizza', 'desert', 'special_pizza', 'traditional_pizza', 'extra', 'pasta', 'crust_house', 'appetizers', 'beverages', 'fifa'].map(cat => (
               <button
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
-                className={`px-2 py-0.5 text-[11px] font-bold rounded-xs whitespace-nowrap cursor-pointer transition ${
+                className={`px-2.5 py-1 text-[10px] uppercase font-bold tracking-wider rounded-xl whitespace-nowrap cursor-pointer transition-all duration-200 border ${
                   selectedCategory === cat
-                    ? 'bg-[#c82333] text-white shadow-xs'
-                    : 'bg-[#222222] text-stone-300 hover:bg-[#333333]'
+                    ? 'bg-gradient-to-r from-red-600 to-red-700 text-white border-red-400/40 shadow-sm'
+                    : 'bg-stone-900/80 text-stone-400 border-white/5 hover:bg-stone-800 hover:text-stone-200'
                 }`}
               >
-                {cat === 'all' ? 'All' : cat === 'square_pizza' ? 'Square Pizza' : cat === 'special_pizza' ? 'Special Pizza' : cat === 'traditional_pizza' ? 'Traditional Pizza' : cat === 'crust_house' ? 'Crust House' : cat.charAt(0).toUpperCase() + cat.slice(1)}
+                {cat === 'all' ? 'All' : cat === 'square_pizza' ? 'Square Pizza' : cat === 'special_pizza' ? 'Special Pizza' : cat === 'traditional_pizza' ? 'Traditional Pizza' : cat === 'crust_house' ? 'Crust House' : cat.replace('_', ' ')}
               </button>
             ))}
             
-            <div className="flex items-center gap-1 flex-1 min-w-[150px] ml-auto">
+            <div className="flex items-center gap-1.5 flex-1 min-w-[160px] ml-auto">
                <input
                  type="text"
-                 placeholder="Item Search"
+                 placeholder="Search menu items..."
                  value={searchQuery}
                  onChange={(e) => setSearchQuery(e.target.value)}
-                 className="bg-[#222222] border border-stone-700 rounded-xs px-2 py-0.5 text-[11px] text-white placeholder:text-stone-500 focus:outline-none focus:border-[#c82333] flex-1 min-w-0"
+                 className="bg-stone-950/80 border border-white/10 rounded-xl px-2.5 py-1 text-xs text-white placeholder:text-stone-500 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 flex-1 min-w-0 transition-all"
                />
-               <button onClick={() => setSearchQuery('')} className="bg-[#c82333] hover:bg-[#bd2130] text-white font-bold px-2 py-0.5 text-[11px] rounded-xs cursor-pointer shrink-0">X</button>
+               <button onClick={() => setSearchQuery('')} className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-bold px-2.5 py-1 text-xs rounded-xl cursor-pointer shrink-0 transition-all hover:scale-105 border border-red-400/20 shadow-sm">X</button>
             </div>
           </div>
         </div>
 
         {/* Visual Menu Grid */}
-        <div className="flex-1 overflow-y-auto p-1.5 bg-[#111111] no-scrollbar">
-          <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-1">
+        <div className="flex-1 overflow-y-auto p-2 bg-transparent no-scrollbar">
+          <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-2">
             {filteredMenuItems.map((item) => (
               <div
                 key={item.id}
                 onClick={() => handleItemTap(item)}
-                className="border border-stone-700 bg-[#1c1c1c] rounded-sm flex flex-col overflow-hidden relative cursor-pointer hover:border-[#1e7e4a] active:scale-[0.98] transition h-[150px]"
+                className="border border-white/5 bg-gradient-to-b from-stone-900 to-stone-950 rounded-2xl flex flex-col overflow-hidden relative cursor-pointer hover:border-emerald-500/30 hover:-translate-y-1 hover:shadow-xl active:scale-[0.98] transition-all duration-200 h-[155px] group"
               >
                 {/* Title */}
-                <div className="px-1.5 pt-1.5 pb-1 text-center z-10 shrink-0 min-h-[36px] bg-[#1c1c1c]">
-                  <h4 className="font-medium text-white text-[11px] leading-tight line-clamp-2">
+                <div className="px-2 pt-2 pb-1 text-center z-10 shrink-0 min-h-[38px] bg-stone-900/90 backdrop-blur-xs border-b border-white/5">
+                  <h4 className="font-medium text-stone-100 text-[11px] leading-tight line-clamp-2 group-hover:text-emerald-300 transition-colors">
                     {item.name}
                   </h4>
                 </div>
 
-                {/* Image or empty space */}
-                <div className="flex-1 relative w-full h-full flex items-end justify-end">
-                  {item.image && (
-                     <img src={item.image} alt={item.name} className="absolute inset-0 w-full h-full object-cover opacity-90" />
+                {/* Image or background */}
+                <div className="flex-1 relative w-full h-full flex items-end justify-end overflow-hidden">
+                  {item.image ? (
+                     <img src={item.image} alt={item.name} className="absolute inset-0 w-full h-full object-cover rounded-t-2xl opacity-80 group-hover:opacity-95 group-hover:scale-105 transition-all duration-300" />
+                  ) : (
+                    <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-900 to-transparent" />
                   )}
                   {/* Price Badge */}
-                  <div className="relative z-10 border border-stone-400 bg-[#111111] px-1.5 py-0.5 text-[11px] font-mono text-white m-1 leading-none rounded-sm">
-                    {item.price}
+                  <div className="relative z-10 border border-white/10 bg-stone-950/90 backdrop-blur-xs px-2 py-1 text-xs font-black font-mono text-emerald-400 m-1.5 leading-none rounded-lg shadow-md">
+                    PKR {item.price.toLocaleString()}
                   </div>
                 </div>
               </div>
@@ -913,29 +960,29 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
       
       {/* CASHOUT MODAL */}
       {isCashoutModalOpen && selectedOrderForCashout && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
-          <div className="bg-[#111111] border border-stone-800 rounded-xl w-[400px] shadow-2xl p-6 relative">
-            <button onClick={() => setIsCashoutModalOpen(false)} className="absolute top-4 right-4 text-stone-500 hover:text-white transition">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4">
+          <div className="bg-gradient-to-b from-stone-900 to-[#121212] border border-white/10 ring-1 ring-white/10 rounded-2xl w-[420px] shadow-2xl p-6 relative animate-in fade-in zoom-in-95 duration-150">
+            <button onClick={() => setIsCashoutModalOpen(false)} className="absolute top-4 right-4 text-stone-400 hover:text-white p-1 rounded-lg hover:bg-white/5 transition-all cursor-pointer">
               <X className="w-5 h-5" />
             </button>
-            <h3 className="text-xl font-black text-white uppercase tracking-wider mb-2">Process Cashout</h3>
-            <p className="text-stone-400 mb-6">Order #{selectedOrderForCashout.orderNumber.replace('ORD-', '')}</p>
+            <h3 className="text-lg font-black text-white uppercase tracking-wider mb-1">Process Cashout</h3>
+            <p className="text-xs text-stone-400 mb-5">Order #{selectedOrderForCashout.orderNumber.replace('ORD-', '')}</p>
             
-            <div className="bg-[#1a1a1a] rounded-lg p-6 text-center border border-stone-800 mb-6 shadow-inner">
-              <div className="text-stone-400 text-sm font-semibold mb-1">AMOUNT DUE</div>
-              <div className="text-4xl font-mono font-black text-[#1e7e4a]">
+            <div className="bg-stone-950/80 rounded-xl p-5 text-center border border-white/5 mb-5 shadow-inner">
+              <div className="text-[10px] tracking-wider text-stone-400 uppercase font-bold mb-1">AMOUNT DUE</div>
+              <div className="text-3xl font-mono font-black text-emerald-400">
                 PKR {selectedOrderForCashout.total.toLocaleString()}
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-3">
-              <button onClick={() => submitCashout('cash')} className="flex items-center justify-center gap-3 w-full py-4 rounded-xl bg-stone-800 hover:bg-stone-700 text-white font-bold text-lg transition border border-stone-700">
+            <div className="grid grid-cols-1 gap-2.5">
+              <button onClick={() => submitCashout('cash')} className="flex items-center justify-center gap-3 w-full py-3.5 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white font-bold text-sm transition-all duration-200 hover:scale-[1.02] hover:shadow-[0_0_15px_rgba(16,185,129,0.3)] active:scale-95 cursor-pointer border border-emerald-400/20 shadow-lg">
                 💵 Cash Paid
               </button>
-              <button onClick={() => submitCashout('card')} className="flex items-center justify-center gap-3 w-full py-4 rounded-xl bg-stone-800 hover:bg-[#1e7e4a]/20 hover:border-[#1e7e4a] hover:text-[#1e7e4a] text-white font-bold text-lg transition border border-stone-700">
+              <button onClick={() => submitCashout('card')} className="flex items-center justify-center gap-3 w-full py-3.5 rounded-xl bg-stone-800 hover:bg-stone-700 text-white font-bold text-sm transition-all duration-200 hover:scale-[1.02] active:scale-95 cursor-pointer border border-white/10 shadow-md">
                 💳 Credit / Debit Card
               </button>
-              <button onClick={() => submitCashout('online')} className="flex items-center justify-center gap-3 w-full py-4 rounded-xl bg-stone-800 hover:bg-[#c82333]/20 hover:border-[#c82333] hover:text-[#c82333] text-white font-bold text-lg transition border border-stone-700">
+              <button onClick={() => submitCashout('online')} className="flex items-center justify-center gap-3 w-full py-3.5 rounded-xl bg-stone-800 hover:bg-stone-700 text-white font-bold text-sm transition-all duration-200 hover:scale-[1.02] active:scale-95 cursor-pointer border border-white/10 shadow-md">
                 🌐 Online Payment
               </button>
             </div>
@@ -946,29 +993,29 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
       {/* FLAVOR & VARIANT PICKER MODAL                                             */}
       {/* ========================================================================= */}
       {activeFlavorModalItem && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-stone-300 rounded-lg max-w-sm w-full p-4 space-y-3 shadow-xl animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between border-b border-stone-200 pb-2">
-              <h3 className="font-bold text-stone-900 text-sm">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-gradient-to-b from-stone-900 to-[#121212] border border-white/10 ring-1 ring-white/10 rounded-2xl max-w-sm w-full p-5 space-y-4 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+              <h3 className="font-bold text-stone-100 text-sm">
                 Select Flavor: {activeFlavorModalItem.name}
               </h3>
               <button
                 onClick={() => setActiveFlavorModalItem(null)}
-                className="text-stone-400 hover:text-stone-700 text-xs font-bold"
+                className="text-stone-400 hover:text-white p-1 rounded-lg hover:bg-white/5 transition-all cursor-pointer"
               >
-                ✕
+                <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               {activeFlavorModalItem.flavors?.map((flavor) => (
                 <button
                   key={flavor}
                   onClick={() => setSelectedFlavor(flavor)}
-                  className={`w-full p-2 text-xs font-semibold rounded border text-left cursor-pointer transition ${
+                  className={`w-full p-2.5 text-xs font-semibold rounded-xl border text-left cursor-pointer transition-all duration-150 ${
                     selectedFlavor === flavor
-                      ? 'bg-[#00897b] text-white border-[#00897b]'
-                      : 'bg-stone-50 text-stone-800 border-stone-200 hover:bg-stone-100'
+                      ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white border-emerald-400/40 shadow-sm'
+                      : 'bg-stone-950/60 text-stone-300 border-white/5 hover:bg-stone-800/80 hover:text-white'
                   }`}
                 >
                   {flavor}
@@ -976,16 +1023,16 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
               ))}
             </div>
 
-            <div className="flex justify-end gap-2 pt-2 border-t border-stone-200">
+            <div className="flex justify-end gap-2 pt-2 border-t border-white/10">
               <button
                 onClick={() => setActiveFlavorModalItem(null)}
-                className="px-3 py-1.5 rounded border border-stone-300 text-xs font-semibold text-stone-600 hover:bg-stone-50 cursor-pointer"
+                className="px-4 py-2 rounded-xl border border-white/10 text-xs font-semibold text-stone-400 hover:text-white hover:bg-white/5 cursor-pointer transition-all"
               >
                 Cancel
               </button>
               <button
                 onClick={handleConfirmFlavor}
-                className="px-4 py-1.5 rounded bg-[#00695c] hover:bg-[#005a4e] text-white text-xs font-bold cursor-pointer"
+                className="px-5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white text-xs font-bold cursor-pointer transition-all hover:scale-[1.02] active:scale-95 shadow-md border border-emerald-400/20"
               >
                 Add to Ticket (PKR {activeFlavorModalItem.price})
               </button>
@@ -998,9 +1045,9 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
       {/* DISCOUNT MODAL PROMPT                                                     */}
       {/* ========================================================================= */}
       {showDiscountPrompt && (
-        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
-          <div className="bg-white border border-stone-300 rounded-lg max-w-xs w-full p-4 space-y-3 shadow-xl">
-            <h3 className="font-bold text-stone-900 text-sm">Apply Order Discount (%)</h3>
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-gradient-to-b from-stone-900 to-[#121212] border border-white/10 ring-1 ring-white/10 rounded-2xl max-w-xs w-full p-5 space-y-4 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+            <h3 className="font-bold text-stone-100 text-sm">Apply Order Discount (%)</h3>
             <div className="flex items-center gap-2">
               <input
                 type="number"
@@ -1008,32 +1055,32 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                 max="100"
                 value={discountInput}
                 onChange={(e) => setDiscountInput(e.target.value)}
-                className="flex-1 bg-stone-50 border border-stone-300 rounded p-2 text-sm font-mono font-bold text-stone-900 focus:outline-none focus:border-[#00695c]"
+                className="flex-1 bg-stone-950 border border-white/10 rounded-xl p-2.5 text-sm font-mono font-bold text-white focus:outline-none focus:border-emerald-500/50"
                 placeholder="Discount % (e.g. 10)"
               />
-              <span className="font-bold text-stone-600 text-sm">%</span>
+              <span className="font-bold text-stone-400 text-sm">%</span>
             </div>
-            <div className="grid grid-cols-4 gap-1">
+            <div className="grid grid-cols-4 gap-1.5">
               {[5, 10, 15, 20].map((d) => (
                 <button
                   key={d}
                   onClick={() => setDiscountInput(d.toString())}
-                  className="py-1 bg-stone-100 border border-stone-300 rounded text-xs font-bold text-stone-700 hover:bg-stone-200 cursor-pointer"
+                  className="py-1.5 bg-stone-800 hover:bg-stone-700 border border-white/10 rounded-lg text-xs font-bold text-stone-200 transition-all cursor-pointer hover:scale-105"
                 >
                   {d}%
                 </button>
               ))}
             </div>
-            <div className="flex justify-end gap-2 pt-2 border-t border-stone-200">
+            <div className="flex justify-end gap-2 pt-2 border-t border-white/10">
               <button
                 onClick={() => setShowDiscountPrompt(false)}
-                className="px-3 py-1.5 rounded border border-stone-300 text-xs font-semibold text-stone-600"
+                className="px-3.5 py-2 rounded-xl border border-white/10 text-xs font-semibold text-stone-400 hover:text-white hover:bg-white/5 cursor-pointer transition-all"
               >
                 Cancel
               </button>
               <button
                 onClick={handleApplyDiscount}
-                className="px-4 py-1.5 rounded bg-[#00695c] text-white text-xs font-bold"
+                className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white text-xs font-bold transition-all hover:scale-[1.02] active:scale-95 shadow-md border border-emerald-400/20 cursor-pointer"
               >
                 Apply
               </button>
@@ -1046,30 +1093,30 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
       {/* EXTRA CHARGES MODAL PROMPT                                                */}
       {/* ========================================================================= */}
       {showChargesPrompt && (
-        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
-          <div className="bg-white border border-stone-300 rounded-lg max-w-xs w-full p-4 space-y-3 shadow-xl">
-            <h3 className="font-bold text-stone-900 text-sm">Add Extra Service Charges (PKR)</h3>
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-gradient-to-b from-stone-900 to-[#121212] border border-white/10 ring-1 ring-white/10 rounded-2xl max-w-xs w-full p-5 space-y-4 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+            <h3 className="font-bold text-stone-100 text-sm">Add Extra Service Charges (PKR)</h3>
             <div className="flex items-center gap-2">
-              <span className="font-bold text-stone-600 text-xs">PKR</span>
+              <span className="font-bold text-stone-400 text-xs">PKR</span>
               <input
                 type="number"
                 min="0"
                 value={chargesInput}
                 onChange={(e) => setChargesInput(e.target.value)}
-                className="flex-1 bg-stone-50 border border-stone-300 rounded p-2 text-sm font-mono font-bold text-stone-900 focus:outline-none focus:border-[#00695c]"
+                className="flex-1 bg-stone-950 border border-white/10 rounded-xl p-2.5 text-sm font-mono font-bold text-white focus:outline-none focus:border-emerald-500/50"
                 placeholder="Charges amount"
               />
             </div>
-            <div className="flex justify-end gap-2 pt-2 border-t border-stone-200">
+            <div className="flex justify-end gap-2 pt-2 border-t border-white/10">
               <button
                 onClick={() => setShowChargesPrompt(false)}
-                className="px-3 py-1.5 rounded border border-stone-300 text-xs font-semibold text-stone-600"
+                className="px-3.5 py-2 rounded-xl border border-white/10 text-xs font-semibold text-stone-400 hover:text-white hover:bg-white/5 cursor-pointer transition-all"
               >
                 Cancel
               </button>
               <button
                 onClick={handleApplyCharges}
-                className="px-4 py-1.5 rounded bg-[#00695c] text-white text-xs font-bold"
+                className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white text-xs font-bold transition-all hover:scale-[1.02] active:scale-95 shadow-md border border-emerald-400/20 cursor-pointer"
               >
                 Save
               </button>

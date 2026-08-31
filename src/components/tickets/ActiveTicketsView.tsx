@@ -14,10 +14,10 @@ export const ActiveTicketsView: React.FC = () => {
   const [filterType, setFilterType] = useState<'all' | 'dine_in' | 'takeaway' | 'delivery'>('all');
   const [searchTicket, setSearchTicket] = useState('');
 
-  // Active tickets only (not completed or refunded or cancelled)
+  // Active tickets only (not completed or refunded or cancelled or dispatched)
   const activeOrders = orders.filter((o) => {
     const st = (o.status || '').toLowerCase();
-    return st !== 'completed' && st !== 'delivered' && st !== 'refunded' && st !== 'cancelled';
+    return st !== 'completed' && st !== 'delivered' && st !== 'refunded' && st !== 'cancelled' && st !== 'dispatched';
   });
 
   const filteredOrders = activeOrders.filter((o) => {
@@ -38,7 +38,7 @@ export const ActiveTicketsView: React.FC = () => {
     if ((order.status as string) === 'open' || (order.status as string) === 'punched_kitchen' || order.status === 'pending' || order.status === 'in_kitchen') {
       await updateOrderStatus(order.id, 'ready');
     } else if (order.status === 'ready') {
-      await updateOrderStatus(order.id, 'completed');
+      await updateOrderStatus(order.id, 'dispatched');
     }
   };
 
@@ -196,7 +196,7 @@ export const ActiveTicketsView: React.FC = () => {
                       }`}
                     >
                       <CheckCircle2 className="w-4 h-4" />
-                      <span>{isReady ? 'Mark Completed' : 'Mark Food Ready'}</span>
+                      <span>{isReady ? 'Dispatch Order' : 'Mark Food Ready'}</span>
                     </button>
                   </div>
                 </div>

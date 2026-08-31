@@ -78,10 +78,15 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ order, onClose }) =>
             {order.customer?.name && (
               <div className="text-[11px] bg-stone-50 p-2 rounded border border-stone-200">
                 <span className="font-bold block">Customer: {order.customer?.name}</span>
-                {order.customer?.phone && <span>Phone: {order.customer?.phone}</span>}
+                {order.customer?.phone && <span className="block">Phone: {order.customer?.phone}</span>}
                 {order.customer?.address && (
                   <span className="block text-[10px] text-stone-600 truncate mt-0.5">
                     Address: {order.customer?.address}
+                  </span>
+                )}
+                {order.deliveryDriver && (
+                  <span className="block text-[10px] font-bold text-stone-800 mt-1 uppercase border-t border-stone-200 pt-1">
+                    RIDER: {order.deliveryDriver}
                   </span>
                 )}
               </div>

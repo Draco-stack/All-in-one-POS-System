@@ -19,12 +19,14 @@ import {
   Check,
   X,
   Loader2,
+  Pencil,
+  Phone,
 } from 'lucide-react';
 import { useRestaurant } from '../../context/RestaurantContext';
 import { UserAccount, UserRole } from '../../types';
 
 export const AdminStaffManager: React.FC = () => {
-  const { users, currentUser, addNewUser, updateUserPin, toggleUserActive, deleteUser, showToast, outlets, getRiderStats } = useRestaurant();
+  const { users, currentUser, addNewUser, updateUser, updateUserPin, toggleUserActive, deleteUser, showToast, outlets, getRiderStats } = useRestaurant();
 
   // Role filter tab
   const [roleFilter, setRoleFilter] = useState<'all' | 'operators' | 'riders'>('all');
@@ -34,6 +36,20 @@ export const AdminStaffManager: React.FC = () => {
   const [isPinModalOpen, setIsPinModalOpen] = useState<boolean>(false);
   const [targetUserForPin, setTargetUserForPin] = useState<UserAccount | null>(null);
   const [newPinValue, setNewPinValue] = useState<string>('');
+
+  // Edit Staff Modal States
+  const [isEditUserOpen, setIsEditUserOpen] = useState<boolean>(false);
+  const [targetUserForEdit, setTargetUserForEdit] = useState<UserAccount | null>(null);
+  const [editFormData, setEditFormData] = useState<{
+    name: string;
+    role: UserRole;
+    phone: string;
+  }>({
+    name: '',
+    role: 'cashier',
+    phone: '',
+  });
+  const [isSavingEdit, setIsSavingEdit] = useState<boolean>(false);
 
   // Async Deletion Loader State
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
@@ -63,12 +79,14 @@ export const AdminStaffManager: React.FC = () => {
     username: string;
     pin: string;
     role: UserRole;
+    phone: string;
     outlet: string;
   }>({
     name: '',
     username: '',
     pin: '',
     role: 'cashier',
+    phone: '',
     outlet: 'Main Branch',
   });
 
@@ -94,6 +112,7 @@ export const AdminStaffManager: React.FC = () => {
       username: formData.username.trim().toLowerCase(),
       pin: formData.pin.trim(),
       role: formData.role,
+      phone: formData.phone.trim(),
       outlet: formData.outlet,
       active: true,
     });
@@ -104,8 +123,51 @@ export const AdminStaffManager: React.FC = () => {
       username: '',
       pin: '',
       role: 'cashier',
+      phone: '',
       outlet: 'Main Branch',
     });
+  };
+
+  const handleOpenEdit = (u: UserAccount) => {
+    setTargetUserForEdit(u);
+    setEditFormData({
+      name: u.name,
+      role: u.role,
+      phone: u.phone || '',
+    });
+    setIsEditUserOpen(true);
+  };
+
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!targetUserForEdit) return;
+    if (!editFormData.name.trim()) {
+      showToast('⚠️ Name is required.');
+      return;
+    }
+
+    // Role Guardrail: Only Owner can assign/edit Owner roles
+    if (editFormData.role === 'owner' && currentUser.role !== 'owner') {
+      showToast('⚠️ Only an Owner can assign the Owner role.');
+      return;
+    }
+
+    setIsSavingEdit(true);
+    try {
+      const success = await updateUser(targetUserForEdit.id, {
+        name: editFormData.name.trim(),
+        role: editFormData.role,
+        phone: editFormData.phone.trim(),
+      });
+      if (success) {
+        setIsEditUserOpen(false);
+        setTargetUserForEdit(null);
+      }
+    } catch (err: any) {
+      showToast(`❌ Error: ${err.message || 'Server error'}`);
+    } finally {
+      setIsSavingEdit(false);
+    }
   };
 
   const handleOpenPinReset = (u: UserAccount) => {
@@ -141,10 +203,10 @@ export const AdminStaffManager: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Top Header & Quick Add */}
-      <div className="bg-stone-900 border border-stone-800 rounded-2xl p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="bg-gradient-to-b from-stone-900/90 to-[#141414]/90 backdrop-blur-md border border-white/10 rounded-2xl p-5 shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h3 className="text-lg font-bold text-white flex items-center gap-2">
-            <Users className="w-5 h-5 text-[#00897b]" />
+            <Users className="w-5 h-5 text-emerald-400" />
             Staff Accounts & Role-Based Access Control (RBAC)
           </h3>
           <p className="text-xs text-stone-400 mt-0.5">
@@ -154,7 +216,7 @@ export const AdminStaffManager: React.FC = () => {
 
         <button
           onClick={() => setIsAddUserOpen(true)}
-          className="px-4 py-2.5 rounded-xl bg-[#00897b] hover:bg-[#00796b] text-white text-xs font-bold flex items-center gap-2 shadow-md shadow-[#00897b]/20 transition cursor-pointer self-start sm:self-auto"
+          className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white text-xs font-bold flex items-center gap-2 shadow-[0_0_15px_rgba(16,185,129,0.25)] hover:scale-[1.02] active:scale-95 transition-all duration-200 cursor-pointer self-start sm:self-auto border border-emerald-500/30"
         >
           <UserPlus className="w-4 h-4" />
           Provision Staff Member
@@ -162,15 +224,15 @@ export const AdminStaffManager: React.FC = () => {
       </div>
 
       {/* Staff Accounts Table */}
-      <div className="bg-stone-900 border border-stone-800 rounded-2xl p-5 shadow-sm">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 mb-4 border-b border-stone-800 gap-3">
+      <div className="bg-gradient-to-b from-stone-900/90 to-[#141414]/90 backdrop-blur-md border border-white/10 rounded-2xl p-5 shadow-lg">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 mb-4 border-b border-white/5 gap-3">
           {/* Role Filter Tabs */}
-          <div className="flex items-center gap-1.5 p-1 bg-stone-950 rounded-xl border border-stone-800">
+          <div className="flex items-center gap-1.5 p-1 bg-stone-950/80 rounded-xl border border-white/10">
             <button
               onClick={() => setRoleFilter('all')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 cursor-pointer ${
                 roleFilter === 'all'
-                  ? 'bg-stone-800 text-white shadow-xs'
+                  ? 'bg-stone-800 text-white shadow-sm border border-white/10'
                   : 'text-stone-400 hover:text-stone-200'
               }`}
             >
@@ -178,9 +240,9 @@ export const AdminStaffManager: React.FC = () => {
             </button>
             <button
               onClick={() => setRoleFilter('operators')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 cursor-pointer ${
                 roleFilter === 'operators'
-                  ? 'bg-stone-800 text-white shadow-xs'
+                  ? 'bg-stone-800 text-white shadow-sm border border-white/10'
                   : 'text-stone-400 hover:text-stone-200'
               }`}
             >
@@ -188,9 +250,9 @@ export const AdminStaffManager: React.FC = () => {
             </button>
             <button
               onClick={() => setRoleFilter('riders')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 cursor-pointer ${
                 roleFilter === 'riders'
-                  ? 'bg-[#00897b]/20 text-[#00897b] border border-[#00897b]/30 shadow-xs'
+                  ? 'bg-gradient-to-r from-emerald-600/30 to-emerald-700/30 text-emerald-300 border border-emerald-500/40 shadow-sm'
                   : 'text-stone-400 hover:text-stone-200'
               }`}
             >
@@ -199,7 +261,7 @@ export const AdminStaffManager: React.FC = () => {
           </div>
 
           <div className="text-xs text-stone-400 flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-500" />
+            <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]" />
             <span>Active Terminal / Fleet Sessions</span>
           </div>
         </div>
@@ -207,7 +269,7 @@ export const AdminStaffManager: React.FC = () => {
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs text-stone-300 border-collapse">
             <thead>
-              <tr className="border-b border-stone-800 text-stone-400 font-bold uppercase tracking-wider text-[10px]">
+              <tr className="border-b border-white/10 text-stone-400 font-bold uppercase tracking-wider text-[10px]">
                 <th className="py-2.5 px-3">Staff Member</th>
                 <th className="py-2.5 px-3">Username</th>
                 <th className="py-2.5 px-3">Assigned Role</th>
@@ -216,7 +278,7 @@ export const AdminStaffManager: React.FC = () => {
                 <th className="py-2.5 px-3 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-stone-800/60 font-sans">
+            <tbody className="divide-y divide-white/5 font-sans">
               {filteredUsers.map((u) => {
                 const isActive = u.active !== false;
                 const isCurrent = u.id === currentUser.id;
@@ -226,7 +288,7 @@ export const AdminStaffManager: React.FC = () => {
                 return (
                   <tr
                     key={u.id}
-                    className={`hover:bg-stone-800/40 transition ${!isActive ? 'opacity-55 bg-stone-950/40' : ''}`}
+                    className={`hover:bg-white/[0.02] transition ${!isActive ? 'opacity-55 bg-stone-950/40' : ''}`}
                   >
                     {/* Name & Badge */}
                     <td className="py-3 px-3">
@@ -250,7 +312,7 @@ export const AdminStaffManager: React.FC = () => {
                           <div className="font-bold text-white flex items-center gap-1.5">
                             {u.name}
                             {isCurrent && (
-                              <span className="px-1.5 py-0.2 bg-[#00897b]/20 text-[#00897b] border border-[#00897b]/30 rounded text-[9px] font-bold">
+                              <span className="px-1.5 py-0.2 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded text-[9px] font-bold">
                                 You
                               </span>
                             )}
@@ -260,7 +322,17 @@ export const AdminStaffManager: React.FC = () => {
                               </span>
                             )}
                           </div>
-                          <div className="text-[11px] text-stone-500">Joined {u.createdAt || '2025-01-01'}</div>
+                          <div className="text-[11px] text-stone-500 flex items-center flex-wrap gap-x-1.5 gap-y-0.5 mt-0.5">
+                            <span>Joined {u.createdAt || '2025-01-01'}</span>
+                            {u.phone && (
+                              <>
+                                <span className="text-stone-700">•</span>
+                                <span className="text-stone-400 font-mono flex items-center gap-0.5">
+                                  📞 {u.phone}
+                                </span>
+                              </>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </td>
@@ -293,7 +365,7 @@ export const AdminStaffManager: React.FC = () => {
                         <div className="space-y-1">
                           <div className="text-stone-300 font-medium text-[11px]">{u.outlet || 'Main Branch'}</div>
                           <div className="flex items-center gap-1.5 text-[10px]">
-                            <span className="bg-stone-950 border border-stone-800 px-1.5 py-0.5 rounded text-stone-300 font-mono">
+                            <span className="bg-stone-950/80 border border-white/5 px-1.5 py-0.5 rounded text-stone-300 font-mono">
                               Total: {riderStats.totalAssigned}
                             </span>
                             <span className="bg-emerald-950/60 border border-emerald-800/40 px-1.5 py-0.5 rounded text-emerald-400 font-mono">
@@ -342,8 +414,16 @@ export const AdminStaffManager: React.FC = () => {
                     <td className="py-3 px-3 text-right">
                       <div className="flex items-center justify-end gap-1.5">
                         <button
+                          onClick={() => handleOpenEdit(u)}
+                          className="px-2 py-1 bg-stone-800/80 hover:bg-stone-700 text-stone-300 hover:text-white rounded-lg text-xs font-semibold flex items-center gap-1 transition cursor-pointer border border-white/10"
+                          title="Edit Staff Information"
+                        >
+                          <Pencil className="w-3 h-3 text-indigo-400" />
+                          Edit
+                        </button>
+                        <button
                           onClick={() => handleOpenPinReset(u)}
-                          className="px-2 py-1 bg-stone-800 hover:bg-stone-700 text-stone-300 hover:text-white rounded-lg text-xs font-semibold flex items-center gap-1 transition cursor-pointer border border-stone-700/60"
+                          className="px-2 py-1 bg-stone-800/80 hover:bg-stone-700 text-stone-300 hover:text-white rounded-lg text-xs font-semibold flex items-center gap-1 transition cursor-pointer border border-white/10"
                           title="Reset POS 4-Digit PIN"
                         >
                           <KeyRound className="w-3 h-3 text-amber-400" />
@@ -356,7 +436,7 @@ export const AdminStaffManager: React.FC = () => {
                             isCurrent ||
                             (u.role === 'owner' && users.filter((x) => x.role === 'owner').length <= 1)
                           }
-                          className="p-1.5 text-stone-400 hover:text-red-400 bg-stone-800 hover:bg-red-950/40 rounded-lg transition cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                          className="p-1.5 text-stone-400 hover:text-red-400 bg-stone-800/80 hover:bg-red-950/40 rounded-lg transition cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed border border-white/5"
                           title="Delete Account"
                         >
                           {deletingUserId === u.id ? (
@@ -376,8 +456,8 @@ export const AdminStaffManager: React.FC = () => {
       </div>
 
       {/* Permission Matrix Breakdown Card */}
-      <div className="bg-stone-900 border border-stone-800 rounded-2xl p-5 shadow-sm space-y-3">
-        <div className="pb-3 border-b border-stone-800 flex items-center justify-between">
+      <div className="bg-gradient-to-b from-stone-900/90 to-[#141414]/90 backdrop-blur-md border border-white/10 rounded-2xl p-5 shadow-lg space-y-3">
+        <div className="pb-3 border-b border-white/5 flex items-center justify-between">
           <div>
             <h4 className="text-sm font-bold text-white flex items-center gap-2">
               <ShieldCheck className="w-4 h-4 text-emerald-400" />
@@ -387,7 +467,7 @@ export const AdminStaffManager: React.FC = () => {
               Enforced backend & workstation route permission limits by role tier
             </p>
           </div>
-          <span className="text-[11px] px-2.5 py-1 rounded-lg bg-stone-950 border border-stone-800 text-stone-400 font-mono">
+          <span className="text-[11px] px-2.5 py-1 rounded-lg bg-stone-950/80 border border-white/10 text-stone-400 font-mono">
             PIN-Gated Operations Active
           </span>
         </div>
@@ -395,16 +475,16 @@ export const AdminStaffManager: React.FC = () => {
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs text-stone-300 border-collapse">
             <thead>
-              <tr className="border-b border-stone-800 text-stone-400 font-bold uppercase tracking-wider text-[10px]">
+              <tr className="border-b border-white/10 text-stone-400 font-bold uppercase tracking-wider text-[10px]">
                 <th className="py-2.5 px-3">System Operation / Action</th>
                 <th className="py-2.5 px-3 text-center">Cashier</th>
                 <th className="py-2.5 px-3 text-center">Manager</th>
                 <th className="py-2.5 px-3 text-center">Owner</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-stone-800/60 font-sans">
+            <tbody className="divide-y divide-white/5 font-sans">
               {permissionMatrix.map((row, i) => (
-                <tr key={i} className="hover:bg-stone-800/30 transition">
+                <tr key={i} className="hover:bg-white/[0.02] transition">
                   <td className="py-2 px-3 font-medium text-stone-200">{row.permission}</td>
                   <td className="py-2 px-3 text-center">
                     {row.cashier ? (
@@ -448,16 +528,16 @@ export const AdminStaffManager: React.FC = () => {
 
       {/* Provision Staff Modal */}
       {isAddUserOpen && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-stone-900 border border-stone-800 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl animate-in fade-in zoom-in-95">
-            <div className="p-4.5 border-b border-stone-800 flex items-center justify-between bg-stone-950">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-gradient-to-b from-stone-900 to-[#141414] border border-white/10 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl animate-in fade-in zoom-in-95">
+            <div className="p-4.5 border-b border-white/10 flex items-center justify-between bg-stone-950/80">
               <div className="flex items-center gap-2">
-                <UserPlus className="w-5 h-5 text-[#00897b]" />
+                <UserPlus className="w-5 h-5 text-emerald-400" />
                 <h4 className="text-sm font-bold text-white">Provision New Staff Account</h4>
               </div>
               <button
                 onClick={() => setIsAddUserOpen(false)}
-                className="p-1 rounded-lg text-stone-400 hover:text-white hover:bg-stone-800 cursor-pointer"
+                className="p-1 rounded-lg text-stone-400 hover:text-white hover:bg-stone-800 transition cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -472,7 +552,7 @@ export const AdminStaffManager: React.FC = () => {
                   placeholder="e.g. Tariq Mehmood"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-3 py-2 bg-stone-950 border border-stone-800 rounded-xl text-xs text-white focus:outline-none focus:border-[#00897b]"
+                  className="w-full px-3 py-2 bg-stone-950/80 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500 transition shadow-inner"
                 />
               </div>
 
@@ -484,7 +564,18 @@ export const AdminStaffManager: React.FC = () => {
                   placeholder="e.g. employee@whitescastle.com"
                   value={formData.username}
                   onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                  className="w-full px-3 py-2 bg-stone-950 border border-stone-800 rounded-xl text-xs text-white font-mono focus:outline-none focus:border-[#00897b]"
+                  className="w-full px-3 py-2 bg-stone-950/80 border border-white/10 rounded-xl text-xs text-white font-mono focus:outline-none focus:border-emerald-500 transition shadow-inner"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-stone-300 mb-1">Phone Number</label>
+                <input
+                  type="text"
+                  placeholder="e.g. +92 300 1234567"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  className="w-full px-3 py-2 bg-stone-950/80 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500 transition shadow-inner"
                 />
               </div>
 
@@ -497,7 +588,7 @@ export const AdminStaffManager: React.FC = () => {
                     placeholder="1234"
                     value={formData.pin}
                     onChange={(e) => setFormData({ ...formData, pin: e.target.value })}
-                    className="w-full px-3 py-2 bg-stone-950 border border-stone-800 rounded-xl text-xs text-white font-mono tracking-widest text-center focus:outline-none focus:border-[#00897b]"
+                    className="w-full px-3 py-2 bg-stone-950/80 border border-white/10 rounded-xl text-xs text-white font-mono tracking-widest text-center focus:outline-none focus:border-emerald-500 transition shadow-inner"
                   />
                 </div>
 
@@ -506,7 +597,7 @@ export const AdminStaffManager: React.FC = () => {
                   <select
                     value={formData.role}
                     onChange={(e) => setFormData({ ...formData, role: e.target.value as UserRole })}
-                    className="w-full px-3 py-2 bg-stone-950 border border-stone-800 rounded-xl text-xs text-white focus:outline-none focus:border-[#00897b]"
+                    className="w-full px-3 py-2 bg-stone-950/80 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500 transition shadow-inner"
                   >
                     <option value="cashier">Cashier (POS Operator)</option>
                     <option value="manager">Manager (Shift Supervisor)</option>
@@ -531,24 +622,24 @@ export const AdminStaffManager: React.FC = () => {
                 <select
                   value={formData.outlet}
                   onChange={(e) => setFormData({ ...formData, outlet: e.target.value })}
-                  className="w-full px-3 py-2 bg-stone-950 border border-stone-800 rounded-xl text-xs text-white focus:outline-none focus:border-[#00897b]"
+                  className="w-full px-3 py-2 bg-stone-950/80 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500 transition shadow-inner"
                 >
                   <option value="Main Branch">Main Branch</option>
                   {outlets.map(o => <option key={o} value={o}>{o}</option>)}
                 </select>
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-4 border-t border-stone-800">
+              <div className="flex items-center justify-end gap-2 pt-4 border-t border-white/10">
                 <button
                   type="button"
                   onClick={() => setIsAddUserOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-300 text-xs font-semibold transition cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-stone-800/80 hover:bg-stone-700 text-stone-300 text-xs font-semibold transition-all duration-200 cursor-pointer border border-white/10 hover:border-white/20 active:scale-95"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-[#00897b] hover:bg-[#00796b] text-white text-xs font-bold transition cursor-pointer shadow-md shadow-[#00897b]/20"
+                  className="px-5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white text-xs font-bold transition-all duration-200 cursor-pointer shadow-[0_0_15px_rgba(16,185,129,0.25)] hover:scale-[1.02] active:scale-95 border border-emerald-500/30"
                 >
                   Create Account
                 </button>
@@ -560,16 +651,16 @@ export const AdminStaffManager: React.FC = () => {
 
       {/* Reset PIN Modal */}
       {isPinModalOpen && targetUserForPin && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-stone-900 border border-stone-800 rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl animate-in fade-in zoom-in-95">
-            <div className="p-4.5 border-b border-stone-800 flex items-center justify-between bg-stone-950">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-gradient-to-b from-stone-900 to-[#141414] border border-white/10 rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl animate-in fade-in zoom-in-95">
+            <div className="p-4.5 border-b border-white/10 flex items-center justify-between bg-stone-950/80">
               <div className="flex items-center gap-2">
                 <KeyRound className="w-5 h-5 text-amber-400" />
                 <h4 className="text-sm font-bold text-white">Reset Terminal PIN</h4>
               </div>
               <button
                 onClick={() => setIsPinModalOpen(false)}
-                className="p-1 rounded-lg text-stone-400 hover:text-white hover:bg-stone-800 cursor-pointer"
+                className="p-1 rounded-lg text-stone-400 hover:text-white hover:bg-stone-800 transition cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -589,24 +680,113 @@ export const AdminStaffManager: React.FC = () => {
                   placeholder="••••"
                   value={newPinValue}
                   onChange={(e) => setNewPinValue(e.target.value)}
-                  className="w-full px-3 py-2 bg-stone-950 border border-stone-800 rounded-xl text-sm text-white font-mono tracking-widest text-center focus:outline-none focus:border-[#00897b]"
+                  className="w-full px-3 py-2 bg-stone-950/80 border border-white/10 rounded-xl text-sm text-white font-mono tracking-widest text-center focus:outline-none focus:border-emerald-500 transition shadow-inner"
                   autoFocus
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-stone-800">
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-white/10">
                 <button
                   type="button"
                   onClick={() => setIsPinModalOpen(false)}
-                  className="px-3.5 py-2 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-300 text-xs font-semibold cursor-pointer"
+                  className="px-3.5 py-2 rounded-xl bg-stone-800/80 hover:bg-stone-700 text-stone-300 text-xs font-semibold transition-all duration-200 cursor-pointer border border-white/10 hover:border-white/20 active:scale-95"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white text-xs font-bold transition-all duration-200 cursor-pointer shadow-[0_0_15px_rgba(245,158,11,0.25)] hover:scale-[1.02] active:scale-95 border border-amber-500/30"
                 >
                   Save New PIN
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Staff Info Modal */}
+      {isEditUserOpen && targetUserForEdit && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-gradient-to-b from-stone-900 to-[#141414] border border-white/10 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl animate-in fade-in zoom-in-95">
+            <div className="p-4.5 border-b border-white/10 flex items-center justify-between bg-stone-950/80">
+              <div className="flex items-center gap-2">
+                <Pencil className="w-5 h-5 text-indigo-400" />
+                <h4 className="text-sm font-bold text-white">Edit Staff Account Info</h4>
+              </div>
+              <button
+                onClick={() => {
+                  setIsEditUserOpen(false);
+                  setTargetUserForEdit(null);
+                }}
+                className="p-1 rounded-lg text-stone-400 hover:text-white hover:bg-stone-800 transition cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEdit} className="p-5 space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-stone-300 mb-1">Full Name *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Tariq Mehmood"
+                  value={editFormData.name}
+                  onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                  className="w-full px-3 py-2 bg-stone-950/80 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500 transition shadow-inner"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-stone-300 mb-1">Phone Number</label>
+                <input
+                  type="text"
+                  placeholder="e.g. +92 300 1234567"
+                  value={editFormData.phone}
+                  onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
+                  className="w-full px-3 py-2 bg-stone-950/80 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500 transition shadow-inner"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-stone-300 mb-1">Assigned Role *</label>
+                <select
+                  value={editFormData.role}
+                  onChange={(e) => setEditFormData({ ...editFormData, role: e.target.value as UserRole })}
+                  className="w-full px-3 py-2 bg-stone-950/80 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500 transition shadow-inner"
+                >
+                  <option value="cashier">Cashier (POS Operator)</option>
+                  <option value="manager">Manager (Shift Supervisor)</option>
+                  <option value="server">Server / Waiter (Dine-In)</option>
+                  <option value="rider">Rider (Delivery Fleet)</option>
+                  {currentUser.role === 'owner' && <option value="owner">Owner (Full Administrator)</option>}
+                </select>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-4 border-t border-white/10">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsEditUserOpen(false);
+                    setTargetUserForEdit(null);
+                  }}
+                  className="px-4 py-2 rounded-xl bg-stone-800/80 hover:bg-stone-700 text-stone-300 text-xs font-semibold transition-all duration-200 cursor-pointer border border-white/10 hover:border-white/20 active:scale-95"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingEdit}
+                  className="px-5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white text-xs font-bold transition-all duration-200 cursor-pointer shadow-[0_0_15px_rgba(16,185,129,0.25)] hover:scale-[1.02] active:scale-95 border border-emerald-500/30 flex items-center gap-1.5"
+                >
+                  {isSavingEdit ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" /> Saving...
+                    </>
+                  ) : (
+                    'Save Changes'
+                  )}
                 </button>
               </div>
             </form>

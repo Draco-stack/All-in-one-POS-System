@@ -34,9 +34,12 @@ import {
 import { useRestaurant } from '../../context/RestaurantContext';
 
 export const AdminSalesOverview: React.FC = () => {
-  const { orders, currentShift, salesAdjustments, users } = useRestaurant();
+  const { orders, currentShift, salesAdjustments, users, updatePettyCash } = useRestaurant();
   const [timeRange, setTimeRange] = useState<'hourly' | 'daily' | 'weekly'>('hourly');
   const [adjustmentFilter, setAdjustmentFilter] = useState<'ALL' | 'CANCELLATION' | 'MODIFICATION'>('ALL');
+
+  const [isEditingPettyCash, setIsEditingPettyCash] = useState(false);
+  const [pettyCashInput, setPettyCashInput] = useState(currentShift?.openingFloat?.toString() || '2000');
 
   const isToday = (dateStr?: string) => {
     if (!dateStr) return true;
@@ -58,7 +61,8 @@ export const AdminSalesOverview: React.FC = () => {
     return todayAllOrders.filter(
       (o) =>
         (o.status || '').toLowerCase() !== 'cancelled' &&
-        (o.status || '').toLowerCase() !== 'refunded'
+        (o.status || '').toLowerCase() !== 'refunded' &&
+        o.paymentStatus === 'paid'
     );
   }, [todayAllOrders]);
 
@@ -261,12 +265,12 @@ export const AdminSalesOverview: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Top Banner: Real-Time Live KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         {/* KPI 1: Net Sales */}
-        <div className="bg-stone-900 border border-stone-800 rounded-2xl p-4.5 shadow-sm relative overflow-hidden flex flex-col justify-between">
+        <div className="bg-gradient-to-b from-stone-900/90 to-[#141414]/90 backdrop-blur-md border border-white/10 rounded-2xl p-4.5 shadow-lg relative overflow-hidden flex flex-col justify-between hover:border-emerald-500/30 transition-all duration-200">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-stone-400 uppercase tracking-wider">Today's Net Sales</span>
-            <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-[0_0_12px_rgba(16,185,129,0.15)]">
               <DollarSign className="w-4 h-4" />
             </div>
           </div>
@@ -283,10 +287,10 @@ export const AdminSalesOverview: React.FC = () => {
         </div>
 
         {/* KPI 2: Total Orders Processed */}
-        <div className="bg-stone-900 border border-stone-800 rounded-2xl p-4.5 shadow-sm relative overflow-hidden flex flex-col justify-between">
+        <div className="bg-gradient-to-b from-stone-900/90 to-[#141414]/90 backdrop-blur-md border border-white/10 rounded-2xl p-4.5 shadow-lg relative overflow-hidden flex flex-col justify-between hover:border-blue-500/30 transition-all duration-200">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-stone-400 uppercase tracking-wider">Total Orders</span>
-            <div className="p-2 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20">
+            <div className="p-2 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 shadow-[0_0_12px_rgba(59,130,246,0.15)]">
               <ShoppingBag className="w-4 h-4" />
             </div>
           </div>
@@ -302,10 +306,10 @@ export const AdminSalesOverview: React.FC = () => {
         </div>
 
         {/* KPI 3: Average Order Value (AOV) */}
-        <div className="bg-stone-900 border border-stone-800 rounded-2xl p-4.5 shadow-sm relative overflow-hidden flex flex-col justify-between">
+        <div className="bg-gradient-to-b from-stone-900/90 to-[#141414]/90 backdrop-blur-md border border-white/10 rounded-2xl p-4.5 shadow-lg relative overflow-hidden flex flex-col justify-between hover:border-purple-500/30 transition-all duration-200">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-stone-400 uppercase tracking-wider">Average Ticket (AOV)</span>
-            <div className="p-2 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
+            <div className="p-2 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20 shadow-[0_0_12px_rgba(168,85,247,0.15)]">
               <TrendingUp className="w-4 h-4" />
             </div>
           </div>
@@ -321,17 +325,17 @@ export const AdminSalesOverview: React.FC = () => {
         </div>
 
         {/* KPI 4: Active Cashiers & Adjustments */}
-        <div className="bg-stone-900 border border-stone-800 rounded-2xl p-4.5 shadow-sm relative overflow-hidden flex flex-col justify-between">
+        <div className="bg-gradient-to-b from-stone-900/90 to-[#141414]/90 backdrop-blur-md border border-white/10 rounded-2xl p-4.5 shadow-lg relative overflow-hidden flex flex-col justify-between hover:border-amber-500/30 transition-all duration-200">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-stone-400 uppercase tracking-wider">Active Staff & Dels</span>
-            <div className="p-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
+            <div className="p-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 shadow-[0_0_12px_rgba(245,158,11,0.15)]">
               <Users className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-3">
             <div className="text-2xl font-black text-white tracking-tight flex items-center justify-between">
               <span>{activeCashiersCount} Cashiers</span>
-              <span className="text-xs px-2 py-0.5 rounded-full bg-red-500/20 text-red-300 border border-red-500/30 font-mono">
+              <span className="text-xs px-2.5 py-0.5 rounded-full bg-red-500/20 text-red-300 border border-red-500/30 font-mono">
                 -{salesAdjustments.length} Adjustments
               </span>
             </div>
@@ -341,16 +345,63 @@ export const AdminSalesOverview: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* KPI 5: Petty Cash Management */}
+        <div className="bg-gradient-to-b from-stone-900/90 to-[#141414]/90 backdrop-blur-md border border-white/10 rounded-2xl p-4.5 shadow-lg relative overflow-hidden flex flex-col justify-between hover:border-orange-500/30 transition-all duration-200">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-stone-400 uppercase tracking-wider">Petty Cash</span>
+            <div className="p-2 rounded-xl bg-orange-500/10 text-orange-400 border border-orange-500/20 shadow-[0_0_12px_rgba(249,115,22,0.15)]">
+              <Layers className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="mt-3">
+            {isEditingPettyCash ? (
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  value={pettyCashInput}
+                  onChange={(e) => setPettyCashInput(e.target.value)}
+                  className="w-full px-2.5 py-1 bg-stone-950/80 border border-white/10 rounded-xl text-sm text-white font-mono focus:outline-none focus:border-emerald-500"
+                  autoFocus
+                />
+                <button
+                  onClick={() => {
+                    updatePettyCash(Number(pettyCashInput) || 0);
+                    setIsEditingPettyCash(false);
+                  }}
+                  className="p-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 text-white hover:from-emerald-500 hover:to-emerald-600 transition shadow cursor-pointer"
+                >
+                  <CheckCircle className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <div className="text-2xl font-black text-white tracking-tight flex items-center justify-between">
+                <span>PKR {(currentShift?.openingFloat || 0).toLocaleString()}</span>
+                <button
+                  onClick={() => setIsEditingPettyCash(true)}
+                  className="text-[10px] uppercase font-bold px-2.5 py-1 rounded-lg bg-stone-800/80 text-stone-300 hover:text-white hover:bg-stone-700 transition border border-white/10 active:scale-95 cursor-pointer"
+                >
+                  Edit
+                </button>
+              </div>
+            )}
+            <div className="flex items-center gap-1.5 mt-1 text-[11px] font-medium text-orange-400">
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>Starting drawer float</span>
+            </div>
+          </div>
+        </div>
+
       </div>
 
       {/* Main Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left 2 Cols: Revenue Trajectory Chart */}
-        <div className="lg:col-span-2 bg-stone-900 border border-stone-800 rounded-2xl p-5 shadow-sm flex flex-col justify-between">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-stone-800">
+        <div className="lg:col-span-2 bg-gradient-to-b from-stone-900/90 to-[#141414]/90 backdrop-blur-md border border-white/10 rounded-2xl p-5 shadow-lg flex flex-col justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-white/5">
             <div>
               <h3 className="text-base font-bold text-white flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 text-[#00897b]" />
+                <TrendingUp className="w-5 h-5 text-emerald-400" />
                 Sales & Revenue Dynamics
               </h3>
               <p className="text-xs text-stone-400 mt-0.5">
@@ -359,27 +410,27 @@ export const AdminSalesOverview: React.FC = () => {
             </div>
 
             {/* Time Toggle */}
-            <div className="flex items-center bg-stone-950 p-1 rounded-xl border border-stone-800 text-xs font-semibold">
+            <div className="flex items-center bg-stone-950/80 p-1 rounded-xl border border-white/10 text-xs font-semibold">
               <button
                 onClick={() => setTimeRange('hourly')}
-                className={`px-3 py-1.5 rounded-lg transition cursor-pointer ${
-                  timeRange === 'hourly' ? 'bg-[#00897b] text-white shadow' : 'text-stone-400 hover:text-stone-200'
+                className={`px-3 py-1.5 rounded-lg transition-all duration-200 cursor-pointer ${
+                  timeRange === 'hourly' ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-[0_0_10px_rgba(16,185,129,0.25)]' : 'text-stone-400 hover:text-stone-200'
                 }`}
               >
                 Hourly Peak
               </button>
               <button
                 onClick={() => setTimeRange('daily')}
-                className={`px-3 py-1.5 rounded-lg transition cursor-pointer ${
-                  timeRange === 'daily' ? 'bg-[#00897b] text-white shadow' : 'text-stone-400 hover:text-stone-200'
+                className={`px-3 py-1.5 rounded-lg transition-all duration-200 cursor-pointer ${
+                  timeRange === 'daily' ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-[0_0_10px_rgba(16,185,129,0.25)]' : 'text-stone-400 hover:text-stone-200'
                 }`}
               >
                 Last 7 Days
               </button>
               <button
                 onClick={() => setTimeRange('weekly')}
-                className={`px-3 py-1.5 rounded-lg transition cursor-pointer ${
-                  timeRange === 'weekly' ? 'bg-[#00897b] text-white shadow' : 'text-stone-400 hover:text-stone-200'
+                className={`px-3 py-1.5 rounded-lg transition-all duration-200 cursor-pointer ${
+                  timeRange === 'weekly' ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-[0_0_10px_rgba(16,185,129,0.25)]' : 'text-stone-400 hover:text-stone-200'
                 }`}
               >
                 Weekly Trend
@@ -393,18 +444,18 @@ export const AdminSalesOverview: React.FC = () => {
                 <AreaChart data={hourlyData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#00897b" stopOpacity={0.8} />
-                      <stop offset="95%" stopColor="#00897b" stopOpacity={0} />
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.7} />
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#292524" vertical={false} />
                   <XAxis dataKey="hour" stroke="#78716c" fontSize={11} tickLine={false} />
                   <YAxis stroke="#78716c" fontSize={11} tickLine={false} tickFormatter={(val) => `${val / 1000}k`} />
                   <Tooltip
-                    contentStyle={{ backgroundColor: '#1c1917', borderColor: '#44403c', borderRadius: '0.75rem', color: '#f5f5f4' }}
+                    contentStyle={{ backgroundColor: '#18181b', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '0.75rem', color: '#f5f5f4', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5)' }}
                     formatter={(val: any) => [`PKR ${Number(val).toLocaleString()}`, 'Revenue']}
                   />
-                  <Area type="monotone" dataKey="sales" stroke="#00897b" strokeWidth={2.5} fillOpacity={1} fill="url(#colorSales)" />
+                  <Area type="monotone" dataKey="sales" stroke="#10b981" strokeWidth={2.5} fillOpacity={1} fill="url(#colorSales)" />
                 </AreaChart>
               ) : timeRange === 'daily' ? (
                 <BarChart data={dailyData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
@@ -412,17 +463,17 @@ export const AdminSalesOverview: React.FC = () => {
                   <XAxis dataKey="date" stroke="#78716c" fontSize={11} tickLine={false} />
                   <YAxis stroke="#78716c" fontSize={11} tickLine={false} tickFormatter={(val) => `${val / 1000}k`} />
                   <Tooltip
-                    contentStyle={{ backgroundColor: '#1c1917', borderColor: '#44403c', borderRadius: '0.75rem', color: '#f5f5f4' }}
+                    contentStyle={{ backgroundColor: '#18181b', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '0.75rem', color: '#f5f5f4', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5)' }}
                     formatter={(val: any, name: string) => [`PKR ${Number(val).toLocaleString()}`, name === 'gross' ? 'Gross Sales' : 'Net Sales']}
                   />
-                  <Bar dataKey="gross" fill="#00897b" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="net" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="gross" fill="#10b981" radius={[6, 6, 0, 0]} />
+                  <Bar dataKey="net" fill="#3b82f6" radius={[6, 6, 0, 0]} />
                 </BarChart>
               ) : (
                 <AreaChart data={weeklyData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorWeek" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.8} />
+                      <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.7} />
                       <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
                     </linearGradient>
                   </defs>
@@ -430,7 +481,7 @@ export const AdminSalesOverview: React.FC = () => {
                   <XAxis dataKey="week" stroke="#78716c" fontSize={11} tickLine={false} />
                   <YAxis stroke="#78716c" fontSize={11} tickLine={false} tickFormatter={(val) => `${val / 1000}k`} />
                   <Tooltip
-                    contentStyle={{ backgroundColor: '#1c1917', borderColor: '#44403c', borderRadius: '0.75rem', color: '#f5f5f4' }}
+                    contentStyle={{ backgroundColor: '#18181b', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '0.75rem', color: '#f5f5f4', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5)' }}
                     formatter={(val: any) => [`PKR ${Number(val).toLocaleString()}`, 'Net Revenue']}
                   />
                   <Area type="monotone" dataKey="net" stroke="#8b5cf6" strokeWidth={2.5} fillOpacity={1} fill="url(#colorWeek)" />
@@ -441,8 +492,8 @@ export const AdminSalesOverview: React.FC = () => {
         </div>
 
         {/* Right Col: Payment Breakdown & Settlement distribution */}
-        <div className="bg-stone-900 border border-stone-800 rounded-2xl p-5 shadow-sm flex flex-col justify-between">
-          <div className="pb-3 border-b border-stone-800">
+        <div className="bg-gradient-to-b from-stone-900/90 to-[#141414]/90 backdrop-blur-md border border-white/10 rounded-2xl p-5 shadow-lg flex flex-col justify-between">
+          <div className="pb-3 border-b border-white/5">
             <h3 className="text-base font-bold text-white flex items-center gap-2">
               <DollarSign className="w-5 h-5 text-blue-400" />
               Settlement Channels
@@ -467,18 +518,18 @@ export const AdminSalesOverview: React.FC = () => {
                   ))}
                 </Pie>
                 <Tooltip
-                  contentStyle={{ backgroundColor: '#1c1917', borderColor: '#44403c', borderRadius: '0.75rem', color: '#f5f5f4' }}
+                  contentStyle={{ backgroundColor: '#18181b', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '0.75rem', color: '#f5f5f4', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5)' }}
                   formatter={(val: any) => [`${val}% of total volume`, 'Share']}
                 />
               </PieChart>
             </ResponsiveContainer>
           </div>
 
-          <div className="space-y-2 pt-2 border-t border-stone-800">
+          <div className="space-y-2 pt-2 border-t border-white/5">
             {paymentMethodData.map((item) => (
               <div key={item.name} className="flex items-center justify-between text-xs">
                 <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
+                  <span className="w-2.5 h-2.5 rounded-full shadow-xs" style={{ backgroundColor: item.color }} />
                   <span className="text-stone-300 font-medium">{item.name}</span>
                 </div>
                 <span className="font-mono font-bold text-white">{item.value}%</span>
@@ -489,8 +540,8 @@ export const AdminSalesOverview: React.FC = () => {
       </div>
 
       {/* Live Sales Ledger Adjustments Stream */}
-      <div className="bg-stone-900 border border-stone-800 rounded-2xl p-5 shadow-sm space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-stone-800">
+      <div className="bg-gradient-to-b from-stone-900/90 to-[#141414]/90 backdrop-blur-md border border-white/10 rounded-2xl p-5 shadow-lg space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/5">
           <div>
             <h3 className="text-base font-bold text-white flex items-center gap-2">
               <RotateCcw className="w-5 h-5 text-amber-400" />
@@ -503,27 +554,27 @@ export const AdminSalesOverview: React.FC = () => {
 
           <div className="flex items-center gap-2">
             <span className="text-xs text-stone-400 font-medium">Filter Type:</span>
-            <div className="flex bg-stone-950 p-1 rounded-xl border border-stone-800 text-xs font-semibold">
+            <div className="flex bg-stone-950/80 p-1 rounded-xl border border-white/10 text-xs font-semibold">
               <button
                 onClick={() => setAdjustmentFilter('ALL')}
-                className={`px-2.5 py-1 rounded-lg transition cursor-pointer ${
-                  adjustmentFilter === 'ALL' ? 'bg-stone-700 text-white' : 'text-stone-400 hover:text-stone-200'
+                className={`px-2.5 py-1 rounded-lg transition-all duration-200 cursor-pointer ${
+                  adjustmentFilter === 'ALL' ? 'bg-stone-700 text-white shadow-xs' : 'text-stone-400 hover:text-stone-200'
                 }`}
               >
                 All ({salesAdjustments.length})
               </button>
               <button
                 onClick={() => setAdjustmentFilter('CANCELLATION')}
-                className={`px-2.5 py-1 rounded-lg transition cursor-pointer ${
-                  adjustmentFilter === 'CANCELLATION' ? 'bg-red-500/30 text-red-300 border border-red-500/40' : 'text-stone-400 hover:text-stone-200'
+                className={`px-2.5 py-1 rounded-lg transition-all duration-200 cursor-pointer ${
+                  adjustmentFilter === 'CANCELLATION' ? 'bg-red-500/30 text-red-300 border border-red-500/40 shadow-xs' : 'text-stone-400 hover:text-stone-200'
                 }`}
               >
                 Cancellations
               </button>
               <button
                 onClick={() => setAdjustmentFilter('MODIFICATION')}
-                className={`px-2.5 py-1 rounded-lg transition cursor-pointer ${
-                  adjustmentFilter === 'MODIFICATION' ? 'bg-blue-500/30 text-blue-300 border border-blue-500/40' : 'text-stone-400 hover:text-stone-200'
+                className={`px-2.5 py-1 rounded-lg transition-all duration-200 cursor-pointer ${
+                  adjustmentFilter === 'MODIFICATION' ? 'bg-blue-500/30 text-blue-300 border border-blue-500/40 shadow-xs' : 'text-stone-400 hover:text-stone-200'
                 }`}
               >
                 Modifications
@@ -536,7 +587,7 @@ export const AdminSalesOverview: React.FC = () => {
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs text-stone-300 border-collapse">
             <thead>
-              <tr className="border-b border-stone-800 text-stone-400 font-bold uppercase tracking-wider text-[10px]">
+              <tr className="border-b border-white/10 text-stone-400 font-bold uppercase tracking-wider text-[10px]">
                 <th className="py-2.5 px-3">Type</th>
                 <th className="py-2.5 px-3">Order #</th>
                 <th className="py-2.5 px-3">Authorizer</th>
@@ -548,7 +599,7 @@ export const AdminSalesOverview: React.FC = () => {
                 <th className="py-2.5 px-3 text-right">Timestamp</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-stone-800/60 font-sans">
+            <tbody className="divide-y divide-white/5 font-sans">
               {filteredAdjustments.length === 0 ? (
                 <tr>
                   <td colSpan={9} className="py-8 text-center text-stone-500 italic">
@@ -560,7 +611,7 @@ export const AdminSalesOverview: React.FC = () => {
                   const isNegative = adj.netDelta < 0;
                   const isPositive = adj.netDelta > 0;
                   return (
-                    <tr key={adj.id} className="hover:bg-stone-800/40 transition">
+                    <tr key={adj.id} className="hover:bg-white/[0.02] transition">
                       <td className="py-2.5 px-3">
                         <span
                           className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase font-mono border ${

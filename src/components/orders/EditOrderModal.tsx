@@ -42,8 +42,8 @@ export const EditOrderModal: React.FC<EditOrderModalProps> = ({ order, onClose, 
 
   // Recalculate financial breakdown
   const subtotal = items.reduce((acc, it) => acc + it.price * it.quantity, 0);
-  const deliveryFee = orderType === 'delivery' ? 3.5 : 0;
-  const tax = subtotal * 0.085;
+  const deliveryFee = orderType === 'delivery' ? 150 : 0;
+  const tax = Math.round(subtotal * 0.16);
   const tip = order.tip || 0;
   const total = subtotal + tax + tip + deliveryFee;
 
@@ -137,23 +137,27 @@ export const EditOrderModal: React.FC<EditOrderModalProps> = ({ order, onClose, 
   };
 
   return (
-    <div id="edit-order-modal" className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-stone-900 border border-stone-800 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col my-auto max-h-[90vh]">
+    <div id="edit-order-modal" className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-150">
+      <div className="bg-gradient-to-b from-stone-900 to-[#121212] border border-white/10 ring-1 ring-white/10 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col my-auto max-h-[90vh]">
         {/* Header */}
-        <div className="p-4 bg-stone-950 border-b border-stone-800 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-amber-400">
-            <Edit className="w-5 h-5" />
-            <h3 className="font-bold text-white text-base">Edit Order {order.orderNumber}</h3>
-            <span className="text-xs bg-stone-800 text-stone-300 px-2 py-0.5 rounded font-mono">
-              Status: {order.status}
-            </span>
+        <div className="p-4 bg-stone-950/60 backdrop-blur-xs border-b border-white/5 flex items-center justify-between">
+          <div className="flex items-center gap-2.5 text-amber-400">
+            <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+              <Edit className="w-4 h-4" />
+            </div>
+            <div>
+              <h3 className="font-extrabold text-white text-base">Edit Order {order.orderNumber}</h3>
+              <span className="text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-full font-mono font-bold">
+                Status: {order.status}
+              </span>
+            </div>
           </div>
           <button
             id="close-edit-order-modal-btn"
             onClick={onClose}
-            className="w-8 h-8 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 flex items-center justify-center cursor-pointer transition"
+            className="p-1.5 rounded-xl hover:bg-white/5 text-stone-400 hover:text-white transition-all cursor-pointer"
           >
-            <X className="w-4 h-4" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
@@ -161,15 +165,15 @@ export const EditOrderModal: React.FC<EditOrderModalProps> = ({ order, onClose, 
         <div className="p-5 space-y-5 overflow-y-auto flex-1 text-xs text-stone-300">
           {/* Order Type Selector */}
           <div>
-            <label className="block font-bold text-stone-400 uppercase tracking-wider mb-1.5">Order Type</label>
+            <label className="block font-bold text-[10px] uppercase tracking-wider text-stone-400 mb-2">Order Type</label>
             <div className="grid grid-cols-3 gap-2">
               <button
                 type="button"
                 onClick={() => setOrderType('dine_in')}
-                className={`py-2 px-3 rounded-xl border flex items-center justify-center gap-2 font-bold cursor-pointer transition ${
+                className={`py-2.5 px-3 rounded-xl border flex items-center justify-center gap-2 font-bold cursor-pointer transition-all ${
                   orderType === 'dine_in'
-                    ? 'bg-amber-600 border-amber-500 text-white'
-                    : 'bg-stone-950 border-stone-800 text-stone-400 hover:border-stone-700'
+                    ? 'bg-gradient-to-r from-amber-600 to-amber-700 border-amber-400/30 text-white shadow-md'
+                    : 'bg-stone-950/80 border-white/5 text-stone-400 hover:border-white/10 hover:text-stone-200'
                 }`}
               >
                 <Utensils className="w-4 h-4" />
@@ -178,10 +182,10 @@ export const EditOrderModal: React.FC<EditOrderModalProps> = ({ order, onClose, 
               <button
                 type="button"
                 onClick={() => setOrderType('takeaway')}
-                className={`py-2 px-3 rounded-xl border flex items-center justify-center gap-2 font-bold cursor-pointer transition ${
+                className={`py-2.5 px-3 rounded-xl border flex items-center justify-center gap-2 font-bold cursor-pointer transition-all ${
                   orderType === 'takeaway'
-                    ? 'bg-amber-600 border-amber-500 text-white'
-                    : 'bg-stone-950 border-stone-800 text-stone-400 hover:border-stone-700'
+                    ? 'bg-gradient-to-r from-amber-600 to-amber-700 border-amber-400/30 text-white shadow-md'
+                    : 'bg-stone-950/80 border-white/5 text-stone-400 hover:border-white/10 hover:text-stone-200'
                 }`}
               >
                 <ShoppingBag className="w-4 h-4" />
@@ -190,10 +194,10 @@ export const EditOrderModal: React.FC<EditOrderModalProps> = ({ order, onClose, 
               <button
                 type="button"
                 onClick={() => setOrderType('delivery')}
-                className={`py-2 px-3 rounded-xl border flex items-center justify-center gap-2 font-bold cursor-pointer transition ${
+                className={`py-2.5 px-3 rounded-xl border flex items-center justify-center gap-2 font-bold cursor-pointer transition-all ${
                   orderType === 'delivery'
-                    ? 'bg-amber-600 border-amber-500 text-white'
-                    : 'bg-stone-950 border-stone-800 text-stone-400 hover:border-stone-700'
+                    ? 'bg-gradient-to-r from-amber-600 to-amber-700 border-amber-400/30 text-white shadow-md'
+                    : 'bg-stone-950/80 border-white/5 text-stone-400 hover:border-white/10 hover:text-stone-200'
                 }`}
               >
                 <Truck className="w-4 h-4" />
@@ -205,22 +209,22 @@ export const EditOrderModal: React.FC<EditOrderModalProps> = ({ order, onClose, 
           {/* Conditional Table or Delivery Driver */}
           {orderType === 'dine_in' ? (
             <div>
-              <label className="block font-bold text-stone-400 mb-1">Table Number</label>
+              <label className="block text-[10px] uppercase font-bold text-stone-400 mb-1">Table Number</label>
               <input
                 type="text"
                 value={tableNumber}
                 onChange={(e) => setTableNumber(e.target.value)}
                 placeholder="e.g. Table 4"
-                className="w-full bg-stone-950 border border-stone-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-amber-500"
+                className="w-full bg-stone-900 border border-white/10 rounded-xl px-3.5 py-2 text-white focus:outline-none focus:border-amber-500/50"
               />
             </div>
           ) : orderType === 'delivery' ? (
             <div>
-              <label className="block font-bold text-stone-400 mb-1">Assigned Delivery Driver</label>
+              <label className="block text-[10px] uppercase font-bold text-stone-400 mb-1">Assigned Delivery Driver</label>
               <select
                 value={deliveryDriver}
                 onChange={(e) => setDeliveryDriver(e.target.value)}
-                className="w-full bg-stone-950 border border-stone-700 rounded-lg px-3 py-2 text-amber-300 font-semibold focus:outline-none focus:border-amber-500"
+                className="w-full bg-stone-900 border border-white/10 rounded-xl px-3.5 py-2 text-amber-300 font-bold focus:outline-none focus:border-amber-500/50 cursor-pointer"
               >
                 {deliveryDrivers.map((d) => {
                   const stats = getRiderStats(d);
@@ -235,50 +239,50 @@ export const EditOrderModal: React.FC<EditOrderModalProps> = ({ order, onClose, 
           ) : null}
 
           {/* Customer & Address Information */}
-          <div className="bg-stone-950 p-3.5 rounded-xl border border-stone-800 space-y-3">
-            <h4 className="font-bold text-stone-200 uppercase tracking-wider text-[11px]">Customer & Contact Details</h4>
+          <div className="bg-stone-950/80 p-4 rounded-xl border border-white/5 space-y-3">
+            <h4 className="font-bold text-stone-200 uppercase tracking-wider text-[10px]">Customer & Contact Details</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
-                <label className="block text-stone-400 mb-1">Customer Name</label>
+                <label className="block text-[10px] uppercase font-bold text-stone-400 mb-1">Customer Name</label>
                 <input
                   type="text"
                   value={customerName}
                   onChange={(e) => setCustomerName(e.target.value)}
                   placeholder="e.g. John Doe"
-                  className="w-full bg-stone-900 border border-stone-700 rounded-lg px-3 py-1.5 text-white focus:outline-none focus:border-amber-500"
+                  className="w-full bg-stone-900 border border-white/10 rounded-xl px-3 py-1.5 text-white focus:outline-none focus:border-amber-500/50"
                 />
               </div>
               <div>
-                <label className="block text-stone-400 mb-1">Customer Phone</label>
+                <label className="block text-[10px] uppercase font-bold text-stone-400 mb-1">Customer Phone</label>
                 <input
                   type="text"
                   value={customerPhone}
                   onChange={(e) => setCustomerPhone(e.target.value)}
-                  placeholder="e.g. 555-0123"
-                  className="w-full bg-stone-900 border border-stone-700 rounded-lg px-3 py-1.5 text-white focus:outline-none focus:border-amber-500"
+                  placeholder="e.g. 0300-1234567"
+                  className="w-full bg-stone-900 border border-white/10 rounded-xl px-3 py-1.5 text-white focus:outline-none focus:border-amber-500/50 font-mono"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-stone-400 mb-1">Delivery Address</label>
+              <label className="block text-[10px] uppercase font-bold text-stone-400 mb-1">Delivery Address</label>
               <input
                 type="text"
                 value={customerAddress}
                 onChange={(e) => setCustomerAddress(e.target.value)}
                 placeholder="e.g. 123 Main St, Apt 4B, Gate #12"
-                className="w-full bg-stone-900 border border-stone-700 rounded-lg px-3 py-1.5 text-white focus:outline-none focus:border-amber-500"
+                className="w-full bg-stone-900 border border-white/10 rounded-xl px-3 py-1.5 text-white focus:outline-none focus:border-amber-500/50"
               />
             </div>
 
             <div>
-              <label className="block text-stone-400 mb-1">Order / Kitchen Notes</label>
+              <label className="block text-[10px] uppercase font-bold text-stone-400 mb-1">Order / Kitchen Notes</label>
               <input
                 type="text"
                 value={orderNotes}
                 onChange={(e) => setOrderNotes(e.target.value)}
                 placeholder="e.g. Extra napkins, sauce on side"
-                className="w-full bg-stone-900 border border-stone-700 rounded-lg px-3 py-1.5 text-white focus:outline-none focus:border-amber-500"
+                className="w-full bg-stone-900 border border-white/10 rounded-xl px-3 py-1.5 text-white focus:outline-none focus:border-amber-500/50"
               />
             </div>
           </div>
@@ -286,18 +290,18 @@ export const EditOrderModal: React.FC<EditOrderModalProps> = ({ order, onClose, 
           {/* Itemized Order List & Modification */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <label className="font-bold text-stone-400 uppercase tracking-wider">Ordered Dishes ({items.length})</label>
+              <label className="font-bold text-stone-300 uppercase tracking-wider text-[10px]">Ordered Dishes ({items.length})</label>
               {/* Add dish dropdown */}
               <div className="flex items-center gap-2">
                 <select
                   value={selectedMenuItemToAdd}
                   onChange={(e) => handleAddItem(e.target.value)}
-                  className="bg-stone-950 border border-stone-700 text-stone-200 text-xs px-2.5 py-1 rounded-lg focus:outline-none focus:border-amber-500"
+                  className="bg-stone-900 border border-white/10 text-stone-200 text-xs px-3 py-1 rounded-xl focus:outline-none focus:border-amber-500/50 cursor-pointer"
                 >
                   <option value="">+ Add Item from Menu...</option>
                   {menuItems.map((m) => (
                     <option key={m.id} value={m.id}>
-                      {m.name} (${m.price.toFixed(2)})
+                      {m.name} (PKR {m.price.toLocaleString()})
                     </option>
                   ))}
                 </select>
@@ -308,40 +312,40 @@ export const EditOrderModal: React.FC<EditOrderModalProps> = ({ order, onClose, 
               {items.map((it) => (
                 <div
                   key={it.id}
-                  className="flex items-center justify-between p-2.5 bg-stone-950 rounded-xl border border-stone-800"
+                  className="flex items-center justify-between p-3 bg-stone-950/80 rounded-xl border border-white/5"
                 >
                   <div className="flex-1 pr-2">
                     <span className="font-bold text-white block">{it.name}</span>
-                    <span className="text-stone-400 text-[11px]">${it.price.toFixed(2)} each</span>
+                    <span className="text-stone-400 text-[10px] font-mono">PKR {it.price.toLocaleString()} each</span>
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-1 bg-stone-900 border border-stone-700 rounded-lg p-0.5">
+                    <div className="flex items-center gap-1 bg-stone-900 border border-white/10 rounded-xl p-0.5">
                       <button
                         type="button"
                         onClick={() => handleUpdateQty(it.id, -1)}
-                        className="w-6 h-6 rounded bg-stone-800 hover:bg-stone-700 text-stone-300 flex items-center justify-center cursor-pointer"
+                        className="w-6 h-6 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 flex items-center justify-center cursor-pointer transition-all"
                       >
                         <Minus className="w-3 h-3" />
                       </button>
-                      <span className="w-6 text-center font-bold text-white">{it.quantity}</span>
+                      <span className="w-6 text-center font-mono font-bold text-white">{it.quantity}</span>
                       <button
                         type="button"
                         onClick={() => handleUpdateQty(it.id, 1)}
-                        className="w-6 h-6 rounded bg-stone-800 hover:bg-stone-700 text-stone-300 flex items-center justify-center cursor-pointer"
+                        className="w-6 h-6 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 flex items-center justify-center cursor-pointer transition-all"
                       >
                         <Plus className="w-3 h-3" />
                       </button>
                     </div>
 
-                    <span className="w-16 text-right font-bold text-amber-400">
-                      ${(it.price * it.quantity).toFixed(2)}
+                    <span className="w-20 text-right font-mono font-bold text-amber-400">
+                      PKR {(it.price * it.quantity).toLocaleString()}
                     </span>
 
                     <button
                       type="button"
                       onClick={() => handleRemoveItem(it.id)}
-                      className="w-7 h-7 rounded-lg bg-red-950/40 hover:bg-red-900/60 text-red-400 flex items-center justify-center cursor-pointer transition border border-red-900/30"
+                      className="w-7 h-7 rounded-xl bg-rose-950/40 hover:bg-rose-900/60 text-rose-400 flex items-center justify-center cursor-pointer transition-all border border-rose-500/20"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -352,25 +356,25 @@ export const EditOrderModal: React.FC<EditOrderModalProps> = ({ order, onClose, 
           </div>
 
           {/* Recalculated Financial Summary */}
-          <div className="bg-stone-950 p-3 rounded-xl border border-stone-800 flex items-center justify-between font-mono">
-            <div className="space-y-0.5 text-stone-400">
-              <p>Subtotal: ${subtotal.toFixed(2)}</p>
-              <p>Tax (8.5%): ${tax.toFixed(2)}</p>
-              {orderType === 'delivery' && <p>Delivery Fee: $3.50</p>}
+          <div className="bg-stone-950/80 p-3.5 rounded-xl border border-white/5 flex items-center justify-between font-mono">
+            <div className="space-y-0.5 text-stone-400 text-xs">
+              <p>Subtotal: PKR {subtotal.toLocaleString()}</p>
+              <p>Tax (16%): PKR {tax.toLocaleString()}</p>
+              {orderType === 'delivery' && <p>Delivery Fee: PKR 150</p>}
             </div>
             <div className="text-right">
-              <span className="text-stone-400 text-xs uppercase block font-sans font-bold">New Order Total</span>
-              <span className="text-xl font-bold text-amber-400 font-mono">${total.toFixed(2)}</span>
+              <span className="text-stone-400 text-[10px] uppercase block font-sans font-bold">New Order Total</span>
+              <span className="text-xl font-black text-amber-400 font-mono">PKR {total.toLocaleString()}</span>
             </div>
           </div>
         </div>
 
         {/* Footer Actions */}
-        <div className="p-4 bg-stone-950 border-t border-stone-800 flex items-center justify-end gap-2">
+        <div className="p-4 bg-stone-950/60 border-t border-white/5 flex items-center justify-end gap-2.5">
           <button
             id="cancel-edit-order-btn"
             onClick={onClose}
-            className="px-4 py-2 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 text-xs font-semibold cursor-pointer transition"
+            className="px-4 py-2 rounded-xl bg-stone-900 hover:bg-stone-800 text-stone-300 text-xs font-bold border border-white/5 cursor-pointer transition-all"
           >
             Cancel
           </button>
@@ -378,7 +382,7 @@ export const EditOrderModal: React.FC<EditOrderModalProps> = ({ order, onClose, 
             id="save-edit-order-btn"
             disabled={isSaving}
             onClick={handleSave}
-            className="px-5 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold cursor-pointer transition flex items-center gap-1.5 shadow-lg shadow-amber-600/30"
+            className="px-5 py-2 rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white text-xs font-black uppercase tracking-wider cursor-pointer transition-all flex items-center gap-1.5 shadow-lg border border-amber-400/20 active:scale-95"
           >
             <Save className="w-4 h-4" />
             <span>{isSaving ? 'Saving...' : 'Save Order Changes'}</span>
