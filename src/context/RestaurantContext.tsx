@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import { io } from 'socket.io-client';
 import {
   MenuItem,
   Category,
@@ -798,8 +799,35 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   // Initial mount fetch & periodic 15s background realtime sync
   useEffect(() => {
     syncFromServer();
+    
+    // Real-time synchronization via WebSockets
+    const socket = io();
+    
+    socket.on('connect', () => {
+      console.log('Connected to real-time synchronization server');
+    });
+    
+    socket.on('orderCreated', (newOrder: Order) => {
+      setOrders((prev) => {
+        // Prevent duplicates
+        if (prev.some(o => o.id === newOrder.id)) return prev;
+        return [newOrder, ...prev];
+      });
+      // Optionally sync the whole state to ensure inventory/shifts remain consistent
+      syncFromServer();
+    });
+
+    socket.on('orderUpdated', (updatedOrder: Order) => {
+      setOrders((prev) => prev.map(o => o.id === updatedOrder.id ? updatedOrder : o));
+      syncFromServer(); // Re-fetch to keep customers/shifts in sync easily
+    });
+
     const interval = setInterval(syncFromServer, 15000);
-    return () => clearInterval(interval);
+    
+    return () => {
+      clearInterval(interval);
+      socket.disconnect();
+    };
   }, [syncFromServer]);
 
   // Table handlers wired to real Prisma DB

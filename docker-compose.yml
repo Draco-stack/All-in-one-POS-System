@@ -9,7 +9,7 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: pos_app_production
-    restart: unless-stopped
+    restart: always
     ports:
       - "3000:3000"
     env_file:
@@ -27,7 +27,7 @@ services:
   db:
     image: postgres:15-alpine
     container_name: pos_postgres_production
-    restart: unless-stopped
+    restart: always
     environment:
       POSTGRES_USER: pos_user
       POSTGRES_PASSWORD: pos_password_prod

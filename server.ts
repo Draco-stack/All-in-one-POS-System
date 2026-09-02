@@ -3,6 +3,10 @@ import path from 'path';
 import { createServer as createViteServer } from 'vite';
 import prisma from './src/server/prisma';
 import { seedDatabaseIfNeeded } from './src/server/seed';
+import helmet from 'helmet';
+import cors from 'cors';
+import compression from 'compression';
+import rateLimit from 'express-rate-limit';
 import {
   addUser,
   updateUser,
@@ -11,10 +15,55 @@ import {
   deleteMenuItem,
 } from './src/server/controllers/adminController';
 
+import http from 'http';
+import { Server as SocketIOServer } from 'socket.io';
+
 const appDir = process.cwd();
 
 const app = express();
+const httpServer = http.createServer(app);
+const io = new SocketIOServer(httpServer, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"]
+  }
+});
+app.set('io', io);
+
+io.on('connection', (socket) => {
+  console.log('Client connected:', socket.id);
+  socket.on('disconnect', () => {
+    console.log('Client disconnected:', socket.id);
+  });
+});
+
+// --- Phase 2: Backend Hardening & Security ---
+// Inject production security middleware
+app.use(helmet({
+  contentSecurityPolicy: false, // Vite requires inline scripts during dev, and keeping it simple for now
+}));
+app.use(cors());
+app.use(compression());
 app.use(express.json());
+
+// Rate Limiting
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // Limit each IP to 10 requests per windowMs
+  message: { error: true, message: 'Too many auth attempts, please try again later.' }
+});
+
+// Apply rate limiting to login and license validation routes (if any)
+app.use('/api/auth', authLimiter);
+app.use('/api/license', authLimiter);
+
+// General API rate limiter
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 1000,
+  message: { error: true, message: 'Too many requests, please try again later.' }
+});
+app.use('/api', apiLimiter);
 
 // API Routes
 app.get('/api/health', (req, res) => {
@@ -409,7 +458,12 @@ app.post('/api/orders', async (req, res) => {
       return order;
     });
 
-    return res.json(transformOrder(result));
+    const transformedOrder = transformOrder(result);
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('orderCreated', transformedOrder);
+    }
+    return res.json(transformedOrder);
   } catch (error) {
     console.error('[Prisma] Create order error:', error);
     return res.status(500).json({ error: 'Failed to create order' });
@@ -461,7 +515,13 @@ app.patch('/api/orders/:id/status', async (req, res) => {
         auditLogs: true,
       },
     });
-    return res.json({ success: true, order: transformOrder(updated) });
+    
+    const updatedOrder = transformOrder(updated);
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('orderUpdated', updatedOrder);
+    }
+    return res.json({ success: true, order: updatedOrder });
   } catch (err) {
     console.error('Update status error:', err);
     return res.status(500).json({ error: 'Failed to update status' });
@@ -516,7 +576,12 @@ app.post('/api/orders/:id/cancel', async (req, res) => {
       include: { items: true, auditLogs: true, customer: true, assignedRider: true },
     });
 
-    return res.json({ success: true, order: transformOrder(updated) });
+    const updatedOrder = transformOrder(updated);
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('orderUpdated', updatedOrder);
+    }
+    return res.json({ success: true, order: updatedOrder });
   } catch (err) {
     console.error('Cancel order error:', err);
     return res.status(500).json({ error: 'Failed to cancel order' });
@@ -593,7 +658,12 @@ app.post('/api/orders/:id/modify', async (req, res) => {
       include: { items: true, auditLogs: true, customer: true, assignedRider: true },
     });
 
-    return res.json({ success: true, order: transformOrder(updated) });
+    const updatedOrder = transformOrder(updated);
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('orderUpdated', updatedOrder);
+    }
+    return res.json({ success: true, order: updatedOrder });
   } catch (err) {
     console.error('Modify order error:', err);
     return res.status(500).json({ error: 'Failed to modify order' });
@@ -827,11 +897,29 @@ app.patch('/api/tables/:id', async (req, res) => {
 
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error('Unhandled error:', err);
-  res.status(500).json({ error: 'Internal Server Error' });
+  res.status(500).json({ error: true, message: 'Internal Server Error' });
 });
 
 async function startServer() {
   const PORT = 3000;
+
+  // Add retry loop for Prisma connection to handle DB container startup delay
+  let retries = 5;
+  while (retries > 0) {
+    try {
+      await prisma.$connect();
+      console.log('Successfully connected to the database.');
+      break;
+    } catch (err) {
+      console.error(`Database connection failed. Retries left: ${retries - 1}`, err);
+      retries -= 1;
+      if (retries === 0) {
+        console.error('Could not connect to database after multiple attempts. Exiting.');
+        process.exit(1);
+      }
+      await new Promise(resolve => setTimeout(resolve, 3000));
+    }
+  }
 
   await seedDatabaseIfNeeded();
 
@@ -842,13 +930,16 @@ async function startServer() {
     });
   } else {
     const vite = await createViteServer({
-      server: { middlewareMode: true },
+      server: { 
+        middlewareMode: true,
+        hmr: { port: 24678 }
+      },
       appType: 'spa',
     });
     app.use(vite.middlewares);
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
+  httpServer.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on http://0.0.0.0:${PORT}`);
   });
 }
