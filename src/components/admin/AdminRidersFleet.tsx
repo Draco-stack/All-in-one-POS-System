@@ -17,7 +17,7 @@ import {
 import { UserRole } from '../../types';
 
 export const AdminRidersFleet: React.FC = () => {
-  const { users, orders, addNewUser, outlets, showToast } = useRestaurant();
+  const { users, orders, addNewUser, outlets, showToast, getRiderStats } = useRestaurant();
   const [searchFilter, setSearchFilter] = useState('');
   const [isAddRiderOpen, setIsAddRiderOpen] = useState(false);
   const [newRiderName, setNewRiderName] = useState('');
@@ -26,48 +26,32 @@ export const AdminRidersFleet: React.FC = () => {
   // Filter riders from registered users
   const riders = useMemo(() => users.filter((u) => u.role === 'rider'), [users]);
 
-  // Calculate detailed live stats strictly from raw order records
+  // Calculate detailed live stats strictly from raw order records using unified getRiderStats
   const riderStats = useMemo(() => {
     return riders.map((rider) => {
+      const stats = getRiderStats(rider.name);
       const riderName = rider.name.trim().toLowerCase();
       const riderId = rider.id.trim().toLowerCase();
       const riderUsername = (rider.username || '').trim().toLowerCase();
 
       const assignedOrders = orders.filter((o) => {
-        const d = (o.deliveryDriver || '').trim().toLowerCase();
+        const d = (o.deliveryDriver || o.riderName || '').trim().toLowerCase();
         const oRiderId = (o as any).assignedRiderId ? String((o as any).assignedRiderId).trim().toLowerCase() : '';
         return (
           d === riderName ||
           d === riderId ||
           (riderUsername && d === riderUsername) ||
-          (oRiderId && (oRiderId === riderId || oRiderId === riderName))
+          (oRiderId && (oRiderId === riderId || oRiderId === riderName)) ||
+          d.includes(riderName) ||
+          riderName.includes(d)
         );
       });
 
-      const deliveredOrders = assignedOrders.filter(
-        (o) => o.status === 'completed' || o.status === 'delivered'
-      );
-      const cancelledOrders = assignedOrders.filter(
-        (o) => o.status === 'cancelled' || o.status === 'refunded'
-      );
-      const inProgressOrders = assignedOrders.filter(
-        (o) =>
-          o.status !== 'completed' &&
-          o.status !== 'delivered' &&
-          o.status !== 'cancelled' &&
-          o.status !== 'refunded'
-      );
-
-      const deliveredRevenue = deliveredOrders.reduce(
-        (sum, o) => sum + (o.total || o.subtotal || 0),
-        0
-      );
-
-      const totalFinished = deliveredOrders.length + cancelledOrders.length;
+      const totalFinished = stats.delivered + stats.cancelled;
       const successRate =
         totalFinished > 0
-          ? Math.round((deliveredOrders.length / totalFinished) * 100)
-          : deliveredOrders.length > 0
+          ? Math.round((stats.delivered / totalFinished) * 100)
+          : stats.delivered > 0
           ? 100
           : 0;
 
@@ -75,16 +59,19 @@ export const AdminRidersFleet: React.FC = () => {
         ...rider,
         assignedOrders,
         stats: {
-          total: assignedOrders.length,
-          delivered: deliveredOrders.length,
-          cancelled: cancelledOrders.length,
-          inProgress: inProgressOrders.length,
-          deliveredRevenue,
+          total: stats.totalAssigned,
+          delivered: stats.delivered,
+          cancelled: stats.cancelled,
+          inProgress: stats.active,
+          deliveredRevenue: stats.totalRevenue,
+          cancelledRevenue: stats.cancelledRevenue,
+          netFleetRevenue: stats.netFleetRevenue,
+          codCashOnHand: stats.codCashOnHand,
           successRate,
         },
       };
     });
-  }, [riders, orders]);
+  }, [riders, orders, getRiderStats]);
 
   // Fleet Overview Summary Metrics
   const fleetTotals = useMemo(() => {
@@ -249,8 +236,8 @@ export const AdminRidersFleet: React.FC = () => {
               {/* Rider Header */}
               <div className="flex items-start justify-between border-b border-white/5 pb-3 mb-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-lg">
-                    🛵
+                  <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
+                    <Truck className="w-5 h-5" />
                   </div>
                   <div>
                     <h3 className="text-white font-bold text-sm flex items-center gap-1.5">
@@ -343,12 +330,28 @@ export const AdminRidersFleet: React.FC = () => {
                 </div>
               </div>
 
-              {/* Delivered Revenue */}
-              <div className="flex items-center justify-between px-3 py-2 bg-stone-950/60 rounded-xl border border-white/5 text-xs mb-3 shadow-inner">
-                <span className="text-stone-400">Total Delivered Revenue:</span>
-                <span className="font-bold text-emerald-400 font-mono">
-                  PKR {rider.stats.deliveredRevenue.toLocaleString()}
-                </span>
+              {/* Revenue & Reconciliation Breakdown */}
+              <div className="space-y-1.5 mb-3">
+                <div className="flex items-center justify-between px-3 py-1.5 bg-stone-950/60 rounded-xl border border-white/5 text-[11px] shadow-inner">
+                  <span className="text-stone-400">Delivered Revenue:</span>
+                  <span className="font-bold text-emerald-400 font-mono">
+                    PKR {rider.stats.deliveredRevenue.toLocaleString()}
+                  </span>
+                </div>
+                {rider.stats.cancelledRevenue > 0 && (
+                  <div className="flex items-center justify-between px-3 py-1.5 bg-red-950/30 rounded-xl border border-red-900/30 text-[11px] shadow-inner">
+                    <span className="text-red-300">Cancelled Order Deduction:</span>
+                    <span className="font-bold text-red-400 font-mono">
+                      -PKR {rider.stats.cancelledRevenue.toLocaleString()}
+                    </span>
+                  </div>
+                )}
+                <div className="flex items-center justify-between px-3 py-1.5 bg-emerald-950/40 rounded-xl border border-emerald-500/20 text-[11px] shadow-inner">
+                  <span className="text-stone-300 font-semibold">COD Wallet Balance:</span>
+                  <span className="font-black text-emerald-400 font-mono text-xs">
+                    PKR {rider.stats.codCashOnHand.toLocaleString()}
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -440,7 +443,7 @@ export const AdminRidersFleet: React.FC = () => {
 
             <form onSubmit={handleCreateRider} className="p-5 space-y-4">
               <div className="p-3 bg-cyan-950/40 border border-cyan-800/40 rounded-xl text-cyan-300 text-xs flex items-start gap-2.5">
-                <span className="text-base leading-none">🛵</span>
+                <Truck className="w-5 h-5 text-cyan-400 shrink-0 mt-0.5" />
                 <div>
                   <span className="font-bold text-cyan-200">Non-Login Fleet Account:</span> Riders are recorded for dispatching orders and tracking delivery performance. They do not have access to POS cashier operations.
                 </div>

@@ -15,7 +15,7 @@ export const EditOrderModal: React.FC<EditOrderModalProps> = ({ order, onClose, 
 
   const [orderType, setOrderType] = useState<OrderType>('dine_in');
   const [tableNumber, setTableNumber] = useState<string>('Table 1');
-  const [deliveryDriver, setDeliveryDriver] = useState<string>('Carlos Rodriguez');
+  const [deliveryDriver, setDeliveryDriver] = useState<string>('');
   const [customerName, setCustomerName] = useState<string>('');
   const [customerPhone, setCustomerPhone] = useState<string>('');
   const [customerAddress, setCustomerAddress] = useState<string>('');
@@ -29,7 +29,7 @@ export const EditOrderModal: React.FC<EditOrderModalProps> = ({ order, onClose, 
     if (order) {
       setOrderType(order.type || order.orderType || 'dine_in');
       setTableNumber(order.tableNumber || 'Table 1');
-      setDeliveryDriver(order.deliveryDriver || deliveryDrivers[0] || 'Carlos Rodriguez');
+      setDeliveryDriver(order.deliveryDriver || '');
       setCustomerName(order.customer?.name || '');
       setCustomerPhone(order.customer?.phone || '');
       setCustomerAddress(order.customer?.address || '');
@@ -88,13 +88,20 @@ export const EditOrderModal: React.FC<EditOrderModalProps> = ({ order, onClose, 
     setSelectedMenuItemToAdd('');
   };
 
-  const executeSave = async (authorizedBy?: string, reason?: string) => {
+  const executeSave = async (authorizedBy?: string, reason?: string, managerPin?: string) => {
+    if (orderType === 'delivery' && !deliveryDriver) {
+      showToast('⚠️ A delivery rider is required for delivery orders. Please select a rider.');
+      return;
+    }
+
     setIsSaving(true);
     try {
       await editOrder(order.id, {
         type: orderType,
+        orderType: orderType,
         tableNumber: orderType === 'dine_in' ? tableNumber : undefined,
         deliveryDriver: orderType === 'delivery' ? deliveryDriver : undefined,
+        riderName: orderType === 'delivery' ? deliveryDriver : undefined,
         customer: {
           ...order.customer,
           name: customerName || 'Guest',
@@ -108,7 +115,8 @@ export const EditOrderModal: React.FC<EditOrderModalProps> = ({ order, onClose, 
         tax,
         deliveryFee,
         total,
-      });
+        managerPin, // Pass pin to fetch JIT token if needed
+      } as any);
       showToast(`✓ Order ${order.orderNumber} successfully modified`);
       if (onSaved) onSaved();
       onClose();
@@ -122,6 +130,11 @@ export const EditOrderModal: React.FC<EditOrderModalProps> = ({ order, onClose, 
   const handleSave = () => {
     if (items.length === 0) {
       showToast('Order must contain at least one item');
+      return;
+    }
+
+    if (orderType === 'delivery' && !deliveryDriver) {
+      showToast('⚠️ A delivery rider is required for delivery orders. Please select a rider.');
       return;
     }
 
@@ -220,17 +233,32 @@ export const EditOrderModal: React.FC<EditOrderModalProps> = ({ order, onClose, 
             </div>
           ) : orderType === 'delivery' ? (
             <div>
-              <label className="block text-[10px] uppercase font-bold text-stone-400 mb-1">Assigned Delivery Driver</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-[10px] uppercase font-bold text-amber-400">
+                  🛵 Assigned Delivery Driver * (Required)
+                </label>
+                {!deliveryDriver && (
+                  <span className="text-[9px] font-bold text-red-400 bg-red-500/10 px-1.5 py-0.2 rounded border border-red-500/20 animate-pulse">
+                    Required
+                  </span>
+                )}
+              </div>
               <select
                 value={deliveryDriver}
                 onChange={(e) => setDeliveryDriver(e.target.value)}
-                className="w-full bg-stone-900 border border-white/10 rounded-xl px-3.5 py-2 text-amber-300 font-bold focus:outline-none focus:border-amber-500/50 cursor-pointer"
+                required
+                className={`w-full rounded-xl px-3.5 py-2 font-bold focus:outline-none cursor-pointer transition ${
+                  !deliveryDriver
+                    ? 'border-2 border-amber-500/70 bg-amber-950/40 text-amber-300 ring-2 ring-amber-500/20'
+                    : 'bg-stone-900 border border-white/10 text-amber-300 focus:border-amber-500/50'
+                }`}
               >
+                <option value="">-- Choose Rider (Required for Delivery)* --</option>
                 {deliveryDrivers.map((d) => {
                   const stats = getRiderStats(d);
                   return (
                     <option key={d} value={d}>
-                      {d} {stats.totalAssigned > 0 ? `(${stats.totalAssigned} orders • ✓${stats.delivered} | ✗${stats.cancelled})` : '(0 orders)'}
+                      🛵 {d} {stats.totalAssigned > 0 ? `(${stats.totalAssigned} orders • ✓${stats.delivered} | ✗${stats.cancelled})` : '(0 orders)'}
                     </option>
                   );
                 })}
@@ -397,7 +425,7 @@ export const EditOrderModal: React.FC<EditOrderModalProps> = ({ order, onClose, 
         title={`Manager Authorization Required - Edit Order ${order.orderNumber}`}
         actionDescription="Punched orders cannot be modified without an authorizing Manager/Owner PIN and logged reason."
         onAuthorized={(manager, reason) => {
-          executeSave(manager.name, reason);
+          executeSave(manager.name, reason, manager.pin);
         }}
       />
     </div>

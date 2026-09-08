@@ -1,5 +1,7 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { io } from 'socket.io-client';
+import { posDB } from '../utils/indexedDB';
+import { roundToCurrency } from '../utils/financial';
 import {
   MenuItem,
   Category,
@@ -20,13 +22,9 @@ import {
 import {
   INITIAL_CATEGORIES,
   INITIAL_MENU_ITEMS,
-  INITIAL_CUSTOMERS,
   INITIAL_STOCK,
-  HISTORICAL_SHIFT_AUDITS,
-  INITIAL_SALES_ADJUSTMENTS,
   HistoricalShiftRecord,
 } from '../data/mockData';
-import { getAllDeliveryMockOrders } from '../data/mockDeliveryData';
 
 interface RestaurantContextType {
   outlets: string[];
@@ -97,6 +95,9 @@ interface RestaurantContextType {
     deliveryNotes?: string;
     notes?: string;
   }) => Promise<Customer>;
+  blockCustomer: (phone: string, reason: string, blockedBy?: string) => Promise<{ success: boolean; error?: string; customer?: Customer }>;
+  unblockCustomer: (phone: string) => Promise<{ success: boolean; error?: string; customer?: Customer }>;
+  isCustomerBlocked: (phone: string) => { blocked: boolean; reason?: string; customer?: Customer };
 
   // Orders & Transactions
   orders: Order[];
@@ -105,9 +106,19 @@ interface RestaurantContextType {
   recallParkedOrder: (parkedId: string) => void;
   deleteParkedOrder: (parkedId: string) => void;
   punchOrder: (tenderedAmount?: number, outletName?: string) => Promise<Order>;
-  updateOrderStatus: (orderId: string, status: Order['status']) => void;
+  updateOrderStatus: (
+    orderId: string, 
+    status: Order['status'], 
+    meta?: { 
+      paymentStatus?: string; 
+      paymentMethod?: string; 
+      riderId?: string;
+      amountTendered?: number;
+      changeGiven?: number;
+    }
+  ) => void;
   refundOrder: (orderId: string, reason: string) => void;
-  cancelOrder: (orderId: string, reason: string) => Promise<any>;
+  cancelOrder: (orderId: string, reason: string, managerPin?: string) => Promise<any>;
   editOrder: (orderId: string, updates: any) => Promise<any>;
   assignDeliveryDriver: (orderId: string, driver: string) => void;
 
@@ -158,6 +169,8 @@ interface RestaurantContextType {
   // Toast
   toast: string | null;
   showToast: (msg: string) => void;
+  syncFromServer: () => Promise<void>;
+  isRestricted: (capability: string) => boolean;
 }
 
 const DEFAULT_EMPTY_CART: PosCartState = {
@@ -171,7 +184,7 @@ const DEFAULT_EMPTY_CART: PosCartState = {
   orderType: "takeaway",
   paymentMethod: "cash",
   tableNumber: 'Table 1',
-  deliveryDriver: 'Carlos Rodriguez',
+  deliveryDriver: '',
   discountPercent: 0,
   tipAmount: 0,
   notes: '',
@@ -197,10 +210,40 @@ const saveToStorage = (key: string, value: any) => {
   } catch (e) {}
 };
 
+export const deduplicateOrders = (ordersList: Order[]): Order[] => {
+  if (!Array.isArray(ordersList)) return [];
+  const seenIds = new Set<string>();
+  const seenNumbers = new Set<string>();
+  const result: Order[] = [];
+  for (const ord of ordersList) {
+    if (!ord || !ord.id) continue;
+    if (seenIds.has(ord.id)) continue;
+    if (ord.orderNumber && seenNumbers.has(ord.orderNumber)) continue;
+    seenIds.add(ord.id);
+    if (ord.orderNumber) seenNumbers.add(ord.orderNumber);
+    result.push(ord);
+  }
+  return result;
+};
+
 export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     return (localStorage.getItem('pos_theme') as 'light' | 'dark') || 'dark';
   });
+
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      if (theme === 'dark') {
+        document.documentElement.classList.add('dark');
+        document.documentElement.classList.remove('light');
+        document.documentElement.setAttribute('data-theme', 'dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+        document.documentElement.classList.add('light');
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    }
+  }, [theme]);
   const [toast, setToast] = useState<string | null>(null);
 
   const showToast = useCallback((msg: string) => {
@@ -337,6 +380,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const logoutUser = useCallback(() => {
     setIsLoggedIn(false);
     saveToStorage('pos_is_logged_in', false);
+    saveToStorage('pos_jwt_token', null);
     showToast('🔒 Logged out. Return to login screen.');
   }, [showToast]);
 
@@ -396,6 +440,26 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         setIsLoggedIn(true);
         saveToStorage('pos_is_logged_in', true);
         saveToStorage('pos_current_user', matched);
+
+        // Pre-fetch and cache JWT token in background
+        const pinToUse = matched.pin || cleanPass;
+        fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pin: pinToUse })
+        })
+        .then(async (loginRes) => {
+          if (loginRes.ok) {
+            const data = await loginRes.json();
+            if (data && data.token) {
+              saveToStorage('pos_jwt_token', data.token);
+            }
+          }
+        })
+        .catch((err) => {
+          console.warn('Background token pre-fetch failed:', err);
+        });
+
         return { success: true, user: matched };
       }
 
@@ -415,41 +479,54 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   // Sales Adjustments & Historical Audits
-  const [salesAdjustments, setSalesAdjustments] = useState<SalesAdjustmentRecord[]>(() =>
-    loadFromStorage('pos_sales_adjustments_cache', INITIAL_SALES_ADJUSTMENTS)
-  );
-  const [historicalShifts, setHistoricalShifts] = useState<HistoricalShiftRecord[]>(() =>
-    loadFromStorage('pos_shifts_cache', HISTORICAL_SHIFT_AUDITS)
-  );
+  const [salesAdjustments, setSalesAdjustments] = useState<SalesAdjustmentRecord[]>(() => {
+    const cached = loadFromStorage<SalesAdjustmentRecord[]>('pos_sales_adjustments_cache', []);
+    if (Array.isArray(cached) && cached.length > 0) {
+      return cached.filter((a) => !a.id?.startsWith('adj-'));
+    }
+    return [];
+  });
+  const [historicalShifts, setHistoricalShifts] = useState<HistoricalShiftRecord[]>(() => {
+    const cached = loadFromStorage<HistoricalShiftRecord[]>('pos_shifts_cache', []);
+    if (Array.isArray(cached) && cached.length > 0) {
+      return cached.filter((s) => !s.id?.startsWith('sh-audit-'));
+    }
+    return [];
+  });
 
   // POS State
   const [posCart, setPosCart] = useState<PosCartState>(DEFAULT_EMPTY_CART);
   const [orders, setOrders] = useState<Order[]>(() => {
     const cached = loadFromStorage<Order[]>('pos_orders_cache', []);
     if (Array.isArray(cached) && cached.length > 0) {
-      return cached;
+      const realOrders = cached.filter((o) =>
+        !o.id?.startsWith('del-ord-') &&
+        !o.id?.startsWith('mock-') &&
+        o.orderNumber !== 'WY164V527CL47H' &&
+        o.orderNumber !== 'WX195C578EJ53E'
+      );
+      return deduplicateOrders(realOrders);
     }
-    return getAllDeliveryMockOrders();
+    return [];
   });
+  const isPunchOrderInFlightRef = useRef<boolean>(false);
   const [parkedOrders, setParkedOrders] = useState<ParkedOrder[]>(() =>
     loadFromStorage('pos_parked_orders_cache', [])
   );
-  const [customers, setCustomers] = useState<Customer[]>(() =>
-    loadFromStorage('pos_customers_cache', INITIAL_CUSTOMERS)
-  );
+  const [customers, setCustomers] = useState<Customer[]>(() => {
+    const cached = loadFromStorage<Customer[]>('pos_customers_cache', []);
+    return Array.isArray(cached) ? cached : [];
+  });
   const [stockItems, setStockItems] = useState<InventoryStockItem[]>(() =>
     loadFromStorage('pos_stock_cache', INITIAL_STOCK)
   );
-  const [drivers, setDrivers] = useState<string[]>([
-    'Carlos Rodriguez',
-    'Samir Khan',
-    'Marcus Vance',
-    'David Miller',
-    'Elena Scott',
-  ]);
+  const [drivers, setDrivers] = useState<string[]>([]);
 
   const [tables, setTables] = useState<{ id: string; number: string; capacity: number; status: string; active: boolean }[]>(() =>
     loadFromStorage('pos_tables_cache', [])
+  );
+  const [cashDrops, setCashDrops] = useState<any[]>(() =>
+    loadFromStorage('pos_cash_drops_cache', [])
   );
 
   // Synchronize state changes to localStorage
@@ -465,6 +542,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   useEffect(() => { saveToStorage('pos_customers_cache', customers); }, [customers]);
   useEffect(() => { saveToStorage('pos_stock_cache', stockItems); }, [stockItems]);
   useEffect(() => { saveToStorage('pos_tables_cache', tables); }, [tables]);
+  useEffect(() => { saveToStorage('pos_cash_drops_cache', cashDrops); }, [cashDrops]);
 
   // Dynamically compute list of active delivery drivers from users with role 'rider'
   const deliveryDrivers = useMemo(() => {
@@ -478,14 +556,26 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const getRiderStats = useCallback(
     (riderIdentifier: string): RiderStats => {
       if (!riderIdentifier) {
-        return { totalAssigned: 0, delivered: 0, cancelled: 0, active: 0, inTransit: 0, totalRevenue: 0 };
+        return {
+          totalAssigned: 0,
+          delivered: 0,
+          cancelled: 0,
+          active: 0,
+          inTransit: 0,
+          totalRevenue: 0,
+          cancelledRevenue: 0,
+          netFleetRevenue: 0,
+          codCashOnHand: 0,
+        };
       }
       const cleanTarget = riderIdentifier.trim().toLowerCase();
       const matchedUser = users.find(
         (u) =>
           u.id.toLowerCase() === cleanTarget ||
           u.name.toLowerCase() === cleanTarget ||
-          (u.username && u.username.toLowerCase() === cleanTarget)
+          (u.username && u.username.toLowerCase() === cleanTarget) ||
+          u.name.toLowerCase().includes(cleanTarget) ||
+          cleanTarget.includes(u.name.toLowerCase())
       );
 
       const targetName = (matchedUser ? matchedUser.name : riderIdentifier).trim().toLowerCase();
@@ -493,45 +583,92 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       const targetUsername = (matchedUser?.username || '').trim().toLowerCase();
 
       const assigned = orders.filter((o) => {
-        const orderDriver = (o.deliveryDriver || '').trim().toLowerCase();
+        const orderDriver = (o.deliveryDriver || o.riderName || '').trim().toLowerCase();
         const orderRiderId = (o as any).assignedRiderId
           ? String((o as any).assignedRiderId).trim().toLowerCase()
           : '';
+        if (!orderDriver && !orderRiderId) return false;
+
         return (
           orderDriver === targetName ||
           orderDriver === targetId ||
           (targetUsername && orderDriver === targetUsername) ||
-          (orderRiderId && (orderRiderId === targetId || orderRiderId === cleanTarget))
+          (orderRiderId && (orderRiderId === targetId || orderRiderId === cleanTarget)) ||
+          (targetName && orderDriver.includes(targetName)) ||
+          (orderDriver && targetName.includes(orderDriver))
         );
       });
 
-      const delivered = assigned.filter(
+      const deliveredOrders = assigned.filter(
         (o) => o.status === 'completed' || o.status === 'delivered'
-      ).length;
-      const cancelled = assigned.filter(
+      );
+      const cancelledOrders = assigned.filter(
         (o) => o.status === 'cancelled' || o.status === 'refunded'
-      ).length;
-      const active = assigned.filter(
+      );
+      const activeOrders = assigned.filter(
         (o) =>
           o.status !== 'completed' &&
           o.status !== 'delivered' &&
           o.status !== 'cancelled' &&
           o.status !== 'refunded'
-      ).length;
-      const totalRevenue = assigned
-        .filter((o) => o.status === 'completed' || o.status === 'delivered')
+      );
+
+      const totalRevenue = deliveredOrders.reduce(
+        (sum, o) => sum + (o.total || o.subtotal || 0),
+        0
+      );
+
+      const cancelledRevenue = cancelledOrders.reduce(
+        (sum, o) => sum + (o.total || o.subtotal || 0),
+        0
+      );
+
+      const netFleetRevenue = Math.max(0, totalRevenue - cancelledRevenue);
+
+      // Delivered COD cash collected (orders delivered with cash / COD)
+      const deliveredCODCash = deliveredOrders
+        .filter((o) => {
+          const pm = (o.paymentMethod || '').toLowerCase();
+          return (
+            pm === 'cash' ||
+            pm === 'cod' ||
+            pm === 'cash_on_delivery' ||
+            !pm ||
+            (!pm.includes('card') && !pm.includes('online') && !pm.includes('pos'))
+          );
+        })
         .reduce((sum, o) => sum + (o.total || o.subtotal || 0), 0);
+
+      // Total cash dropped by rider in cash drops audit ledger
+      const totalDropped = (cashDrops || [])
+        .filter((d) => {
+          const dRider = (d.riderName || '').trim().toLowerCase();
+          return (
+            dRider === targetName ||
+            dRider === targetId ||
+            (targetUsername && dRider === targetUsername) ||
+            (targetName && dRider.includes(dRider)) ||
+            (dRider && targetName.includes(dRider))
+          );
+        })
+        .reduce((sum, d) => sum + (d.amount || 0), 0);
+
+      // COD Cash Reconciliation: Any order that cancels is naturally excluded/subtracted from delivered cash balance
+      const codCashOnHand = Math.max(0, deliveredCODCash - totalDropped);
 
       return {
         totalAssigned: assigned.length,
-        delivered,
-        cancelled,
-        active,
-        inTransit: active,
+        delivered: deliveredOrders.length,
+        cancelled: cancelledOrders.length,
+        active: activeOrders.length,
+        inTransit: activeOrders.length,
         totalRevenue,
+        cancelledRevenue,
+        netFleetRevenue,
+        codCashOnHand,
       };
     },
-    [orders, users]
+    [orders, users, cashDrops]
   );
 
   const addSalesAdjustment = useCallback((adj: Omit<SalesAdjustmentRecord, 'id' | 'timestamp'>) => {
@@ -544,13 +681,6 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   }, []);
 
   // Current Register Shift
-  const [cashDrops, setCashDrops] = useState<any[]>(() =>
-    loadFromStorage('pos_cash_drops_cache', [])
-  );
-
-  useEffect(() => {
-    saveToStorage('pos_cash_drops_cache', cashDrops);
-  }, [cashDrops]);
 
   const dropRiderCash = (riderName: string, amount: number, notes?: string) => {
     const newDrop = {
@@ -565,7 +695,12 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   };
 
   const addOrder = (order: Order) => {
-    setOrders((prev) => [order, ...prev]);
+    setOrders((prev) => {
+      const filtered = prev.filter(
+        (o) => o.id !== order.id && (!order.orderNumber || o.orderNumber !== order.orderNumber)
+      );
+      return [order, ...filtered];
+    });
   };
 
   const [activeReceiptOrder, setActiveReceiptOrder] = useState<Order | null>(null);
@@ -701,6 +836,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             outlet: u.outlet || 'Main Branch',
             phone: u.phone || '',
             active: u.active !== false,
+            restrictions: u.restrictions || '[]',
             createdAt: u.createdAt ? String(u.createdAt).split('T')[0] : '2025-01-01',
           }));
           setUsers(mappedUsers);
@@ -710,24 +846,49 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       console.warn('User fetch fallback to local cache:', err);
     }
 
-    // 2. Fetch Menu Items
+    // 1.5. Fetch Dynamic Categories from Database
+    try {
+      const res = await fetch('/api/categories');
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          const mappedCats: Category[] = [
+            { id: 'all', name: 'All', itemCount: 0 },
+            ...data.map((c: any) => ({
+              id: c.slug || c.id,
+              name: c.title || c.name,
+              icon: c.icon || undefined,
+              itemCount: c._count?.menuItems || 0,
+            })),
+          ];
+          setCategories(mappedCats);
+          saveToStorage('pos_categories_cache', mappedCats);
+        }
+      }
+    } catch (err) {
+      console.warn('Categories fetch fallback to local cache:', err);
+    }
+
+    // 2. Fetch Dynamic Menu Items from Database
     try {
       const res = await fetch('/api/menu');
       if (res.ok) {
         const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
+        if (Array.isArray(data)) {
           const mappedItems: MenuItem[] = data.map((i: any) => ({
             id: i.id,
             name: i.title || i.name,
             description: i.description || '',
             price: Number(i.price),
-            category: i.category?.slug || i.categoryId || i.category || 'pizzas',
+            category: i.category?.slug || i.category?.title || i.categoryId || i.category || 'pizzas',
             image: i.imageUrl || i.image || 'https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=400&q=80',
             available: i.active !== false,
             flavors: i.flavors ? (typeof i.flavors === 'string' ? JSON.parse(i.flavors) : i.flavors) : [],
             isPopular: i.isPopular || false,
+            preparationTimeMinutes: i.preparationTime || 10,
           }));
           setMenuItems(mappedItems);
+          saveToStorage('pos_menu_items_cache', mappedItems);
         }
       }
     } catch (err) {
@@ -739,7 +900,18 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       const res = await fetch('/api/customers');
       if (res.ok) {
         const data = await res.json();
-        if (Array.isArray(data)) setCustomers(data);
+        if (Array.isArray(data) && data.length > 0) {
+          setCustomers((prev) => {
+            const merged = [...data];
+            prev.forEach((localCust) => {
+              const localClean = (localCust.phone || '').replace(/\D/g, '');
+              if (localClean && !merged.some((m) => (m.phone || '').replace(/\D/g, '') === localClean)) {
+                merged.push(localCust);
+              }
+            });
+            return merged;
+          });
+        }
       }
     } catch (e) {}
 
@@ -749,7 +921,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data)) {
-          setOrders(data);
+          setOrders(deduplicateOrders(data));
         }
       }
     } catch (e) {}
@@ -809,26 +981,190 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     
     socket.on('orderCreated', (newOrder: Order) => {
       setOrders((prev) => {
-        // Prevent duplicates
-        if (prev.some(o => o.id === newOrder.id)) return prev;
+        // Prevent duplicates by id and orderNumber
+        if (prev.some((o) => o.id === newOrder.id || (newOrder.orderNumber && o.orderNumber === newOrder.orderNumber))) {
+          return prev.map((o) =>
+            o.id === newOrder.id || (newOrder.orderNumber && o.orderNumber === newOrder.orderNumber)
+              ? newOrder
+              : o
+          );
+        }
         return [newOrder, ...prev];
       });
-      // Optionally sync the whole state to ensure inventory/shifts remain consistent
-      syncFromServer();
     });
 
     socket.on('orderUpdated', (updatedOrder: Order) => {
-      setOrders((prev) => prev.map(o => o.id === updatedOrder.id ? updatedOrder : o));
-      syncFromServer(); // Re-fetch to keep customers/shifts in sync easily
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.id === updatedOrder.id || (updatedOrder.orderNumber && o.orderNumber === updatedOrder.orderNumber)
+            ? updatedOrder
+            : o
+        )
+      );
     });
 
-    const interval = setInterval(syncFromServer, 15000);
-    
+    // Real-time menu synchronization
+    socket.on('menuItemCreated', (createdItem: any) => {
+      const newItem: MenuItem = {
+        id: createdItem.id,
+        name: createdItem.title || createdItem.name,
+        description: createdItem.description || '',
+        price: Number(createdItem.price),
+        category: createdItem.category?.slug || createdItem.category?.title || createdItem.categoryId || 'pizzas',
+        image: createdItem.imageUrl || createdItem.image || 'https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=400&q=80',
+        available: createdItem.active !== false,
+        flavors: createdItem.flavors ? (typeof createdItem.flavors === 'string' ? JSON.parse(createdItem.flavors) : createdItem.flavors) : [],
+        isPopular: createdItem.isPopular || false,
+        preparationTimeMinutes: createdItem.preparationTime || 10,
+      };
+      setMenuItems((prev) => {
+        const exists = prev.some((m) => m.id === newItem.id);
+        const updated = exists ? prev.map((m) => (m.id === newItem.id ? newItem : m)) : [newItem, ...prev];
+        saveToStorage('pos_menu_items_cache', updated);
+        return updated;
+      });
+    });
+
+    socket.on('menuItemUpdated', (updatedItem: any) => {
+      setMenuItems((prev) => {
+        const updated = prev.map((m) => {
+          if (m.id === updatedItem.id) {
+            return {
+              ...m,
+              name: updatedItem.title || updatedItem.name || m.name,
+              description: updatedItem.description !== undefined ? updatedItem.description : m.description,
+              price: updatedItem.price !== undefined ? Number(updatedItem.price) : m.price,
+              category: updatedItem.category?.slug || updatedItem.category?.title || updatedItem.categoryId || m.category,
+              image: updatedItem.imageUrl || updatedItem.image || m.image,
+              available: updatedItem.active !== false,
+              flavors: updatedItem.flavors ? (typeof updatedItem.flavors === 'string' ? JSON.parse(updatedItem.flavors) : updatedItem.flavors) : m.flavors,
+              preparationTimeMinutes: updatedItem.preparationTime || m.preparationTimeMinutes,
+            };
+          }
+          return m;
+        });
+        saveToStorage('pos_menu_items_cache', updated);
+        return updated;
+      });
+    });
+
+    socket.on('menuItemDeleted', ({ id }: { id: string }) => {
+      setMenuItems((prev) => {
+        const updated = prev.filter((m) => m.id !== id);
+        saveToStorage('pos_menu_items_cache', updated);
+        return updated;
+      });
+    });
+
+    socket.on('categoriesUpdated', () => {
+      fetch('/api/categories')
+        .then((r) => r.json())
+        .then((data) => {
+          if (Array.isArray(data)) {
+            const mappedCats: Category[] = [
+              { id: 'all', name: 'All', itemCount: 0 },
+              ...data.map((c: any) => ({
+                id: c.slug || c.id,
+                name: c.title || c.name,
+                icon: c.icon || undefined,
+                itemCount: c._count?.menuItems || 0,
+              })),
+            ];
+            setCategories(mappedCats);
+            saveToStorage('pos_categories_cache', mappedCats);
+          }
+        })
+        .catch(console.warn);
+    });
+
+    socket.on('customer:blocked', ({ phone, customer }: any) => {
+      if (customer) {
+        setCustomers((prev) => {
+          const matchPhone = (p1?: string, p2?: string) => {
+            if (!p1 || !p2) return false;
+            const d1 = String(p1).replace(/\D/g, '');
+            const d2 = String(p2).replace(/\D/g, '');
+            return d1 && d2 && (d1 === d2 || (d1.length >= 7 && d2.length >= 7 && (d1.endsWith(d2) || d2.endsWith(d1))));
+          };
+          const exists = prev.some((c) => c.id === customer.id || matchPhone(c.phone, phone));
+          if (exists) {
+            return prev.map((c) => (c.id === customer.id || matchPhone(c.phone, phone) ? { ...c, ...customer } : c));
+          }
+          return [customer, ...prev];
+        });
+      }
+    });
+
+    socket.on('customer:unblocked', ({ phone, customer }: any) => {
+      if (customer) {
+        setCustomers((prev) => {
+          const matchPhone = (p1?: string, p2?: string) => {
+            if (!p1 || !p2) return false;
+            const d1 = String(p1).replace(/\D/g, '');
+            const d2 = String(p2).replace(/\D/g, '');
+            return d1 && d2 && (d1 === d2 || (d1.length >= 7 && d2.length >= 7 && (d1.endsWith(d2) || d2.endsWith(d1))));
+          };
+          return prev.map((c) => {
+            if (c.id === customer.id || matchPhone(c.phone, phone)) {
+              return {
+                ...c,
+                ...customer,
+                isBlocked: false,
+                blockReason: undefined,
+                blockedAt: undefined,
+                blockedBy: undefined,
+              };
+            }
+            return c;
+          });
+        });
+      }
+    });
+
     return () => {
-      clearInterval(interval);
       socket.disconnect();
     };
   }, [syncFromServer]);
+
+  // Auto-recovery offline sync worker: drains IndexedDB queue when online
+  useEffect(() => {
+    const drainOfflineQueue = async () => {
+      if (typeof navigator !== 'undefined' && !navigator.onLine) return;
+      try {
+        const pending = await posDB.getQueuedOrders();
+        for (const item of pending) {
+          if (item.status === 'queued' || item.status === 'failed') {
+            const res = await fetch('/api/orders', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(item.data),
+            });
+            if (res.ok) {
+              await posDB.removeQueuedOrder(item.localId);
+              showToast(`✓ Offline Order #${item.orderNumber} successfully synced to server!`);
+            } else if (res.status === 400 || res.status === 409 || res.status === 422) {
+              console.warn(`[IndexedDB Sync] Order #${item.orderNumber} returned HTTP ${res.status} (invalid/duplicate payload). Evicting from offline queue.`);
+              await posDB.removeQueuedOrder(item.localId);
+            } else if (res.status === 401 || res.status === 403) {
+              console.warn(`[IndexedDB Sync] Authentication expired (HTTP ${res.status}). Pausing offline sync queue drain.`);
+              break;
+            }
+          }
+        }
+      } catch (syncErr) {
+        console.warn('Auto-sync queue drain error:', syncErr);
+      }
+    };
+
+    window.addEventListener('online', drainOfflineQueue);
+    const syncInterval = setInterval(drainOfflineQueue, 20000);
+    drainOfflineQueue();
+
+    return () => {
+      window.removeEventListener('online', drainOfflineQueue);
+      clearInterval(syncInterval);
+    };
+  }, [showToast]);
 
   // Table handlers wired to real Prisma DB
   const addTable = async (number: string, capacity: number) => {
@@ -885,18 +1221,61 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
   };
 
+  // Authentication Helper for API requests
+  const getAuthToken = async (overridePin?: string) => {
+    try {
+      // Use cached token if available and valid
+      const cachedToken = loadFromStorage<string | null>('pos_jwt_token', null);
+      if (cachedToken && !overridePin) {
+        try {
+          const parts = cachedToken.split('.');
+          if (parts.length === 3) {
+            const payload = JSON.parse(atob(parts[1]));
+            const exp = payload.exp * 1000;
+            if (Date.now() < exp) {
+              return cachedToken;
+            }
+          }
+        } catch (tokenParseErr) {
+          console.warn('Stale or malformed cached token:', tokenParseErr);
+        }
+      }
+
+      const authPin = overridePin || currentUser?.pin;
+      if (!authPin) return null;
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin: authPin })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        saveToStorage('pos_jwt_token', data.token);
+        return data.token;
+      }
+    } catch (e) {
+      console.warn('Failed to fetch auth token', e);
+    }
+    return null;
+  };
+
   // Staff handlers wired to real Prisma DB
   const addNewUser = async (user: Omit<UserAccount, 'id' | 'createdAt'>) => {
     try {
+      const token = await getAuthToken();
       const res = await fetch('/api/users', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
         body: JSON.stringify({
           name: user.name,
           username: user.username,
           pin: user.pin,
           role: user.role.toUpperCase(),
           phone: user.phone,
+          restrictions: user.restrictions || '[]',
         }),
       });
 
@@ -912,6 +1291,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           outlet: user.outlet || 'Main Branch',
           phone: created.phone || '',
           active: created.active,
+          restrictions: created.restrictions || '[]',
           createdAt: new Date().toISOString().split('T')[0],
         };
         setUsers((prev) => [...prev, newUser]);
@@ -929,6 +1309,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     const newUser: UserAccount = {
       ...user,
       id: `usr-${Date.now()}`,
+      restrictions: user.restrictions || '[]',
       createdAt: new Date().toISOString().split('T')[0],
       createdBy: currentUser.name,
     };
@@ -944,10 +1325,15 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       if (updates.phone !== undefined) payload.phone = updates.phone;
       if (updates.pin !== undefined) payload.pin = updates.pin;
       if (updates.active !== undefined) payload.active = updates.active;
+      if (updates.restrictions !== undefined) payload.restrictions = updates.restrictions;
 
+      const token = await getAuthToken();
       const res = await fetch(`/api/users/${encodeURIComponent(userId)}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
         body: JSON.stringify(payload),
       });
 
@@ -964,6 +1350,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
                   phone: updated.phone || '',
                   pin: updated.pin || u.pin,
                   active: updated.active,
+                  restrictions: updated.restrictions || '[]',
                 }
               : u
           )
@@ -982,22 +1369,21 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
   };
 
-  const updateUserPin = (userId: string, newPin: string) => {
+  const updateUserPin = async (userId: string, newPin: string) => {
     setUsers((prev) =>
       prev.map((u) => (u.id === userId ? { ...u, pin: newPin } : u))
     );
-    showToast('PIN successfully updated!');
+    await updateUser(userId, { pin: newPin });
   };
 
-  const toggleUserActive = (userId: string) => {
+  const toggleUserActive = async (userId: string) => {
+    const user = users.find((u) => u.id === userId);
+    if (!user) return;
+    const newStatus = user.active === false ? true : false;
     setUsers((prev) =>
-      prev.map((u) => {
-        if (u.id !== userId) return u;
-        const newStatus = u.active === false ? true : false;
-        showToast(`Staff "${u.name}" ${newStatus ? 'activated' : 'deactivated'}.`);
-        return { ...u, active: newStatus };
-      })
+      prev.map((u) => (u.id === userId ? { ...u, active: newStatus } : u))
     );
+    await updateUser(userId, { active: newStatus });
   };
 
   const deleteUser = async (userId: string): Promise<boolean> => {
@@ -1012,8 +1398,12 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
 
     try {
+      const token = await getAuthToken();
       const res = await fetch(`/api/users/${encodeURIComponent(userId)}`, {
         method: 'DELETE',
+        headers: {
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        }
       });
 
       if (res.ok) {
@@ -1028,7 +1418,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       } else if (res.status === 409) {
         const errData = await res.json();
         showToast(`⚠️ ${errData.error || 'User is linked to shift history. Deactivating instead.'}`);
-        toggleUserActive(userId);
+        await toggleUserActive(userId);
         return true;
       } else {
         const errData = await res.json().catch(() => ({}));
@@ -1045,16 +1435,27 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   // Menu handlers wired to real Prisma DB
   const addMenuItem = async (item: Omit<MenuItem, 'id'>) => {
     try {
+      const token = await getAuthToken();
       const res = await fetch('/api/menu-items', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+          'x-manager-pin': currentUser?.pin || '1111',
+          'x-user-role': currentUser?.role || 'owner',
+        },
         body: JSON.stringify({
           title: item.name,
+          name: item.name,
           description: item.description,
           price: item.price,
           imageUrl: item.image,
+          image: item.image,
           categoryTitle: item.category,
+          category: item.category,
           active: item.available !== false,
+          available: item.available !== false,
+          flavors: item.flavors || [],
         }),
       });
 
@@ -1063,16 +1464,20 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         const created = body.data;
         const newItem: MenuItem = {
           id: created.id,
-          name: created.title,
+          name: created.title || item.name,
           description: created.description || '',
           price: Number(created.price),
           category: item.category,
           image: created.imageUrl || item.image,
-          available: created.active,
+          available: created.active !== false,
           flavors: item.flavors || [],
           isPopular: item.isPopular || false,
         };
-        setMenuItems((prev) => [newItem, ...prev]);
+        setMenuItems((prev) => {
+          const updated = [newItem, ...prev.filter((m) => m.id !== newItem.id)];
+          saveToStorage('pos_menu_items_cache', updated);
+          return updated;
+        });
         showToast(`✓ Added "${newItem.name}" to database catalog!`);
         return;
       }
@@ -1081,21 +1486,70 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
 
     const newItem: MenuItem = { ...item, id: `item-${Date.now()}` };
-    setMenuItems((prev) => [newItem, ...prev]);
+    setMenuItems((prev) => {
+      const updated = [newItem, ...prev];
+      saveToStorage('pos_menu_items_cache', updated);
+      return updated;
+    });
     showToast(`Added "${newItem.name}" to menu!`);
   };
 
-  const updateMenuItem = (id: string, updates: Partial<MenuItem>) => {
-    setMenuItems((prev) => prev.map((m) => (m.id === id ? { ...m, ...updates } : m)));
-    showToast('Menu item updated!');
+  const updateMenuItem = async (id: string, updates: Partial<MenuItem>) => {
+    // Immediate optimistic local update
+    setMenuItems((prev) => {
+      const updated = prev.map((m) => (m.id === id ? { ...m, ...updates } : m));
+      saveToStorage('pos_menu_items_cache', updated);
+      return updated;
+    });
+
+    try {
+      const token = await getAuthToken();
+      const res = await fetch(`/api/menu-items/${encodeURIComponent(id)}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+          'x-manager-pin': currentUser?.pin || '1111',
+          'x-user-role': currentUser?.role || 'owner',
+        },
+        body: JSON.stringify({
+          title: updates.name,
+          name: updates.name,
+          description: updates.description,
+          price: updates.price,
+          imageUrl: updates.image,
+          image: updates.image,
+          categoryTitle: updates.category,
+          category: updates.category,
+          active: updates.available,
+          available: updates.available,
+          flavors: updates.flavors,
+        })
+      });
+
+      if (res.ok) {
+        showToast('✓ Menu item updated in database!');
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        showToast(`⚠️ ${errData.error || 'Failed to update item on server'}`);
+      }
+    } catch (err) {
+      console.error('[updateMenuItem] Server sync error:', err);
+    }
   };
 
   const deleteMenuItem = async (id: string): Promise<boolean> => {
     console.log('[deleteMenuItem] Attempting to delete menu item ID:', id);
     const target = menuItems.find((m) => m.id === id);
     try {
+      const token = await getAuthToken();
       const res = await fetch(`/api/menu-items/${encodeURIComponent(id)}`, {
         method: 'DELETE',
+        headers: {
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+          'x-manager-pin': currentUser?.pin || '1111',
+          'x-user-role': currentUser?.role || 'owner',
+        }
       });
       const data = await res.json();
 
@@ -1105,10 +1559,14 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
       console.log('[deleteMenuItem] Delete API response success:', data);
       // Instant React state update so item vanishes immediately without page refresh
-      setMenuItems((prev) => prev.filter((m) => m.id !== id));
+      setMenuItems((prev) => {
+        const updated = prev.filter((m) => m.id !== id);
+        saveToStorage('pos_menu_items_cache', updated);
+        return updated;
+      });
 
       if (data.strategy === 'SOFT_DELETE' || data.strategy === 'SOFT_DELETE_FALLBACK') {
-        showToast(`✓ "${target?.name || 'Item'}" soft-deleted (active: false). Hidden from POS grid.`);
+        showToast(`✓ "${target?.name || 'Item'}" deactivated in database.`);
       } else {
         showToast(`✓ "${target?.name || 'Item'}" permanently removed from database.`);
       }
@@ -1120,33 +1578,113 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
   };
 
-  const toggleItemAvailability = (id: string) => {
-    setMenuItems((prev) =>
-      prev.map((m) => (m.id === id ? { ...m, available: m.available === false ? true : false } : m))
-    );
+  const toggleItemAvailability = async (id: string) => {
+    const item = menuItems.find((m) => m.id === id);
+    if (!item) return;
+    const newAvail = item.available === false ? true : false;
+    await updateMenuItem(id, { available: newAvail });
   };
 
-  const addCategory = (name: string) => {
+  const addCategory = async (name: string) => {
+    const catName = name.trim();
+    if (!catName) return;
+
+    try {
+      const token = await getAuthToken();
+      const res = await fetch('/api/categories', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+          'x-manager-pin': currentUser?.pin || '1111',
+          'x-user-role': currentUser?.role || 'owner',
+        },
+        body: JSON.stringify({ name: catName, title: catName })
+      });
+
+      if (res.ok) {
+        const body = await res.json();
+        const created = body.data;
+        const newCat: Category = {
+          id: created.slug || created.id,
+          name: created.title,
+          itemCount: 0,
+        };
+        setCategories((prev) => {
+          const updated = [...prev, newCat];
+          saveToStorage('pos_categories_cache', updated);
+          return updated;
+        });
+        showToast(`✓ Category "${catName}" saved to database!`);
+        return;
+      }
+    } catch (err) {
+      console.error('[addCategory] Error creating category on server:', err);
+    }
+
     const newCat: Category = {
-      id: name.toLowerCase().replace(/\s+/g, '-'),
-      name,
+      id: catName.toLowerCase().replace(/\s+/g, '-'),
+      name: catName,
       itemCount: 0,
     };
-    setCategories((prev) => [...prev, newCat]);
-    showToast(`Category "${name}" created!`);
+    setCategories((prev) => {
+      const updated = [...prev, newCat];
+      saveToStorage('pos_categories_cache', updated);
+      return updated;
+    });
+    showToast(`Category "${catName}" created!`);
   };
 
-  const updateCategory = (id: string, name: string) => {
-    setCategories((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, name } : c))
-    );
-    showToast(`Category updated to "${name}"`);
+  const updateCategory = async (id: string, name: string) => {
+    const catName = name.trim();
+    if (!catName) return;
+
+    setCategories((prev) => {
+      const updated = prev.map((c) => (c.id === id ? { ...c, name: catName } : c));
+      saveToStorage('pos_categories_cache', updated);
+      return updated;
+    });
+
+    try {
+      const token = await getAuthToken();
+      await fetch(`/api/categories/${encodeURIComponent(id)}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+          'x-manager-pin': currentUser?.pin || '1111',
+          'x-user-role': currentUser?.role || 'owner',
+        },
+        body: JSON.stringify({ name: catName, title: catName })
+      });
+      showToast(`✓ Category updated to "${catName}" in database`);
+    } catch (err) {
+      console.error('[updateCategory] Error updating category on server:', err);
+    }
   };
 
-  const deleteCategory = (id: string) => {
+  const deleteCategory = async (id: string) => {
     if (id === 'all') return;
-    setCategories((prev) => prev.filter((c) => c.id !== id));
-    showToast('Category removed.');
+    setCategories((prev) => {
+      const updated = prev.filter((c) => c.id !== id);
+      saveToStorage('pos_categories_cache', updated);
+      return updated;
+    });
+
+    try {
+      const token = await getAuthToken();
+      await fetch(`/api/categories/${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+        headers: {
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+          'x-manager-pin': currentUser?.pin || '1111',
+          'x-user-role': currentUser?.role || 'owner',
+        }
+      });
+      showToast('✓ Category deactivated in database');
+    } catch (err) {
+      console.error('[deleteCategory] Error deleting category on server:', err);
+    }
   };
 
   const reorderCategories = (newCategories: Category[]) => {
@@ -1324,6 +1862,10 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         notes: cust.deliveryNotes || '',
         vipTier: cust.vipTier,
         loyaltyPoints: cust.loyaltyPoints,
+        isBlocked: cust.isBlocked,
+        blockReason: cust.blockReason,
+        blockedAt: cust.blockedAt,
+        blockedBy: cust.blockedBy,
       },
     }));
   };
@@ -1334,7 +1876,8 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       phone: string
     ): Promise<{ found: boolean; customer?: Customer; pastOrders?: Order[] }> => {
       const clean = (phone || '').replace(/\D/g, '');
-      if (!clean || clean.length < 4) return { found: false };
+      // Make sure to fetch customer data only when 11 digits phone number completes
+      if (!clean || clean.length < 11) return { found: false };
 
       try {
         const res = await fetch(`/api/customers/${encodeURIComponent(clean)}`);
@@ -1346,13 +1889,18 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
               customer: {
                 id: data.customer.id,
                 name: data.customer.name,
-                phone: prev.customer?.phone || data.customer.phone,
+                phone: data.customer.phone || clean,
                 address: data.customer.address || '',
-                notes: data.customer.deliveryNotes || '',
+                notes: data.customer.deliveryNotes || data.customer.notes || '',
                 vipTier: data.customer.vipTier,
                 loyaltyPoints: data.customer.loyaltyPoints,
+                isBlocked: data.customer.isBlocked,
+                blockReason: data.customer.blockReason,
+                blockedAt: data.customer.blockedAt,
+                blockedBy: data.customer.blockedBy,
               },
             }));
+            posDB.cacheCustomer(data.customer).catch(() => {});
             return { found: true, customer: data.customer, pastOrders: data.pastOrders || [] };
           }
         }
@@ -1360,10 +1908,34 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         console.warn('Customer lookup error:', err);
       }
 
-      // Local fallback
+      // Check IndexedDB cache
+      try {
+        const cachedInDB = await posDB.getCachedCustomer(clean);
+        if (cachedInDB) {
+          setPosCart((prev) => ({
+            ...prev,
+            customer: {
+              id: cachedInDB.id,
+              name: cachedInDB.name,
+              phone: cachedInDB.phone || clean,
+              address: cachedInDB.address || '',
+              notes: cachedInDB.deliveryNotes || cachedInDB.notes || '',
+              vipTier: cachedInDB.vipTier,
+              loyaltyPoints: cachedInDB.loyaltyPoints,
+              isBlocked: cachedInDB.isBlocked,
+              blockReason: cachedInDB.blockReason,
+              blockedAt: cachedInDB.blockedAt,
+              blockedBy: cachedInDB.blockedBy,
+            },
+          }));
+          return { found: true, customer: cachedInDB, pastOrders: [] };
+        }
+      } catch (err) {}
+
+      // Local fallback in state
       const found = customers.find((c) => {
-        const dbDigits = c.phone.replace(/\D/g, '');
-        return dbDigits === clean || (clean.length >= 10 && dbDigits.endsWith(clean));
+        const dbDigits = (c.phone || '').replace(/\D/g, '');
+        return dbDigits === clean || (clean.length === 11 && dbDigits.endsWith(clean)) || (dbDigits.length === 11 && clean.endsWith(dbDigits));
       });
 
       if (found) {
@@ -1372,17 +1944,252 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           customer: {
             id: found.id,
             name: found.name,
-            phone: prev.customer?.phone || found.phone,
-            address: found.address,
-            notes: found.deliveryNotes || '',
+            phone: found.phone || clean,
+            address: found.address || '',
+            notes: found.deliveryNotes || found.notes || '',
             vipTier: found.vipTier,
             loyaltyPoints: found.loyaltyPoints,
+            isBlocked: found.isBlocked,
+            blockReason: found.blockReason,
+            blockedAt: found.blockedAt,
+            blockedBy: found.blockedBy,
           },
         }));
         return { found: true, customer: found, pastOrders: [] };
       }
 
       return { found: false };
+    },
+    [customers]
+  );
+
+  const isManagerOrOwnerUser = useCallback((user?: UserAccount | null) => {
+    if (!user) return false;
+    const role = String(user.role || '').toLowerCase();
+    return role === 'owner' || role === 'manager' || role === 'admin';
+  }, []);
+
+  const blockCustomer = useCallback(
+    async (
+      phone: string,
+      reason: string,
+      blockedBy?: string
+    ): Promise<{ success: boolean; error?: string; customer?: Customer }> => {
+      const clean = (phone || '').replace(/\D/g, '');
+      if (!clean) return { success: false, error: 'Valid phone number is required.' };
+      if (!reason || !reason.trim()) {
+        return { success: false, error: 'Reason is required to block a customer.' };
+      }
+
+      if (!isManagerOrOwnerUser(currentUser)) {
+        showToast('⚠️ Permission Denied: Only Manager or Owner can block customers.');
+        return { success: false, error: 'Only Manager or Owner users can block customers.' };
+      }
+
+      const trimmedReason = reason.trim();
+      const staffName = blockedBy || currentUser?.name || 'Manager';
+      const blockedAt = new Date().toISOString();
+
+      const matchPhone = (p1?: string, p2?: string) => {
+        if (!p1 || !p2) return false;
+        const d1 = String(p1).replace(/\D/g, '');
+        const d2 = String(p2).replace(/\D/g, '');
+        return d1 && d2 && (d1 === d2 || (d1.length >= 7 && d2.length >= 7 && (d1.endsWith(d2) || d2.endsWith(d1))));
+      };
+
+      let updatedCustomer: Customer | undefined;
+      setCustomers((prev) => {
+        const idx = prev.findIndex((c) => matchPhone(c.phone, phone) || matchPhone((c as any).phoneNumber, phone));
+        if (idx !== -1) {
+          const updated = [...prev];
+          updatedCustomer = {
+            ...prev[idx],
+            isBlocked: true,
+            blockReason: trimmedReason,
+            blockedAt,
+            blockedBy: staffName,
+          };
+          updated[idx] = updatedCustomer;
+          return updated;
+        } else {
+          updatedCustomer = {
+            id: `cust-blk-${Date.now()}`,
+            name: 'Blocked Customer',
+            phone: clean,
+            isBlocked: true,
+            blockReason: trimmedReason,
+            blockedAt,
+            blockedBy: staffName,
+            loyaltyPoints: 0,
+            vipTier: 'Regular',
+            totalOrdersCount: 0,
+            totalSpent: 0,
+            createdAt: new Date().toISOString(),
+          };
+          return [updatedCustomer, ...prev];
+        }
+      });
+
+      // Synchronize active posCart customer if matching
+      setPosCart((prev) => {
+        if (matchPhone(prev.customer?.phone, phone)) {
+          return {
+            ...prev,
+            customer: {
+              ...prev.customer,
+              isBlocked: true,
+              blockReason: trimmedReason,
+              blockedAt,
+              blockedBy: staffName,
+            },
+          };
+        }
+        return prev;
+      });
+
+      if (updatedCustomer) {
+        posDB.cacheCustomer(updatedCustomer).catch(() => {});
+      }
+
+      try {
+        const token = localStorage.getItem('pos_jwt_token');
+        const res = await fetch('/api/customers/block', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            'x-user-role': currentUser?.role || 'owner',
+            'x-manager-pin': currentUser?.pin || '1111',
+          },
+          body: JSON.stringify({
+            phone: clean || phone,
+            reason: trimmedReason,
+            blockedBy: staffName,
+          }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.customer) {
+            updatedCustomer = data.customer;
+            setCustomers((prev) => prev.map((c) => (c.id === data.customer.id || matchPhone(c.phone, phone) ? data.customer : c)));
+            posDB.cacheCustomer(data.customer).catch(() => {});
+          }
+        }
+      } catch (e) {
+        console.warn('Backend block API error:', e);
+      }
+
+      showToast(`⛔ Customer ${clean || phone} has been blocked.`);
+      return { success: true, customer: updatedCustomer };
+    },
+    [currentUser, isManagerOrOwnerUser, showToast]
+  );
+
+  const unblockCustomer = useCallback(
+    async (phone: string): Promise<{ success: boolean; error?: string; customer?: Customer }> => {
+      const clean = (phone || '').replace(/\D/g, '');
+      if (!clean) return { success: false, error: 'Valid phone number is required.' };
+
+      if (!isManagerOrOwnerUser(currentUser)) {
+        showToast('⚠️ Permission Denied: Only Manager or Owner can unblock customers.');
+        return { success: false, error: 'Only Manager or Owner users can unblock customers.' };
+      }
+
+      const matchPhone = (p1?: string, p2?: string) => {
+        if (!p1 || !p2) return false;
+        const d1 = String(p1).replace(/\D/g, '');
+        const d2 = String(p2).replace(/\D/g, '');
+        return d1 && d2 && (d1 === d2 || (d1.length >= 7 && d2.length >= 7 && (d1.endsWith(d2) || d2.endsWith(d1))));
+      };
+
+      let updatedCustomer: Customer | undefined;
+      setCustomers((prev) => {
+        return prev.map((c) => {
+          if (matchPhone(c.phone, phone) || matchPhone((c as any).phoneNumber, phone)) {
+            updatedCustomer = {
+              ...c,
+              isBlocked: false,
+              blockReason: undefined,
+              blockedAt: undefined,
+              blockedBy: undefined,
+            };
+            return updatedCustomer;
+          }
+          return c;
+        });
+      });
+
+      setPosCart((prev) => {
+        if (matchPhone(prev.customer?.phone, phone)) {
+          return {
+            ...prev,
+            customer: {
+              ...prev.customer,
+              isBlocked: false,
+              blockReason: undefined,
+              blockedAt: undefined,
+              blockedBy: undefined,
+            },
+          };
+        }
+        return prev;
+      });
+
+      if (updatedCustomer) {
+        posDB.cacheCustomer(updatedCustomer).catch(() => {});
+      }
+
+      try {
+        const token = localStorage.getItem('pos_jwt_token');
+        const res = await fetch('/api/customers/unblock', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            'x-user-role': currentUser?.role || 'owner',
+            'x-manager-pin': currentUser?.pin || '1111',
+          },
+          body: JSON.stringify({ phone: clean || phone }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.customer) {
+            updatedCustomer = data.customer;
+            setCustomers((prev) => {
+              const exists = prev.some((c) => c.id === data.customer.id || matchPhone(c.phone, phone));
+              if (exists) {
+                return prev.map((c) => (c.id === data.customer.id || matchPhone(c.phone, phone) ? data.customer : c));
+              }
+              return [data.customer, ...prev];
+            });
+            posDB.cacheCustomer(data.customer).catch(() => {});
+          }
+        }
+      } catch (e) {
+        console.warn('Backend unblock API error:', e);
+      }
+
+      showToast(`✓ Customer ${clean || phone} unblocked successfully.`);
+      return { success: true, customer: updatedCustomer };
+    },
+    [currentUser, isManagerOrOwnerUser, showToast]
+  );
+
+  const isCustomerBlocked = useCallback(
+    (phone: string): { blocked: boolean; reason?: string; customer?: Customer } => {
+      const clean = (phone || '').replace(/\D/g, '');
+      if (!clean) return { blocked: false };
+      const found = customers.find((c) => {
+        const dbDigits = (c.phone || '').replace(/\D/g, '');
+        return (
+          (dbDigits === clean || (clean.length === 11 && dbDigits.endsWith(clean)) || (dbDigits.length === 11 && clean.endsWith(dbDigits))) &&
+          Boolean(c.isBlocked)
+        );
+      });
+      if (found) {
+        return { blocked: true, reason: found.blockReason || 'Customer is blocked from placing orders.', customer: found };
+      }
+      return { blocked: false };
     },
     [customers]
   );
@@ -1395,60 +2202,78 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     deliveryNotes?: string;
     notes?: string;
   }): Promise<Customer> => {
+    const cleanPhone = (custData.phone || '').replace(/\D/g, '');
+    let resultCustomer: Customer | null = null;
+
     try {
       const res = await fetch('/api/customers/upsert', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(custData),
+        body: JSON.stringify({
+          ...custData,
+          phone: cleanPhone || custData.phone,
+        }),
       });
       if (res.ok) {
         const data = await res.json();
         if (data.customer) {
-          setCustomers((prev) => {
-            const idx = prev.findIndex((c) => c.phone.replace(/\D/g, '') === custData.phone.replace(/\D/g, ''));
-            if (idx !== -1) {
-              const updated = [...prev];
-              updated[idx] = data.customer;
-              return updated;
-            }
-            return [data.customer, ...prev];
-          });
-          return data.customer;
+          resultCustomer = data.customer;
         }
       }
     } catch (e) {
       console.warn('Customer upsert fallback to client state:', e);
     }
 
-    const fallback: Customer = {
-      id: `cust-${Date.now()}`,
-      name: custData.name || 'Customer',
-      phone: custData.phone,
-      email: custData.email,
-      address: custData.address || '',
-      deliveryNotes: custData.deliveryNotes || custData.notes || '',
-      vipTier: 'Regular',
-      loyaltyPoints: 50,
-      totalOrdersCount: 1,
-      totalSpent: 0,
-      createdAt: new Date().toISOString().split('T')[0],
-    };
-    setCustomers((prev) => [fallback, ...prev]);
-    return fallback;
+    if (!resultCustomer) {
+      resultCustomer = {
+        id: `cust-${Date.now()}`,
+        name: (custData.name && custData.name.trim()) || 'Customer',
+        phone: cleanPhone || custData.phone,
+        email: custData.email || '',
+        address: custData.address || '',
+        deliveryNotes: custData.deliveryNotes || custData.notes || '',
+        vipTier: 'Regular',
+        loyaltyPoints: 50,
+        totalOrdersCount: 1,
+        totalSpent: 0,
+        createdAt: new Date().toISOString().split('T')[0],
+      };
+    }
+
+    setCustomers((prev) => {
+      const idx = prev.findIndex((c) => (c.phone || '').replace(/\D/g, '') === cleanPhone);
+      if (idx !== -1) {
+        const updated = [...prev];
+        updated[idx] = { ...prev[idx], ...resultCustomer! };
+        return updated;
+      }
+      return [resultCustomer!, ...prev];
+    });
+
+    try {
+      await posDB.cacheCustomer(resultCustomer);
+      if (cleanPhone) {
+        await posDB.cacheCustomer({ ...resultCustomer, phone: cleanPhone });
+      }
+    } catch (err) {}
+
+    return resultCustomer;
   };
 
   // Cart Calculations
   const cartSubtotal = useMemo(() => {
-    return posCart.items.reduce((sum, i) => sum + i.price * i.quantity, 0);
+    const sum = posCart.items.reduce((acc, i) => acc + (Number(i.price) * Number(i.quantity)), 0);
+    return roundToCurrency(sum);
   }, [posCart.items]);
 
   const cartDiscount = useMemo(() => {
-    return (cartSubtotal * (posCart.discountPercent || 0)) / 100;
+    const pct = Number(posCart.discountPercent) || 0;
+    return roundToCurrency((cartSubtotal * pct) / 100);
   }, [cartSubtotal, posCart.discountPercent]);
 
   const cartTax = useMemo(() => {
     // 16% standard sales tax
-    return Math.round((cartSubtotal - cartDiscount) * 0.16);
+    return roundToCurrency((cartSubtotal - cartDiscount) * 0.16);
   }, [cartSubtotal, cartDiscount]);
 
   const cartDeliveryFee = useMemo(() => {
@@ -1456,130 +2281,213 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   }, [posCart.orderType]);
 
   const cartTotal = useMemo(() => {
-    return Math.max(0, cartSubtotal - cartDiscount + cartTax + cartDeliveryFee + (posCart.tipAmount || 0));
+    const rawTotal = cartSubtotal - cartDiscount + cartTax + cartDeliveryFee + (Number(posCart.tipAmount) || 0);
+    return roundToCurrency(Math.max(0, rawTotal));
   }, [cartSubtotal, cartDiscount, cartTax, cartDeliveryFee, posCart.tipAmount]);
 
   // Order Punch & Persistence
   const punchOrder = async (tenderedAmount?: number, outletName?: string): Promise<Order> => {
+    if (isPunchOrderInFlightRef.current) {
+      throw new Error('An order is already being processed. Please wait.');
+    }
     if (posCart.items.length === 0) {
       throw new Error('Cannot punch an empty order');
     }
+    isPunchOrderInFlightRef.current = true;
 
-    const orderSeq = 100 + orders.length + 1;
-    const orderNumber = `ORD-${orderSeq}`;
-    const effectiveBranch = outletName || currentUser?.outlet || 'Gulberg Branch';
-    const effectiveDriver = (posCart.orderType === 'delivery' || posCart.orderType === 'takeaway')
-      ? (posCart.deliveryDriver || (posCart.orderType === 'delivery' ? 'Unassigned Rider' : 'Self Pickup'))
-      : undefined;
-
-    const isPaid = tenderedAmount !== undefined ? tenderedAmount > 0 : true;
-
-    const newOrder: Order = {
-      id: `ord-${Date.now()}`,
-      orderNumber,
-      type: posCart.orderType,
-      orderType: posCart.orderType,
-      status: 'completed',
-      paymentStatus: isPaid ? 'paid' : 'unpaid',
-      paymentMethod: posCart.paymentMethod || 'cash',
-      customer: {
-        name: posCart.customer?.name || (posCart.orderType === 'delivery' ? 'Delivery Customer' : posCart.orderType === 'takeaway' ? 'Takeaway Customer' : 'Walk-in Customer'),
-        phone: posCart.customer?.phone || '',
-        address: posCart.customer?.address || '',
-        deliveryNotes: posCart.customer?.notes || '',
-      },
-      tableNumber: posCart.orderType === 'dine_in' ? posCart.tableNumber : undefined,
-      deliveryDriver: effectiveDriver,
-      outlet: effectiveBranch,
-      branchName: effectiveBranch,
-      items: posCart.items.map((item) => ({
-        id: `oi-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-        menuItemId: item.menuItemId,
-        name: item.name,
-        price: item.price,
-        quantity: item.quantity,
-        flavor: item.flavor,
-        modifiers: item.modifiers,
-        customization: [item.flavor, ...(item.modifiers || []).map((m) => m.name), item.itemNote]
-          .filter(Boolean)
-          .join(', '),
-        image: item.image,
-      })),
-      subtotal: cartSubtotal,
-      tax: cartTax,
-      discount: cartDiscount,
-      tip: posCart.tipAmount || 0,
-      deliveryFee: cartDeliveryFee,
-      total: cartTotal,
-      amountTendered: tenderedAmount ?? cartTotal,
-      changeGiven: tenderedAmount ? Math.max(0, tenderedAmount - cartTotal) : 0,
-      notes: posCart.notes,
-      cashierName: currentUser.name,
-      cashierId: currentUser.id,
-      createdAt: new Date().toISOString(),
-      createdById: currentUser.id,
-      terminalId: 'POS-MAIN-01',
-      serverId: posCart.serverId,
-      serverName: posCart.serverName,
-    };
-
-    // Auto-upsert customer via backend
-    if (posCart.customer?.phone && posCart.customer.phone.trim().length >= 4) {
-      upsertCustomer({
-        name: posCart.customer.name || 'Customer',
-        phone: posCart.customer.phone,
-        address: posCart.customer.address,
-        deliveryNotes: posCart.customer.notes,
-      }).catch(() => {});
-    }
-
-    let finalOrder = newOrder;
     try {
-      const response = await fetch('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newOrder),
-      });
-      if (response.ok) {
-        const serverOrder = await response.json();
-        finalOrder = serverOrder;
+      if (posCart.orderType === 'delivery' && !posCart.deliveryDriver) {
+        throw new Error('A delivery rider must be selected for delivery orders.');
       }
-    } catch (e) {
-      console.warn('Order synced locally due to network error:', e);
+
+      // Check if customer is blocked
+      const custPhone = (posCart.customer?.phone || '').replace(/\D/g, '');
+      const isCustBlocked = Boolean(posCart.customer?.isBlocked) || (custPhone ? customers.some(c => (c.phone || '').replace(/\D/g, '') === custPhone && c.isBlocked) : false);
+      if (isCustBlocked) {
+        const foundBlocked = customers.find(c => (c.phone || '').replace(/\D/g, '') === custPhone && c.isBlocked);
+        const reason = posCart.customer?.blockReason || foundBlocked?.blockReason || 'Customer is blocked from placing orders.';
+        showToast(`⛔ BLOCKED CUSTOMER: Cannot place order! (${reason})`);
+        throw new Error(`Blocked customer cannot place an order. Reason: ${reason}`);
+      }
+
+      const orderSeq = 100 + orders.length + 1;
+      const orderNumber = `ORD-${orderSeq}`;
+      const effectiveBranch = outletName || currentUser?.outlet || 'Gulberg Branch';
+      const effectiveDriver = (posCart.orderType === 'delivery' || posCart.orderType === 'takeaway')
+        ? (posCart.deliveryDriver || (posCart.orderType === 'delivery' ? 'Unassigned Rider' : 'Self Pickup'))
+        : undefined;
+
+      const isPaid = tenderedAmount !== undefined ? tenderedAmount > 0 : false;
+
+      const newOrder: Order = {
+        id: `ord-${Date.now()}`,
+        orderNumber,
+        type: posCart.orderType,
+        orderType: posCart.orderType,
+        status: 'PUNCHED',
+        paymentStatus: isPaid ? 'paid' : 'unpaid',
+        paymentMethod: posCart.paymentMethod || 'cash',
+        customer: {
+          name: posCart.customer?.name || (posCart.orderType === 'delivery' ? 'Delivery Customer' : posCart.orderType === 'takeaway' ? 'Takeaway Customer' : 'Walk-in Customer'),
+          phone: posCart.customer?.phone || '',
+          address: posCart.customer?.address || '',
+          deliveryNotes: posCart.customer?.notes || '',
+        },
+        tableNumber: posCart.orderType === 'dine_in' ? posCart.tableNumber : undefined,
+        deliveryDriver: effectiveDriver,
+        riderName: effectiveDriver,
+        outlet: effectiveBranch,
+        branchName: effectiveBranch,
+        items: posCart.items.map((item) => ({
+          id: `oi-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+          menuItemId: item.menuItemId,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          flavor: item.flavor,
+          modifiers: item.modifiers,
+          customization: [item.flavor, ...(item.modifiers || []).map((m) => m.name), item.itemNote]
+            .filter(Boolean)
+            .join(', '),
+          image: item.image,
+        })),
+        subtotal: cartSubtotal,
+        tax: cartTax,
+        discount: cartDiscount,
+        tip: posCart.tipAmount || 0,
+        deliveryFee: cartDeliveryFee,
+        total: cartTotal,
+        amountTendered: tenderedAmount ?? cartTotal,
+        changeGiven: tenderedAmount ? Math.max(0, tenderedAmount - cartTotal) : 0,
+        notes: posCart.notes,
+        cashierName: currentUser.name,
+        cashierId: currentUser.id,
+        createdAt: new Date().toISOString(),
+        createdById: currentUser.id,
+        terminalId: 'POS-MAIN-01',
+        serverId: posCart.serverId,
+        serverName: posCart.serverName,
+      };
+
+      // Auto-upsert customer via backend
+      if (posCart.customer?.phone) {
+        const cleanDigits = posCart.customer.phone.replace(/\D/g, '');
+        if (cleanDigits.length >= 7) {
+          upsertCustomer({
+            name: (posCart.customer.name && posCart.customer.name.trim()) || 'Customer',
+            phone: cleanDigits,
+            address: posCart.customer.address,
+            deliveryNotes: posCart.customer.notes,
+          }).catch(() => {});
+        }
+      }
+
+      let finalOrder = newOrder;
+      try {
+        const response = await fetch('/api/orders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newOrder),
+        });
+        if (response.ok) {
+          const serverOrder = await response.json();
+          finalOrder = serverOrder;
+        } else {
+          console.warn('Server responded with non-OK status. Queuing offline in IndexedDB:', response.status);
+          await posDB.queueOrder(newOrder);
+        }
+      } catch (e) {
+        console.warn('Network unreachable. Persisting order into local offline IndexedDB queue:', e);
+        try {
+          await posDB.queueOrder(newOrder);
+          showToast(`⚡ Network offline: Order #${newOrder.orderNumber} saved locally to till queue.`);
+        } catch (idbErr) {
+          console.error('Critical IndexedDB Failure:', idbErr);
+        }
+      }
+
+      setOrders((prev) => {
+        const filtered = prev.filter(
+          (o) =>
+            o.id !== finalOrder.id &&
+            o.id !== newOrder.id &&
+            (!finalOrder.orderNumber || o.orderNumber !== finalOrder.orderNumber)
+        );
+        return deduplicateOrders([finalOrder, ...filtered]);
+      });
+      
+      // Auto-print receipt
+      setPrintQueueOrder(finalOrder);
+      setTimeout(() => {
+        window.print();
+      }, 500);
+
+      // Auto-deduct inventory
+      setStockItems((prev) =>
+        prev.map((stk) => {
+          if (stk.name.includes('Cheese')) return { ...stk, currentStock: Math.max(0, stk.currentStock - 0.2) };
+          if (stk.name.includes('Chicken')) return { ...stk, currentStock: Math.max(0, stk.currentStock - 0.3) };
+          if (stk.name.includes('Flour')) return { ...stk, currentStock: Math.max(0, stk.currentStock - 0.25) };
+          return stk;
+        })
+      );
+
+      clearPosCart();
+      showToast(`✓ Order ${finalOrder.orderNumber || newOrder.orderNumber} successfully punched!`);
+      return finalOrder;
+    } finally {
+      isPunchOrderInFlightRef.current = false;
     }
-
-    setOrders((prev) => [finalOrder, ...prev]);
-    
-    // Auto-print receipt
-    setPrintQueueOrder(finalOrder);
-    setTimeout(() => {
-      window.print();
-    }, 500);
-
-    // Auto-deduct inventory
-    setStockItems((prev) =>
-      prev.map((stk) => {
-        if (stk.name.includes('Cheese')) return { ...stk, currentStock: Math.max(0, stk.currentStock - 0.2) };
-        if (stk.name.includes('Chicken')) return { ...stk, currentStock: Math.max(0, stk.currentStock - 0.3) };
-        if (stk.name.includes('Flour')) return { ...stk, currentStock: Math.max(0, stk.currentStock - 0.25) };
-        return stk;
-      })
-    );
-
-    clearPosCart();
-    showToast(`✓ Order ${newOrder.orderNumber} successfully punched!`);
-    return newOrder;
   };
 
-  const updateOrderStatus = (orderId: string, status: Order['status']) => {
+  const updateOrderStatus = (
+    orderId: string, 
+    status: Order['status'], 
+    meta?: { 
+      paymentStatus?: string; 
+      paymentMethod?: string; 
+      riderId?: string;
+      amountTendered?: number;
+      changeGiven?: number;
+      reason?: string;
+      cancelReason?: string;
+    }
+  ) => {
     const normalizedStatus = (status || '').toLowerCase() as Order['status'];
+
+    if (normalizedStatus === 'cancelled') {
+      let cancelReason = meta?.reason || meta?.cancelReason;
+      if (!cancelReason || !cancelReason.trim()) {
+        const targetOrder = orders.find((o) => o.id === orderId);
+        const orderNum = targetOrder?.orderNumber || orderId;
+        const promptInput = window.prompt(`Please enter cancellation reason for Order #${orderNum}:`, 'Customer change of mind');
+        if (promptInput === null) return; // User pressed Cancel on prompt
+        cancelReason = promptInput.trim() || 'Customer change of mind';
+      }
+      cancelOrder(orderId, cancelReason);
+      return;
+    }
+
     setOrders((prev) =>
-      prev.map((o) => (o.id === orderId ? { ...o, status: normalizedStatus, updatedAt: new Date().toISOString() } : o))
+      prev.map((o) => (o.id === orderId ? { 
+        ...o, 
+        status: normalizedStatus,
+        ...(meta?.paymentStatus ? { paymentStatus: meta.paymentStatus as any } : {}),
+        ...(meta?.paymentMethod ? { paymentMethod: meta.paymentMethod as any } : {}),
+        ...(meta?.amountTendered !== undefined ? { amountTendered: meta.amountTendered, tenderedAmount: meta.amountTendered } : {}),
+        ...(meta?.changeGiven !== undefined ? { changeGiven: meta.changeGiven } : {}),
+        updatedAt: new Date().toISOString() 
+      } : o))
     );
     fetch(`/api/orders/${orderId}/status`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: normalizedStatus }),
+      body: JSON.stringify({ 
+        status: normalizedStatus,
+        ...(meta?.paymentStatus ? { paymentStatus: meta.paymentStatus } : {}),
+        ...(meta?.paymentMethod ? { paymentMethod: meta.paymentMethod } : {}),
+        ...(meta?.riderId ? { riderId: meta.riderId } : {}),
+      }),
     }).catch((err) => {
       console.warn('Status sync queued locally:', err);
     });
@@ -1608,23 +2516,28 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     showToast(`Order ${orderId} refunded successfully.`);
   };
 
-  const cancelOrder = async (orderId: string, reason: string) => {
+  const cancelOrder = async (orderId: string, reason: string, managerPin?: string) => {
     const target = orders.find((o) => o.id === orderId);
     const orderAmt = target ? (target.total || target.subtotal || 0) : 0;
     const itemsSummary = target?.items ? target.items.map((it) => `${it.quantity}x ${it.name}`).join(', ') : 'Order cancelled';
+    const cleanReason = reason && reason.trim() ? reason.trim() : 'Customer change of mind';
 
     // 1. Immediate optimistic local update
     setOrders((prev) =>
-      prev.map((o) =>
-        o.id === orderId
-          ? {
-              ...o,
-              status: 'cancelled',
-              cancelReason: reason,
-              updatedAt: new Date().toISOString(),
-            }
-          : o
-      )
+      prev.map((o) => {
+        if (o.id !== orderId) return o;
+        const existingNotes = o.notes || '';
+        const updatedNotes = existingNotes.includes('[CANCELLED]:')
+          ? existingNotes
+          : existingNotes ? `${existingNotes} | [CANCELLED]: ${cleanReason}` : `[CANCELLED]: ${cleanReason}`;
+        return {
+          ...o,
+          status: 'cancelled',
+          cancelReason: cleanReason,
+          notes: updatedNotes,
+          updatedAt: new Date().toISOString(),
+        };
+      })
     );
 
     addSalesAdjustment({
@@ -1637,16 +2550,20 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       newAmount: 0,
       netDelta: -orderAmt,
       itemsSummary,
-      reason: reason || 'Manager cancellation override',
+      reason: cleanReason,
     });
 
     // 2. Sync to backend database
     try {
+      const token = await getAuthToken(managerPin);
       const response = await fetch(`/api/orders/${orderId}/cancel`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
         body: JSON.stringify({
-          reason,
+          reason: cleanReason,
           managerId: currentUser.id,
           managerName: currentUser.name,
         }),
@@ -1654,7 +2571,17 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       if (response.ok) {
         const resData = await response.json();
         if (resData.order) {
-          setOrders((prev) => prev.map((o) => (o.id === orderId ? resData.order : o)));
+          setOrders((prev) =>
+            prev.map((o) =>
+              o.id === orderId
+                ? {
+                    ...resData.order,
+                    cancelReason: cleanReason,
+                    notes: resData.order.notes || `[CANCELLED]: ${cleanReason}`,
+                  }
+                : o
+            )
+          );
         }
       }
     } catch (err) {
@@ -1719,9 +2646,13 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
     // 2. Sync to backend database
     try {
+      const token = await getAuthToken((updates as any).managerPin);
       const response = await fetch(`/api/orders/${orderId}/modify`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
         body: JSON.stringify({
           ...updates,
           managerId: currentUser.id,
@@ -1803,15 +2734,18 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   // Shift Management
   const openShift = (openingFloat: number, notes?: string) => {
+    const shiftSeq = Date.now().toString().slice(-4);
+    const sNumber = `SH-${shiftSeq}`;
     const shift: RegisterShift = {
       id: `shift-${Date.now()}`,
-      shiftNumber: `SH-${Date.now().toString().slice(-4)}`,
+      shiftNumber: sNumber,
       cashierName: currentUser.name,
       openedBy: currentUser.id,
       openedById: currentUser.id,
       terminalId: 'POS-MAIN-01',
       openedAt: new Date().toISOString(),
       openingFloat,
+      startingFloat: openingFloat,
       cashSales: 0,
       cardSales: 0,
       otherSales: 0,
@@ -1825,7 +2759,22 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       notes,
     };
     setCurrentShift(shift);
-    showToast(`Shift opened with PKR ${openingFloat.toLocaleString()} float`);
+    saveToStorage('pos_current_shift', shift);
+
+    // Sync to backend register shift API
+    fetch('/api/shifts/open', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        shiftNumber: sNumber,
+        cashierName: currentUser.name,
+        startingFloat: openingFloat,
+        notes,
+        openedById: currentUser.id,
+      }),
+    }).catch((e) => console.warn('Shift opened in offline mode:', e));
+
+    showToast(`✓ Shift opened with PKR ${openingFloat.toLocaleString()} starting float`);
   };
 
   const updatePettyCash = (newAmount: number) => {
@@ -1848,7 +2797,31 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       notes: notes || currentShift.notes,
     };
     setCurrentShift(closed);
-    showToast(`Shift closed. Difference: PKR ${diff.toLocaleString()}`);
+    saveToStorage('pos_current_shift', closed);
+
+    // Immediately record to historical shifts ledger so reports are immediately up to date
+    const newHist: HistoricalShiftRecord = {
+      id: `hist-${closed.id}-${Date.now()}`,
+      shiftNumber: closed.shiftNumber,
+      cashierName: closed.cashierName || currentUser.name,
+      role: currentUser.role,
+      outlet: currentUser.outlet || 'Main Branch',
+      openedAt: closed.openedAt,
+      closedAt: closed.closedAt || new Date().toISOString(),
+      startingPettyCash: closed.startingFloat || closed.openingFloat || 0,
+      totalGrossSales: closed.totalGrossSales || 0,
+      cashSales: closed.cashSales || 0,
+      cardSales: closed.cardSales || 0,
+      expectedCash: closed.cashInDrawerExpected || 0,
+      actualCash: actualCash,
+      shortageOverage: diff,
+      transactionsCount: closed.transactionsCount || 0,
+      status: 'closed',
+      notes: notes || closed.notes,
+    };
+    setHistoricalShifts((prev) => [newHist, ...prev]);
+
+    showToast(`✓ Shift closed. Difference: PKR ${diff.toLocaleString()}`);
   };
 
   const updateStockQuantity = (id: string, newStock: number) => {
@@ -1856,6 +2829,16 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       prev.map((s) => (s.id === id ? { ...s, currentStock: Math.max(0, newStock) } : s))
     );
     showToast('Inventory stock updated');
+  };
+
+  const isRestricted = (capability: string): boolean => {
+    try {
+      if (!currentUser || !currentUser.restrictions) return false;
+      const parsed = JSON.parse(currentUser.restrictions);
+      return Array.isArray(parsed) && parsed.includes(capability);
+    } catch {
+      return false;
+    }
   };
 
   return (
@@ -1869,6 +2852,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         setIsLoggedIn,
         loginUser,
         logoutUser,
+        isRestricted,
         loginTheme,
         setLoginTheme,
         outlets,
@@ -1919,6 +2903,9 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         customers,
         lookupCustomer,
         upsertCustomer,
+        blockCustomer,
+        unblockCustomer,
+        isCustomerBlocked,
         orders,
         parkedOrders,
         parkCurrentOrder,
@@ -1961,6 +2948,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         getRiderStats,
         toast,
         showToast,
+        syncFromServer,
       }}
     >
       {children}

@@ -1,0 +1,101 @@
+1022:              <h2 className="font-['JetBrains_Mono',monospace] text-[0.6rem] uppercase tracking-[0.15em] text-[#e4e4e7]/50 mb-1">Client Details</h2>
+1023-              <div className="flex items-center gap-1.5">
+1024-                <select value={selectedOutlet} onChange={(e) => setSelectedOutlet(e.target.value)} className="bg-[#141417] border border-[#e4e4e7]/10 rounded-lg px-3 py-2.5 text-[0.8rem] text-[#e4e4e7] appearance-none focus:outline-none focus:border-emerald-500 w-full transition-all">
+1025-                  <option value="">Select Outlet</option>
+1026-                  {outlets.map(o => <option key={o} value={o}>{o}</option>)}
+1027-                </select>
+1028-                <button onClick={() => showToast('WhatsApp Sync Status')} className="bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white p-1.5 rounded-xl shrink-0 cursor-pointer transition-all hover:scale-105 shadow-sm border border-emerald-400/20"><Check className="w-4 h-4 stroke-[3]" /></button>
+1029-                <button onClick={handleResetTicket} className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white p-1.5 rounded-xl shrink-0 cursor-pointer transition-all hover:scale-105 shadow-sm border border-red-400/20"><X className="w-4 h-4 stroke-[3]" /></button>
+1030-              </div>
+1031-              
+1032-              {/* Row 2: Order Type & Source */}
+1033-              <div className="flex items-center gap-1.5">
+1034-                <div className="flex rounded-xl overflow-hidden shrink-0 border border-white/10 bg-stone-950/80 p-0.5 shadow-inner">
+1035-                  <button onClick={() => setPosOrderType('dine_in')} className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all duration-150 cursor-pointer ${posCart.orderType === 'dine_in' ? 'bg-gradient-to-r from-amber-600 to-amber-700 text-white shadow-sm border border-amber-400/30' : 'text-stone-400 hover:text-white'}`}>DineIn</button>
+1036-                  <button onClick={() => setPosOrderType('takeaway')} className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all duration-150 cursor-pointer ${posCart.orderType === 'takeaway' ? 'bg-gradient-to-r from-stone-700 to-stone-800 text-white shadow-sm border border-white/10' : 'text-stone-400 hover:text-white'}`}>TakeAway</button>
+1037-                  <button onClick={() => setPosOrderType('delivery')} className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all duration-150 cursor-pointer ${posCart.orderType === 'delivery' ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-sm border border-emerald-400/30' : 'text-stone-400 hover:text-white'}`}>Delivery</button>
+1038-                </div>
+1039-                <select value={selectedSource} onChange={(e) => setSelectedSource(e.target.value)} className="bg-stone-950/80 border border-white/10 rounded-xl px-2.5 py-1.5 text-xs text-white font-semibold focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 flex-1 cursor-pointer transition-all">
+1040-                  <option value="Pos">Select Source</option>
+1041-                  <option value="Blink Co Mobile">Blink Co Mobile</option>
+1042-                  <option value="Website Web">Website Web</option>
+1043-                  <option value="Call Center">Call Center</option>
+1044-                </select>
+1045-              </div>
+1046-              
+1047-              {/* Row 3: Customer Input */}
+1048-              <div className="flex items-center gap-1.5">
+1049-                <div className="relative flex-1 min-w-0">
+1050-                  <input
+1051-                    type="text"
+1052-                    placeholder="Search Phone..."
+1053-                    value={phoneSearchInput}
+1054-                    onChange={(e) => setPhoneSearchInput(e.target.value)}
+1055-                    onKeyDown={(e) => { if (e.key === 'Enter') handlePhoneLookup(undefined, true); }}
+1056-                    className="w-full bg-stone-950/80 border border-white/10 rounded-xl pl-8 pr-2.5 py-1.5 text-xs text-white placeholder:text-stone-500 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 transition-all"
+1057-                  />
+1058-                  <Phone className="w-3.5 h-3.5 text-stone-500 absolute left-2.5 top-1/2 -translate-y-1/2" />
+1059-                </div>
+1060-                <button onClick={() => setIsCustomerManageModalOpen(true)} className="bg-stone-800 hover:bg-stone-700 text-stone-300 hover:text-white p-1.5 rounded-xl shrink-0 cursor-pointer border border-white/10 transition-all hover:scale-105" title="Manage Customers">
+1061-                  <Users className="w-3.5 h-3.5" />
+1062-                </button>
+1063-                <button onClick={() => handlePhoneLookup(undefined, true)} className="bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white p-1.5 rounded-xl shrink-0 cursor-pointer transition-all hover:scale-105 border border-emerald-400/20 shadow-sm" title="Search Customer">
+1064-                  <Search className="w-3.5 h-3.5" />
+1065-                </button>
+1066-              </div>
+1067-              
+1068-              {/* Customer Details Display Area */}
+1069-              {customerLookupStatus === 'new' ? (
+1070-                <div className="bg-gradient-to-b from-stone-900 to-stone-950 border border-emerald-500/30 rounded-xl p-2 mt-0.5 flex flex-col gap-2 shadow-inner">
+1071-                   <div className="flex items-center gap-1.5 mb-0.5">
+1072-                     <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+1073-                     <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-400">New Customer Profile</span>
+1074-                   </div>
+1075-                   <div className="space-y-1.5">
+1076-                     <div className="relative">
+1077-                       <User className="w-3.5 h-3.5 text-stone-500 absolute left-2.5 top-1/2 -translate-y-1/2" />
+1078-                       <input type="text" placeholder="Customer Name (Required)" value={posCart.customer?.name || ''} onChange={(e) => setPosCustomerField('name', e.target.value)} className="w-full bg-stone-950 border border-white/10 rounded-lg pl-8 pr-2 py-1.5 text-xs text-white placeholder:text-stone-500 focus:outline-none focus:border-emerald-500/50" />
+1079-                     </div>
+1080-                     <div className="relative">
+1081-                       <MapPin className="w-3.5 h-3.5 text-stone-500 absolute left-2.5 top-2" />
+1082-                       <textarea rows={2} placeholder="Delivery Address (Optional)" value={posCart.customer?.address || ''} onChange={(e) => setPosCustomerField('address', e.target.value)} className="w-full bg-stone-950 border border-white/10 rounded-lg pl-8 pr-2 py-1.5 text-xs text-white placeholder:text-stone-500 focus:outline-none focus:border-emerald-500/50 resize-none" />
+1083-                     </div>
+1084-                   </div>
+1085-                </div>
+1086-              ) : customerLookupStatus === 'found' && posCart.customer ? (
+1087-                <div className="bg-gradient-to-r from-emerald-900/40 to-stone-900/40 border border-emerald-500/30 rounded-xl p-2.5 mt-0.5 flex flex-col shadow-inner relative overflow-hidden group">
+1088-                   <div className="absolute top-2 right-2 opacity-30 group-hover:opacity-100 transition-opacity">
+1089-                      <button onClick={() => setIsCustomerModalOpen(true)} className="text-white bg-stone-800 rounded-lg p-1.5 hover:bg-emerald-600 transition-colors cursor-pointer border border-white/10" title="View Full Profile">
+1090-                        <Eye className="w-3.5 h-3.5" />
+1091-                      </button>
+1092-                   </div>
+1093-                   <div className="flex items-center gap-2 mb-1">
+1094-                     <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center border border-emerald-500/30 shrink-0">
+1095-                       <User className="w-4 h-4 text-emerald-400" />
+1096-                     </div>
+1097-                     <div className="flex flex-col min-w-0 pr-8">
+1098-                       <span className="font-bold text-white text-xs truncate leading-tight">{posCart.customer.name}</span>
+1099-                       <span className="text-[10px] text-emerald-400 font-mono leading-tight">{posCart.customer.phone}</span>
+1100-                     </div>
+1101-                   </div>
+1102-                   {posCart.customer.address && (
+1103-                     <div className="flex items-start gap-1.5 mt-2 border-t border-white/5 pt-2">
+1104-                       <MapPin className="w-3.5 h-3.5 text-stone-400 shrink-0 mt-0.5" />
+1105-                       <span className="text-[10.5px] text-stone-300 line-clamp-2 leading-tight">{posCart.customer.address}</span>
+1106-                     </div>
+1107-                   )}
+1108-                   {foundCustomer && (
+1109-                     <div className="flex items-center gap-4 mt-2 pt-2 border-t border-white/5">
+1110-                       <div className="flex flex-col">
+1111-                         <span className="text-[9px] text-stone-500 uppercase font-bold tracking-wider">Visits</span>
+1112-                         <span className="text-xs font-mono text-stone-200">{foundCustomer.totalVisits || 1}</span>
+1113-                       </div>
+1114-                       <div className="flex flex-col">
+1115-                         <span className="text-[9px] text-stone-500 uppercase font-bold tracking-wider">Points</span>
+1116-                         <span className="text-xs font-mono text-amber-400">{foundCustomer.loyaltyPoints || 0}</span>
+1117-                       </div>
+1118-                     </div>
+1119-                   )}
+1120-                </div>
+1121-              ) : null}
+1122-            </div>

@@ -11,14 +11,29 @@ import {
   TrendingUp,
   X,
   CheckCircle,
+  ShieldAlert,
+  Unlock,
+  Ban,
+  AlertTriangle,
 } from 'lucide-react';
 import { useRestaurant } from '../../context/RestaurantContext';
 import { Customer } from '../../types';
+import { BlockCustomerModal } from '../pos/BlockCustomerModal';
+import { ManagerAuthModal } from '../auth/ManagerAuthModal';
 
 export const CustomerDirectoryView: React.FC = () => {
-  const { customers, upsertCustomer, showToast } = useRestaurant();
+  const { customers, upsertCustomer, blockCustomer, unblockCustomer, showToast, currentUser } = useRestaurant();
   const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'blocked'>('all');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [blockModalTarget, setBlockModalTarget] = useState<Customer | null>(null);
+  const [isManagerAuthOpen, setIsManagerAuthOpen] = useState(false);
+  const [pendingUnblockPhone, setPendingUnblockPhone] = useState<string | null>(null);
+
+  const isManagerOrOwner =
+    currentUser?.role === 'owner' ||
+    currentUser?.role === 'manager' ||
+    currentUser?.role === 'admin';
   const [newCust, setNewCust] = useState({
     name: '',
     phone: '',
@@ -29,12 +44,18 @@ export const CustomerDirectoryView: React.FC = () => {
 
   const filteredCustomers = customers.filter((c) => {
     const q = search.toLowerCase();
-    return (
+    const matchesSearch = (
       c.name.toLowerCase().includes(q) ||
       c.phone.includes(q) ||
       (c.address && c.address.toLowerCase().includes(q)) ||
-      (c.vipTier && c.vipTier.toLowerCase().includes(q))
+      (c.vipTier && c.vipTier.toLowerCase().includes(q)) ||
+      (c.blockReason && c.blockReason.toLowerCase().includes(q))
     );
+
+    if (!matchesSearch) return false;
+    if (statusFilter === 'blocked') return Boolean(c.isBlocked);
+    if (statusFilter === 'active') return !c.isBlocked;
+    return true;
   });
 
   const handleCreateCustomer = async (e: React.FormEvent) => {
@@ -50,8 +71,9 @@ export const CustomerDirectoryView: React.FC = () => {
     showToast(`✓ Customer "${newCust.name}" added to Prisma database!`);
   };
 
-  const totalLoyaltyPoints = customers.reduce((sum, c) => sum + c.loyaltyPoints, 0);
-  const totalLifetimeSpent = customers.reduce((sum, c) => sum + c.totalSpent, 0);
+  const totalLoyaltyPoints = customers.reduce((sum, c) => sum + (c.loyaltyPoints || 0), 0);
+  const totalLifetimeSpent = customers.reduce((sum, c) => sum + (c.totalSpent || 0), 0);
+  const totalBlockedCount = customers.filter((c) => c.isBlocked).length;
 
   return (
     <div className="flex-1 p-6 overflow-y-auto bg-stone-950 text-stone-100 font-sans space-y-6">
@@ -64,7 +86,7 @@ export const CustomerDirectoryView: React.FC = () => {
               Prisma Customer Directory & Loyalty Registry
             </h2>
             <p className="text-xs text-stone-400">
-              Synchronized customer database with instant phone lookup, VIP tier grading, and past order records.
+              Synchronized customer database with instant phone lookup, VIP tier grading, blacklist blocking, and past order records.
             </p>
           </div>
 
@@ -102,13 +124,13 @@ export const CustomerDirectoryView: React.FC = () => {
           </div>
 
           <div className="bg-stone-950/80 p-3.5 rounded-xl border border-stone-800 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-purple-500/10 text-purple-400 flex items-center justify-center font-bold">
-              <TrendingUp className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-lg bg-red-500/10 text-red-400 flex items-center justify-center font-bold">
+              <Ban className="w-5 h-5" />
             </div>
             <div>
-              <span className="text-[11px] text-stone-400 font-medium">Total Customer LTV</span>
-              <p className="text-xl font-black text-white font-mono">
-                PKR {totalLifetimeSpent.toLocaleString()}
+              <span className="text-[11px] text-stone-400 font-medium">Blacklisted / Blocked Numbers</span>
+              <p className="text-xl font-black text-red-400 font-mono">
+                {totalBlockedCount} <span className="text-xs font-normal text-stone-400">blocked</span>
               </p>
             </div>
           </div>
@@ -116,16 +138,53 @@ export const CustomerDirectoryView: React.FC = () => {
       </div>
 
       {/* Search & Filter bar */}
-      <div className="flex items-center gap-3 bg-stone-900 p-3 rounded-xl border border-stone-800">
-        <div className="relative flex-1">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-stone-900 p-3 rounded-xl border border-stone-800">
+        <div className="relative flex-1 w-full">
           <Search className="w-4 h-4 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Search by customer name, phone number (e.g. 0300...), sector or VIP tier..."
+            placeholder="Search by customer name, phone number, address, VIP tier, or block reason..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-stone-950 border border-stone-800 rounded-xl text-xs text-white focus:outline-none focus:border-[#00897b]"
+            className="w-full pl-9 pr-4 py-2 bg-stone-950 border border-stone-800 rounded-xl text-xs text-white placeholder:text-stone-500 focus:outline-none focus:border-[#00897b]"
           />
+        </div>
+
+        <div className="flex items-center gap-1 bg-stone-950 p-1 rounded-xl border border-stone-800 shrink-0">
+          <button
+            type="button"
+            onClick={() => setStatusFilter('all')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+              statusFilter === 'all'
+                ? 'bg-[#00897b] text-white'
+                : 'text-stone-400 hover:text-white'
+            }`}
+          >
+            All ({customers.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setStatusFilter('active')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+              statusFilter === 'active'
+                ? 'bg-emerald-600 text-white'
+                : 'text-stone-400 hover:text-white'
+            }`}
+          >
+            Active ({customers.filter((c) => !c.isBlocked).length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setStatusFilter('blocked')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1 ${
+              statusFilter === 'blocked'
+                ? 'bg-red-600 text-white'
+                : 'text-red-400 hover:text-red-300'
+            }`}
+          >
+            <ShieldAlert className="w-3.5 h-3.5" />
+            Blocked ({totalBlockedCount})
+          </button>
         </div>
       </div>
 
@@ -138,24 +197,45 @@ export const CustomerDirectoryView: React.FC = () => {
                 <th className="p-4">Customer Name</th>
                 <th className="p-4">Phone & Email</th>
                 <th className="p-4">Saved Address</th>
-                <th className="p-4">VIP Tier</th>
+                <th className="p-4">Status & VIP</th>
                 <th className="p-4">Loyalty Pts</th>
                 <th className="p-4">Total Orders</th>
-                <th className="p-4 text-right">Lifetime Spend</th>
+                <th className="p-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-stone-800">
               {filteredCustomers.map((cust) => (
-                <tr key={cust.id} className="hover:bg-stone-850 transition">
+                <tr
+                  key={cust.id}
+                  className={`transition ${
+                    cust.isBlocked
+                      ? 'bg-red-950/15 hover:bg-red-950/30'
+                      : 'hover:bg-stone-850'
+                  }`}
+                >
                   <td className="p-4 font-bold text-white flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-lg bg-[#00897b]/20 border border-[#00897b]/40 text-emerald-300 flex items-center justify-center font-mono text-xs">
-                      {cust.name[0]}
+                    <div
+                      className={`w-7 h-7 rounded-lg border flex items-center justify-center font-mono text-xs ${
+                        cust.isBlocked
+                          ? 'bg-red-500/20 border-red-500/40 text-red-300'
+                          : 'bg-[#00897b]/20 border-[#00897b]/40 text-emerald-300'
+                      }`}
+                    >
+                      {cust.isBlocked ? '✕' : cust.name[0] || 'C'}
                     </div>
-                    <span>{cust.name}</span>
+                    <div>
+                      <span className="block">{cust.name}</span>
+                      {cust.isBlocked && (
+                        <span className="text-[10px] font-normal text-red-400 flex items-center gap-1 mt-0.5">
+                          <AlertTriangle className="w-3 h-3 shrink-0" />
+                          {cust.blockReason || 'Customer is blocked'}
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td className="p-4 font-mono">
                     <div className="text-white flex items-center gap-1.5">
-                      <Phone className="w-3 h-3 text-[#00897b]" />
+                      <Phone className={`w-3 h-3 ${cust.isBlocked ? 'text-red-400' : 'text-[#00897b]'}`} />
                       {cust.phone}
                     </div>
                     {cust.email && <span className="text-[10px] text-stone-500">{cust.email}</span>}
@@ -164,31 +244,116 @@ export const CustomerDirectoryView: React.FC = () => {
                     {cust.address || 'Counter / Takeaway'}
                   </td>
                   <td className="p-4">
-                    <span
-                      className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
-                        cust.vipTier === 'Platinum'
-                          ? 'bg-purple-500/20 text-purple-300 border-purple-500/40'
-                          : cust.vipTier === 'Gold'
-                          ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
-                          : 'bg-stone-800 text-stone-300 border-stone-700'
-                      }`}
-                    >
-                      {cust.vipTier}
-                    </span>
+                    <div className="flex flex-col gap-1 items-start">
+                      {cust.isBlocked ? (
+                        <span className="px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider bg-red-600/30 text-red-300 border border-red-500/50">
+                          ⛔ BLOCKED
+                        </span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                          Active
+                        </span>
+                      )}
+                      <span
+                        className={`px-1.5 py-0.2 rounded text-[9px] font-bold border ${
+                          cust.vipTier === 'Platinum'
+                            ? 'bg-purple-500/20 text-purple-300 border-purple-500/40'
+                            : cust.vipTier === 'Gold'
+                            ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                            : 'bg-stone-800 text-stone-400 border-stone-700'
+                        }`}
+                      >
+                        {cust.vipTier || 'Regular'}
+                      </span>
+                    </div>
                   </td>
                   <td className="p-4 font-mono font-bold text-amber-300">
-                    {cust.loyaltyPoints}
+                    {cust.loyaltyPoints || 0}
                   </td>
-                  <td className="p-4 font-mono">{cust.totalOrdersCount}</td>
-                  <td className="p-4 font-mono font-bold text-right text-white">
-                    PKR {cust.totalSpent.toLocaleString()}
+                  <td className="p-4 font-mono">{cust.totalOrdersCount || cust.totalVisits || 0}</td>
+                  <td className="p-4 text-right">
+                    {cust.isBlocked ? (
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          if (!isManagerOrOwner) {
+                            setPendingUnblockPhone(cust.phone);
+                            setIsManagerAuthOpen(true);
+                            return;
+                          }
+                          if (window.confirm(`Unblock customer ${cust.phone}?`)) {
+                            await unblockCustomer(cust.phone);
+                          }
+                        }}
+                        className="px-2.5 py-1 rounded-lg bg-emerald-950/60 hover:bg-emerald-900 text-emerald-300 text-[11px] font-bold transition border border-emerald-500/30 cursor-pointer flex items-center gap-1 ml-auto"
+                      >
+                        <Unlock className="w-3 h-3" />
+                        Unblock
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!isManagerOrOwner) {
+                            showToast('⚠️ Manager or Owner privilege is required to block a customer.');
+                            setPendingUnblockPhone(null);
+                            setIsManagerAuthOpen(true);
+                            return;
+                          }
+                          setBlockModalTarget(cust);
+                        }}
+                        className="px-2.5 py-1 rounded-lg bg-red-950/40 hover:bg-red-900/60 text-red-400 hover:text-red-200 text-[11px] font-bold transition border border-red-500/30 cursor-pointer flex items-center gap-1 ml-auto"
+                      >
+                        <ShieldAlert className="w-3 h-3" />
+                        Block
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}
+              {filteredCustomers.length === 0 && (
+                <tr>
+                  <td colSpan={7} className="p-8 text-center text-stone-500 text-sm">
+                    No customers found. Punch an order or click &quot;Add Customer&quot; to register one.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
       </div>
+
+      {/* BLOCK CUSTOMER MODAL */}
+      <BlockCustomerModal
+        isOpen={Boolean(blockModalTarget)}
+        onClose={() => setBlockModalTarget(null)}
+        phone={blockModalTarget?.phone || ''}
+        customerName={blockModalTarget?.name}
+        onConfirmBlock={async (reason) => {
+          if (blockModalTarget) {
+            await blockCustomer(blockModalTarget.phone, reason, currentUser?.name);
+            setBlockModalTarget(null);
+          }
+        }}
+      />
+
+      {/* MANAGER AUTH MODAL FOR CASHIERS */}
+      <ManagerAuthModal
+        isOpen={isManagerAuthOpen}
+        onClose={() => {
+          setIsManagerAuthOpen(false);
+          setPendingUnblockPhone(null);
+        }}
+        actionTitle="Manager Authorization Required"
+        actionDescription="Only Manager or Owner users are allowed to block or unblock customer accounts. Authenticate with a Manager PIN to proceed."
+        onAuthorized={async (manager) => {
+          setIsManagerAuthOpen(false);
+          if (pendingUnblockPhone) {
+            await unblockCustomer(pendingUnblockPhone);
+            setPendingUnblockPhone(null);
+          }
+        }}
+      />
 
       {/* ADD NEW CUSTOMER MODAL */}
       {isAddModalOpen && (

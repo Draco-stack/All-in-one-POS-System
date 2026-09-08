@@ -1,4 +1,5 @@
 import React from 'react';
+import { roundToCurrency } from '../../utils/financial';
 
 export interface DailyFinancialSummaryThermalProps {
   dateLabel: string;
@@ -13,6 +14,13 @@ export interface DailyFinancialSummaryThermalProps {
 }
 
 export const DailyFinancialSummaryThermal: React.FC<DailyFinancialSummaryThermalProps> = (props) => {
+  const roundedGross = roundToCurrency(props.grossSales);
+  const roundedNet = roundToCurrency(props.netSales);
+  const roundedDiscounts = roundToCurrency(props.discounts);
+  const roundedCash = roundToCurrency(props.cashSales);
+  const roundedCard = roundToCurrency(props.cardSales);
+  const avgOrderValue = props.totalOrders > 0 ? roundToCurrency(roundedGross / props.totalOrders) : 0;
+
   return (
     <>
       <style>{`
@@ -69,15 +77,15 @@ export const DailyFinancialSummaryThermal: React.FC<DailyFinancialSummaryThermal
           <div className="font-bold mb-1 text-sm">SALES OVERVIEW</div>
           <div className="flex justify-between">
             <span>Gross Sales:</span>
-            <span>PKR {props.grossSales.toLocaleString()}</span>
+            <span>PKR {roundedGross.toLocaleString()}</span>
           </div>
           <div className="flex justify-between">
             <span>Discounts/Refunds:</span>
-            <span>-PKR {props.discounts.toLocaleString()}</span>
+            <span>-PKR {roundedDiscounts.toLocaleString()}</span>
           </div>
           <div className="flex justify-between font-bold mt-1 text-sm">
             <span>Net Sales:</span>
-            <span>PKR {props.netSales.toLocaleString()}</span>
+            <span>PKR {roundedNet.toLocaleString()}</span>
           </div>
           
           <div className="border-t border-dashed border-black my-2"></div>
@@ -85,11 +93,11 @@ export const DailyFinancialSummaryThermal: React.FC<DailyFinancialSummaryThermal
           <div className="font-bold mb-1 text-sm">PAYMENT BREAKDOWN</div>
           <div className="flex justify-between">
             <span>Cash Sales:</span>
-            <span>PKR {props.cashSales.toLocaleString()}</span>
+            <span>PKR {roundedCash.toLocaleString()}</span>
           </div>
           <div className="flex justify-between">
             <span>Card/Online:</span>
-            <span>PKR {props.cardSales.toLocaleString()}</span>
+            <span>PKR {roundedCard.toLocaleString()}</span>
           </div>
 
           <div className="border-t border-dashed border-black my-2"></div>
@@ -101,7 +109,7 @@ export const DailyFinancialSummaryThermal: React.FC<DailyFinancialSummaryThermal
           </div>
           <div className="flex justify-between">
             <span>Avg Order Value:</span>
-            <span>PKR {props.totalOrders > 0 ? Math.round(props.grossSales / props.totalOrders).toLocaleString() : 0}</span>
+            <span>PKR {avgOrderValue.toLocaleString()}</span>
           </div>
 
           <div className="border-t border-dashed border-black my-2"></div>
@@ -119,15 +127,15 @@ export const DailyFinancialSummaryThermal: React.FC<DailyFinancialSummaryThermal
               </div>
               <div className="flex justify-between">
                 <span>Expected Cash:</span>
-                <span>PKR {s.expectedCash?.toLocaleString() || 0}</span>
+                <span>PKR {roundToCurrency(Number(s.expectedCash) || 0).toLocaleString()}</span>
               </div>
               <div className="flex justify-between">
                 <span>Actual Cash:</span>
-                <span>PKR {s.actualCash?.toLocaleString() || 0}</span>
+                <span>PKR {roundToCurrency(Number(s.actualCash) || 0).toLocaleString()}</span>
               </div>
               <div className="flex justify-between font-bold">
                 <span>Variance:</span>
-                <span>{s.shortageOverage >= 0 ? '+' : ''}PKR {s.shortageOverage?.toLocaleString() || 0}</span>
+                <span>{(Number(s.shortageOverage) || 0) >= 0 ? '+' : ''}PKR {roundToCurrency(Number(s.shortageOverage) || 0).toLocaleString()}</span>
               </div>
             </div>
           ))}

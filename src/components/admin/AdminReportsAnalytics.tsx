@@ -20,6 +20,8 @@ import * as XLSX from 'xlsx';
 import { useRestaurant } from '../../context/RestaurantContext';
 import { HistoricalShiftRecord } from '../../data/mockData';
 import { DailyFinancialSummaryThermal } from './DailyFinancialSummaryThermal';
+import { roundToCurrency } from '../../utils/financial';
+import { exportToStyledExcel } from '../../utils/excelExporter';
 
 export const AdminReportsAnalytics: React.FC = () => {
   const { historicalShifts, currentShift, menuItems, orders, showToast } = useRestaurant();
@@ -134,17 +136,21 @@ export const AdminReportsAnalytics: React.FC = () => {
       }
     });
 
-    const netSales = grossSales - discounts;
+    const roundedGross = roundToCurrency(grossSales);
+    const roundedDiscounts = roundToCurrency(discounts);
+    const roundedNet = roundToCurrency(roundedGross - roundedDiscounts);
+    const roundedCash = roundToCurrency(cashSales);
+    const roundedCard = roundToCurrency(cardSales);
     
     return {
       dateLabel: new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
-      grossSales,
-      netSales,
+      grossSales: roundedGross,
+      netSales: roundedNet,
       totalOrders,
-      cogs: Math.round(grossSales * 0.32),
-      discounts,
-      cashSales,
-      cardSales,
+      cogs: roundToCurrency(roundedGross * 0.32),
+      discounts: roundedDiscounts,
+      cashSales: roundedCash,
+      cardSales: roundedCard,
       shifts: allShifts.filter(s => new Date(s.openedAt).getTime() >= today.getTime() || s.status === 'open')
     };
   }, [orders, allShifts]);
@@ -249,7 +255,7 @@ export const AdminReportsAnalytics: React.FC = () => {
         s.shortageOverage,
         s.status,
       ]);
-      const orderHeaders = ['Order #', 'Date Time', 'Shift #', 'Cashier', 'Status', 'Payment Status', 'Payment Method', 'Order Type', 'Items Summary', 'Subtotal (PKR)', 'Tax (PKR)', 'Discount (PKR)', 'Total (PKR)'];
+      const orderHeaders = ['Order #', 'Date Time', 'Shift #', 'Cashier', 'Customer Name', 'Customer Phone', 'Source', 'Order Type', 'Status', 'Payment Status', 'Payment Method', 'Items Summary', 'Subtotal (PKR)', 'Tax (PKR)', 'Delivery Fee (PKR)', 'Discount (PKR)', 'Total (PKR)', 'Delivery Address', 'Delivery Driver'];
       const orderRows: any[] = [];
 
       orders.forEach(o => {
@@ -264,33 +270,38 @@ export const AdminReportsAnalytics: React.FC = () => {
           }
         }
         
-        const itemsSummary = o.items.map(i => `${i.quantity}x ${i.name}`).join(' | ');
+        const itemsSummary = o.items.map(i => `${i.quantity}x ${i.name}${i.flavor ? ` (${i.flavor})` : ''}`).join(' | ');
         orderRows.push([
           o.orderNumber,
           new Date(o.createdAt).toLocaleString(),
           shiftNum,
           o.cashierName || 'System',
-          o.status,
+          o.customer?.name || '-',
+          o.customer?.phone || '-',
+          o.source || 'Pos',
+          (o.type || o.orderType || '').replace('_', ' ').toUpperCase(),
+          o.status.toUpperCase(),
           o.paymentStatus,
           o.paymentMethod,
-          o.orderType,
           itemsSummary,
           o.subtotal,
           o.tax,
+          o.deliveryFee || 0,
           o.discount,
-          o.total
+          o.total,
+          o.customer?.address || '-',
+          o.riderName || o.deliveryDriver || '-'
         ]);
       });
 
-      const wb = XLSX.utils.book_new();
-      const wsShifts = XLSX.utils.aoa_to_sheet([headers, ...rows]);
-      XLSX.utils.book_append_sheet(wb, wsShifts, 'Shifts Summary');
-      
-      const wsOrders = XLSX.utils.aoa_to_sheet([orderHeaders, ...orderRows]);
-      XLSX.utils.book_append_sheet(wb, wsOrders, 'All Orders');
-
-      XLSX.writeFile(wb, `Shifts_And_Orders_Report_${new Date().toISOString().slice(0, 10)}.xlsx`);
-      showToast('✓ Shift audit and orders report downloaded as Excel');
+      exportToStyledExcel({
+        title: 'Executive Shift Audits & Order Trend Report',
+        subTitle: 'Section B includes: All Operational Outlets & Active Shifts',
+        reportType: 'all',
+        orders,
+        filename: `Shifts_And_Orders_Report_${new Date().toISOString().slice(0, 10)}.xls`,
+      });
+      showToast('✓ Executive Shift audit and order report exported to Excel');
     } else if (selectedReportTab === 'TOP_ITEMS') {
       if (topSellingItems.length === 0) {
         showToast('No sales data to export.');
@@ -507,6 +518,13 @@ export const AdminReportsAnalytics: React.FC = () => {
                     </tr>
                   );
                 })}
+                {filteredShifts.length === 0 && (
+                  <tr>
+                    <td colSpan={13} className="py-8 text-center text-stone-500 text-sm">
+                      No shift audit records found.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>

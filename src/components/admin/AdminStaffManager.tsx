@@ -21,9 +21,27 @@ import {
   Loader2,
   Pencil,
   Phone,
+  Truck,
 } from 'lucide-react';
 import { useRestaurant } from '../../context/RestaurantContext';
 import { UserAccount, UserRole } from '../../types';
+
+export const AVAILABLE_CAPABILITIES = [
+  { id: 'pos', label: 'POS Terminal Access', description: 'Access the register and punch orders' },
+  { id: 'kitchen', label: 'Kitchen & Dispatch Access', description: 'Monitor incoming kitchen tickets' },
+  { id: 'delivery', label: 'Delivery Monitoring Access', description: 'Manage riders and delivery fleet assignments' },
+  { id: 'all-orders', label: 'All Orders Search Access', description: 'Search historical orders and issue duplicate receipts' },
+  { id: 'orders', label: 'Orders & Refunds View', description: 'Inspect orders, void items, or issue refunds' },
+  { id: 'menu', label: 'Menu Catalog Access', description: 'View and manage menu items, categories, and inventory' },
+  { id: 'customers', label: 'Customers View Access', description: 'Access and search customer profiles' },
+  { id: 'shift', label: 'Shift & Float view', description: 'Start/close shifts and inspect cash registers' },
+  { id: 'admin_sales', label: 'Admin: Sales & Revenue Dashboard', description: 'Inspect sales performance and live margins' },
+  { id: 'admin_menu', label: 'Admin: Menu Catalog Settings', description: 'Manage menu items and prices in admin dashboard' },
+  { id: 'admin_staff', label: 'Admin: Staff & Roles (RBAC)', description: 'Configure staff accounts and granular restrictions' },
+  { id: 'admin_reports', label: 'Admin: Reports & Shift Audits', description: 'Review terminal audit logs and reconciliation sheets' },
+  { id: 'admin_riders', label: 'Admin: Fleet & Riders Management', description: 'Manage rider records and delivery analytics' },
+  { id: 'admin_settings', label: 'Admin: System Configuration', description: 'Update system integrations, printers, and core parameters' },
+];
 
 export const AdminStaffManager: React.FC = () => {
   const { users, currentUser, addNewUser, updateUser, updateUserPin, toggleUserActive, deleteUser, showToast, outlets, getRiderStats } = useRestaurant();
@@ -44,10 +62,12 @@ export const AdminStaffManager: React.FC = () => {
     name: string;
     role: UserRole;
     phone: string;
+    restrictions: string[];
   }>({
     name: '',
     role: 'cashier',
     phone: '',
+    restrictions: [],
   });
   const [isSavingEdit, setIsSavingEdit] = useState<boolean>(false);
 
@@ -81,6 +101,7 @@ export const AdminStaffManager: React.FC = () => {
     role: UserRole;
     phone: string;
     outlet: string;
+    restrictions: string[];
   }>({
     name: '',
     username: '',
@@ -88,16 +109,13 @@ export const AdminStaffManager: React.FC = () => {
     role: 'cashier',
     phone: '',
     outlet: 'Main Branch',
+    restrictions: [],
   });
 
   const handleCreateUser = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name.trim() || !formData.username.trim() || !formData.pin.trim()) {
-      showToast('All fields including Email Address and PIN / Password are required');
-      return;
-    }
-    if (formData.pin.length < 4) {
-      showToast('PIN / Password must be at least 4 digits');
+      showToast('All fields including Username and Password / PIN are required');
       return;
     }
 
@@ -115,6 +133,7 @@ export const AdminStaffManager: React.FC = () => {
       phone: formData.phone.trim(),
       outlet: formData.outlet,
       active: true,
+      restrictions: JSON.stringify(formData.restrictions),
     });
 
     setIsAddUserOpen(false);
@@ -125,15 +144,25 @@ export const AdminStaffManager: React.FC = () => {
       role: 'cashier',
       phone: '',
       outlet: 'Main Branch',
+      restrictions: [],
     });
   };
 
   const handleOpenEdit = (u: UserAccount) => {
     setTargetUserForEdit(u);
+    let initialRestrictions: string[] = [];
+    try {
+      if (u.restrictions) {
+        initialRestrictions = JSON.parse(u.restrictions);
+      }
+    } catch (e) {
+      console.error(e);
+    }
     setEditFormData({
       name: u.name,
       role: u.role,
       phone: u.phone || '',
+      restrictions: initialRestrictions,
     });
     setIsEditUserOpen(true);
   };
@@ -158,6 +187,7 @@ export const AdminStaffManager: React.FC = () => {
         name: editFormData.name.trim(),
         role: editFormData.role,
         phone: editFormData.phone.trim(),
+        restrictions: JSON.stringify(editFormData.restrictions || []),
       });
       if (success) {
         setIsEditUserOpen(false);
@@ -179,11 +209,11 @@ export const AdminStaffManager: React.FC = () => {
   const handleSaveNewPin = (e: React.FormEvent) => {
     e.preventDefault();
     if (!targetUserForPin) return;
-    if (newPinValue.length !== 4 || !/^\d{4}$/.test(newPinValue)) {
-      showToast('PIN must be exactly 4 numerical digits');
+    if (!newPinValue.trim()) {
+      showToast('Password cannot be empty');
       return;
     }
-    updateUserPin(targetUserForPin.id, newPinValue);
+    updateUserPin(targetUserForPin.id, newPinValue.trim());
     setIsPinModalOpen(false);
     setTargetUserForPin(null);
   };
@@ -250,13 +280,14 @@ export const AdminStaffManager: React.FC = () => {
             </button>
             <button
               onClick={() => setRoleFilter('riders')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 cursor-pointer flex items-center gap-1.5 ${
                 roleFilter === 'riders'
                   ? 'bg-gradient-to-r from-emerald-600/30 to-emerald-700/30 text-emerald-300 border border-emerald-500/40 shadow-sm'
                   : 'text-stone-400 hover:text-stone-200'
               }`}
             >
-              🛵 Delivery Fleet / Riders ({users.filter(u => u.role === 'rider').length})
+              <Truck className="w-3.5 h-3.5" />
+              <span>Delivery Fleet / Riders ({users.filter(u => u.role === 'rider').length})</span>
             </button>
           </div>
 
@@ -306,7 +337,7 @@ export const AdminStaffManager: React.FC = () => {
                               : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
                           }`}
                         >
-                          {isRider ? '🛵' : u.name.substring(0, 2)}
+                          {isRider ? <Truck className="w-4 h-4 text-cyan-400" /> : u.name.substring(0, 2)}
                         </div>
                         <div>
                           <div className="font-bold text-white flex items-center gap-1.5">
@@ -327,8 +358,9 @@ export const AdminStaffManager: React.FC = () => {
                             {u.phone && (
                               <>
                                 <span className="text-stone-700">•</span>
-                                <span className="text-stone-400 font-mono flex items-center gap-0.5">
-                                  📞 {u.phone}
+                                <span className="text-stone-400 font-mono flex items-center gap-1">
+                                  <Phone className="w-3 h-3 text-stone-400" />
+                                  <span>{u.phone}</span>
                                 </span>
                               </>
                             )}
@@ -424,10 +456,10 @@ export const AdminStaffManager: React.FC = () => {
                         <button
                           onClick={() => handleOpenPinReset(u)}
                           className="px-2 py-1 bg-stone-800/80 hover:bg-stone-700 text-stone-300 hover:text-white rounded-lg text-xs font-semibold flex items-center gap-1 transition cursor-pointer border border-white/10"
-                          title="Reset POS 4-Digit PIN"
+                          title="Change User Password"
                         >
                           <KeyRound className="w-3 h-3 text-amber-400" />
-                          Reset PIN
+                          Password
                         </button>
                         <button
                           onClick={() => handleDeleteUser(u)}
@@ -610,7 +642,7 @@ export const AdminStaffManager: React.FC = () => {
 
               {formData.role === 'rider' && (
                 <div className="p-3 bg-cyan-950/40 border border-cyan-800/40 rounded-xl text-cyan-300 text-xs flex items-start gap-2.5">
-                  <span className="text-base leading-none">🛵</span>
+                  <Truck className="w-5 h-5 text-cyan-400 shrink-0 mt-0.5" />
                   <div>
                     <span className="font-bold text-cyan-200">Delivery Fleet Account:</span> Riders are recorded for order assignment, tracking, and fleet analytics. They do not log in to the POS cashier terminal, but appear in all driver assignment dropdowns with live order counts.
                   </div>
@@ -649,14 +681,14 @@ export const AdminStaffManager: React.FC = () => {
         </div>
       )}
 
-      {/* Reset PIN Modal */}
+      {/* Reset Password Modal */}
       {isPinModalOpen && targetUserForPin && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
           <div className="bg-gradient-to-b from-stone-900 to-[#141414] border border-white/10 rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl animate-in fade-in zoom-in-95">
             <div className="p-4.5 border-b border-white/10 flex items-center justify-between bg-stone-950/80">
               <div className="flex items-center gap-2">
                 <KeyRound className="w-5 h-5 text-amber-400" />
-                <h4 className="text-sm font-bold text-white">Reset Terminal PIN</h4>
+                <h4 className="text-sm font-bold text-white">Change User Password</h4>
               </div>
               <button
                 onClick={() => setIsPinModalOpen(false)}
@@ -668,19 +700,18 @@ export const AdminStaffManager: React.FC = () => {
 
             <form onSubmit={handleSaveNewPin} className="p-5 space-y-4">
               <div className="text-xs text-stone-300">
-                Set a new 4-digit PIN for <span className="text-white font-bold">{targetUserForPin.name}</span> ({targetUserForPin.role.toUpperCase()})
+                Set a new password for <span className="text-white font-bold">{targetUserForPin.name}</span> ({targetUserForPin.role.toUpperCase()}). Password can contain letters, numbers, or special characters.
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-stone-300 mb-1">New 4-Digit PIN</label>
+                <label className="block text-xs font-semibold text-stone-300 mb-1">New Password</label>
                 <input
-                  type="password"
+                  type="text"
                   required
-                  maxLength={4}
-                  placeholder="••••"
+                  placeholder="Enter new password (e.g. Pass#123)"
                   value={newPinValue}
                   onChange={(e) => setNewPinValue(e.target.value)}
-                  className="w-full px-3 py-2 bg-stone-950/80 border border-white/10 rounded-xl text-sm text-white font-mono tracking-widest text-center focus:outline-none focus:border-emerald-500 transition shadow-inner"
+                  className="w-full px-3 py-2.5 bg-stone-950/80 border border-white/10 rounded-xl text-sm text-white font-mono focus:outline-none focus:border-emerald-500 transition shadow-inner"
                   autoFocus
                 />
               </div>
@@ -697,7 +728,7 @@ export const AdminStaffManager: React.FC = () => {
                   type="submit"
                   className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white text-xs font-bold transition-all duration-200 cursor-pointer shadow-[0_0_15px_rgba(245,158,11,0.25)] hover:scale-[1.02] active:scale-95 border border-amber-500/30"
                 >
-                  Save New PIN
+                  Save Password
                 </button>
               </div>
             </form>
@@ -762,6 +793,51 @@ export const AdminStaffManager: React.FC = () => {
                   <option value="rider">Rider (Delivery Fleet)</option>
                   {currentUser.role === 'owner' && <option value="owner">Owner (Full Administrator)</option>}
                 </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-stone-300 mb-1 flex items-center gap-1.5">
+                  <ShieldAlert className="w-3.5 h-3.5 text-red-400" />
+                  Capability Restrictions
+                </label>
+                <p className="text-[10px] text-stone-500 mb-2 leading-relaxed">
+                  Toggle checkboxes to <span className="text-red-400 font-bold">Restrict / Block</span> this staff member's access to specific views, dashboards, or system modules.
+                </p>
+                <div className="bg-stone-950/80 border border-white/10 rounded-xl p-3 max-h-40 overflow-y-auto space-y-2.5 scrollbar-thin">
+                  {AVAILABLE_CAPABILITIES.map((cap) => {
+                    const isChecked = editFormData.restrictions.includes(cap.id);
+                    return (
+                      <label key={cap.id} className="flex items-start gap-2.5 cursor-pointer text-xs group select-none">
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setEditFormData({
+                                ...editFormData,
+                                restrictions: [...editFormData.restrictions, cap.id],
+                              });
+                            } else {
+                              setEditFormData({
+                                ...editFormData,
+                                restrictions: editFormData.restrictions.filter((r) => r !== cap.id),
+                              });
+                            }
+                          }}
+                          className="mt-0.5 rounded border-stone-700 bg-stone-900 text-red-500 focus:ring-red-500/30 w-3.5 h-3.5 accent-red-500"
+                        />
+                        <div>
+                          <div className={`font-semibold text-[11px] ${isChecked ? 'text-red-400 font-bold' : 'text-stone-300 group-hover:text-white'}`}>
+                            {cap.label}
+                          </div>
+                          <div className="text-[9.5px] text-stone-500 leading-snug">
+                            {cap.description}
+                          </div>
+                        </div>
+                      </label>
+                    );
+                  })}
+                </div>
               </div>
 
               <div className="flex items-center justify-end gap-2 pt-4 border-t border-white/10">

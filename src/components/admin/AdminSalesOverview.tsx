@@ -15,6 +15,7 @@ import {
   CheckCircle,
   FileSpreadsheet,
   Filter,
+  Eye,
 } from 'lucide-react';
 import {
   AreaChart,
@@ -32,11 +33,14 @@ import {
   Legend,
 } from 'recharts';
 import { useRestaurant } from '../../context/RestaurantContext';
+import { Order } from '../../types';
+import { DeliveryOrderDetailsModal } from '../delivery/DeliveryOrderDetailsModal';
 
 export const AdminSalesOverview: React.FC = () => {
-  const { orders, currentShift, salesAdjustments, users, updatePettyCash } = useRestaurant();
+  const { orders, currentShift, salesAdjustments, users, updatePettyCash, updateOrderStatus, assignDeliveryDriver } = useRestaurant();
   const [timeRange, setTimeRange] = useState<'hourly' | 'daily' | 'weekly'>('hourly');
   const [adjustmentFilter, setAdjustmentFilter] = useState<'ALL' | 'CANCELLATION' | 'MODIFICATION'>('ALL');
+  const [selectedOrderForModal, setSelectedOrderForModal] = useState<Order | null>(null);
 
   const [isEditingPettyCash, setIsEditingPettyCash] = useState(false);
   const [pettyCashInput, setPettyCashInput] = useState(currentShift?.openingFloat?.toString() || '2000');
@@ -267,36 +271,36 @@ export const AdminSalesOverview: React.FC = () => {
       {/* Top Banner: Real-Time Live KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         {/* KPI 1: Net Sales */}
-        <div className="bg-gradient-to-b from-stone-900/90 to-[#141414]/90 backdrop-blur-md border border-white/10 rounded-2xl p-4.5 shadow-lg relative overflow-hidden flex flex-col justify-between hover:border-emerald-500/30 transition-all duration-200">
+        <div className="bg-[#14161f] border border-white/10 rounded-2xl p-4.5 shadow-sm relative overflow-hidden flex flex-col justify-between hover:border-emerald-500/40 transition-all duration-100">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-stone-400 uppercase tracking-wider">Today's Net Sales</span>
-            <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-[0_0_12px_rgba(16,185,129,0.15)]">
+            <span className="text-xs font-bold text-stone-400 uppercase tracking-wider">Today's Net Sales</span>
+            <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
               <DollarSign className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-3">
-            <div className="text-2xl font-black text-white tracking-tight">
+            <div className="text-2xl font-black text-white tracking-tight font-mono tabular-nums">
               PKR {todayNetSales.toLocaleString()}
             </div>
             <div className="flex items-center gap-1.5 mt-1 text-[11px] font-medium text-emerald-400">
-              <Sparkles className="w-3.5 h-3.5" />
+              <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
               <span>Real-time reconciled sales</span>
-              <span className="text-stone-500 ml-1 font-mono">Gross: {todayGrossSales.toLocaleString()}</span>
+              <span className="text-stone-500 ml-1 font-mono tabular-nums">Gross: {todayGrossSales.toLocaleString()}</span>
             </div>
           </div>
         </div>
 
         {/* KPI 2: Total Orders Processed */}
-        <div className="bg-gradient-to-b from-stone-900/90 to-[#141414]/90 backdrop-blur-md border border-white/10 rounded-2xl p-4.5 shadow-lg relative overflow-hidden flex flex-col justify-between hover:border-blue-500/30 transition-all duration-200">
+        <div className="bg-[#14161f] border border-white/10 rounded-2xl p-4.5 shadow-sm relative overflow-hidden flex flex-col justify-between hover:border-blue-500/40 transition-all duration-100">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-stone-400 uppercase tracking-wider">Total Orders</span>
-            <div className="p-2 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 shadow-[0_0_12px_rgba(59,130,246,0.15)]">
+            <span className="text-xs font-bold text-stone-400 uppercase tracking-wider">Total Orders</span>
+            <div className="p-2 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20">
               <ShoppingBag className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-3">
-            <div className="text-2xl font-black text-white tracking-tight">
-              {totalOrdersProcessed} <span className="text-sm font-normal text-stone-400">tickets</span>
+            <div className="text-2xl font-black text-white tracking-tight font-mono tabular-nums">
+              {totalOrdersProcessed} <span className="text-sm font-normal text-stone-400 font-sans">tickets</span>
             </div>
             <div className="flex items-center gap-1.5 mt-1 text-[11px] font-medium text-blue-400">
               <Clock className="w-3.5 h-3.5" />
@@ -306,15 +310,15 @@ export const AdminSalesOverview: React.FC = () => {
         </div>
 
         {/* KPI 3: Average Order Value (AOV) */}
-        <div className="bg-gradient-to-b from-stone-900/90 to-[#141414]/90 backdrop-blur-md border border-white/10 rounded-2xl p-4.5 shadow-lg relative overflow-hidden flex flex-col justify-between hover:border-purple-500/30 transition-all duration-200">
+        <div className="bg-[#14161f] border border-white/10 rounded-2xl p-4.5 shadow-sm relative overflow-hidden flex flex-col justify-between hover:border-purple-500/40 transition-all duration-100">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-stone-400 uppercase tracking-wider">Average Ticket (AOV)</span>
-            <div className="p-2 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20 shadow-[0_0_12px_rgba(168,85,247,0.15)]">
+            <span className="text-xs font-bold text-stone-400 uppercase tracking-wider">Average Ticket (AOV)</span>
+            <div className="p-2 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
               <TrendingUp className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-3">
-            <div className="text-2xl font-black text-white tracking-tight">
+            <div className="text-2xl font-black text-white tracking-tight font-mono tabular-nums">
               PKR {averageOrderValue.toLocaleString()}
             </div>
             <div className="flex items-center gap-1.5 mt-1 text-[11px] font-medium text-purple-300">
@@ -597,12 +601,13 @@ export const AdminSalesOverview: React.FC = () => {
                 <th className="py-2.5 px-3 text-right">Net Ledger Delta</th>
                 <th className="py-2.5 px-3">Reason Code</th>
                 <th className="py-2.5 px-3 text-right">Timestamp</th>
+                <th className="py-2.5 px-3 text-center">Inspect</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5 font-sans">
               {filteredAdjustments.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="py-8 text-center text-stone-500 italic">
+                  <td colSpan={10} className="py-8 text-center text-stone-500 italic">
                     No sales adjustments found for the selected filter.
                   </td>
                 </tr>
@@ -610,6 +615,28 @@ export const AdminSalesOverview: React.FC = () => {
                 filteredAdjustments.map((adj) => {
                   const isNegative = adj.netDelta < 0;
                   const isPositive = adj.netDelta > 0;
+                  const matchedOrder = orders.find((o) => o.orderNumber === adj.orderNumber || o.id === adj.orderId);
+
+                  const handleInspectOrder = () => {
+                    if (matchedOrder) {
+                      setSelectedOrderForModal(matchedOrder);
+                    } else {
+                      setSelectedOrderForModal({
+                        id: adj.orderId,
+                        orderNumber: adj.orderNumber,
+                        orderType: 'delivery',
+                        type: 'delivery',
+                        status: adj.type === 'CANCELLATION' ? 'cancelled' : 'completed',
+                        total: adj.newAmount,
+                        subtotal: adj.newAmount,
+                        items: [],
+                        paymentStatus: 'paid',
+                        paymentMethod: 'cash',
+                        createdAt: adj.timestamp,
+                      } as any);
+                    }
+                  };
+
                   return (
                     <tr key={adj.id} className="hover:bg-white/[0.02] transition">
                       <td className="py-2.5 px-3">
@@ -623,7 +650,15 @@ export const AdminSalesOverview: React.FC = () => {
                           {adj.type}
                         </span>
                       </td>
-                      <td className="py-2.5 px-3 font-mono font-bold text-white">{adj.orderNumber}</td>
+                      <td className="py-2.5 px-3 font-mono font-bold text-white">
+                        <button
+                          onClick={handleInspectOrder}
+                          className="hover:text-blue-400 transition cursor-pointer text-left underline decoration-blue-500/30"
+                          title="Click to view complete order details"
+                        >
+                          {adj.orderNumber}
+                        </button>
+                      </td>
                       <td className="py-2.5 px-3">
                         <span className="font-semibold text-stone-200">{adj.authorizerName}</span>
                         <span className="text-[10px] text-stone-400 block uppercase font-mono">{adj.authorizerRole}</span>
@@ -652,6 +687,16 @@ export const AdminSalesOverview: React.FC = () => {
                       <td className="py-2.5 px-3 text-right font-mono text-[11px] text-stone-400 whitespace-nowrap">
                         {new Date(adj.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </td>
+                      <td className="py-2.5 px-3 text-center">
+                        <button
+                          onClick={handleInspectOrder}
+                          className="px-2.5 py-1 rounded-lg bg-blue-600/15 hover:bg-blue-600 text-blue-400 hover:text-white text-xs font-bold transition inline-flex items-center gap-1 border border-blue-500/30 cursor-pointer shadow-xs"
+                          title="Inspect complete order breakdown"
+                        >
+                          <Eye className="w-3 h-3" />
+                          <span>View</span>
+                        </button>
+                      </td>
                     </tr>
                   );
                 })
@@ -660,6 +705,33 @@ export const AdminSalesOverview: React.FC = () => {
           </table>
         </div>
       </div>
+
+      {/* Complete Order Details Modal */}
+      {selectedOrderForModal && (
+        <DeliveryOrderDetailsModal
+          order={selectedOrderForModal}
+          isOpen={!!selectedOrderForModal}
+          onClose={() => setSelectedOrderForModal(null)}
+          onUpdateStatus={(orderId, newStatus) => {
+            updateOrderStatus(orderId, newStatus);
+            if (selectedOrderForModal) {
+              setSelectedOrderForModal({ ...selectedOrderForModal, status: newStatus });
+            }
+          }}
+          onAssignRider={(orderId, riderName, phone, vehicle) => {
+            assignDeliveryDriver(orderId, riderName);
+            if (selectedOrderForModal) {
+              setSelectedOrderForModal({
+                ...selectedOrderForModal,
+                riderName,
+                deliveryDriver: riderName,
+                riderPhone: phone,
+                riderVehicle: vehicle,
+              });
+            }
+          }}
+        />
+      )}
     </div>
   );
 };

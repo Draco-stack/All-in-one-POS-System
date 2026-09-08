@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -16,6 +16,7 @@ model User {
   phone          String?         // Phone number of the staff member
   avatar         String?
   active         Boolean         @default(true)
+  restrictions   String          @default("[]") // JSON array of strings: restricted capabilities (e.g., ["dashboard", "pos"])
   createdOrders  Order[]         @relation("CreatedByUser")
   modifiedOrders Order[]         @relation("ModifiedByUser")
   riderOrders    Order[]         @relation("OrderRider")
@@ -27,21 +28,25 @@ model User {
 }
 
 model Customer {
-  id            String   @id @default(cuid())
-  phone         String   @unique
-  phoneNumber   String?  @unique
+  id            String    @id @default(cuid())
+  phone         String    @unique
+  phoneNumber   String?   @unique
   name          String
   email         String?
   address       String?
   deliveryNotes String?
   notes         String?
-  loyaltyPoints Int      @default(0)
-  vipTier       String   @default("BRONZE") // BRONZE, SILVER, GOLD, PLATINUM
-  totalVisits   Int      @default(0)
-  totalSpent    Float    @default(0)
+  loyaltyPoints Int       @default(0)
+  vipTier       String    @default("BRONZE") // BRONZE, SILVER, GOLD, PLATINUM
+  totalVisits   Int       @default(0)
+  totalSpent    Float     @default(0)
+  isBlocked     Boolean   @default(false)
+  blockReason   String?
+  blockedAt     DateTime?
+  blockedBy     String?
   orders        Order[]
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 }
 
 model Category {
@@ -88,6 +93,8 @@ model Order {
   assignedRiderId String?
   assignedRider  User?           @relation("OrderRider", fields: [assignedRiderId], references: [id])
   cashierName    String?         @default("Cashier")
+  customerName   String?
+  customerPhone  String?
   
   subtotal       Float           @default(0)
   tax            Float           @default(0)

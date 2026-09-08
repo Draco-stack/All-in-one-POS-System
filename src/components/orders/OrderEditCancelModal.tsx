@@ -108,7 +108,7 @@ export const OrderEditCancelModal: React.FC<OrderEditCancelModalProps> = ({
   const executeAction = async (action: 'modify' | 'cancel', manager: UserAccount, auditReason: string) => {
     try {
       if (action === 'cancel') {
-        await cancelOrder(order.id, auditReason);
+        await cancelOrder(order.id, auditReason, manager?.pin);
       } else {
         await editOrder(order.id, {
           items: editedItems,
@@ -117,7 +117,8 @@ export const OrderEditCancelModal: React.FC<OrderEditCancelModalProps> = ({
           total: updatedTotal,
           notes: editNotes,
           reason: auditReason,
-        });
+          managerPin: manager?.pin,
+        } as any);
       }
       onClose();
     } catch (err) {

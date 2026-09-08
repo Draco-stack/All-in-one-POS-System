@@ -32,15 +32,15 @@ export const StaffManagementView: React.FC = () => {
 
   const handleCreateStaff = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !username || pin.length !== 4) {
-      showToast('Name, username, and a 4-digit PIN are required.');
+    if (!name.trim() || !username.trim() || !pin.trim()) {
+      showToast('Name, username, and Password / PIN are required.');
       return;
     }
 
     addNewUser({
-      name,
-      username,
-      pin,
+      name: name.trim(),
+      username: username.trim(),
+      pin: pin.trim(),
       role,
       outlet,
       active: true,
@@ -53,11 +53,11 @@ export const StaffManagementView: React.FC = () => {
   };
 
   const handleSaveNewPin = () => {
-    if (!selectedUserForPin || newPinInput.length !== 4) {
-      showToast('PIN must be exactly 4 digits.');
+    if (!selectedUserForPin || !newPinInput.trim()) {
+      showToast('Password / PIN cannot be empty.');
       return;
     }
-    updateUserPin(selectedUserForPin.id, newPinInput);
+    updateUserPin(selectedUserForPin.id, newPinInput.trim());
     setSelectedUserForPin(null);
     setNewPinInput('');
   };

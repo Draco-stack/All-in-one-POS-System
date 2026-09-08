@@ -121,8 +121,14 @@ export const ThermalReceipt: React.FC<ThermalReceiptProps> = (props) => {
   const ord = props.order || {};
 
   useEffect(() => {
+    let printTimer: NodeJS.Timeout;
     if (props.order) {
       connectAndKickDrawer().catch(() => {});
+      
+      // Auto-trigger browser native printing when an order is queued
+      printTimer = setTimeout(() => {
+        window.print();
+      }, 300);
     }
 
     const handleAfterPrint = () => {
@@ -132,7 +138,12 @@ export const ThermalReceipt: React.FC<ThermalReceiptProps> = (props) => {
     };
 
     window.addEventListener('afterprint', handleAfterPrint);
-    return () => window.removeEventListener('afterprint', handleAfterPrint);
+    return () => {
+      window.removeEventListener('afterprint', handleAfterPrint);
+      if (printTimer) {
+        clearTimeout(printTimer);
+      }
+    };
   }, [setPrintQueueOrder, props.order]);
 
   // If no order object and no items provided, return null

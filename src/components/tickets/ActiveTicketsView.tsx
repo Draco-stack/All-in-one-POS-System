@@ -29,6 +29,9 @@ export const ActiveTicketsView: React.FC = () => {
     return matchType && matchSearch;
   });
 
+  const [visibleCount, setVisibleCount] = useState(10);
+  const displayedOrders = filteredOrders.slice(0, visibleCount);
+
   const getElapsedTimeMinutes = (dateStr: string) => {
     const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 60000);
     return Math.max(0, diff);
@@ -100,7 +103,7 @@ export const ActiveTicketsView: React.FC = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {filteredOrders.map((order) => {
+            {displayedOrders.map((order) => {
               const elapsed = getElapsedTimeMinutes(order.createdAt);
               const isUrgent = elapsed > 15;
               const isReady = order.status === 'ready';
@@ -202,6 +205,42 @@ export const ActiveTicketsView: React.FC = () => {
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {filteredOrders.length > 10 && (
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-stone-900 p-4 rounded-2xl border border-stone-800 shadow-md mt-4">
+            <div className="text-xs text-stone-400 font-mono flex items-center gap-2">
+              <span>Showing <strong className="text-white">{displayedOrders.length}</strong> of <strong className="text-white">{filteredOrders.length}</strong> tickets</span>
+              {filteredOrders.length > visibleCount && (
+                <span className="px-2 py-0.5 rounded-full bg-teal-500/10 text-teal-300 text-[10px] font-bold border border-teal-500/20">
+                  {filteredOrders.length - visibleCount} remaining
+                </span>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2">
+              {filteredOrders.length > visibleCount && (
+                <button
+                  onClick={() => setVisibleCount((prev) => prev + 10)}
+                  className="px-5 py-2.5 bg-[#00897b] hover:bg-[#00796b] text-white font-bold text-xs rounded-xl shadow-lg transition-all flex items-center gap-2 cursor-pointer"
+                >
+                  <span>Load More Tickets (+10)</span>
+                  <span className="bg-black/20 px-2 py-0.5 rounded text-[10px] font-mono">
+                    +{Math.min(10, filteredOrders.length - visibleCount)}
+                  </span>
+                </button>
+              )}
+
+              {visibleCount > 10 && (
+                <button
+                  onClick={() => setVisibleCount(10)}
+                  className="px-3 py-2 bg-stone-800 hover:bg-stone-700 text-stone-300 font-semibold text-xs rounded-xl transition cursor-pointer border border-stone-700"
+                >
+                  Reset to 10
+                </button>
+              )}
+            </div>
           </div>
         )}
       </div>

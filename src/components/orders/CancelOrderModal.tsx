@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Order } from '../../types';
 import { useRestaurant } from '../../context/RestaurantContext';
 import { X, AlertTriangle, Check } from 'lucide-react';
+import { ManagerOverrideModal } from '../auth/ManagerOverrideModal';
 
 interface CancelOrderModalProps {
   order: Order | null;
@@ -10,29 +11,58 @@ interface CancelOrderModalProps {
 }
 
 const COMMON_CANCEL_REASONS = [
-  'Customer requested cancellation',
+  'Duplicate order one from branch and cc',
+  'Customer change of mind',
+  'Customer was not responding',
+  'Transferred to another branch',
   'Kitchen out of stock / unable to fulfill',
-  'Duplicate order punched in error',
-  'Customer entered wrong address / unreachable',
-  'Payment declined / issue',
-  'Other manager override',
+  'Other custom reason',
 ];
 
 export const CancelOrderModal: React.FC<CancelOrderModalProps> = ({ order, onClose, onCancelled }) => {
-  const { cancelOrder } = useRestaurant();
+  const { cancelOrder, currentUser } = useRestaurant();
   const [selectedReason, setSelectedReason] = useState<string>(COMMON_CANCEL_REASONS[0]);
   const [customReason, setCustomReason] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [isManagerModalOpen, setIsManagerModalOpen] = useState<boolean>(false);
 
   if (!order) return null;
 
-  const handleConfirmCancel = async () => {
+  const isCashier = currentUser?.role?.toLowerCase() === 'cashier';
+
+  const executeCancel = async (managerPin?: string, overrideReason?: string) => {
+    let finalReason = overrideReason;
+    if (!finalReason) {
+      if (selectedReason === 'Other custom reason' && !customReason.trim()) {
+        alert('Please enter a specific cancellation reason in the text box.');
+        return;
+      }
+      if (customReason.trim()) {
+        finalReason = selectedReason === 'Other custom reason'
+          ? customReason.trim()
+          : `${selectedReason} - ${customReason.trim()}`;
+      } else {
+        finalReason = selectedReason;
+      }
+    }
     setIsSubmitting(true);
-    const finalReason = selectedReason === 'Other manager override' && customReason.trim() ? customReason.trim() : selectedReason;
-    await cancelOrder(order.id, finalReason);
-    setIsSubmitting(false);
-    if (onCancelled) onCancelled();
-    onClose();
+    try {
+      await cancelOrder(order.id, finalReason, managerPin || currentUser?.pin);
+      if (onCancelled) onCancelled();
+      onClose();
+    } catch (err) {
+      console.error('Cancel order execution error:', err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleConfirmCancel = () => {
+    if (isCashier) {
+      setIsManagerModalOpen(true);
+    } else {
+      executeCancel();
+    }
   };
 
   return (
@@ -95,18 +125,18 @@ export const CancelOrderModal: React.FC<CancelOrderModalProps> = ({ order, onClo
             </div>
           </div>
 
-          {selectedReason === 'Other manager override' && (
-            <div>
-              <label className="block text-[10px] uppercase font-bold text-stone-400 mb-1">Specify Reason:</label>
-              <input
-                type="text"
-                value={customReason}
-                onChange={(e) => setCustomReason(e.target.value)}
-                placeholder="Enter custom cancellation notes..."
-                className="w-full bg-stone-950 border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-rose-500/50"
-              />
-            </div>
-          )}
+          <div>
+            <label className="block text-[10px] uppercase font-bold text-stone-400 mb-1">
+              {selectedReason === 'Other custom reason' ? 'Custom Cancellation Reason (Required):' : 'Additional Details / Notes (Optional):'}
+            </label>
+            <input
+              type="text"
+              value={customReason}
+              onChange={(e) => setCustomReason(e.target.value)}
+              placeholder={selectedReason === 'Other custom reason' ? "Please specify cancellation reason..." : "Enter additional cancellation notes or details..."}
+              className="w-full bg-stone-950 border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-rose-500/50"
+            />
+          </div>
 
           <div className="p-3.5 bg-rose-950/20 border border-rose-900/30 rounded-xl text-[11px] text-rose-300 leading-relaxed">
             ⚠️ <strong>Warning:</strong> Cancelling this order will mark it as cancelled, stop kitchen preparation, and reverse the sales amount from the current shift register.
@@ -133,6 +163,17 @@ export const CancelOrderModal: React.FC<CancelOrderModalProps> = ({ order, onClo
           </button>
         </div>
       </div>
+
+      <ManagerOverrideModal
+        isOpen={isManagerModalOpen}
+        onClose={() => setIsManagerModalOpen(false)}
+        title={`Manager Authorization - Cancel Order ${order.orderNumber}`}
+        actionDescription="Punched orders cannot be cancelled without an authorizing Manager/Owner PIN and logged reason."
+        onAuthorized={(manager, reason) => {
+          setIsManagerModalOpen(false);
+          executeCancel(manager.pin, reason);
+        }}
+      />
     </div>
   );
 };

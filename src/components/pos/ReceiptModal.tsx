@@ -54,7 +54,7 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ order, onClose }) =>
           >
             {/* Store Header */}
             <div className="text-center space-y-1 pb-3 border-b-2 border-dashed border-stone-300">
-              <h2 className="text-lg font-black tracking-wider uppercase font-sans text-stone-950">White's Castle</h2>
+              <h2 className="text-lg font-black tracking-wider uppercase font-sans text-stone-950">Master POS</h2>
               <p className="text-[11px] font-bold text-stone-700">Pizza, Fast Food & Grill</p>
               <p className="text-[10px] text-stone-500">Main Commercial Hub, Islamabad</p>
               <p className="text-[10px] text-stone-500">UAN: (051) 111-227-853 • NTN: #7391024-1</p>
@@ -176,11 +176,11 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ order, onClose }) =>
 
             {/* Barcode & Footer Thank You */}
             <div className="text-center pt-3 space-y-2 border-t-2 border-dashed border-stone-300">
-              <p className="text-[10px] text-stone-600 font-sans">Thank you for dining with White's Castle!</p>
+              <p className="text-[10px] text-stone-600 font-sans">Thank you for dining with Master POS!</p>
               <div className="font-mono text-xs tracking-widest text-stone-600 bg-stone-100 py-1 rounded">
                 * * * {order.orderNumber} * * *
               </div>
-              <p className="text-[9px] text-stone-400">Wifi: WhitesCastleGuest • Pass: castlepizza</p>
+              <p className="text-[9px] text-stone-400">Wifi: MasterPOSGuest • Pass: masterpospizza</p>
             </div>
           </div>
         </div>

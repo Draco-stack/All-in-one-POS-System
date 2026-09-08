@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import {
   Clock,
   ChefHat,
@@ -13,21 +14,43 @@ import {
   Edit3,
   Trash2,
   ShieldCheck,
+  Eye,
 } from 'lucide-react';
 import { useRestaurant } from '../../context/RestaurantContext';
 import { Order, OrderStatus } from '../../types';
 import { OrderEditCancelModal } from './OrderEditCancelModal';
+import { DeliveryOrderDetailsModal } from '../delivery/DeliveryOrderDetailsModal';
 
 export const OrderQueueView: React.FC = () => {
-  const { orders, updateOrderStatus, refundOrder, currentUser, assignDeliveryDriver, deliveryDrivers, getRiderStats } = useRestaurant();
+  const { orders, updateOrderStatus, refundOrder, currentUser, assignDeliveryDriver, deliveryDrivers, getRiderStats, showToast, theme } = useRestaurant();
   const [filterType, setFilterType] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('active');
   const [search, setSearch] = useState<string>('');
   const [selectedOrderForRefund, setSelectedOrderForRefund] = useState<Order | null>(null);
   const [refundReason, setRefundReason] = useState<string>('');
   const [selectedOrderForManage, setSelectedOrderForManage] = useState<Order | null>(null);
+  const [selectedOrderForInspect, setSelectedOrderForInspect] = useState<Order | null>(null);
   const [dispatchModalOrder, setDispatchModalOrder] = useState<Order | null>(null);
   const [selectedRiderForDispatch, setSelectedRiderForDispatch] = useState<string>('');
+  const [transitioningOrderId, setTransitioningOrderId] = useState<string | null>(null);
+
+  const handleTransitionStatus = async (orderId: string, nextStatus: OrderStatus, paymentStatus?: string) => {
+    if (transitioningOrderId === orderId) return;
+    if (nextStatus === 'completed' && paymentStatus?.toUpperCase() !== 'PAID') {
+      showToast('❌ Cannot complete order. Order is UNPAID. Process at POS Cashout.');
+      return;
+    }
+    setTransitioningOrderId(orderId);
+    try {
+      await Promise.resolve(updateOrderStatus(orderId, nextStatus));
+    } catch (err) {
+      console.error('Failed to transition order status:', err);
+    } finally {
+      setTimeout(() => {
+        setTransitioningOrderId(null);
+      }, 400);
+    }
+  };
 
   const statusConfig: Record<
     OrderStatus,
@@ -145,6 +168,16 @@ export const OrderQueueView: React.FC = () => {
     return matchesType && matchesStatus && matchesSearch;
   });
 
+  const [visibleCount, setVisibleCount] = useState(10);
+
+  useEffect(() => {
+    setVisibleCount(10);
+  }, [filterType, filterStatus, search]);
+
+  const displayedOrders = useMemo(() => {
+    return filteredOrders.slice(0, visibleCount);
+  }, [filteredOrders, visibleCount]);
+
   const handleRefundSubmit = () => {
     if (selectedOrderForRefund && refundReason) {
       refundOrder(selectedOrderForRefund.id, refundReason);
@@ -154,15 +187,23 @@ export const OrderQueueView: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 p-6 overflow-y-auto bg-[#1a1d24] text-stone-100 font-sans space-y-6 no-scrollbar">
+    <div className={`flex-1 p-4 md:p-6 overflow-y-auto font-sans space-y-6 no-scrollbar transition-colors duration-200 ${
+      theme === 'dark' ? 'bg-[#0f1117] text-stone-100' : 'bg-slate-100 text-slate-900'
+    }`}>
       {/* Top Header & Metrics Bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#232833] p-4 rounded-2xl border border-stone-800">
+      <div className={`flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-2xl border transition-colors ${
+        theme === 'dark' ? 'bg-[#151821] border-stone-800 shadow-lg' : 'bg-white border-slate-200 shadow-xs'
+      }`}>
         <div>
-          <h2 className="text-xl font-black text-white flex items-center gap-2">
-            <ChefHat className="w-6 h-6 text-[#00897b]" />
+          <h2 className={`text-lg md:text-xl font-black flex items-center gap-2 ${
+            theme === 'dark' ? 'text-white' : 'text-slate-900'
+          }`}>
+            <ChefHat className="w-5 h-5 md:w-6 md:h-6 text-emerald-500" />
             Live Kitchen Display & Order Dispatch
           </h2>
-          <p className="text-xs text-stone-400">
+          <p className={`text-xs mt-0.5 ${
+            theme === 'dark' ? 'text-stone-400' : 'text-slate-500'
+          }`}>
             Real-time kitchen ticket flow, dispatch status tracking, and RBAC manager order modifications.
           </p>
         </div>
@@ -170,20 +211,30 @@ export const OrderQueueView: React.FC = () => {
         {/* Filters */}
         <div className="flex flex-wrap items-center gap-2 text-xs">
           <div className="relative">
-            <Search className="w-3.5 h-3.5 text-stone-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+            <Search className={`w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 ${
+              theme === 'dark' ? 'text-stone-400' : 'text-slate-400'
+            }`} />
             <input
               type="text"
               placeholder="Search order #, phone, customer..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-8 pr-3 py-1.5 bg-[#171a21] border border-stone-700 rounded-xl text-xs text-white focus:outline-none focus:border-[#00897b]"
+              className={`pl-8 pr-3 py-1.5 border rounded-xl text-xs focus:outline-none transition-colors ${
+                theme === 'dark'
+                  ? 'bg-[#0c0e14] border-stone-700 text-white placeholder-stone-500 focus:border-emerald-500'
+                  : 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400 focus:border-emerald-600'
+              }`}
             />
           </div>
 
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
-            className="px-3 py-1.5 bg-[#171a21] border border-stone-700 rounded-xl text-stone-200 focus:outline-none text-xs font-semibold"
+            className={`px-3 py-1.5 border rounded-xl focus:outline-none text-xs font-semibold cursor-pointer transition-colors ${
+              theme === 'dark'
+                ? 'bg-[#0c0e14] border-stone-700 text-stone-200 focus:border-emerald-500'
+                : 'bg-slate-50 border-slate-300 text-slate-800 focus:border-emerald-600'
+            }`}
           >
             <option value="active">Active Tickets ({orders.filter((o) => ['pending', 'PUNCHED', 'MODIFIED', 'in_kitchen', 'ready'].includes(o.status)).length})</option>
             <option value="all">All Historical Tickets</option>
@@ -198,7 +249,11 @@ export const OrderQueueView: React.FC = () => {
           <select
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
-            className="px-3 py-1.5 bg-[#171a21] border border-stone-700 rounded-xl text-stone-200 focus:outline-none text-xs font-semibold"
+            className={`px-3 py-1.5 border rounded-xl focus:outline-none text-xs font-semibold cursor-pointer transition-colors ${
+              theme === 'dark'
+                ? 'bg-[#0c0e14] border-stone-700 text-stone-200 focus:border-emerald-500'
+                : 'bg-slate-50 border-slate-300 text-slate-800 focus:border-emerald-600'
+            }`}
           >
             <option value="all">All Order Types</option>
             <option value="dine_in">Dine-In</option>
@@ -210,37 +265,74 @@ export const OrderQueueView: React.FC = () => {
 
       {/* Orders Grid */}
       {filteredOrders.length === 0 ? (
-        <div className="py-20 text-center bg-[#232833]/40 rounded-2xl border border-dashed border-stone-800 text-stone-500">
-          <Receipt className="w-12 h-12 text-stone-600 mx-auto mb-2" />
-          <p className="text-sm font-bold text-stone-400">No active kitchen orders found</p>
-          <p className="text-xs text-stone-600 mt-1">Punch new orders from POS terminal to see live kitchen tickets.</p>
+        <div className={`py-20 px-6 text-center rounded-3xl border border-dashed transition-all duration-100 flex flex-col items-center justify-center space-y-4 ${
+          theme === 'dark'
+            ? 'bg-[#0c0e14] border-stone-800 text-stone-400 shadow-sm'
+            : 'bg-slate-50 border-slate-300 text-slate-500 shadow-2xs'
+        }`}>
+          <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center">
+            <ChefHat className="w-8 h-8 text-amber-400" />
+          </div>
+          <div className="space-y-1.5 max-w-sm">
+            <h3 className={`text-base font-black tracking-wide uppercase ${theme === 'dark' ? 'text-stone-200' : 'text-slate-800'}`}>
+              No Kitchen Orders in Queue
+            </h3>
+            <p className="text-xs leading-relaxed text-stone-400 font-medium">
+              Punch new orders from the POS terminal or online dispatch to see live kitchen tickets populated here in real time.
+            </p>
+          </div>
+          <div className="pt-2 flex items-center gap-2 text-xs font-mono font-bold text-amber-400 bg-amber-500/10 px-4 py-1.5 rounded-full border border-amber-500/20 tabular-nums">
+            <Receipt className="w-4 h-4 text-amber-400 shrink-0" />
+            <span>KDS Station Standby</span>
+          </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {filteredOrders.map((order) => {
-            const conf = statusConfig[order.status] || statusConfig[order.status?.toLowerCase() as OrderStatus] || statusConfig.pending;
-            const elapsedMins = Math.floor((Date.now() - new Date(order.createdAt).getTime()) / 60000);
-            return (
-              <div
+        <>
+          <motion.div layout className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            <AnimatePresence mode="popLayout">
+            {displayedOrders.map((order, idx) => {
+              const conf = statusConfig[order.status] || statusConfig[order.status?.toLowerCase() as OrderStatus] || statusConfig.pending;
+              const elapsedMins = Math.floor((Date.now() - new Date(order.createdAt).getTime()) / 60000);
+              return (
+              <motion.div
+                layout
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                transition={{ duration: 0.1, delay: Math.min(idx * 0.015, 0.1) }}
                 key={order.id}
-                className="bg-[#232833] border border-stone-800 rounded-2xl p-4 flex flex-col justify-between shadow-lg space-y-3"
+                className={`border rounded-2xl p-4 flex flex-col justify-between space-y-3 transition-all duration-100 active:scale-[0.99] ${
+                  theme === 'dark'
+                    ? 'bg-[#12141c] border-stone-800/90 shadow-md hover:border-stone-700'
+                    : 'bg-white border-slate-200 shadow-sm hover:shadow-md'
+                }`}
               >
                 {/* Header */}
-                <div className="flex items-start justify-between border-b border-stone-800 pb-3">
+                <div className={`flex items-start justify-between border-b pb-3 ${
+                  theme === 'dark' ? 'border-stone-800' : 'border-slate-100'
+                }`}>
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="font-mono font-black text-base text-white">
+                      <span className={`font-mono font-black text-base tabular-nums ${
+                        theme === 'dark' ? 'text-white' : 'text-slate-900'
+                      }`}>
                         {order.orderNumber}
                       </span>
-                      <span className="px-2 py-0.5 rounded-md bg-[#171a21] text-[10px] uppercase font-black text-stone-300 border border-stone-800">
+                      <span className={`px-2 py-0.5 rounded-md text-[10px] uppercase font-black border ${
+                        theme === 'dark'
+                          ? 'bg-[#0c0e14] text-stone-300 border-stone-800'
+                          : 'bg-slate-100 text-slate-700 border-slate-200'
+                      }`}>
                         {(order.type || order.orderType || 'takeaway').replace('_', ' ')}
                       </span>
                     </div>
-                    <p className="text-xs text-stone-400 mt-0.5">
+                    <p className={`text-xs mt-0.5 ${
+                      theme === 'dark' ? 'text-stone-400' : 'text-slate-500'
+                    }`}>
                       {order.type === 'dine_in'
                         ? order.tableNumber || 'Table'
                         : order.type === 'delivery'
-                        ? `Delivery: ${order.customer?.name || 'Customer'}`
+                        ? `Delivery: ${order.customer?.name || 'Customer'} - ${order.customer?.phone || 'No phone'}`
                         : `Takeaway: ${order.customer?.name || 'Walk-in'}`}
                     </p>
                   </div>
@@ -249,7 +341,9 @@ export const OrderQueueView: React.FC = () => {
                     <span className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${conf.bg} ${conf.text}`}>
                       {conf.label}
                     </span>
-                    <span className="text-[10px] text-stone-500 font-mono block mt-1">
+                    <span className={`text-[10px] font-mono block mt-1 ${
+                      theme === 'dark' ? 'text-stone-500' : 'text-slate-400'
+                    }`}>
                       {elapsedMins}m ago
                     </span>
                   </div>
@@ -257,25 +351,33 @@ export const OrderQueueView: React.FC = () => {
 
                 {/* Items List */}
                 <div className="space-y-2 flex-1">
-                  {order.items.map((item, idx) => (
+                  {order.items.map((item, itemIdx) => (
                     <div
-                      key={idx}
-                      className="p-2 bg-[#171a21]/90 rounded-xl border border-stone-800 flex items-center justify-between text-xs"
+                      key={itemIdx}
+                      className={`p-2.5 rounded-xl border flex items-center justify-between text-xs transition-colors ${
+                        theme === 'dark'
+                          ? 'bg-[#0c0e14]/80 border-stone-800/80 text-stone-200'
+                          : 'bg-slate-50 border-slate-200 text-slate-800'
+                      }`}
                     >
                       <div className="flex items-center gap-2">
-                        <span className="w-5 h-5 rounded bg-[#00897b]/20 border border-[#00897b]/30 text-emerald-400 font-mono font-bold flex items-center justify-center text-[11px]">
+                        <span className="w-5 h-5 rounded bg-emerald-500/20 border border-emerald-500/30 text-emerald-500 font-mono font-bold flex items-center justify-center text-[11px]">
                           {item.quantity}x
                         </span>
                         <div>
-                          <span className="font-bold text-white">{item.name}</span>
+                          <span className={`font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
+                            {item.name}
+                          </span>
                           {item.flavor && (
-                            <p className="text-[10px] text-amber-300 mt-0.5">
+                            <p className="text-[10px] text-amber-500 font-medium mt-0.5">
                               {item.flavor}
                             </p>
                           )}
                         </div>
                       </div>
-                      <span className="font-mono text-stone-400 text-[11px]">
+                      <span className={`font-mono text-[11px] font-semibold ${
+                        theme === 'dark' ? 'text-stone-400' : 'text-slate-600'
+                      }`}>
                         PKR {(item.price * item.quantity).toLocaleString()}
                       </span>
                     </div>
@@ -284,57 +386,171 @@ export const OrderQueueView: React.FC = () => {
 
                 {/* Delivery details */}
                 {order.type === 'delivery' && order.customer?.address && (
-                  <div className="bg-[#171a21] p-2.5 rounded-xl border border-stone-800 text-[11px] text-stone-400">
-                    <span className="font-bold text-stone-300 block">Address:</span>
+                  <div className={`p-2.5 rounded-xl border text-[11px] ${
+                    theme === 'dark'
+                      ? 'bg-[#0c0e14] border-stone-800 text-stone-400'
+                      : 'bg-slate-50 border-slate-200 text-slate-600'
+                  }`}>
+                    <span className={`font-bold block ${theme === 'dark' ? 'text-stone-300' : 'text-slate-800'}`}>
+                      Address:
+                    </span>
                     {order.customer.address}
                   </div>
                 )}
 
                 {/* Total & Action Footer */}
-                <div className="pt-2 border-t border-stone-800 flex items-center justify-between">
+                <div className={`pt-2.5 border-t flex items-center justify-between ${
+                  theme === 'dark' ? 'border-stone-800' : 'border-slate-100'
+                }`}>
                   <div className="font-mono text-xs">
-                    <span className="text-stone-400">Total: </span>
-                    <span className="font-bold text-emerald-400">
+                    <span className={theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}>Total: </span>
+                    <span className="font-bold text-emerald-500 text-sm">
                       PKR {order.total.toLocaleString()}
                     </span>
                   </div>
 
                   <div className="flex items-center gap-1.5">
+                    {/* Inspect View Details */}
+                    <button
+                      onClick={() => setSelectedOrderForInspect(order)}
+                      className="px-2.5 py-1.5 rounded-xl bg-blue-600/15 hover:bg-blue-600 text-blue-500 hover:text-white text-[11px] font-bold transition flex items-center gap-1 cursor-pointer border border-blue-500/30 active:scale-95"
+                      title="Inspect complete order details"
+                    >
+                      <Eye className="w-3 h-3" />
+                      View
+                    </button>
+
                     {/* Manage/Edit Button (RBAC protected) */}
                     <button
                       onClick={() => setSelectedOrderForManage(order)}
-                      className="px-2.5 py-1.5 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-300 text-[11px] font-bold transition flex items-center gap-1 cursor-pointer"
+                      className={`px-2.5 py-1.5 rounded-xl text-[11px] font-bold transition flex items-center gap-1 cursor-pointer active:scale-95 ${
+                        theme === 'dark'
+                          ? 'bg-stone-800 hover:bg-stone-700 text-stone-300'
+                          : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200'
+                      }`}
                       title="Edit / Cancel Ticket (Manager Auth)"
                     >
-                      <Edit3 className="w-3 h-3 text-amber-400" />
+                      <Edit3 className="w-3 h-3 text-amber-500" />
                       Manage
                     </button>
 
                     {order.status === 'ready' && (order.type === 'delivery' || order.orderType === 'delivery') ? (
                       <button
+                        disabled={transitioningOrderId === order.id}
                         onClick={() => {
-                          setSelectedRiderForDispatch(order.deliveryDriver || deliveryDrivers[0] || '');
+                          setSelectedRiderForDispatch(order.deliveryDriver || order.riderName || deliveryDrivers[0] || '');
                           setDispatchModalOrder(order);
                         }}
-                        className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition shadow-sm cursor-pointer flex items-center gap-1"
+                        className={`px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition shadow-sm flex items-center gap-1 cursor-pointer active:scale-95 ${
+                          transitioningOrderId === order.id ? 'opacity-60 cursor-not-allowed animate-pulse' : ''
+                        }`}
                       >
                         <Truck className="w-3 h-3" />
                         Dispatch Rider
                       </button>
                     ) : conf.nextStatus && conf.nextLabel && (
                       <button
-                        onClick={() => updateOrderStatus(order.id, conf.nextStatus!)}
-                        className="px-3 py-1.5 rounded-xl bg-[#00897b] hover:bg-[#00796b] text-white text-xs font-bold transition shadow-sm cursor-pointer"
+                        disabled={transitioningOrderId === order.id}
+                        onClick={() => {
+                          const isDelivery = order.type === 'delivery' || order.orderType === 'delivery';
+                          const isDeliveringTransition = conf.nextStatus === 'dispatched' || conf.nextStatus === 'completed';
+                          const hasDriver = order.deliveryDriver || order.riderName;
+
+                          if (isDelivery && isDeliveringTransition && !hasDriver) {
+                            setSelectedRiderForDispatch(deliveryDrivers[0] || '');
+                            setDispatchModalOrder(order);
+                            showToast('⚠️ A delivery rider is required to dispatch/deliver this order.');
+                            return;
+                          }
+
+                          handleTransitionStatus(order.id, conf.nextStatus!, order.paymentStatus);
+                        }}
+                        className={`px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow-sm cursor-pointer active:scale-95 ${
+                          transitioningOrderId === order.id ? 'opacity-60 cursor-not-allowed animate-pulse' : ''
+                        }`}
                       >
-                        {conf.nextLabel} →
+                        {transitioningOrderId === order.id ? 'Updating...' : `${conf.nextLabel} →`}
                       </button>
                     )}
                   </div>
                 </div>
-              </div>
+              </motion.div>
             );
           })}
-        </div>
+          </AnimatePresence>
+        </motion.div>
+
+        {filteredOrders.length > 10 && (
+          <div className={`flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-2xl border shadow-md transition-colors ${
+            theme === 'dark' ? 'bg-[#151821] border-stone-800' : 'bg-white border-slate-200'
+          }`}>
+            <div className={`text-xs font-mono flex items-center gap-2 ${
+              theme === 'dark' ? 'text-stone-400' : 'text-slate-500'
+            }`}>
+              <span>Showing <strong className={theme === 'dark' ? 'text-white' : 'text-slate-900'}>{displayedOrders.length}</strong> of <strong className={theme === 'dark' ? 'text-white' : 'text-slate-900'}>{filteredOrders.length}</strong> orders</span>
+              {filteredOrders.length > visibleCount && (
+                <span className="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 text-[10px] font-bold border border-amber-500/20">
+                  {filteredOrders.length - visibleCount} more available
+                </span>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2">
+              {filteredOrders.length > visibleCount && (
+                <button
+                  onClick={() => setVisibleCount((prev) => prev + 10)}
+                  className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-lg transition-all flex items-center gap-2 cursor-pointer active:scale-95"
+                >
+                  <span>Load More Orders (+10)</span>
+                  <span className="bg-black/20 px-2 py-0.5 rounded text-[10px] font-mono">
+                    +{Math.min(10, filteredOrders.length - visibleCount)}
+                  </span>
+                </button>
+              )}
+
+              {visibleCount > 10 && (
+                <button
+                  onClick={() => setVisibleCount(10)}
+                  className={`px-3 py-2 font-semibold text-xs rounded-xl transition cursor-pointer active:scale-95 ${
+                    theme === 'dark'
+                      ? 'bg-stone-800 hover:bg-stone-700 text-stone-300 border border-stone-700'
+                      : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200'
+                  }`}
+                >
+                  Reset to 10
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+      </>
+      )}
+
+      {/* Complete Order Details Modal */}
+      {selectedOrderForInspect && (
+        <DeliveryOrderDetailsModal
+          order={selectedOrderForInspect}
+          isOpen={!!selectedOrderForInspect}
+          onClose={() => setSelectedOrderForInspect(null)}
+          onUpdateStatus={(orderId, newStatus) => {
+            updateOrderStatus(orderId, newStatus);
+            if (selectedOrderForInspect) {
+              setSelectedOrderForInspect({ ...selectedOrderForInspect, status: newStatus });
+            }
+          }}
+          onAssignRider={(orderId, riderName, phone, vehicle) => {
+            assignDeliveryDriver(orderId, riderName);
+            if (selectedOrderForInspect) {
+              setSelectedOrderForInspect({
+                ...selectedOrderForInspect,
+                riderName,
+                deliveryDriver: riderName,
+                riderPhone: phone,
+                riderVehicle: vehicle,
+              });
+            }
+          }}
+        />
       )}
 
       {/* Order Edit / Cancel Modal */}
@@ -416,17 +632,30 @@ export const OrderQueueView: React.FC = () => {
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs text-stone-300 font-semibold block">Select Delivery Rider:</label>
+              <div className="flex items-center justify-between">
+                <label className="text-xs text-stone-300 font-bold block">
+                  Select Delivery Rider *
+                </label>
+                {!selectedRiderForDispatch && (
+                  <span className="text-[10px] font-bold text-red-400 bg-red-500/10 px-1.5 py-0.5 rounded border border-red-500/20 animate-pulse">
+                    Required
+                  </span>
+                )}
+              </div>
               <select
                 value={selectedRiderForDispatch}
                 onChange={(e) => setSelectedRiderForDispatch(e.target.value)}
-                className="w-full bg-stone-950 border border-stone-800 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-blue-500 font-medium"
+                required
+                className={`w-full bg-stone-950 border rounded-xl p-3 text-xs text-white focus:outline-none font-bold transition ${
+                  !selectedRiderForDispatch ? 'border-amber-500/70 text-amber-300 ring-1 ring-amber-500/30' : 'border-stone-800 focus:border-blue-500'
+                }`}
               >
+                <option value="">-- Select Rider (Required for Delivery)* --</option>
                 {deliveryDrivers.map((driver) => {
                   const stats = getRiderStats(driver);
                   return (
                     <option key={driver} value={driver}>
-                      {driver} ({stats.totalAssigned} assigned • ✓{stats.delivered} delivered | ✗{stats.cancelled} void)
+                      🛵 {driver} ({stats.totalAssigned} assigned • ✓{stats.delivered} delivered | ✗{stats.cancelled} void)
                     </option>
                   );
                 })}
@@ -453,11 +682,14 @@ export const OrderQueueView: React.FC = () => {
               </button>
               <button
                 onClick={async () => {
-                  if (selectedRiderForDispatch) {
-                    await assignDeliveryDriver(dispatchModalOrder.id, selectedRiderForDispatch);
-                    await updateOrderStatus(dispatchModalOrder.id, 'dispatched');
+                  if (!selectedRiderForDispatch) {
+                    showToast('⚠️ Please select a delivery rider. Rider is required for delivery orders.');
+                    return;
                   }
+                  await assignDeliveryDriver(dispatchModalOrder.id, selectedRiderForDispatch);
+                  await updateOrderStatus(dispatchModalOrder.id, 'dispatched');
                   setDispatchModalOrder(null);
+                  showToast(`🚀 Order #${dispatchModalOrder.orderNumber} dispatched with rider ${selectedRiderForDispatch}`);
                 }}
                 className="px-6 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition shadow-md cursor-pointer flex items-center gap-1.5"
               >

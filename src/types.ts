@@ -43,8 +43,13 @@ export interface Customer {
   loyaltyPoints?: number;
   vipTier?: string;
   totalOrdersCount?: number;
+  totalVisits?: number;
   totalSpent?: number;
   createdAt?: string;
+  isBlocked?: boolean;
+  blockReason?: string;
+  blockedAt?: string;
+  blockedBy?: string;
 }
 
 export interface CartItemModifier {
@@ -80,6 +85,10 @@ export interface PosCartCustomer {
   notes?: string;
   vipTier?: string;
   loyaltyPoints?: number;
+  isBlocked?: boolean;
+  blockReason?: string;
+  blockedAt?: string;
+  blockedBy?: string;
 }
 
 export interface PosCartState {
@@ -105,6 +114,7 @@ export interface OrderItemRecord {
   flavor?: string;
   modifiers?: CartItemModifier[];
   itemNote?: string;
+  notes?: string;
   image?: string;
   customization?: string;
   selectedOptions?: any[];
@@ -189,6 +199,8 @@ export interface RegisterShift {
   id: string;
   shiftNumber: string;
   terminalId?: string;
+  outlet?: string;
+  branchName?: string;
   openedBy?: string;
   openedById?: string;
   cashierName?: string;
@@ -280,6 +292,7 @@ export interface UserAccount {
   phone?: string;
   createdBy?: string;
   createdAt?: string;
+  restrictions?: string; // JSON array of string representing restricted capabilities
 }
 
 export interface InventoryStockItem {
@@ -316,5 +329,8 @@ export interface RiderStats {
   active: number;
   inTransit: number;
   totalRevenue: number;
+  cancelledRevenue: number;
+  netFleetRevenue: number;
+  codCashOnHand: number;
 }
 

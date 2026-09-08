@@ -1,0 +1,61 @@
+1073:              {/* Customer Details Display Area */}
+1074-              {customerLookupStatus === 'new' ? (
+1075-                <div className="bg-gradient-to-b from-stone-900 to-stone-950 border border-emerald-500/30 rounded-xl p-2 mt-0.5 flex flex-col gap-2 shadow-inner">
+1076-                   <div className="flex items-center gap-1.5 mb-0.5">
+1077-                     <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+1078-                     <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-400">New Customer Profile</span>
+1079-                   </div>
+1080-                   <div className="space-y-1.5">
+1081-                     <div className="relative">
+1082-                       <User className="w-3.5 h-3.5 text-stone-500 absolute left-2.5 top-1/2 -translate-y-1/2" />
+1083-                       <input type="text" placeholder="Customer Name (Required)" value={posCart.customer?.name || ''} onChange={(e) => setPosCustomerField('name', e.target.value)} className="w-full bg-stone-950 border border-white/10 rounded-lg pl-8 pr-2 py-1.5 text-xs text-white placeholder:text-stone-500 focus:outline-none focus:border-emerald-500/50" />
+1084-                     </div>
+1085-                     <div className="relative">
+1086-                       <MapPin className="w-3.5 h-3.5 text-stone-500 absolute left-2.5 top-2" />
+1087-                       <textarea rows={2} placeholder="Delivery Address (Optional)" value={posCart.customer?.address || ''} onChange={(e) => setPosCustomerField('address', e.target.value)} className="w-full bg-stone-950 border border-white/10 rounded-lg pl-8 pr-2 py-1.5 text-xs text-white placeholder:text-stone-500 focus:outline-none focus:border-emerald-500/50 resize-none" />
+1088-                     </div>
+1089-                   </div>
+1090-                </div>
+1091-              ) : customerLookupStatus === 'found' && posCart.customer ? (
+1092-                <div className="bg-gradient-to-r from-emerald-900/40 to-stone-900/40 border border-emerald-500/30 rounded-xl p-2.5 mt-0.5 flex flex-col shadow-inner relative overflow-hidden group">
+1093-                   <div className="absolute top-2 right-2 opacity-30 group-hover:opacity-100 transition-opacity">
+1094-                      <button onClick={() => setIsCustomerModalOpen(true)} className="text-white bg-stone-800 rounded-lg p-1.5 hover:bg-emerald-600 transition-colors cursor-pointer border border-white/10" title="View Full Profile">
+1095-                        <Eye className="w-3.5 h-3.5" />
+1096-                      </button>
+1097-                   </div>
+1098-                   <div className="flex items-center gap-2 mb-1">
+1099-                     <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center border border-emerald-500/30 shrink-0">
+1100-                       <User className="w-4 h-4 text-emerald-400" />
+1101-                     </div>
+1102-                     <div className="flex flex-col min-w-0 pr-8">
+1103-                       <span className="font-bold text-white text-xs truncate leading-tight">{posCart.customer.name}</span>
+1104-                       <span className="text-[10px] text-emerald-400 font-mono leading-tight">{posCart.customer.phone}</span>
+1105-                     </div>
+1106-                   </div>
+1107-                   {posCart.customer.address && (
+1108-                     <div className="flex items-start gap-1.5 mt-2 border-t border-white/5 pt-2">
+1109-                       <MapPin className="w-3.5 h-3.5 text-stone-400 shrink-0 mt-0.5" />
+1110-                       <span className="text-[10.5px] text-stone-300 line-clamp-2 leading-tight">{posCart.customer.address}</span>
+1111-                     </div>
+1112-                   )}
+1113-                   {foundCustomer && (
+1114-                     <div className="flex items-center gap-4 mt-2 pt-2 border-t border-white/5">
+1115-                       <div className="flex flex-col">
+1116-                         <span className="text-[9px] text-stone-500 uppercase font-bold tracking-wider">Visits</span>
+1117-                         <span className="text-xs font-mono text-stone-200">{foundCustomer.totalVisits || 1}</span>
+1118-                       </div>
+1119-                       <div className="flex flex-col">
+1120-                         <span className="text-[9px] text-stone-500 uppercase font-bold tracking-wider">Points</span>
+1121-                         <span className="text-xs font-mono text-amber-400">{foundCustomer.loyaltyPoints || 0}</span>
+1122-                       </div>
+1123-                     </div>
+1124-                   )}
+1125-                </div>
+1126-              ) : null}
+1127-            </div>
+1128-
+1129-            {/* Active Ticket Cart Items */}
+1130-            <div className="flex-1 overflow-y-auto p-2 space-y-1.5 bg-transparent no-scrollbar">
+1131-               {posCart.items.length === 0 ? (
+1132-                  <div className="h-full flex flex-col items-center justify-center p-6 text-center text-stone-600 space-y-2">
+1133-                     <ChefHat className="w-8 h-8 stroke-1 text-stone-700" />

@@ -1,64 +1,9 @@
 import { prisma } from './prisma';
 import { CustomerUpsertSchema } from './validators';
-import { INITIAL_CUSTOMERS } from '../data/mockData';
 import { Customer, Order } from '../types';
 
 // In-Memory Fallback Cache to ensure 100% uptime even during DB connection drops
 const memoryCustomers: Map<string, any> = new Map();
-
-// Initialize in-memory cache with initial customers
-INITIAL_CUSTOMERS.forEach((c) => {
-  const clean = c.phone.replace(/\D/g, '');
-  memoryCustomers.set(clean, {
-    id: c.id,
-    phoneNumber: c.phone,
-    name: c.name,
-    email: c.email || null,
-    address: c.address || '',
-    deliveryNotes: c.deliveryNotes || '',
-    vipTier: c.vipTier || 'Regular',
-    loyaltyPoints: c.loyaltyPoints || 50,
-    totalVisits: c.totalOrdersCount || 1,
-    totalSpent: c.totalSpent || 0,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  });
-});
-
-/**
- * Seed initial customers into Prisma database on server boot
- */
-export async function seedPrismaCustomers() {
-  try {
-    for (const c of INITIAL_CUSTOMERS) {
-      const cleanPhone = c.phone.trim();
-      await prisma.customer.upsert({
-        where: { phone: cleanPhone },
-        update: {
-          phoneNumber: cleanPhone,
-          name: c.name,
-          address: c.address || '',
-          deliveryNotes: c.deliveryNotes || '',
-        },
-        create: {
-          id: c.id,
-          phone: cleanPhone,
-          phoneNumber: cleanPhone,
-          name: c.name,
-          email: c.email || null,
-          address: c.address || '',
-          deliveryNotes: c.deliveryNotes || '',
-          vipTier: c.vipTier || 'Regular',
-          loyaltyPoints: c.loyaltyPoints || 50,
-          totalVisits: c.totalOrdersCount || 1,
-          totalSpent: c.totalSpent || 0,
-        },
-      });
-    }
-  } catch (err) {
-    console.warn('[Prisma] Customer database seed using memory sync:', err);
-  }
-}
 
 /**
  * Normalizes phone numbers for indexing and search consistency

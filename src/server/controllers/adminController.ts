@@ -21,8 +21,8 @@ export async function addUser(req: Request, res: Response): Promise<Response> {
 
     const sanitizedUsername = username.trim().toLowerCase();
 
-    if (!pin || typeof pin !== 'string' || !/^\d{4,6}$/.test(pin.trim())) {
-      return res.status(400).json({ error: 'PIN must be a 4 to 6 digit numeric code.' });
+    if (!pin || typeof pin !== 'string' || !pin.trim()) {
+      return res.status(400).json({ error: 'Password / PIN is required.' });
     }
 
     const roleUpper = (role || 'CASHIER').toString().toUpperCase();
@@ -40,6 +40,9 @@ export async function addUser(req: Request, res: Response): Promise<Response> {
       return res.status(409).json({ error: `Username '${sanitizedUsername}' is already taken.` });
     }
 
+    const { restrictions } = req.body;
+    const serializedRestrictions = typeof restrictions === 'string' ? restrictions : JSON.stringify(restrictions || []);
+
     // Create real user record in database
     const createdUser = await prisma.user.create({
       data: {
@@ -49,6 +52,7 @@ export async function addUser(req: Request, res: Response): Promise<Response> {
         role: roleUpper,
         phone: phone ? phone.trim() : null,
         active: true,
+        restrictions: serializedRestrictions,
       },
       select: {
         id: true,
@@ -58,6 +62,7 @@ export async function addUser(req: Request, res: Response): Promise<Response> {
         phone: true,
         pin: true,
         active: true,
+        restrictions: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -79,12 +84,12 @@ export async function addUser(req: Request, res: Response): Promise<Response> {
 
 // ============================================================================
 // 1.5 UPDATE USER
-// Updates user details in database (name, role, phone, pin, active status)
+// Updates user details in database (name, role, phone, pin, active status, restrictions)
 // ============================================================================
 export async function updateUser(req: Request, res: Response): Promise<Response> {
   try {
     const { id } = req.params;
-    const { name, role, phone, pin, active } = req.body;
+    const { name, role, phone, pin, active, restrictions } = req.body;
 
     if (!id) {
       return res.status(400).json({ error: 'User ID is required.' });
@@ -120,14 +125,18 @@ export async function updateUser(req: Request, res: Response): Promise<Response>
     }
 
     if (pin !== undefined) {
-      if (typeof pin !== 'string' || !/^\d{4,6}$/.test(pin.trim())) {
-        return res.status(400).json({ error: 'PIN must be a 4 to 6 digit numeric code.' });
+      if (typeof pin !== 'string' || !pin.trim()) {
+        return res.status(400).json({ error: 'Password / PIN cannot be empty.' });
       }
       dataToUpdate.pin = pin.trim();
     }
 
     if (active !== undefined) {
       dataToUpdate.active = Boolean(active);
+    }
+
+    if (restrictions !== undefined) {
+      dataToUpdate.restrictions = typeof restrictions === 'string' ? restrictions : JSON.stringify(restrictions || []);
     }
 
     const updated = await prisma.user.update({
@@ -141,6 +150,7 @@ export async function updateUser(req: Request, res: Response): Promise<Response>
         phone: true,
         pin: true,
         active: true,
+        restrictions: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -163,6 +173,7 @@ export async function updateUser(req: Request, res: Response): Promise<Response>
 // ============================================================================
 // 2. DELETE USER
 // Permanently deletes a user from the database (prisma.user.delete) using their unique ID.
+// Unlinks any relationships (historical orders, audit logs, register shifts, shift audits) first.
 // ============================================================================
 export async function deleteUser(req: Request, res: Response): Promise<Response> {
   try {
@@ -183,9 +194,46 @@ export async function deleteUser(req: Request, res: Response): Promise<Response>
       return res.status(404).json({ error: `User with ID '${targetId}' was not found.` });
     }
 
-    // Attempt to permanently delete user from database
-    try {
-      const deletedUser = await prisma.user.delete({
+    // Force deletion by unlinking historical relations first, then hard deleting
+    const [
+      createdOrdersUnlinked,
+      modifiedOrdersUnlinked,
+      riderOrdersUnlinked,
+      auditLogsUnlinked,
+      shiftsOpenedUnlinked,
+      shiftsClosedUnlinked,
+      shiftAuditsUnlinked,
+      deletedUser,
+    ] = await prisma.$transaction([
+      prisma.order.updateMany({
+        where: { createdById: targetId },
+        data: { createdById: null }
+      }),
+      prisma.order.updateMany({
+        where: { modifiedById: targetId },
+        data: { modifiedById: null }
+      }),
+      prisma.order.updateMany({
+        where: { assignedRiderId: targetId },
+        data: { assignedRiderId: null }
+      }),
+      prisma.orderAuditLog.updateMany({
+        where: { performedById: targetId },
+        data: { performedById: null }
+      }),
+      prisma.registerShift.updateMany({
+        where: { openedById: targetId },
+        data: { openedById: null }
+      }),
+      prisma.registerShift.updateMany({
+        where: { closedById: targetId },
+        data: { closedById: null }
+      }),
+      prisma.shiftAudit.updateMany({
+        where: { userId: targetId },
+        data: { userId: null }
+      }),
+      prisma.user.delete({
         where: { id: targetId },
         select: {
           id: true,
@@ -193,37 +241,14 @@ export async function deleteUser(req: Request, res: Response): Promise<Response>
           username: true,
           role: true,
         },
-      });
+      }),
+    ]);
 
-      return res.status(200).json({
-        success: true,
-        message: `User '${deletedUser.name}' (@${deletedUser.username || 'unassigned'}) permanently deleted.`,
-        data: deletedUser,
-      });
-    } catch (deleteError: any) {
-      if (deleteError instanceof Prisma.PrismaClientKnownRequestError && deleteError.code === 'P2003') {
-        // Fallback to soft delete
-        const fallbackUser = await prisma.user.update({
-          where: { id: targetId },
-          data: { active: false },
-          select: {
-            id: true,
-            name: true,
-            username: true,
-            role: true,
-            active: true,
-          }
-        });
-
-        return res.status(200).json({
-          success: true,
-          strategy: 'SOFT_DELETE_FALLBACK',
-          message: `User '${fallbackUser.name}' soft-deleted (active: false) because they are linked to historical orders/shifts.`,
-          data: fallbackUser,
-        });
-      }
-      throw deleteError;
-    }
+    return res.status(200).json({
+      success: true,
+      message: `User '${deletedUser.name}' (@${deletedUser.username || 'unassigned'}) permanently deleted from database.`,
+      data: deletedUser,
+    });
   } catch (error: any) {
     console.error('[adminController.deleteUser] Error:', error);
 
@@ -247,9 +272,10 @@ export async function deleteUser(req: Request, res: Response): Promise<Response>
 // ============================================================================
 export async function addMenuItem(req: Request, res: Response): Promise<Response> {
   try {
-    const { title, description, price, imageUrl, image, categoryId, categoryTitle, active } = req.body;
+    const { title, name, description, price, imageUrl, image, categoryId, categoryTitle, category, active, available, flavors, options, preparationTime } = req.body;
 
-    if (!title || typeof title !== 'string' || !title.trim()) {
+    const itemTitle = (title || name || '').trim();
+    if (!itemTitle) {
       return res.status(400).json({ error: 'Menu item title is required.' });
     }
 
@@ -259,15 +285,16 @@ export async function addMenuItem(req: Request, res: Response): Promise<Response
     }
 
     let targetCategoryId = categoryId ? String(categoryId).trim() : '';
+    const resolvedCatTitle = categoryTitle || category;
 
     // If categoryId is not directly provided or not found, find or create category by categoryTitle
-    if (!targetCategoryId && categoryTitle) {
-      const catSlug = String(categoryTitle).toLowerCase().replace(/\s+/g, '-');
+    if (!targetCategoryId && resolvedCatTitle) {
+      const catSlug = String(resolvedCatTitle).toLowerCase().replace(/\s+/g, '-');
       const cat = await prisma.category.upsert({
         where: { slug: catSlug },
-        update: { title: categoryTitle },
+        update: { title: resolvedCatTitle },
         create: {
-          title: categoryTitle,
+          title: resolvedCatTitle,
           slug: catSlug,
           active: true,
         },
@@ -307,16 +334,21 @@ export async function addMenuItem(req: Request, res: Response): Promise<Response
     }
 
     const resolvedImageUrl = imageUrl || image || '';
+    const resolvedActive = active !== undefined ? Boolean(active) : (available !== undefined ? Boolean(available) : true);
+    const resolvedFlavors = flavors ? (typeof flavors === 'string' ? flavors : JSON.stringify(flavors)) : '[]';
+    const resolvedPrepTime = Number(preparationTime) || 10;
 
     // Create real menu item record in database
     const createdItem = await prisma.menuItem.create({
       data: {
-        title: title.trim(),
+        title: itemTitle,
         description: description ? String(description).trim() : null,
         price: numericPrice,
         imageUrl: resolvedImageUrl,
-        active: active !== undefined ? Boolean(active) : true,
+        active: resolvedActive,
         categoryId: targetCategoryId,
+        flavors: resolvedFlavors,
+        preparationTime: resolvedPrepTime,
       },
       include: {
         category: {
@@ -324,6 +356,11 @@ export async function addMenuItem(req: Request, res: Response): Promise<Response
         },
       },
     });
+
+    const io = (req.app as any).get('io');
+    if (io) {
+      io.emit('menuItemCreated', createdItem);
+    }
 
     return res.status(201).json({
       success: true,
@@ -340,15 +377,13 @@ export async function addMenuItem(req: Request, res: Response): Promise<Response
 }
 
 // ============================================================================
-// 4. DELETE MENU ITEM (PRODUCTION-SAFE PRISMA DELETE)
-// First, check if the menu item exists in past order history (prisma.orderItem.count where menuItemId matches).
-// If it does exist in past orders, perform a safe soft-delete / deactivation (prisma.menuItem.update setting active: false)
-// so it instantly disappears from the POS grid without throwing a foreign key constraint crash.
-// If it has no past orders, perform a hard delete (prisma.menuItem.delete) to remove it completely from the database.
+// 4. DELETE MENU ITEM (PRODUCTION-SAFE PRISMA PERMANENT DELETE)
+// Dissociates foreign key from orderItem records while preserving sales numbers,
+// and deletes the menu item from PostgreSQL so it is truly and dynamically removed.
 // ============================================================================
 export async function deleteMenuItem(req: Request, res: Response): Promise<Response> {
   const paramId = req.params.id || req.params.itemId;
-  console.log("RECEIVED DELETE REQUEST FOR ID:", req.params.id || req.params.itemId);
+  console.log("RECEIVED DELETE REQUEST FOR ID:", paramId);
 
   try {
     if (!paramId || typeof paramId !== 'string' || !paramId.trim()) {
@@ -365,100 +400,203 @@ export async function deleteMenuItem(req: Request, res: Response): Promise<Respo
 
     if (!existingItem) {
       existingItem = await prisma.menuItem.findFirst({
-        where: { title: targetId },
+        where: {
+          OR: [
+            { title: { equals: targetId, mode: 'insensitive' } },
+            { id: { contains: targetId } },
+          ],
+        },
       });
     }
 
     if (!existingItem) {
-      console.warn(`[adminController.deleteMenuItem] Item '${targetId}' not in DB. Returning local removal response.`);
+      console.warn(`[adminController.deleteMenuItem] Item '${targetId}' not in DB. Returning success for catalog consistency.`);
+      const io = (req.app as any).get('io');
+      if (io) {
+        io.emit('menuItemDeleted', { id: targetId });
+      }
       return res.status(200).json({
         success: true,
         strategy: 'LOCAL_ONLY',
-        message: `Menu item '${targetId}' removed from local UI catalog.`,
+        message: `Menu item '${targetId}' removed from catalog.`,
       });
     }
 
     const realId = existingItem.id;
 
-    // 2. Count past orders referencing this item
-    const pastOrderCount = await prisma.orderItem.count({
-      where: {
-        OR: [
-          { menuItemId: realId },
-          { name: existingItem.title },
-        ],
+    // 2. Safe dissociation: nullify menuItemId on past order records so financial receipts remain intact
+    await prisma.orderItem.updateMany({
+      where: { menuItemId: realId },
+      data: { menuItemId: null },
+    });
+
+    // 3. Permanently hard-delete item from PostgreSQL
+    const deletedItem = await prisma.menuItem.delete({
+      where: { id: realId },
+      select: {
+        id: true,
+        title: true,
+        price: true,
       },
     });
 
-    console.log(`[adminController.deleteMenuItem] Found ${pastOrderCount} past order reference(s) for '${existingItem.title}' (${realId})`);
+    console.log(`[adminController.deleteMenuItem] Permanently deleted item '${deletedItem.title}' (${realId}) from database`);
 
-    // 3A. If referenced in past orders -> Soft-delete (set active = false)
-    if (pastOrderCount > 0) {
-      try {
-        const softDeletedItem = await prisma.menuItem.update({
-          where: { id: realId },
-          data: { active: false },
-          select: {
-            id: true,
-            title: true,
-            price: true,
-            active: true,
-            categoryId: true,
-            updatedAt: true,
-          },
-        });
-
-        console.log(`[adminController.deleteMenuItem] Soft-deleted item '${softDeletedItem.title}' (active: false)`);
-        return res.status(200).json({
-          success: true,
-          strategy: 'SOFT_DELETE',
-          message: `Menu item '${softDeletedItem.title}' has ${pastOrderCount} past order reference(s). Safe soft-delete applied (active: false).`,
-          data: softDeletedItem,
-        });
-      } catch (softErr: any) {
-        console.error("PRISMA DELETE ERROR:", softErr);
-        throw softErr;
-      }
+    const io = (req.app as any).get('io');
+    if (io) {
+      io.emit('menuItemDeleted', { id: realId, title: deletedItem.title });
     }
 
-    // 3B. If no past orders -> Hard delete from database
+    return res.status(200).json({
+      success: true,
+      strategy: 'HARD_DELETE',
+      message: `Menu item '${deletedItem.title}' permanently removed from database.`,
+      data: deletedItem,
+    });
+  } catch (error: any) {
+    console.error("PRISMA DELETE ERROR:", error);
+    // Fallback: soft-deactivate if database constraint error occurs
     try {
-      const hardDeletedItem = await prisma.menuItem.delete({
-        where: { id: realId },
-        select: {
-          id: true,
-          title: true,
-          price: true,
-        },
-      });
-
-      console.log(`[adminController.deleteMenuItem] Permanently hard-deleted item '${hardDeletedItem.title}' (${realId})`);
-      return res.status(200).json({
-        success: true,
-        strategy: 'HARD_DELETE',
-        message: `Menu item '${hardDeletedItem.title}' deleted from database.`,
-        data: hardDeletedItem,
-      });
-    } catch (deleteError: any) {
-      console.error("PRISMA DELETE ERROR:", deleteError);
-      // Fallback to soft delete if hard delete fails due to constraint
-      const fallbackItem = await prisma.menuItem.update({
-        where: { id: realId },
+      const targetId = String(paramId).trim();
+      const fallbackItem = await prisma.menuItem.updateMany({
+        where: { OR: [{ id: targetId }, { title: targetId }] },
         data: { active: false },
       });
-
-      console.log(`[adminController.deleteMenuItem] Soft-delete fallback applied for '${fallbackItem.title}' (${realId})`);
+      const io = (req.app as any).get('io');
+      if (io) {
+        io.emit('menuItemDeleted', { id: targetId });
+      }
       return res.status(200).json({
         success: true,
         strategy: 'SOFT_DELETE_FALLBACK',
-        message: `Menu item '${fallbackItem.title}' soft-deleted (active: false) due to foreign key constraint.`,
+        message: 'Menu item deactivated in database.',
         data: fallbackItem,
       });
+    } catch (fallbackErr) {
+      return res.status(500).json({
+        error: 'Failed to delete menu item from database.',
+        details: error.message || 'Internal database error.',
+      });
     }
+  }
+}
+
+// ============================================================================
+// 5. UPDATE MENU ITEM
+// Updates an existing menu item in the database (title, price, description, active status, image, category, flavors).
+// ============================================================================
+export async function updateMenuItem(req: Request, res: Response): Promise<Response> {
+  try {
+    const { id } = req.params;
+    const { title, name, description, price, imageUrl, image, categoryId, categoryTitle, category, active, available, flavors, preparationTime } = req.body;
+
+    if (!id || typeof id !== 'string' || !id.trim()) {
+      return res.status(400).json({ error: 'Menu item ID is required.' });
+    }
+
+    const targetId = id.trim();
+
+    let existingItem = await prisma.menuItem.findUnique({
+      where: { id: targetId },
+    });
+
+    if (!existingItem) {
+      existingItem = await prisma.menuItem.findFirst({
+        where: {
+          OR: [
+            { title: { equals: targetId, mode: 'insensitive' } },
+            { title: { equals: title || name, mode: 'insensitive' } },
+          ],
+        },
+      });
+    }
+
+    if (!existingItem) {
+      return res.status(404).json({ error: `Menu item with ID '${targetId}' was not found.` });
+    }
+
+    const realId = existingItem.id;
+    const dataToUpdate: any = {};
+
+    const resolvedTitle = title || name;
+    if (resolvedTitle !== undefined) {
+      if (typeof resolvedTitle !== 'string' || !resolvedTitle.trim()) {
+        return res.status(400).json({ error: 'Title cannot be empty.' });
+      }
+      dataToUpdate.title = resolvedTitle.trim();
+    }
+
+    if (price !== undefined) {
+      const numericPrice = Number(price);
+      if (isNaN(numericPrice) || numericPrice <= 0) {
+        return res.status(400).json({ error: 'Price must be a valid number greater than 0.' });
+      }
+      dataToUpdate.price = numericPrice;
+    }
+
+    if (description !== undefined) {
+      dataToUpdate.description = description ? String(description).trim() : null;
+    }
+
+    const resolvedImageUrl = imageUrl || image;
+    if (resolvedImageUrl !== undefined) {
+      dataToUpdate.imageUrl = String(resolvedImageUrl);
+    }
+
+    const resolvedActive = active !== undefined ? active : available;
+    if (resolvedActive !== undefined) {
+      dataToUpdate.active = Boolean(resolvedActive);
+    }
+
+    if (flavors !== undefined) {
+      dataToUpdate.flavors = typeof flavors === 'string' ? flavors : JSON.stringify(flavors);
+    }
+
+    if (preparationTime !== undefined) {
+      dataToUpdate.preparationTime = Number(preparationTime) || 10;
+    }
+
+    const targetCatTitle = categoryTitle || category;
+    if (categoryId) {
+      dataToUpdate.categoryId = String(categoryId).trim();
+    } else if (targetCatTitle) {
+      const catSlug = String(targetCatTitle).toLowerCase().replace(/\s+/g, '-');
+      const cat = await prisma.category.upsert({
+        where: { slug: catSlug },
+        update: { title: targetCatTitle },
+        create: {
+          title: targetCatTitle,
+          slug: catSlug,
+          active: true,
+        },
+      });
+      dataToUpdate.categoryId = cat.id;
+    }
+
+    const updatedItem = await prisma.menuItem.update({
+      where: { id: realId },
+      data: dataToUpdate,
+      include: {
+        category: {
+          select: { id: true, title: true, slug: true },
+        },
+      },
+    });
+
+    const io = (req.app as any).get('io');
+    if (io) {
+      io.emit('menuItemUpdated', updatedItem);
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Menu item updated successfully in database.',
+      data: updatedItem,
+    });
   } catch (error: any) {
-    console.error("PRISMA DELETE ERROR:", error);
+    console.error('[adminController.updateMenuItem] Error:', error);
     return res.status(500).json({
-      error: 'Failed to delete or deactivate menu item.',
+      error: 'Failed to update menu item record in database.',
       details: error.message || 'Internal database error.',
     });
   }

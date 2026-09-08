@@ -2,6 +2,7 @@ import React from 'react';
 import { useRestaurant } from '../../context/RestaurantContext';
 import { MenuItem, MenuItemOption } from '../../types';
 import { X, Plus, Check } from 'lucide-react';
+import { MenuItemThumbnail } from '../common/MenuItemThumbnail';
 
 interface ItemOptionsModalProps {
   item: MenuItem | null;
@@ -66,11 +67,12 @@ export const ItemOptionsModal: React.FC<ItemOptionsModalProps> = ({ item, onClos
         {/* Header */}
         <div className="p-4 bg-stone-950/60 backdrop-blur-xs border-b border-white/5 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img
-              src={item.image}
-              alt={item.name}
-              className="w-12 h-12 rounded-xl object-cover border border-white/10 shadow-sm"
-              referrerPolicy="no-referrer"
+            <MenuItemThumbnail
+              image={item.image}
+              name={item.name}
+              category={item.category}
+              size="lg"
+              className="w-12 h-12 rounded-xl"
             />
             <div>
               <h3 className="text-base font-extrabold text-white leading-tight">{item.name}</h3>

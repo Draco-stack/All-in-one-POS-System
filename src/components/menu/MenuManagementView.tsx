@@ -15,6 +15,9 @@ import {
 } from 'lucide-react';
 import { useRestaurant } from '../../context/RestaurantContext';
 import { MenuItem } from '../../types';
+import { ImageUploadZone } from '../common/ImageUploadZone';
+import { MenuItemThumbnail } from '../common/MenuItemThumbnail';
+import { CategoryIcon } from '../../utils/categoryIcons';
 
 export const MenuManagementView: React.FC = () => {
   const {
@@ -176,14 +179,17 @@ export const MenuManagementView: React.FC = () => {
                 className="bg-stone-900 border border-stone-800 rounded-2xl p-4 flex flex-col justify-between shadow-lg space-y-3"
               >
                 <div className="flex gap-3">
-                  <img
-                    src={item.image}
-                    alt={item.name}
-                    className="w-20 h-20 rounded-xl object-cover bg-stone-950 shrink-0 border border-stone-800"
+                  <MenuItemThumbnail
+                    image={item.image}
+                    name={item.name}
+                    category={item.category}
+                    size="lg"
+                    className="w-20 h-20 rounded-xl"
                   />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#00897b]">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#00897b] flex items-center gap-1">
+                        <CategoryIcon categoryIdOrName={item.category} className="w-3 h-3" />
                         {item.category}
                       </span>
                       <button
@@ -395,15 +401,12 @@ export const MenuManagementView: React.FC = () => {
                 />
               </div>
 
-              <div>
-                <label className="text-xs text-stone-300 font-semibold block mb-1">Image URL</label>
-                <input
-                  type="url"
-                  value={formImage}
-                  onChange={(e) => setFormImage(e.target.value)}
-                  className="w-full bg-stone-950 border border-stone-800 rounded-xl p-2.5 text-xs text-white focus:outline-none"
-                />
-              </div>
+              <ImageUploadZone
+                value={formImage}
+                onChange={(img) => setFormImage(img)}
+                label="Product / Dish Image"
+                helperText="Upload an image directly from your computer storage or paste a web URL."
+              />
 
               <div className="pt-3 border-t border-stone-800 flex justify-end gap-2">
                 <button

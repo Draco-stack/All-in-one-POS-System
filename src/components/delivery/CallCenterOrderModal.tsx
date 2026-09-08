@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   X,
   Phone,
@@ -11,10 +11,13 @@ import {
   Search,
   Truck,
   Sparkles,
+  CheckCircle2,
+  Loader2,
 } from 'lucide-react';
 import { useRestaurant } from '../../context/RestaurantContext';
-import { Order, MenuItem } from '../../types';
+import { Order, MenuItem, Customer } from '../../types';
 import { playCashRegisterSound } from '../../utils/audio';
+import { posDB } from '../../utils/indexedDB';
 
 interface CallCenterOrderModalProps {
   isOpen: boolean;
@@ -27,17 +30,59 @@ export const CallCenterOrderModal: React.FC<CallCenterOrderModalProps> = ({
   onClose,
   onOrderCreated,
 }) => {
-  const { menuItems, currentUser, showToast, outlets } = useRestaurant();
+  const { menuItems, currentUser, showToast, outlets, lookupCustomer, upsertCustomer, addOrder, deliveryDrivers } = useRestaurant();
   
   const [customerPhone, setCustomerPhone] = useState<string>('');
   const [customerName, setCustomerName] = useState<string>('');
   const [customerAddress, setCustomerAddress] = useState<string>('');
   const [deliveryNotes, setDeliveryNotes] = useState<string>('');
   const [selectedBranch, setSelectedBranch] = useState<string>('Sargodha');
+  const [selectedRider, setSelectedRider] = useState<string>('');
   const [cart, setCart] = useState<{ item: MenuItem; quantity: number; flavor?: string }[]>([]);
   const [itemSearch, setItemSearch] = useState<string>('');
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'online'>('cash');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [isSearchingCustomer, setIsSearchingCustomer] = useState<boolean>(false);
+  const [recognizedCustomer, setRecognizedCustomer] = useState<Customer | null>(null);
+
+  const cleanPhone = useMemo(() => customerPhone.replace(/\D/g, ''), [customerPhone]);
+
+  // Auto-fetch customer ONLY when 11 digits completes
+  useEffect(() => {
+    if (cleanPhone.length === 11) {
+      let isMounted = true;
+      setIsSearchingCustomer(true);
+      const timer = setTimeout(async () => {
+        try {
+          const res = await lookupCustomer(cleanPhone);
+          if (isMounted) {
+            if (res.found && res.customer) {
+              setRecognizedCustomer(res.customer);
+              setCustomerName(res.customer.name);
+              if (res.customer.address) setCustomerAddress(res.customer.address);
+              if (res.customer.deliveryNotes || res.customer.notes) {
+                setDeliveryNotes(res.customer.deliveryNotes || res.customer.notes || '');
+              }
+              showToast(`✓ Recognized Customer: ${res.customer.name}`);
+            } else {
+              setRecognizedCustomer(null);
+            }
+          }
+        } catch (e) {
+          console.warn('Call center customer lookup error:', e);
+        } finally {
+          if (isMounted) setIsSearchingCustomer(false);
+        }
+      }, 200);
+
+      return () => {
+        isMounted = false;
+        clearTimeout(timer);
+      };
+    } else {
+      setRecognizedCustomer(null);
+    }
+  }, [cleanPhone, lookupCustomer, showToast]);
 
   if (!isOpen) return null;
 
@@ -72,7 +117,7 @@ export const CallCenterOrderModal: React.FC<CallCenterOrderModalProps> = ({
   const deliveryFee = cart.length > 0 ? 100 : 0;
   const total = subtotal + deliveryFee;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!customerPhone.trim()) {
       showToast('⚠️ Please enter customer contact phone number');
@@ -84,6 +129,10 @@ export const CallCenterOrderModal: React.FC<CallCenterOrderModalProps> = ({
     }
     if (!customerAddress.trim()) {
       showToast('⚠️ Please enter customer delivery address');
+      return;
+    }
+    if (!selectedRider.trim()) {
+      showToast('⚠️ Please select a Delivery Rider. Rider selection is mandatory for delivery orders.');
       return;
     }
     if (cart.length === 0) {
@@ -110,6 +159,8 @@ export const CallCenterOrderModal: React.FC<CallCenterOrderModalProps> = ({
       status: 'in_kitchen',
       paymentStatus: paymentMethod === 'cash' ? 'unpaid' : 'paid',
       paymentMethod,
+      deliveryDriver: selectedRider,
+      riderName: selectedRider,
       deliveryElapsedMinutes: 1,
       deliveryMinutes: 1,
       branchName: selectedBranch,
@@ -121,10 +172,6 @@ export const CallCenterOrderModal: React.FC<CallCenterOrderModalProps> = ({
       total,
       cashierName: currentUser.name || 'Call Center Agent',
       punchedBy: currentUser.name || 'Call Center Agent',
-      deliveryDriver: 'Carlos Rodriguez',
-      riderName: 'Carlos Rodriguez',
-      riderPhone: '0315-9988771',
-      riderVehicle: 'Honda 125 (LEA-4891)',
       deliveryAddress: customerAddress,
       customer: {
         name: customerName,
@@ -147,13 +194,51 @@ export const CallCenterOrderModal: React.FC<CallCenterOrderModalProps> = ({
       ],
     };
 
-    playCashRegisterSound();
-    if (onOrderCreated) {
-      onOrderCreated(newOrder);
+    // Upsert customer into database for persistence
+    if (customerPhone && customerName) {
+      const cleanDigits = customerPhone.replace(/\D/g, '');
+      if (cleanDigits.length >= 7) {
+        upsertCustomer({
+          name: customerName.trim(),
+          phone: cleanDigits,
+          address: customerAddress || '',
+          notes: deliveryNotes || '',
+        }).catch((err) => console.warn('Failed to upsert customer:', err));
+      }
     }
-    showToast(`✓ Call Center Order #${orderNumber} punched & dispatched to kitchen!`);
-    setIsSubmitting(false);
-    onClose();
+
+    try {
+      if (onOrderCreated) {
+        onOrderCreated(newOrder);
+      } else {
+        // Direct transmission fallback: store locally and post to backend
+        addOrder(newOrder);
+        try {
+          const res = await fetch('/api/orders', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(newOrder),
+          });
+          if (!res.ok) {
+            console.warn('Direct order API returned non-OK status. Queuing offline:', res.status);
+            await posDB.queueOrder(newOrder);
+          }
+        } catch (netErr) {
+          console.warn('Network offline during call center order dispatch. Queuing in IndexedDB:', netErr);
+          await posDB.queueOrder(newOrder);
+        }
+      }
+
+      playCashRegisterSound();
+      showToast(`✓ Call Center Order #${orderNumber} punched & dispatched to kitchen!`);
+      onClose();
+    } catch (err: any) {
+      console.error('Call center order dispatch error:', err);
+      showToast(`⚠️ Order recorded locally. Error: ${err?.message || 'Network dispatch error'}`);
+      onClose();
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -199,20 +284,43 @@ export const CallCenterOrderModal: React.FC<CallCenterOrderModalProps> = ({
               </h3>
 
               <div>
-                <label className="block text-xs font-bold text-stone-300 mb-1">
-                  Customer Contact Phone *
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-bold text-stone-300">
+                    Customer Contact Phone *
+                  </label>
+                  <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded ${
+                    cleanPhone.length === 11 
+                      ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
+                      : cleanPhone.length > 0 
+                      ? 'bg-stone-800 text-stone-400' 
+                      : 'text-stone-500'
+                  }`}>
+                    {cleanPhone.length === 11 ? '11/11 ✓' : `${cleanPhone.length}/11`}
+                  </span>
+                </div>
                 <div className="relative">
                   <Phone className="w-4 h-4 text-stone-400 absolute left-3 top-2.5" />
                   <input
                     type="tel"
+                    maxLength={11}
                     required
-                    placeholder="e.g. 03150679738"
+                    placeholder="e.g. 03150679738 (11 digits)"
                     value={customerPhone}
                     onChange={(e) => setCustomerPhone(e.target.value)}
-                    className="w-full bg-[#161726] border border-stone-700 rounded-lg pl-9 pr-3 py-2 text-xs text-white font-mono placeholder:text-stone-500 focus:outline-none focus:border-blue-500"
+                    className="w-full bg-[#161726] border border-stone-700 rounded-lg pl-9 pr-8 py-2 text-xs text-white font-mono placeholder:text-stone-500 focus:outline-none focus:border-blue-500"
                   />
+                  {isSearchingCustomer && (
+                    <div className="absolute right-2.5 top-2.5">
+                      <Loader2 className="w-4 h-4 animate-spin text-blue-400" />
+                    </div>
+                  )}
                 </div>
+                {recognizedCustomer && (
+                  <div className="mt-1 flex items-center gap-1.5 text-[11px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded-md">
+                    <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                    <span>Recognized: <b>{recognizedCustomer.name}</b> ({recognizedCustomer.totalVisits || 1} previous orders)</span>
+                  </div>
+                )}
               </div>
 
               <div>
@@ -261,6 +369,36 @@ export const CallCenterOrderModal: React.FC<CallCenterOrderModalProps> = ({
                     className="w-full bg-[#161726] border border-stone-700 rounded-lg pl-9 pr-3 py-2 text-xs text-white placeholder:text-stone-500 focus:outline-none focus:border-blue-500"
                   />
                 </div>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-bold text-amber-300">
+                    🛵 Assigned Delivery Rider *
+                  </label>
+                  {!selectedRider && (
+                    <span className="text-[10px] font-bold text-red-400 bg-red-500/10 px-1.5 py-0.5 rounded border border-red-500/20 animate-pulse">
+                      Required
+                    </span>
+                  )}
+                </div>
+                <select
+                  value={selectedRider}
+                  onChange={(e) => setSelectedRider(e.target.value)}
+                  required
+                  className={`w-full bg-[#161726] border rounded-lg px-3 py-2 text-xs font-bold focus:outline-none transition ${
+                    !selectedRider
+                      ? 'border-amber-500/70 text-amber-300 ring-1 ring-amber-500/30'
+                      : 'border-stone-700 text-white focus:border-blue-500'
+                  }`}
+                >
+                  <option value="">-- Select Rider (Required for Delivery)* --</option>
+                  {deliveryDrivers.map((d) => (
+                    <option key={d} value={d}>
+                      🛵 {d}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>
@@ -433,10 +571,21 @@ export const CallCenterOrderModal: React.FC<CallCenterOrderModalProps> = ({
             <button
               type="submit"
               disabled={isSubmitting || cart.length === 0}
-              className="px-6 py-2.5 rounded-xl bg-[#0284c7] hover:bg-[#0369a1] disabled:opacity-50 text-white text-xs font-black transition cursor-pointer flex items-center gap-2 shadow-lg"
+              className={`px-6 py-2.5 rounded-xl bg-[#0284c7] hover:bg-[#0369a1] text-white text-xs font-black transition flex items-center gap-2 shadow-lg ${
+                isSubmitting || cart.length === 0 ? 'opacity-50 cursor-not-allowed pointer-events-none' : 'cursor-pointer'
+              }`}
             >
-              <Truck className="w-4 h-4" />
-              Punch & Broadcast Delivery Order
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin text-white" />
+                  Dispatching...
+                </>
+              ) : (
+                <>
+                  <Truck className="w-4 h-4" />
+                  Punch & Broadcast Delivery Order
+                </>
+              )}
             </button>
           </div>
         </form>

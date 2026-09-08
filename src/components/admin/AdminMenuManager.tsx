@@ -23,6 +23,9 @@ import {
 } from 'lucide-react';
 import { useRestaurant } from '../../context/RestaurantContext';
 import { MenuItem, Category } from '../../types';
+import { ImageUploadZone } from '../common/ImageUploadZone';
+import { MenuItemThumbnail } from '../common/MenuItemThumbnail';
+import { CategoryIcon } from '../../utils/categoryIcons';
 
 export const AdminMenuManager: React.FC = () => {
   const {
@@ -119,7 +122,7 @@ export const AdminMenuManager: React.FC = () => {
       description: '',
       price: 999,
       category: categories[0]?.id !== 'all' ? categories[0]?.id : 'pizzas',
-      image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=400&q=80',
+      image: '',
       available: true,
       flavors: ['Chicken Tikka', 'Fajita Classic', 'Cheese Feast'],
       isPopular: false,
@@ -256,13 +259,14 @@ export const AdminMenuManager: React.FC = () => {
           <div className="flex items-center gap-1.5 overflow-x-auto w-full pb-1 sm:pb-0 scrollbar-thin">
             <button
               onClick={() => setSelectedCatFilter('all')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer flex items-center gap-1.5 ${
                 selectedCatFilter === 'all'
                   ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-[0_0_10px_rgba(16,185,129,0.25)] border border-emerald-500/30'
                   : 'bg-stone-950/80 text-stone-400 hover:text-white border border-white/5 hover:border-white/10'
               }`}
             >
-              All Items ({menuItems.length})
+              <Layers className="w-3.5 h-3.5" />
+              <span>All Items ({menuItems.length})</span>
             </button>
             {categories.map((c) => {
               const count = menuItems.filter((m) => m.category.toLowerCase() === c.id.toLowerCase()).length;
@@ -270,13 +274,14 @@ export const AdminMenuManager: React.FC = () => {
                 <button
                   key={c.id}
                   onClick={() => setSelectedCatFilter(c.id)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer flex items-center gap-1.5 ${
                     selectedCatFilter.toLowerCase() === c.id.toLowerCase()
                       ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-[0_0_10px_rgba(16,185,129,0.25)] border border-emerald-500/30'
                       : 'bg-stone-950/80 text-stone-400 hover:text-white border border-white/5 hover:border-white/10'
                   }`}
                 >
-                  {c.name} ({count})
+                  <CategoryIcon categoryIdOrName={c.id || c.name} className="w-3.5 h-3.5" />
+                  <span>{c.name} ({count})</span>
                 </button>
               );
             })}
@@ -330,11 +335,12 @@ export const AdminMenuManager: React.FC = () => {
                       {/* Item Details */}
                       <td className="py-3 px-3">
                         <div className="flex items-center gap-3">
-                          <img
-                            src={item.image}
-                            alt={item.name}
-                            className="w-10 h-10 rounded-xl object-cover border border-white/10 bg-stone-950 flex-shrink-0 shadow-sm"
-                            referrerPolicy="no-referrer"
+                          <MenuItemThumbnail
+                            image={item.image}
+                            name={item.name}
+                            category={item.category}
+                            size="sm"
+                            className="w-10 h-10 rounded-xl"
                           />
                           <div>
                             <div className="font-bold text-white flex items-center gap-1.5">
@@ -551,19 +557,13 @@ export const AdminMenuManager: React.FC = () => {
                 />
               </div>
 
-              {/* Image URL */}
-              <div>
-                <label className="block text-xs font-semibold text-stone-300 mb-1">Image URL</label>
-                <div className="flex gap-2">
-                  <input
-                    type="url"
-                    placeholder="https://images.unsplash.com/photo-..."
-                    value={itemFormData.image}
-                    onChange={(e) => setItemFormData({ ...itemFormData, image: e.target.value })}
-                    className="w-full px-3 py-2 bg-stone-950/80 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500 transition shadow-inner"
-                  />
-                </div>
-              </div>
+              {/* Product / Menu Image (Upload from Storage or URL) */}
+              <ImageUploadZone
+                value={itemFormData.image}
+                onChange={(newImage) => setItemFormData({ ...itemFormData, image: newImage })}
+                label="Product / Menu Image"
+                helperText="Upload an image directly from your computer storage or paste a web URL."
+              />
 
               {/* Flavors (Comma separated) */}
               <div>

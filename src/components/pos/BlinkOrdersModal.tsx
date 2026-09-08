@@ -16,7 +16,7 @@ import {
 import { EditOrderModal } from '../orders/EditOrderModal';
 import { CancelOrderModal } from '../orders/CancelOrderModal';
 import { DeliveryDriverSlipModal } from './DeliveryDriverSlipModal';
-import { ReceiptModal } from './ReceiptModal';
+import { ReceiptModal } from '../orders/ReceiptModal';
 
 interface BlinkOrdersModalProps {
   isOpen: boolean;
@@ -167,10 +167,11 @@ export const BlinkOrdersModal: React.FC<BlinkOrdersModalProps> = ({ isOpen, onCl
                         {order.type === 'delivery' && (
                           <div className="mt-1">
                             <select
-                              value={order.deliveryDriver || deliveryDrivers[0] || 'Carlos Rodriguez'}
+                              value={order.deliveryDriver || ''}
                               onChange={(e) => assignDeliveryDriver(order.id, e.target.value)}
                               className="bg-stone-950 text-emerald-300 text-[10px] font-bold px-2 py-1 rounded-lg border border-white/10 focus:outline-none focus:border-emerald-500/50 max-w-[180px] truncate cursor-pointer"
                             >
+                              <option value="">-- Assign Rider --</option>
                               {deliveryDrivers.map((driver) => {
                                 const stats = getRiderStats(driver);
                                 return (
@@ -269,7 +270,7 @@ export const BlinkOrdersModal: React.FC<BlinkOrdersModalProps> = ({ isOpen, onCl
           order={activeDeliverySlipOrder}
           onClose={() => setActiveDeliverySlipOrder(null)}
         />
-        <ReceiptModal order={activeReceiptOrder} onClose={() => setActiveReceiptOrder(null)} />
+        <ReceiptModal isOpen={!!activeReceiptOrder} order={activeReceiptOrder} onClose={() => setActiveReceiptOrder(null)} />
       </div>
     </div>
   );

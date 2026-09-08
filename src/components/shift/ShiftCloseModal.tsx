@@ -3,6 +3,7 @@ import {
   Calculator,
   X,
   Lock,
+  Unlock,
   CheckCircle,
   AlertTriangle,
   Printer,
@@ -11,9 +12,14 @@ import {
   TrendingUp,
   Receipt,
   FileCheck,
+  RotateCcw,
+  Sparkles,
+  ArrowRight,
+  UserCheck,
 } from 'lucide-react';
 import { useRestaurant } from '../../context/RestaurantContext';
 import { DenominationCounts, ShiftAuditRecord } from '../../types';
+import { roundToCurrency } from '../../utils/financial';
 
 interface ShiftCloseModalProps {
   isOpen: boolean;
@@ -26,7 +32,11 @@ export const ShiftCloseModal: React.FC<ShiftCloseModalProps> = ({
   onClose,
   onShiftClosed,
 }) => {
-  const { currentShift, closeShift, currentUser, orders, showToast, logoutUser } = useRestaurant();
+  const { currentShift, closeShift, openShift, currentUser, orders, showToast, logoutUser } = useRestaurant();
+
+  // State for Opening Shift (when shift is closed/none)
+  const [openingFloatInput, setOpeningFloatInput] = useState<string>('5000');
+  const [openingNotesInput, setOpeningNotesInput] = useState<string>('');
 
   // Petty Cash / Float Balance input
   const [pettyCash, setPettyCash] = useState<number>(
@@ -58,6 +68,18 @@ export const ShiftCloseModal: React.FC<ShiftCloseModalProps> = ({
   const [showSuccessZReport, setShowSuccessZReport] = useState(false);
   const [closedAuditData, setClosedAuditData] = useState<ShiftAuditRecord | null>(null);
 
+  // Check if current shift was opened on a previous day (not closed yesterday)
+  const isUnclosedPreviousShift = useMemo(() => {
+    if (!currentShift || currentShift.status !== 'open' || !currentShift.openedAt) return false;
+    const openedDate = new Date(currentShift.openedAt);
+    const todayDate = new Date();
+    return (
+      openedDate.getFullYear() < todayDate.getFullYear() ||
+      openedDate.getMonth() < todayDate.getMonth() ||
+      openedDate.getDate() < todayDate.getDate()
+    );
+  }, [currentShift]);
+
   // Update individual denomination count
   const handleDenomChange = (denom: keyof DenominationCounts, val: string) => {
     const parsed = parseInt(val, 10);
@@ -81,65 +103,119 @@ export const ShiftCloseModal: React.FC<ShiftCloseModalProps> = ({
   }, [denomCounts, coinsAmount]);
 
   // Strict User-ID Cashout Accountability (Till Management)
-  // Calculate expected cash from orders created during this shift with robust fallback
+  // Calculate expected cash from orders created strictly during this shift session with outlet and cashier isolation
   const userShiftOrders = useMemo(() => {
     if (!currentShift) return [];
     const shiftStartTime = currentShift.openedAt ? new Date(currentShift.openedAt).getTime() : 0;
     const shiftEndTime = currentShift.closedAt ? new Date(currentShift.closedAt).getTime() : null;
+    const shiftOutlet = currentShift.outlet || currentUser?.outlet || 'Gulberg Branch';
+    const shiftCashier = currentShift.cashierName || currentUser?.name || '';
     
-    // First: Filter orders generated during this shift session
-    let validOrders = orders.filter((o) => {
+    return orders.filter((o) => {
+      // 1. Exclude non-revenue or cancelled states
       if (o.status === 'cancelled' || o.status === 'refunded' || o.paymentStatus === 'refunded') return false;
-      const orderTime = o.createdAt ? new Date(o.createdAt).getTime() : Date.now();
-      // Allow 2-minute clock skew buffer
-      if (shiftStartTime > 0 && orderTime < (shiftStartTime - 120000)) return false;
-      if (shiftEndTime && orderTime > (shiftEndTime + 120000)) return false;
+
+      // 2. Strict Outlet / Terminal Isolation
+      const orderOutlet = o.outlet || (o as any).branchName || '';
+      if (orderOutlet && shiftOutlet && orderOutlet !== shiftOutlet) return false;
+
+      // 3. Strict Shift Time Window Isolation
+      const orderTime = o.createdAt ? new Date(o.createdAt).getTime() : 0;
+      if (shiftStartTime > 0 && orderTime < (shiftStartTime - 60000)) return false;
+      if (shiftEndTime && orderTime > (shiftEndTime + 60000)) return false;
+
+      // 4. Strict Cashier Attribution
+      if (shiftCashier && o.cashierName && o.cashierName !== shiftCashier) {
+        return false;
+      }
+
       return true;
     });
-
-    // Fallback: If no orders match the tight timestamp window and shift is open, include all active non-cancelled orders
-    if (validOrders.length === 0 && orders.length > 0 && !shiftEndTime) {
-      validOrders = orders.filter((o) => o.status !== 'cancelled' && o.status !== 'refunded' && o.paymentStatus !== 'refunded');
-    }
-
-    return validOrders;
   }, [orders, currentShift, currentUser]);
 
   const userCashSales = useMemo(() => {
-    return userShiftOrders
+    const total = userShiftOrders
       .filter((o) => {
         const pm = (o.paymentMethod || 'cash').toLowerCase();
         return pm === 'cash' || pm === 'cod' || pm === 'cash_on_delivery' || (!pm.includes('card') && !pm.includes('online') && !pm.includes('pos'));
       })
       .reduce((sum, o) => sum + (Number(o.total) || Number(o.subtotal) || 0), 0);
+    return roundToCurrency(total);
   }, [userShiftOrders]);
 
   const userCardSales = useMemo(() => {
-    return userShiftOrders
+    const total = userShiftOrders
       .filter((o) => {
         const pm = (o.paymentMethod || '').toLowerCase();
         return pm.includes('card') || pm.includes('online') || pm.includes('pos') || pm.includes('bank') || pm.includes('digital');
       })
       .reduce((sum, o) => sum + (Number(o.total) || Number(o.subtotal) || 0), 0);
+    return roundToCurrency(total);
   }, [userShiftOrders]);
 
   const userTotalSales = useMemo(() => {
-    return userShiftOrders.reduce((sum, o) => sum + (Number(o.total) || Number(o.subtotal) || 0), 0);
+    const total = userShiftOrders.reduce((sum, o) => sum + (Number(o.total) || Number(o.subtotal) || 0), 0);
+    return roundToCurrency(total);
   }, [userShiftOrders]);
 
-  const openingFloatVal = currentShift?.openingFloat || currentShift?.startingFloat || pettyCash || 0;
-  const cashSalesVal = userCashSales || (currentShift?.cashSales || 0);
-  const cardSalesVal = userCardSales || (currentShift?.cardSales || 0);
-  const totalSalesVal = userTotalSales || (currentShift?.totalGrossSales || (cashSalesVal + cardSalesVal));
+  const openingFloatVal = roundToCurrency(currentShift?.openingFloat ?? currentShift?.startingFloat ?? pettyCash ?? 0);
+  const cashSalesVal = userCashSales ?? (currentShift?.cashSales ?? 0);
+  const cardSalesVal = userCardSales ?? (currentShift?.cardSales ?? 0);
+  const totalSalesVal = userTotalSales ?? (currentShift?.totalGrossSales ?? (cashSalesVal + cardSalesVal));
 
   // Expected cash in drawer = Opening Float/Petty Cash + User's Own Account Cash Sales
-  const expectedCashInDrawer = openingFloatVal + cashSalesVal;
+  const expectedCashInDrawer = roundToCurrency(openingFloatVal + cashSalesVal);
 
   // Reconciliation Discrepancy: Physical Cash Counted - Expected Cash
-  const discrepancy = totalPhysicalCashCounted - expectedCashInDrawer;
+  const discrepancy = roundToCurrency(totalPhysicalCashCounted - expectedCashInDrawer);
   const isBalanced = Math.abs(discrepancy) === 0;
   const isOverage = discrepancy > 0;
   const isShortage = discrepancy < 0;
+
+  // Auto-Fill Expected Cash Breakdown
+  const handleAutoFillExpected = () => {
+    let remaining = Math.max(0, expectedCashInDrawer);
+    const newCounts: DenominationCounts = {
+      5000: 0,
+      1000: 0,
+      500: 0,
+      100: 0,
+      50: 0,
+      20: 0,
+      10: 0,
+    };
+    const denoms: (keyof DenominationCounts)[] = [5000, 1000, 500, 100, 50, 20, 10];
+    for (const d of denoms) {
+      const count = Math.floor(remaining / d);
+      newCounts[d] = count;
+      remaining = remaining % d;
+    }
+    setDenomCounts(newCounts);
+    setCoinsAmount(remaining);
+    showToast(`Count auto-filled to exact expected PKR ${expectedCashInDrawer.toLocaleString()}`);
+  };
+
+  const handleResetCounts = () => {
+    setDenomCounts({
+      5000: 0,
+      1000: 0,
+      500: 0,
+      100: 0,
+      50: 0,
+      20: 0,
+      10: 0,
+    });
+    setCoinsAmount(0);
+  };
+
+  const handleOpenNewShift = (e: React.FormEvent) => {
+    e.preventDefault();
+    const floatAmount = Number(openingFloatInput) || 0;
+    openShift(floatAmount, openingNotesInput);
+    setShowSuccessZReport(false);
+    setClosedAuditData(null);
+    showToast(`✓ Cashier shift opened with PKR ${floatAmount.toLocaleString()} starting float`);
+  };
 
   if (!isOpen) return null;
 
@@ -173,15 +249,18 @@ export const ShiftCloseModal: React.FC<ShiftCloseModalProps> = ({
       // Call context closeShift
       closeShift(totalPhysicalCashCounted, shiftNotes);
 
-      // Attempt to save to backend shift audit endpoint if available
-      const res = await fetch('/api/shifts/close', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(auditPayload),
-      });
-
-      if (!res.ok) {
-        throw new Error('Failed to record shift on backend server');
+      // Attempt to save to backend shift audit endpoint if available (resilient error handling)
+      try {
+        const res = await fetch('/api/shifts/close', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(auditPayload),
+        });
+        if (!res.ok) {
+          console.warn('Backend server returned non-ok status for shift close, saved locally');
+        }
+      } catch (networkErr) {
+        console.warn('Network offline, shift closed and cached locally');
       }
 
       setClosedAuditData(auditPayload);
@@ -201,6 +280,8 @@ export const ShiftCloseModal: React.FC<ShiftCloseModalProps> = ({
     showToast('🖨️ Z-Report sent to thermal receipt printer.');
   };
 
+  const isShiftOpen = currentShift && currentShift.status === 'open';
+
   return (
     <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto no-scrollbar">
       <div className="bg-stone-900 border border-stone-800 rounded-2xl w-full max-w-3xl shadow-2xl overflow-hidden flex flex-col my-auto max-h-[92vh]">
@@ -213,9 +294,9 @@ export const ShiftCloseModal: React.FC<ShiftCloseModalProps> = ({
             </div>
             <div>
               <h3 className="font-extrabold text-white text-base flex items-center gap-2">
-                Register Shift Close & Reconciliation
-                <span className="text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30">
-                  {currentShift?.shiftNumber || 'ACTIVE SHIFT'}
+                {isShiftOpen ? 'Register Shift Close & Reconciliation' : 'Register Shift Management'}
+                <span className={`text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded border ${isShiftOpen ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-stone-800 text-stone-400 border-stone-700'}`}>
+                  {isShiftOpen ? (currentShift?.shiftNumber || 'ACTIVE SHIFT') : 'SHIFT CLOSED'}
                 </span>
               </h3>
               <p className="text-xs text-stone-400">
@@ -247,7 +328,7 @@ export const ShiftCloseModal: React.FC<ShiftCloseModalProps> = ({
             {/* Thermal Print Slip Simulation */}
             <div className="bg-white text-stone-950 p-5 rounded-xl font-mono text-xs max-w-md mx-auto shadow-2xl space-y-3 border border-stone-300">
               <div className="text-center border-b border-dashed border-stone-400 pb-2">
-                <h5 className="font-black text-sm tracking-wider uppercase">WHITES CASTLE PRO POS</h5>
+                <h5 className="font-black text-sm tracking-wider uppercase">MASTER POS PRO POS</h5>
                 <p className="text-[10px] text-stone-600">END OF SHIFT Z-REPORT (AUDIT # {closedAuditData.id.slice(-6)})</p>
                 <p className="text-[10px] text-stone-500">Cashier: {closedAuditData.cashierName}</p>
               </div>
@@ -307,29 +388,134 @@ export const ShiftCloseModal: React.FC<ShiftCloseModalProps> = ({
             </div>
 
             {/* Action Buttons */}
-            <div className="flex items-center justify-center gap-3 pt-2">
+            <div className="flex flex-wrap items-center justify-center gap-2.5 pt-2">
               <button
                 onClick={handlePrintZReport}
-                className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-lg cursor-pointer"
+                className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-lg cursor-pointer"
               >
                 <Printer className="w-4 h-4" />
                 Print Physical Z-Report
               </button>
               <button
                 onClick={() => {
+                  setShowSuccessZReport(false);
+                  setClosedAuditData(null);
+                  handleResetCounts();
+                }}
+                className="px-4 py-2.5 bg-[#00897b] hover:bg-[#00796b] text-white rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-lg cursor-pointer"
+              >
+                <Unlock className="w-4 h-4" />
+                Open Next Shift
+              </button>
+              <button
+                onClick={() => {
+                  onClose();
+                }}
+                className="px-4 py-2.5 bg-stone-800 hover:bg-stone-700 text-stone-200 rounded-xl text-xs font-bold transition cursor-pointer"
+              >
+                Done & Return to POS
+              </button>
+              <button
+                onClick={() => {
                   onClose();
                   logoutUser();
                 }}
-                className="px-5 py-2.5 bg-stone-800 hover:bg-stone-700 text-stone-200 rounded-xl text-xs font-bold transition cursor-pointer"
+                className="px-4 py-2.5 bg-stone-900 border border-stone-700 hover:bg-stone-800 text-stone-300 rounded-xl text-xs font-bold transition cursor-pointer"
               >
-                Done & Exit
+                Switch Cashier
               </button>
             </div>
+          </div>
+        ) : !isShiftOpen ? (
+          /* Shift Closed - Open Shift Panel */
+          <div className="p-6 overflow-y-auto space-y-6">
+            <div className="bg-stone-950 p-5 rounded-2xl border border-stone-800 text-center space-y-2">
+              <div className="w-12 h-12 rounded-2xl bg-[#00897b]/20 border border-[#00897b]/30 text-[#00897b] flex items-center justify-center mx-auto">
+                <Unlock className="w-6 h-6" />
+              </div>
+              <h4 className="text-lg font-black text-white">No Active Shift Session</h4>
+              <p className="text-xs text-stone-400 max-w-md mx-auto">
+                Open a new register shift to begin order billing and enable automated cash drawer tracking.
+              </p>
+            </div>
+
+            <form onSubmit={handleOpenNewShift} className="space-y-4 max-w-md mx-auto">
+              <div>
+                <label className="text-xs font-bold text-stone-300 block mb-1">
+                  Opening Cash Float (PKR):
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  value={openingFloatInput}
+                  onChange={(e) => setOpeningFloatInput(e.target.value)}
+                  className="w-full bg-stone-950 border border-stone-800 rounded-xl p-3 text-sm font-mono font-bold text-white focus:outline-none focus:border-[#00897b]"
+                />
+              </div>
+
+              {/* Quick Presets */}
+              <div className="flex gap-2">
+                {['1000', '2000', '5000', '10000'].map((f) => (
+                  <button
+                    key={f}
+                    type="button"
+                    onClick={() => setOpeningFloatInput(f)}
+                    className="flex-1 py-2 bg-stone-950 hover:bg-stone-800 border border-stone-800 rounded-xl text-xs font-mono font-bold text-stone-300 transition cursor-pointer"
+                  >
+                    PKR {Number(f).toLocaleString()}
+                  </button>
+                ))}
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-stone-300 block mb-1">
+                  Shift Opening Notes (Optional):
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Standard morning float assigned by manager"
+                  value={openingNotesInput}
+                  onChange={(e) => setOpeningNotesInput(e.target.value)}
+                  className="w-full bg-stone-950 border border-stone-800 rounded-xl p-2.5 text-xs text-white focus:outline-none"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="px-4 py-2.5 rounded-xl text-xs font-bold text-stone-400 hover:text-white transition cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-6 py-2.5 bg-[#00897b] hover:bg-[#00796b] text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 shadow-xl cursor-pointer"
+                >
+                  <Unlock className="w-4 h-4" />
+                  Start New Register Shift
+                </button>
+              </div>
+            </form>
           </div>
         ) : (
           /* Shift Close Reconciliation Form */
           <form onSubmit={handleFinalizeShiftClose} className="p-5 overflow-y-auto space-y-5 no-scrollbar">
             
+            {isUnclosedPreviousShift && currentShift && (
+              <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 flex items-start gap-2.5 shadow-md">
+                <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                <div className="space-y-0.5">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-amber-200">
+                    Unclosed Shift From Yesterday ({new Date(currentShift.openedAt).toLocaleDateString()})
+                  </h4>
+                  <p className="text-[11px] text-amber-300/90 leading-snug font-medium">
+                    This shift was opened on {new Date(currentShift.openedAt).toLocaleString()} and was not closed yesterday. In accordance with strict cash control, shifts are <strong>never automatically closed</strong>. Complete physical cash counting below to close this shift.
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* Top Stats Overview */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
               <div className="bg-stone-950 p-3 rounded-xl border border-stone-800">
@@ -386,7 +572,7 @@ export const ShiftCloseModal: React.FC<ShiftCloseModalProps> = ({
 
             {/* Notes & Bills Counter Matrix */}
             <div className="bg-stone-950/90 p-4 rounded-xl border border-stone-800 space-y-3">
-              <div className="flex items-center justify-between border-b border-stone-800 pb-2">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-stone-800 pb-2 gap-2">
                 <div>
                   <h4 className="text-xs font-bold text-white flex items-center gap-1.5">
                     <Banknote className="w-4 h-4 text-[#00897b]" />
@@ -396,11 +582,31 @@ export const ShiftCloseModal: React.FC<ShiftCloseModalProps> = ({
                     Input individual physical note counts: Total = ∑(Note × Quantity)
                   </p>
                 </div>
-                <div className="text-right">
-                  <span className="text-[10px] uppercase text-stone-400 font-bold">Sum from Matrix</span>
-                  <p className="text-sm font-black text-emerald-400 font-mono">
-                    PKR {totalPhysicalCashCounted.toLocaleString()}
-                  </p>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleAutoFillExpected}
+                    className="px-2.5 py-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-lg text-[10px] font-bold transition flex items-center gap-1 cursor-pointer"
+                    title="Auto fill denominations to match expected cash"
+                  >
+                    <Sparkles className="w-3 h-3" />
+                    Auto-Fill Expected
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleResetCounts}
+                    className="px-2.5 py-1 bg-stone-850 hover:bg-stone-800 text-stone-400 hover:text-white border border-stone-700 rounded-lg text-[10px] font-bold transition flex items-center gap-1 cursor-pointer"
+                    title="Clear all denomination counts"
+                  >
+                    <RotateCcw className="w-3 h-3" />
+                    Clear
+                  </button>
+                  <div className="text-right pl-2 border-l border-stone-800">
+                    <span className="text-[10px] uppercase text-stone-400 font-bold block">Counted</span>
+                    <p className="text-sm font-black text-emerald-400 font-mono">
+                      PKR {totalPhysicalCashCounted.toLocaleString()}
+                    </p>
+                  </div>
                 </div>
               </div>
 
@@ -489,65 +695,63 @@ export const ShiftCloseModal: React.FC<ShiftCloseModalProps> = ({
               </div>
             </div>
 
-            {/* Reconciliation Comparison Summary Box (Visible to Management Only) */}
-            {['admin', 'manager', 'owner'].includes(currentUser.role) && (
-              <div
-                className={`p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
-                  isBalanced
-                    ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-300'
-                    : isOverage
-                    ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-300'
-                    : 'bg-red-950/40 border-red-500/40 text-red-300'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                      isBalanced
-                        ? 'bg-emerald-500/20 text-emerald-400'
-                        : isOverage
-                        ? 'bg-emerald-500/20 text-emerald-400'
-                        : 'bg-red-500/20 text-red-400'
-                    }`}
-                  >
-                    {isBalanced ? (
-                      <CheckCircle className="w-5 h-5" />
-                    ) : (
-                      <AlertTriangle className="w-5 h-5" />
-                    )}
-                  </div>
-                  <div>
-                    <h4 className="font-extrabold text-sm flex items-center gap-2">
-                      {isBalanced
-                        ? 'Cash Drawer Perfectly Balanced (0 Discrepancy)'
-                        : isOverage
-                        ? `Cash Overage Detected (+PKR ${discrepancy.toLocaleString()})`
-                        : `Cash Shortage Detected (-PKR ${Math.abs(discrepancy).toLocaleString()})`}
-                    </h4>
-                    <p className="text-xs text-stone-400 mt-0.5">
-                      Physical Count: PKR {totalPhysicalCashCounted.toLocaleString()} | System Expected: PKR {expectedCashInDrawer.toLocaleString()}
-                    </p>
-                  </div>
+            {/* Reconciliation Comparison Summary Box */}
+            <div
+              className={`p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                isBalanced
+                  ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-300'
+                  : isOverage
+                  ? 'bg-sky-950/40 border-sky-500/40 text-sky-300'
+                  : 'bg-red-950/40 border-red-500/40 text-red-300'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div
+                  className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                    isBalanced
+                      ? 'bg-emerald-500/20 text-emerald-400'
+                      : isOverage
+                      ? 'bg-sky-500/20 text-sky-400'
+                      : 'bg-red-500/20 text-red-400'
+                  }`}
+                >
+                  {isBalanced ? (
+                    <CheckCircle className="w-5 h-5" />
+                  ) : (
+                    <AlertTriangle className="w-5 h-5" />
+                  )}
                 </div>
-
-                <div className="text-right shrink-0">
-                  <span className="text-[10px] uppercase font-bold tracking-wider text-stone-400 block">
-                    Variance
-                  </span>
-                  <span
-                    className={`text-xl font-black font-mono ${
-                      isBalanced
-                        ? 'text-emerald-400'
-                        : isOverage
-                        ? 'text-emerald-400'
-                        : 'text-red-400'
-                    }`}
-                  >
-                    {discrepancy >= 0 ? `+PKR ${discrepancy.toLocaleString()}` : `-PKR ${Math.abs(discrepancy).toLocaleString()}`}
-                  </span>
+                <div>
+                  <h4 className="font-extrabold text-sm flex items-center gap-2">
+                    {isBalanced
+                      ? 'Cash Drawer Perfectly Balanced (0 Discrepancy)'
+                      : isOverage
+                      ? `Cash Overage Detected (+PKR ${discrepancy.toLocaleString()})`
+                      : `Cash Shortage Detected (-PKR ${Math.abs(discrepancy).toLocaleString()})`}
+                  </h4>
+                  <p className="text-xs text-stone-400 mt-0.5">
+                    Physical Count: PKR {totalPhysicalCashCounted.toLocaleString()} | System Expected: PKR {expectedCashInDrawer.toLocaleString()}
+                  </p>
                 </div>
               </div>
-            )}
+
+              <div className="text-right shrink-0">
+                <span className="text-[10px] uppercase font-bold tracking-wider text-stone-400 block">
+                  Variance
+                </span>
+                <span
+                  className={`text-xl font-black font-mono ${
+                    isBalanced
+                      ? 'text-emerald-400'
+                      : isOverage
+                      ? 'text-sky-400'
+                      : 'text-red-400'
+                  }`}
+                >
+                  {discrepancy >= 0 ? `+PKR ${discrepancy.toLocaleString()}` : `-PKR ${Math.abs(discrepancy).toLocaleString()}`}
+                </span>
+              </div>
+            </div>
 
             {/* Shift Discrepancy & Handover Notes */}
             <div className="space-y-1.5">

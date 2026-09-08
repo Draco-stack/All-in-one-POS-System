@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { useRestaurant } from '../../context/RestaurantContext';
 import { MenuItem } from '../../types';
+import { ImageUploadZone } from '../common/ImageUploadZone';
+import { MenuItemThumbnail } from '../common/MenuItemThumbnail';
+import { CategoryIcon } from '../../utils/categoryIcons';
 import {
   Settings,
   Plus,
@@ -9,6 +12,7 @@ import {
   CheckCircle,
   XCircle,
   Search,
+  Layers,
 } from 'lucide-react';
 
 export const MenuManagerView: React.FC = () => {
@@ -136,6 +140,38 @@ export const MenuManagerView: React.FC = () => {
         </div>
       </div>
 
+      {/* Category Filter Bar */}
+      <div className="px-5 py-2.5 bg-stone-900/60 border-b border-stone-800 flex items-center gap-1.5 overflow-x-auto scrollbar-thin">
+        <button
+          onClick={() => setSelectedCat('all')}
+          className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition cursor-pointer flex items-center gap-1.5 ${
+            selectedCat === 'all'
+              ? 'bg-[#00897b] text-white shadow'
+              : 'bg-stone-900 text-stone-400 hover:text-white border border-stone-800'
+          }`}
+        >
+          <Layers className="w-3.5 h-3.5" />
+          <span>All Dishes ({menuItems.length})</span>
+        </button>
+        {categories.map((c) => {
+          const count = menuItems.filter((m) => m.category === c.id || m.category === c.name).length;
+          return (
+            <button
+              key={c.id}
+              onClick={() => setSelectedCat(c.id)}
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition cursor-pointer flex items-center gap-1.5 ${
+                selectedCat === c.id
+                  ? 'bg-[#00897b] text-white shadow'
+                  : 'bg-stone-900 text-stone-400 hover:text-white border border-stone-800'
+              }`}
+            >
+              <CategoryIcon categoryIdOrName={c.id || c.name} className="w-3.5 h-3.5" />
+              <span>{c.name} ({count})</span>
+            </button>
+          );
+        })}
+      </div>
+
       {/* Main Grid */}
       <div className="flex-1 p-5 overflow-y-auto">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -148,11 +184,12 @@ export const MenuManagerView: React.FC = () => {
               >
                 <div className="space-y-2">
                   <div className="relative aspect-video rounded-xl overflow-hidden bg-stone-950">
-                    <img
-                      src={item.image}
-                      alt={item.name}
+                    <MenuItemThumbnail
+                      image={item.image}
+                      name={item.name}
+                      category={item.category}
+                      size="full"
                       className="w-full h-full object-cover"
-                      referrerPolicy="no-referrer"
                     />
                     <div className="absolute top-2 right-2">
                       <span className="px-2 py-0.5 rounded-lg bg-stone-950/90 text-teal-300 font-mono font-bold text-xs shadow border border-stone-800">
@@ -273,16 +310,12 @@ export const MenuManagerView: React.FC = () => {
                 />
               </div>
 
-              <div className="space-y-1">
-                <label className="font-bold text-stone-300 uppercase">Image URL</label>
-                <input
-                  type="url"
-                  value={image}
-                  onChange={(e) => setImage(e.target.value)}
-                  placeholder="https://..."
-                  className="w-full bg-stone-950 border border-stone-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-teal-500"
-                />
-              </div>
+              <ImageUploadZone
+                value={image}
+                onChange={(img) => setImage(img)}
+                label="Dish Image"
+                helperText="Upload an image directly from your computer storage or paste a web URL."
+              />
 
               <div className="flex items-center justify-end gap-2 pt-3 border-t border-stone-800">
                 <button

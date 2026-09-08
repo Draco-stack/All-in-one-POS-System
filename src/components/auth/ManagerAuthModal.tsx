@@ -67,11 +67,8 @@ export const ManagerAuthModal: React.FC<ManagerAuthModalProps> = ({
 
   const verifyPin = (pin: string, manager: UserAccount) => {
     if (manager.pin === pin) {
-      if (!reason.trim()) {
-        setErrorMessage('Please provide a mandatory reason for this managerial override.');
-        return;
-      }
-      onAuthorized(manager, reason.trim());
+      const finalReason = reason.trim() || 'Manager authorization override';
+      onAuthorized(manager, finalReason);
       onClose();
     } else {
       setErrorMessage('Invalid Manager Security PIN. Authorization denied.');
@@ -83,10 +80,6 @@ export const ManagerAuthModal: React.FC<ManagerAuthModalProps> = ({
     e.preventDefault();
     if (!selectedManager) {
       setErrorMessage('Please select an authorized Manager or Owner.');
-      return;
-    }
-    if (!reason.trim()) {
-      setErrorMessage('Please enter a mandatory audit reason.');
       return;
     }
     verifyPin(enteredPin, selectedManager);

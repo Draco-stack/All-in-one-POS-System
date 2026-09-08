@@ -5,6 +5,7 @@ import { EditOrderModal } from '../orders/EditOrderModal';
 import { CancelOrderModal } from '../orders/CancelOrderModal';
 import { DeliveryDriverSlipModal } from '../pos/DeliveryDriverSlipModal';
 import { ReceiptModal } from '../pos/ReceiptModal';
+import { exportToStyledExcel } from '../../utils/excelExporter';
 import {
   History,
   Search,
@@ -61,37 +62,18 @@ export const OrdersHistoryView: React.FC = () => {
     setRefundModalOrder(null);
   };
 
-  // Export orders to CSV spreadsheet
+  // Export orders to styled Excel report
   const handleExportCSV = () => {
     if (filteredOrders.length === 0) {
       alert('No orders to export.');
       return;
     }
 
-    const headers = ['Order Number', 'Time', 'Type', 'Customer Name', 'Phone', 'Address', 'Items', 'Total (Rs)', 'Payment Method', 'Status', 'Driver'];
-    const rows = filteredOrders.map((o) => [
-      o.orderNumber,
-      new Date(o.createdAt).toLocaleString(),
-      o.type,
-      `"${(o.customer?.name || '').replace(/"/g, '""')}"`,
-      `"${(o.customer?.phone || '').replace(/"/g, '""')}"`,
-      `"${(o.customer?.address || '').replace(/"/g, '""')}"`,
-      `"${o.items.map((i) => `${i.quantity}x ${i.name}`).join('; ').replace(/"/g, '""')}"`,
-      o.total,
-      o.paymentMethod,
-      o.status,
-      `"${(o.deliveryDriver || '').replace(/"/g, '""')}"`,
-    ]);
-
-    const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', `WhitesCastle_Orders_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    exportToStyledExcel({
+      reportType: 'all',
+      orders: filteredOrders,
+      filename: `Whites_Orders_History_${new Date().toISOString().slice(0, 10)}.xls`,
+    });
   };
 
   return (
