@@ -6,7 +6,7 @@ WORKDIR /app
 # Install dependencies first for better caching
 COPY package.json package-lock.json* ./
 # Install ALL dependencies (including devDependencies) so that Vite/esbuild are available for the build step
-RUN npm ci
+RUN npm install
 
 # Copy Prisma schema and generate client
 COPY prisma ./prisma
@@ -29,7 +29,7 @@ ENV PORT=3000
 COPY package.json package-lock.json* ./
 
 # Install only production dependencies
-RUN npm ci --omit=dev
+RUN npm install --omit=dev
 
 # Copy compiled backend and frontend assets from the builder stage
 COPY --from=builder /app/dist ./dist
