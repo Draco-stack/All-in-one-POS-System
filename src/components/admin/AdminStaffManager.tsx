@@ -233,24 +233,26 @@ export const AdminStaffManager: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Top Header & Quick Add */}
-      <div className={`backdrop-blur-md rounded-2xl p-5 shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-4 border ${
+      <div className={`rounded-2xl p-5 border transition-colors ${
         theme === 'dark' 
-          ? 'bg-gradient-to-b from-stone-900/90 to-[#141414]/90 border-slate-300 dark:border-white/10' 
-          : 'bg-white border-slate-200 shadow-sm'
-      }`}>
+          ? 'bg-[#0f1117] border-white/10 shadow-lg' 
+          : 'bg-white border-slate-200/80 shadow-sm'
+      } flex flex-col sm:flex-row sm:items-center justify-between gap-4`}>
         <div>
-          <h3 className={`text-lg font-bold flex items-center gap-2 ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>
-            <Users className="w-5 h-5 text-emerald-400" />
+          <h3 className={`text-base font-bold flex items-center gap-2 ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
+            <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              <Users className="w-4 h-4" />
+            </div>
             Staff Accounts & Role-Based Access Control (RBAC)
           </h3>
-          <p className={`text-xs mt-0.5 ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`}>
+          <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`}>
             Manage terminal credentials, enforce strict role boundaries, and instantly revoke staff access
           </p>
         </div>
 
         <button
           onClick={() => setIsAddUserOpen(true)}
-          className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white text-xs font-bold flex items-center gap-2 shadow-[0_0_15px_rgba(16,185,129,0.25)] hover:scale-[1.02] active:scale-95 transition-all duration-200 cursor-pointer self-start sm:self-auto border border-emerald-500/30"
+          className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white text-xs font-bold flex items-center gap-2 shadow-sm hover:scale-[1.02] active:scale-95 transition-all duration-150 cursor-pointer self-start sm:self-auto border border-emerald-500/30"
         >
           <UserPlus className="w-4 h-4" />
           Provision Staff Member
@@ -258,44 +260,44 @@ export const AdminStaffManager: React.FC = () => {
       </div>
 
       {/* Staff Accounts Table */}
-      <div className={`backdrop-blur-md rounded-2xl p-5 shadow-lg border ${
+      <div className={`rounded-2xl p-5 border transition-colors ${
         theme === 'dark' 
-          ? 'bg-gradient-to-b from-stone-900/90 to-[#141414]/90 border-slate-300 dark:border-white/10' 
-          : 'bg-white border-slate-200 shadow-sm'
+          ? 'bg-[#0f1117] border-white/10 shadow-lg' 
+          : 'bg-white border-slate-200/80 shadow-sm'
       }`}>
-        <div className={`flex flex-col sm:flex-row sm:items-center justify-between pb-3 mb-4 border-b gap-3 ${
-          theme === 'dark' ? 'border-slate-200 dark:border-white/5' : 'border-slate-200'
+        <div className={`flex flex-col sm:flex-row sm:items-center justify-between pb-3.5 mb-4 border-b gap-3 ${
+          theme === 'dark' ? 'border-white/10' : 'border-slate-200'
         }`}>
           {/* Role Filter Tabs */}
           <div className={`flex items-center gap-1.5 p-1 rounded-xl border ${
-            theme === 'dark' ? 'bg-stone-950/80 border-slate-300 dark:border-white/10' : 'bg-slate-100 border-slate-200'
+            theme === 'dark' ? 'bg-[#090a0f] border-white/10' : 'bg-slate-100 border-slate-200'
           }`}>
             <button
               onClick={() => setRoleFilter('all')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-150 cursor-pointer ${
                 roleFilter === 'all'
-                  ? (theme === 'dark' ? 'bg-slate-50 dark:bg-stone-800 text-white border-slate-300 dark:border-white/10' : 'bg-white text-slate-800 shadow-xs border-slate-300 border')
-                  : (theme === 'dark' ? 'text-slate-500 dark:text-stone-400 hover:text-stone-200' : 'text-slate-500 hover:text-slate-800')
+                  ? (theme === 'dark' ? 'bg-stone-800 text-white border border-white/10 shadow-sm' : 'bg-white text-slate-900 shadow-xs border-slate-300 border')
+                  : (theme === 'dark' ? 'text-stone-400 hover:text-stone-200' : 'text-slate-600 hover:text-slate-900')
               }`}
             >
               All Accounts ({users.length})
             </button>
             <button
               onClick={() => setRoleFilter('operators')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-150 cursor-pointer ${
                 roleFilter === 'operators'
-                  ? (theme === 'dark' ? 'bg-slate-50 dark:bg-stone-800 text-white border-slate-300 dark:border-white/10' : 'bg-white text-slate-800 shadow-xs border-slate-300 border')
-                  : (theme === 'dark' ? 'text-slate-500 dark:text-stone-400 hover:text-stone-200' : 'text-slate-500 hover:text-slate-800')
+                  ? (theme === 'dark' ? 'bg-stone-800 text-white border border-white/10 shadow-sm' : 'bg-white text-slate-900 shadow-xs border-slate-300 border')
+                  : (theme === 'dark' ? 'text-stone-400 hover:text-stone-200' : 'text-slate-600 hover:text-slate-900')
               }`}
             >
               Register & POS Staff ({users.filter(u => u.role !== 'rider').length})
             </button>
             <button
               onClick={() => setRoleFilter('riders')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 cursor-pointer flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-150 cursor-pointer flex items-center gap-1.5 ${
                 roleFilter === 'riders'
-                  ? 'bg-gradient-to-r from-emerald-600/30 to-emerald-700/30 text-emerald-300 border border-emerald-500/40 shadow-sm'
-                  : (theme === 'dark' ? 'text-slate-500 dark:text-stone-400 hover:text-stone-200' : 'text-slate-500 hover:text-slate-800')
+                  ? 'bg-emerald-600/20 text-emerald-400 border border-emerald-500/40 shadow-xs'
+                  : (theme === 'dark' ? 'text-stone-400 hover:text-stone-200' : 'text-slate-600 hover:text-slate-900')
               }`}
             >
               <Truck className="w-3.5 h-3.5" />
@@ -303,17 +305,17 @@ export const AdminStaffManager: React.FC = () => {
             </button>
           </div>
 
-          <div className={`text-xs flex items-center gap-2 ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`}>
+          <div className={`text-xs flex items-center gap-2 ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`}>
             <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]" />
             <span>Active Terminal / Fleet Sessions</span>
           </div>
         </div>
 
         <div className="overflow-x-auto">
-          <table className={`w-full text-left text-xs border-collapse ${theme === 'dark' ? 'text-slate-700 dark:text-stone-300' : 'text-slate-700'}`}>
+          <table className={`w-full text-left text-xs border-collapse ${theme === 'dark' ? 'text-stone-300' : 'text-slate-700'}`}>
             <thead>
               <tr className={`border-b font-bold uppercase tracking-wider text-[10px] ${
-                theme === 'dark' ? 'border-slate-300 dark:border-white/10 text-slate-500 dark:text-stone-400' : 'border-slate-200 text-slate-500'
+                theme === 'dark' ? 'border-white/10 text-stone-400 bg-[#090a0f]' : 'border-slate-200 text-slate-500 bg-slate-50/80'
               }`}>
                 <th className="py-2.5 px-3">Staff Member</th>
                 <th className="py-2.5 px-3">Username</th>
@@ -522,33 +524,33 @@ export const AdminStaffManager: React.FC = () => {
       </div>
 
       {/* Permission Matrix Breakdown Card */}
-      <div className={`backdrop-blur-md rounded-2xl p-5 shadow-lg space-y-3 border ${
+      <div className={`rounded-2xl p-5 border transition-colors space-y-3 ${
         theme === 'dark' 
-          ? 'bg-gradient-to-b from-stone-900/90 to-[#141414]/90 border-slate-300 dark:border-white/10' 
-          : 'bg-white border-slate-200 shadow-sm'
+          ? 'bg-[#0f1117] border-white/10 shadow-lg' 
+          : 'bg-white border-slate-200/80 shadow-sm'
       }`}>
-        <div className={`pb-3 border-b flex items-center justify-between ${theme === 'dark' ? 'border-slate-200 dark:border-white/5' : 'border-slate-200'}`}>
+        <div className={`pb-3.5 border-b flex items-center justify-between ${theme === 'dark' ? 'border-white/10' : 'border-slate-200'}`}>
           <div>
-            <h4 className={`text-sm font-bold flex items-center gap-2 ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>
+            <h4 className={`text-sm font-bold flex items-center gap-2 ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
               <ShieldCheck className="w-4 h-4 text-emerald-400" />
               Role Privilege Matrix & POS Guardrails
             </h4>
-            <p className={`text-xs mt-0.5 ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`}>
+            <p className={`text-xs mt-0.5 ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`}>
               Enforced backend & workstation route permission limits by role tier
             </p>
           </div>
           <span className={`text-[11px] px-2.5 py-1 rounded-lg border font-mono ${
-            theme === 'dark' ? 'bg-stone-950/80 border-slate-300 dark:border-white/10 text-slate-500 dark:text-stone-400' : 'bg-slate-50 border-slate-200 text-slate-500'
+            theme === 'dark' ? 'bg-[#090a0f] border-white/10 text-stone-400' : 'bg-slate-50 border-slate-200 text-slate-600'
           }`}>
             PIN-Gated Operations Active
           </span>
         </div>
 
         <div className="overflow-x-auto">
-          <table className={`w-full text-left text-xs border-collapse ${theme === 'dark' ? 'text-slate-700 dark:text-stone-300' : 'text-slate-700'}`}>
+          <table className={`w-full text-left text-xs border-collapse ${theme === 'dark' ? 'text-stone-300' : 'text-slate-700'}`}>
             <thead>
               <tr className={`border-b font-bold uppercase tracking-wider text-[10px] ${
-                theme === 'dark' ? 'border-slate-300 dark:border-white/10 text-slate-500 dark:text-stone-400' : 'border-slate-200 text-slate-500'
+                theme === 'dark' ? 'border-white/10 text-stone-400 bg-[#090a0f]' : 'border-slate-200 text-slate-500 bg-slate-50/80'
               }`}>
                 <th className="py-2.5 px-3">System Operation / Action</th>
                 <th className="py-2.5 px-3 text-center">Cashier</th>
@@ -559,36 +561,36 @@ export const AdminStaffManager: React.FC = () => {
             <tbody className={`divide-y font-sans ${theme === 'dark' ? 'divide-white/5' : 'divide-slate-200'}`}>
               {permissionMatrix.map((row, i) => (
                 <tr key={i} className={`transition ${theme === 'dark' ? 'hover:bg-white/[0.02]' : 'hover:bg-slate-50'}`}>
-                  <td className={`py-2 px-3 font-medium ${theme === 'dark' ? 'text-stone-200' : 'text-slate-700'}`}>{row.permission}</td>
-                  <td className="py-2 px-3 text-center">
+                  <td className={`py-2.5 px-3 font-medium ${theme === 'dark' ? 'text-stone-200' : 'text-slate-700'}`}>{row.permission}</td>
+                  <td className="py-2.5 px-3 text-center">
                     {row.cashier ? (
-                      <span className="inline-flex items-center gap-1 text-emerald-400 font-bold text-[11px]">
+                      <span className="inline-flex items-center gap-1 text-emerald-500 font-bold text-[11px]">
                         <Check className="w-3.5 h-3.5" /> Allowed
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 text-red-400/80 text-[11px]">
+                      <span className="inline-flex items-center gap-1 text-rose-400 text-[11px]">
                         <X className="w-3.5 h-3.5" /> Blocked
                       </span>
                     )}
                   </td>
-                  <td className="py-2 px-3 text-center">
+                  <td className="py-2.5 px-3 text-center">
                     {row.manager ? (
-                      <span className="inline-flex items-center gap-1 text-emerald-400 font-bold text-[11px]">
+                      <span className="inline-flex items-center gap-1 text-emerald-500 font-bold text-[11px]">
                         <Check className="w-3.5 h-3.5" /> Allowed
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 text-red-400 text-[11px]">
+                      <span className="inline-flex items-center gap-1 text-rose-400 text-[11px]">
                         <X className="w-3.5 h-3.5" /> Blocked
                       </span>
                     )}
                   </td>
-                  <td className="py-2 px-3 text-center">
+                  <td className="py-2.5 px-3 text-center">
                     {row.owner ? (
-                      <span className="inline-flex items-center gap-1 text-amber-400 font-bold text-[11px]">
+                      <span className="inline-flex items-center gap-1 text-amber-500 font-bold text-[11px]">
                         <Check className="w-3.5 h-3.5" /> Full Access
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 text-red-400 text-[11px]">
+                      <span className="inline-flex items-center gap-1 text-rose-400 text-[11px]">
                         <X className="w-3.5 h-3.5" /> Blocked
                       </span>
                     )}
@@ -603,15 +605,23 @@ export const AdminStaffManager: React.FC = () => {
       {/* Provision Staff Modal */}
       {isAddUserOpen && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-gradient-to-b from-stone-900 to-[#141414] border border-slate-300 dark:border-white/10 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl animate-in fade-in zoom-in-95">
-            <div className="p-4.5 border-b border-slate-300 dark:border-white/10 flex items-center justify-between bg-stone-950/80">
+          <div className={`border rounded-3xl w-full max-w-md overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 ${
+            theme === 'dark' ? 'bg-[#12141c] border-white/10 text-white' : 'bg-white border-slate-200 text-slate-900'
+          }`}>
+            <div className={`p-4.5 border-b flex items-center justify-between ${
+              theme === 'dark' ? 'border-white/10 bg-[#0c0d12]' : 'border-slate-200 bg-slate-50'
+            }`}>
               <div className="flex items-center gap-2">
-                <UserPlus className="w-5 h-5 text-emerald-400" />
-                <h4 className="text-sm font-bold text-white">Provision New Staff Account</h4>
+                <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  <UserPlus className="w-4 h-4" />
+                </div>
+                <h4 className={`text-sm font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>Provision New Staff Account</h4>
               </div>
               <button
                 onClick={() => setIsAddUserOpen(false)}
-                className="p-1 rounded-lg text-slate-500 dark:text-stone-400 hover:text-white hover:bg-slate-100 dark:hover:bg-stone-800 transition cursor-pointer"
+                className={`p-1.5 rounded-lg transition cursor-pointer ${
+                  theme === 'dark' ? 'text-stone-400 hover:text-white hover:bg-stone-800' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+                }`}
               >
                 <X className="w-4 h-4" />
               </button>
@@ -619,101 +629,135 @@ export const AdminStaffManager: React.FC = () => {
 
             <form onSubmit={handleCreateUser} className="p-5 space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-stone-300 mb-1">Full Name *</label>
+                <label className={`block text-xs font-semibold mb-1 ${theme === 'dark' ? 'text-stone-300' : 'text-slate-700'}`}>Full Name *</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. Tariq Mehmood"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-3 py-2 bg-stone-950/80 border border-slate-300 dark:border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500 transition shadow-inner"
+                  className={`w-full px-3 py-2.5 rounded-xl text-xs focus:outline-none focus:border-emerald-500 transition border ${
+                    theme === 'dark'
+                      ? 'bg-[#08090d] border-white/10 text-white placeholder-stone-500'
+                      : 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400'
+                  }`}
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-stone-300 mb-1">Email Address (Login Username) *</label>
+                <label className={`block text-xs font-semibold mb-1 ${theme === 'dark' ? 'text-stone-300' : 'text-slate-700'}`}>Email Address (Login Username) *</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. employee@whitescastle.com"
                   value={formData.username}
                   onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                  className="w-full px-3 py-2 bg-stone-950/80 border border-slate-300 dark:border-white/10 rounded-xl text-xs text-white font-mono focus:outline-none focus:border-emerald-500 transition shadow-inner"
+                  className={`w-full px-3 py-2.5 rounded-xl text-xs font-mono focus:outline-none focus:border-emerald-500 transition border ${
+                    theme === 'dark'
+                      ? 'bg-[#08090d] border-white/10 text-white placeholder-stone-500'
+                      : 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400'
+                  }`}
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-stone-300 mb-1">Phone Number</label>
+                <label className={`block text-xs font-semibold mb-1 ${theme === 'dark' ? 'text-stone-300' : 'text-slate-700'}`}>Phone Number</label>
                 <input
                   type="text"
                   placeholder="e.g. +92 300 1234567"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="w-full px-3 py-2 bg-stone-950/80 border border-slate-300 dark:border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500 transition shadow-inner"
+                  className={`w-full px-3 py-2.5 rounded-xl text-xs focus:outline-none focus:border-emerald-500 transition border ${
+                    theme === 'dark'
+                      ? 'bg-[#08090d] border-white/10 text-white placeholder-stone-500'
+                      : 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400'
+                  }`}
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-stone-300 mb-1">PIN / Password *</label>
+                  <label className={`block text-xs font-semibold mb-1 ${theme === 'dark' ? 'text-stone-300' : 'text-slate-700'}`}>PIN / Password *</label>
                   <input
                     type="password"
                     required
                     placeholder="1234"
                     value={formData.pin}
                     onChange={(e) => setFormData({ ...formData, pin: e.target.value })}
-                    className="w-full px-3 py-2 bg-stone-950/80 border border-slate-300 dark:border-white/10 rounded-xl text-xs text-white font-mono tracking-widest text-center focus:outline-none focus:border-emerald-500 transition shadow-inner"
+                    className={`w-full px-3 py-2.5 rounded-xl text-xs font-mono tracking-widest text-center focus:outline-none focus:border-emerald-500 transition border ${
+                      theme === 'dark'
+                        ? 'bg-[#08090d] border-white/10 text-white'
+                        : 'bg-slate-50 border-slate-300 text-slate-900'
+                    }`}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-stone-300 mb-1">Role *</label>
+                  <label className={`block text-xs font-semibold mb-1 ${theme === 'dark' ? 'text-stone-300' : 'text-slate-700'}`}>Role *</label>
                   <select
                     value={formData.role}
                     onChange={(e) => setFormData({ ...formData, role: e.target.value as UserRole })}
-                    className="w-full px-3 py-2 bg-stone-950/80 border border-slate-300 dark:border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500 transition shadow-inner"
+                    className={`w-full px-3 py-2.5 rounded-xl text-xs focus:outline-none focus:border-emerald-500 transition border ${
+                      theme === 'dark'
+                        ? 'bg-[#08090d] border-white/10 text-white'
+                        : 'bg-slate-50 border-slate-300 text-slate-900'
+                    }`}
                   >
-                    <option value="cashier">Cashier (POS Operator)</option>
-                    <option value="manager">Manager (Shift Supervisor)</option>
-                    <option value="server">Server / Waiter (Dine-In)</option>
-                    <option value="rider">Rider (Delivery Fleet)</option>
-                    {currentUser.role === 'owner' && <option value="owner">Owner (Full Administrator)</option>}
+                    <option value="cashier" className={theme === 'dark' ? 'bg-[#08090d] text-white' : 'bg-white text-slate-900'}>Cashier (POS Operator)</option>
+                    <option value="manager" className={theme === 'dark' ? 'bg-[#08090d] text-white' : 'bg-white text-slate-900'}>Manager (Shift Supervisor)</option>
+                    <option value="server" className={theme === 'dark' ? 'bg-[#08090d] text-white' : 'bg-white text-slate-900'}>Server / Waiter (Dine-In)</option>
+                    <option value="rider" className={theme === 'dark' ? 'bg-[#08090d] text-white' : 'bg-white text-slate-900'}>Rider (Delivery Fleet)</option>
+                    {currentUser.role === 'owner' && <option value="owner" className={theme === 'dark' ? 'bg-[#08090d] text-white' : 'bg-white text-slate-900'}>Owner (Full Administrator)</option>}
                   </select>
                 </div>
               </div>
 
               {formData.role === 'rider' && (
-                <div className="p-3 bg-cyan-950/40 border border-cyan-800/40 rounded-xl text-cyan-300 text-xs flex items-start gap-2.5">
-                  <Truck className="w-5 h-5 text-cyan-400 shrink-0 mt-0.5" />
+                <div className={`p-3 border rounded-xl text-xs flex items-start gap-2.5 ${
+                  theme === 'dark' ? 'bg-cyan-950/40 border-cyan-800/40 text-cyan-300' : 'bg-cyan-50 border-cyan-200 text-cyan-800'
+                }`}>
+                  <Truck className="w-5 h-5 text-cyan-500 shrink-0 mt-0.5" />
                   <div>
-                    <span className="font-bold text-cyan-200">Delivery Fleet Account:</span> Riders are recorded for order assignment, tracking, and fleet analytics. They do not log in to the POS cashier terminal, but appear in all driver assignment dropdowns with live order counts.
+                    <span className="font-bold">Delivery Fleet Account:</span> Riders are recorded for order assignment, tracking, and fleet analytics. They do not log in to the POS cashier terminal, but appear in all driver assignment dropdowns with live order counts.
                   </div>
                 </div>
               )}
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-stone-300 mb-1">Assigned Outlet</label>
+                <label className={`block text-xs font-semibold mb-1 ${theme === 'dark' ? 'text-stone-300' : 'text-slate-700'}`}>Assigned Outlet</label>
                 <select
                   value={formData.outlet}
                   onChange={(e) => setFormData({ ...formData, outlet: e.target.value })}
-                  className="w-full px-3 py-2 bg-stone-950/80 border border-slate-300 dark:border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500 transition shadow-inner"
+                  className={`w-full px-3 py-2.5 rounded-xl text-xs focus:outline-none focus:border-emerald-500 transition border ${
+                    theme === 'dark'
+                      ? 'bg-[#08090d] border-white/10 text-white'
+                      : 'bg-slate-50 border-slate-300 text-slate-900'
+                  }`}
                 >
-                  <option value="Main Branch">Main Branch</option>
-                  {outlets.map(o => <option key={o} value={o}>{o}</option>)}
+                  <option value="Main Branch" className={theme === 'dark' ? 'bg-[#08090d] text-white' : 'bg-white text-slate-900'}>Main Branch</option>
+                  {outlets.map(o => (
+                    <option key={o} value={o} className={theme === 'dark' ? 'bg-[#08090d] text-white' : 'bg-white text-slate-900'}>
+                      {o}
+                    </option>
+                  ))}
                 </select>
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-300 dark:border-white/10">
+              <div className={`flex items-center justify-end gap-2 pt-4 border-t ${theme === 'dark' ? 'border-white/10' : 'border-slate-200'}`}>
                 <button
                   type="button"
                   onClick={() => setIsAddUserOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-50 dark:bg-stone-800/80 hover:bg-stone-700 text-slate-700 dark:text-stone-300 text-xs font-semibold transition-all duration-200 cursor-pointer border border-slate-300 dark:border-white/10 hover:border-white/20 active:scale-95"
+                  className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all duration-150 cursor-pointer border active:scale-95 ${
+                    theme === 'dark'
+                      ? 'bg-stone-800/80 hover:bg-stone-700 text-stone-300 border-white/10'
+                      : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300'
+                  }`}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white text-xs font-bold transition-all duration-200 cursor-pointer shadow-[0_0_15px_rgba(16,185,129,0.25)] hover:scale-[1.02] active:scale-95 border border-emerald-500/30"
+                  className="px-5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white text-xs font-bold transition-all duration-150 cursor-pointer shadow-sm active:scale-95 border border-emerald-500/30"
                 >
                   Create Account
                 </button>
@@ -726,49 +770,65 @@ export const AdminStaffManager: React.FC = () => {
       {/* Reset Password Modal */}
       {isPinModalOpen && targetUserForPin && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-gradient-to-b from-stone-900 to-[#141414] border border-slate-300 dark:border-white/10 rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl animate-in fade-in zoom-in-95">
-            <div className="p-4.5 border-b border-slate-300 dark:border-white/10 flex items-center justify-between bg-stone-950/80">
+          <div className={`border rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 ${
+            theme === 'dark' ? 'bg-[#12141c] border-white/10 text-white' : 'bg-white border-slate-200 text-slate-900'
+          }`}>
+            <div className={`p-4.5 border-b flex items-center justify-between ${
+              theme === 'dark' ? 'border-white/10 bg-[#0c0d12]' : 'border-slate-200 bg-slate-50'
+            }`}>
               <div className="flex items-center gap-2">
-                <KeyRound className="w-5 h-5 text-amber-400" />
-                <h4 className="text-sm font-bold text-white">Change User Password</h4>
+                <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                  <KeyRound className="w-4 h-4" />
+                </div>
+                <h4 className={`text-sm font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>Change User Password</h4>
               </div>
               <button
                 onClick={() => setIsPinModalOpen(false)}
-                className="p-1 rounded-lg text-slate-500 dark:text-stone-400 hover:text-white hover:bg-slate-100 dark:hover:bg-stone-800 transition cursor-pointer"
+                className={`p-1.5 rounded-lg transition cursor-pointer ${
+                  theme === 'dark' ? 'text-stone-400 hover:text-white hover:bg-stone-800' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+                }`}
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             <form onSubmit={handleSaveNewPin} className="p-5 space-y-4">
-              <div className="text-xs text-slate-700 dark:text-stone-300">
-                Set a new password for <span className="text-white font-bold">{targetUserForPin.name}</span> ({targetUserForPin.role.toUpperCase()}). Password can contain letters, numbers, or special characters.
+              <div className={`text-xs ${theme === 'dark' ? 'text-stone-300' : 'text-slate-600'}`}>
+                Set a new password for <span className={`font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>{targetUserForPin.name}</span> ({targetUserForPin.role.toUpperCase()}). Password can contain letters, numbers, or special characters.
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-stone-300 mb-1">New Password</label>
+                <label className={`block text-xs font-semibold mb-1 ${theme === 'dark' ? 'text-stone-300' : 'text-slate-700'}`}>New Password</label>
                 <input
                   type="text"
                   required
                   placeholder="Enter new password (e.g. Pass#123)"
                   value={newPinValue}
                   onChange={(e) => setNewPinValue(e.target.value)}
-                  className="w-full px-3 py-2.5 bg-stone-950/80 border border-slate-300 dark:border-white/10 rounded-xl text-sm text-white font-mono focus:outline-none focus:border-emerald-500 transition shadow-inner"
+                  className={`w-full px-3 py-2.5 rounded-xl text-sm font-mono focus:outline-none focus:border-amber-500 transition border ${
+                    theme === 'dark'
+                      ? 'bg-[#08090d] border-white/10 text-white placeholder-stone-500'
+                      : 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400'
+                  }`}
                   autoFocus
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-300 dark:border-white/10">
+              <div className={`flex items-center justify-end gap-2 pt-3 border-t ${theme === 'dark' ? 'border-white/10' : 'border-slate-200'}`}>
                 <button
                   type="button"
                   onClick={() => setIsPinModalOpen(false)}
-                  className="px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-stone-800/80 hover:bg-stone-700 text-slate-700 dark:text-stone-300 text-xs font-semibold transition-all duration-200 cursor-pointer border border-slate-300 dark:border-white/10 hover:border-white/20 active:scale-95"
+                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all duration-150 cursor-pointer border active:scale-95 ${
+                    theme === 'dark'
+                      ? 'bg-stone-800/80 hover:bg-stone-700 text-stone-300 border-white/10'
+                      : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300'
+                  }`}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white text-xs font-bold transition-all duration-200 cursor-pointer shadow-[0_0_15px_rgba(245,158,11,0.25)] hover:scale-[1.02] active:scale-95 border border-amber-500/30"
+                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white text-xs font-bold transition-all duration-150 cursor-pointer shadow-sm active:scale-95 border border-amber-500/30"
                 >
                   Save Password
                 </button>
@@ -781,18 +841,26 @@ export const AdminStaffManager: React.FC = () => {
       {/* Edit Staff Info Modal */}
       {isEditUserOpen && targetUserForEdit && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-gradient-to-b from-stone-900 to-[#141414] border border-slate-300 dark:border-white/10 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl animate-in fade-in zoom-in-95">
-            <div className="p-4.5 border-b border-slate-300 dark:border-white/10 flex items-center justify-between bg-stone-950/80">
+          <div className={`border rounded-3xl w-full max-w-md overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 ${
+            theme === 'dark' ? 'bg-[#12141c] border-white/10 text-white' : 'bg-white border-slate-200 text-slate-900'
+          }`}>
+            <div className={`p-4.5 border-b flex items-center justify-between ${
+              theme === 'dark' ? 'border-white/10 bg-[#0c0d12]' : 'border-slate-200 bg-slate-50'
+            }`}>
               <div className="flex items-center gap-2">
-                <Pencil className="w-5 h-5 text-indigo-400" />
-                <h4 className="text-sm font-bold text-white">Edit Staff Account Info</h4>
+                <div className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                  <Pencil className="w-4 h-4" />
+                </div>
+                <h4 className={`text-sm font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>Edit Staff Account Info</h4>
               </div>
               <button
                 onClick={() => {
                   setIsEditUserOpen(false);
                   setTargetUserForEdit(null);
                 }}
-                className="p-1 rounded-lg text-slate-500 dark:text-stone-400 hover:text-white hover:bg-slate-100 dark:hover:bg-stone-800 transition cursor-pointer"
+                className={`p-1.5 rounded-lg transition cursor-pointer ${
+                  theme === 'dark' ? 'text-stone-400 hover:text-white hover:bg-stone-800' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+                }`}
               >
                 <X className="w-4 h-4" />
               </button>
@@ -800,52 +868,66 @@ export const AdminStaffManager: React.FC = () => {
 
             <form onSubmit={handleSaveEdit} className="p-5 space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-stone-300 mb-1">Full Name *</label>
+                <label className={`block text-xs font-semibold mb-1 ${theme === 'dark' ? 'text-stone-300' : 'text-slate-700'}`}>Full Name *</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. Tariq Mehmood"
                   value={editFormData.name}
                   onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
-                  className="w-full px-3 py-2 bg-stone-950/80 border border-slate-300 dark:border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500 transition shadow-inner"
+                  className={`w-full px-3 py-2.5 rounded-xl text-xs focus:outline-none focus:border-emerald-500 transition border ${
+                    theme === 'dark'
+                      ? 'bg-[#08090d] border-white/10 text-white placeholder-stone-500'
+                      : 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400'
+                  }`}
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-stone-300 mb-1">Phone Number</label>
+                <label className={`block text-xs font-semibold mb-1 ${theme === 'dark' ? 'text-stone-300' : 'text-slate-700'}`}>Phone Number</label>
                 <input
                   type="text"
                   placeholder="e.g. +92 300 1234567"
                   value={editFormData.phone}
                   onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
-                  className="w-full px-3 py-2 bg-stone-950/80 border border-slate-300 dark:border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500 transition shadow-inner"
+                  className={`w-full px-3 py-2.5 rounded-xl text-xs focus:outline-none focus:border-emerald-500 transition border ${
+                    theme === 'dark'
+                      ? 'bg-[#08090d] border-white/10 text-white placeholder-stone-500'
+                      : 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400'
+                  }`}
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-stone-300 mb-1">Assigned Role *</label>
+                <label className={`block text-xs font-semibold mb-1 ${theme === 'dark' ? 'text-stone-300' : 'text-slate-700'}`}>Assigned Role *</label>
                 <select
                   value={editFormData.role}
                   onChange={(e) => setEditFormData({ ...editFormData, role: e.target.value as UserRole })}
-                  className="w-full px-3 py-2 bg-stone-950/80 border border-slate-300 dark:border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500 transition shadow-inner"
+                  className={`w-full px-3 py-2.5 rounded-xl text-xs focus:outline-none focus:border-emerald-500 transition border ${
+                    theme === 'dark'
+                      ? 'bg-[#08090d] border-white/10 text-white'
+                      : 'bg-slate-50 border-slate-300 text-slate-900'
+                  }`}
                 >
-                  <option value="cashier">Cashier (POS Operator)</option>
-                  <option value="manager">Manager (Shift Supervisor)</option>
-                  <option value="server">Server / Waiter (Dine-In)</option>
-                  <option value="rider">Rider (Delivery Fleet)</option>
-                  {currentUser.role === 'owner' && <option value="owner">Owner (Full Administrator)</option>}
+                  <option value="cashier" className={theme === 'dark' ? 'bg-[#08090d] text-white' : 'bg-white text-slate-900'}>Cashier (POS Operator)</option>
+                  <option value="manager" className={theme === 'dark' ? 'bg-[#08090d] text-white' : 'bg-white text-slate-900'}>Manager (Shift Supervisor)</option>
+                  <option value="server" className={theme === 'dark' ? 'bg-[#08090d] text-white' : 'bg-white text-slate-900'}>Server / Waiter (Dine-In)</option>
+                  <option value="rider" className={theme === 'dark' ? 'bg-[#08090d] text-white' : 'bg-white text-slate-900'}>Rider (Delivery Fleet)</option>
+                  {currentUser.role === 'owner' && <option value="owner" className={theme === 'dark' ? 'bg-[#08090d] text-white' : 'bg-white text-slate-900'}>Owner (Full Administrator)</option>}
                 </select>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-stone-300 mb-1 flex items-center gap-1.5">
-                  <ShieldAlert className="w-3.5 h-3.5 text-red-400" />
+                <label className={`block text-xs font-semibold mb-1 flex items-center gap-1.5 ${theme === 'dark' ? 'text-stone-300' : 'text-slate-700'}`}>
+                  <ShieldAlert className="w-3.5 h-3.5 text-rose-500" />
                   Capability Restrictions
                 </label>
-                <p className="text-[10px] text-slate-400 dark:text-stone-500 mb-2 leading-relaxed">
-                  Toggle checkboxes to <span className="text-red-400 font-bold">Restrict / Block</span> this staff member's access to specific views, dashboards, or system modules.
+                <p className={`text-[10px] mb-2 leading-relaxed ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`}>
+                  Toggle checkboxes to <span className="text-rose-500 font-bold">Restrict / Block</span> this staff member's access to specific views, dashboards, or system modules.
                 </p>
-                <div className="bg-stone-950/80 border border-slate-300 dark:border-white/10 rounded-xl p-3 max-h-40 overflow-y-auto space-y-2.5 scrollbar-thin">
+                <div className={`border rounded-xl p-3 max-h-40 overflow-y-auto space-y-2.5 scrollbar-thin ${
+                  theme === 'dark' ? 'bg-[#08090d] border-white/10' : 'bg-slate-50 border-slate-200'
+                }`}>
                   {AVAILABLE_CAPABILITIES.map((cap) => {
                     const isChecked = editFormData.restrictions.includes(cap.id);
                     return (
@@ -866,13 +948,17 @@ export const AdminStaffManager: React.FC = () => {
                               });
                             }
                           }}
-                          className="mt-0.5 rounded border-slate-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-red-500 focus:ring-red-500/30 w-3.5 h-3.5 accent-red-500"
+                          className="mt-0.5 rounded border-slate-300 text-rose-500 focus:ring-rose-500/30 w-3.5 h-3.5 accent-rose-500"
                         />
                         <div>
-                          <div className={`font-semibold text-[11px] ${isChecked ? 'text-red-400 font-bold' : 'text-slate-700 dark:text-stone-300 group-hover:text-white'}`}>
+                          <div className={`font-semibold text-[11px] ${
+                            isChecked 
+                              ? 'text-rose-500 font-bold' 
+                              : (theme === 'dark' ? 'text-stone-300 group-hover:text-white' : 'text-slate-700 group-hover:text-slate-900')
+                          }`}>
                             {cap.label}
                           </div>
-                          <div className="text-[9.5px] text-slate-400 dark:text-stone-500 leading-snug">
+                          <div className={`text-[9.5px] leading-snug ${theme === 'dark' ? 'text-stone-500' : 'text-slate-400'}`}>
                             {cap.description}
                           </div>
                         </div>
@@ -882,21 +968,25 @@ export const AdminStaffManager: React.FC = () => {
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-300 dark:border-white/10">
+              <div className={`flex items-center justify-end gap-2 pt-4 border-t ${theme === 'dark' ? 'border-white/10' : 'border-slate-200'}`}>
                 <button
                   type="button"
                   onClick={() => {
                     setIsEditUserOpen(false);
                     setTargetUserForEdit(null);
                   }}
-                  className="px-4 py-2 rounded-xl bg-slate-50 dark:bg-stone-800/80 hover:bg-stone-700 text-slate-700 dark:text-stone-300 text-xs font-semibold transition-all duration-200 cursor-pointer border border-slate-300 dark:border-white/10 hover:border-white/20 active:scale-95"
+                  className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all duration-150 cursor-pointer border active:scale-95 ${
+                    theme === 'dark'
+                      ? 'bg-stone-800/80 hover:bg-stone-700 text-stone-300 border-white/10'
+                      : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300'
+                  }`}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSavingEdit}
-                  className="px-5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white text-xs font-bold transition-all duration-200 cursor-pointer shadow-[0_0_15px_rgba(16,185,129,0.25)] hover:scale-[1.02] active:scale-95 border border-emerald-500/30 flex items-center gap-1.5"
+                  className="px-5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white text-xs font-bold transition-all duration-150 cursor-pointer shadow-sm active:scale-95 border border-emerald-500/30 flex items-center gap-1.5"
                 >
                   {isSavingEdit ? (
                     <>

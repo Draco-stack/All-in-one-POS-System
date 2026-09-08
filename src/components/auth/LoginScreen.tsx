@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
 import { useRestaurant } from '../../context/RestaurantContext';
+import { MasterPOSLogo } from '../common/MasterPOSLogo';
+import { Mail, Lock, Eye, EyeOff, Shield, Crown, User, Sparkles } from 'lucide-react';
 
 export type LoginTheme = 'dark' | 'wood' | 'pink' | 'midnight' | 'light' | 'blue';
 
 export const LoginScreen: React.FC = () => {
   const { loginUser, loginTheme, setLoginTheme, showToast } = useRestaurant();
-  const [email, setEmail] = useState<string>('');
-  const [password, setPassword] = useState<string>('');
+  const [email, setEmail] = useState<string>('owner');
+  const [password, setPassword] = useState<string>('1111');
+  const [showPassword, setShowPassword] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
@@ -27,6 +30,12 @@ export const LoginScreen: React.FC = () => {
       setErrorMsg(result.error || 'Invalid Email Address or Password. Please try again.');
     }
     setIsSubmitting(false);
+  };
+
+  const handleQuickDemo = (demoUser: string, demoPin: string) => {
+    setEmail(demoUser);
+    setPassword(demoPin);
+    setErrorMsg(null);
   };
 
   // Background Theme Gradient Classes
@@ -116,22 +125,86 @@ export const LoginScreen: React.FC = () => {
 
   return (
     <div
-      className={`w-screen h-screen flex flex-col items-center justify-center select-none font-sans overflow-hidden transition-colors duration-500 relative ${getThemeBackground(
+      className={`w-screen h-screen flex flex-col items-center justify-center select-none font-sans overflow-hidden transition-colors duration-500 relative px-4 ${getThemeBackground(
         loginTheme
       )}`}
     >
       {/* Centered Login Card */}
       <div
-        className={`w-[360px] sm:w-[400px] max-w-[92vw] border shadow-2xl rounded-2xl p-7 text-white backdrop-blur-md transition-colors duration-300 ${getCardBackground(
+        className={`w-full sm:w-[410px] max-w-[94vw] border shadow-2xl rounded-3xl p-6 sm:p-8 text-white backdrop-blur-xl transition-all duration-300 ${getCardBackground(
           loginTheme
         )}`}
       >
-        <h2 className="text-3xl font-bold text-center mb-6 tracking-tight text-white">Login</h2>
+        {/* Brand Header */}
+        <div className="flex flex-col items-center text-center mb-6">
+          <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-b from-[#1c1e28] via-[#12131b] to-[#0a0b10] flex items-center justify-center mb-3 shadow-xl shadow-black/60 border border-emerald-500/40">
+            <div className="absolute inset-0 rounded-2xl bg-radial from-emerald-500/30 to-transparent opacity-70" />
+            <MasterPOSLogo className="w-8 h-8 text-emerald-400 relative z-10" size={32} useColor={true} accent="emerald" />
+            <span className="absolute -bottom-1 -right-1 w-3 h-3 rounded-full bg-emerald-500 border-2 border-[#12131b] shadow-xs" />
+          </div>
+          <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white font-sans flex items-center gap-1.5">
+            MASTER <span className="text-emerald-400">POS</span>
+            <span className="text-[10px] font-mono font-extrabold uppercase px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+              PRO
+            </span>
+          </h2>
+          <p className="text-xs text-stone-300/80 mt-1 font-medium">Commercial Restaurant Operating System</p>
+        </div>
+
+        {/* Quick Demo Switcher */}
+        <div className="mb-5 p-2.5 rounded-2xl bg-black/30 border border-white/10 space-y-1.5">
+          <div className="flex items-center justify-between text-[11px] font-mono font-bold text-stone-300 px-1">
+            <span className="flex items-center gap-1">
+              <Sparkles className="w-3 h-3 text-emerald-400" />
+              Quick Demo Accounts:
+            </span>
+            <span className="text-[10px] text-stone-400 font-normal">Click to fill</span>
+          </div>
+          <div className="grid grid-cols-3 gap-1.5">
+            <button
+              type="button"
+              onClick={() => handleQuickDemo('owner', '1111')}
+              className={`px-2 py-1.5 rounded-xl text-[11px] font-bold transition flex items-center justify-center gap-1 cursor-pointer border ${
+                email === 'owner'
+                  ? 'bg-amber-500 text-stone-950 border-amber-400 font-black shadow-xs'
+                  : 'bg-white/5 hover:bg-white/10 text-stone-200 border-white/10'
+              }`}
+            >
+              <Crown className="w-3 h-3" />
+              <span>Owner</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleQuickDemo('manager', '2222')}
+              className={`px-2 py-1.5 rounded-xl text-[11px] font-bold transition flex items-center justify-center gap-1 cursor-pointer border ${
+                email === 'manager'
+                  ? 'bg-blue-500 text-white border-blue-400 font-black shadow-xs'
+                  : 'bg-white/5 hover:bg-white/10 text-stone-200 border-white/10'
+              }`}
+            >
+              <Shield className="w-3 h-3" />
+              <span>Manager</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleQuickDemo('cashier', '3333')}
+              className={`px-2 py-1.5 rounded-xl text-[11px] font-bold transition flex items-center justify-center gap-1 cursor-pointer border ${
+                email === 'cashier'
+                  ? 'bg-emerald-500 text-stone-950 border-emerald-400 font-black shadow-xs'
+                  : 'bg-white/5 hover:bg-white/10 text-stone-200 border-white/10'
+              }`}
+            >
+              <User className="w-3 h-3" />
+              <span>Cashier</span>
+            </button>
+          </div>
+        </div>
 
         <form onSubmit={handleLoginSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-stone-200 mb-1.5">
-              Email Address
+            <label className="block text-xs font-semibold text-stone-200 mb-1.5 flex items-center gap-1.5">
+              <Mail className="w-3.5 h-3.5 text-stone-400" />
+              Email or Username
             </label>
             <input
               type="text"
@@ -141,33 +214,44 @@ export const LoginScreen: React.FC = () => {
                 setEmail(e.target.value);
                 setErrorMsg(null);
               }}
-              placeholder="Email"
-              className={`w-full px-3.5 py-2.5 rounded-lg text-sm text-white font-medium placeholder-stone-400/60 focus:outline-none focus:ring-1 transition ${getInputStyle(
+              placeholder="e.g. owner, manager, cashier"
+              className={`w-full px-3.5 py-2.5 rounded-xl text-sm text-white font-medium placeholder-stone-400/60 focus:outline-none focus:ring-1 transition ${getInputStyle(
                 loginTheme
               )}`}
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-stone-200 mb-1.5">
-              Password
+            <label className="block text-xs font-semibold text-stone-200 mb-1.5 flex items-center gap-1.5">
+              <Lock className="w-3.5 h-3.5 text-stone-400" />
+              Password / PIN
             </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => {
-                setPassword(e.target.value);
-                setErrorMsg(null);
-              }}
-              placeholder="Password"
-              className={`w-full px-3.5 py-2.5 rounded-lg text-sm text-white font-medium placeholder-stone-400/60 focus:outline-none focus:ring-1 transition ${getInputStyle(
-                loginTheme
-              )}`}
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  setErrorMsg(null);
+                }}
+                placeholder="4-digit PIN or password"
+                className={`w-full pl-3.5 pr-10 py-2.5 rounded-xl text-sm text-white font-mono tracking-wider font-medium placeholder-stone-400/60 focus:outline-none focus:ring-1 transition ${getInputStyle(
+                  loginTheme
+                )}`}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-white cursor-pointer transition p-1"
+                title={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
           </div>
 
           {errorMsg && (
-            <div className="p-2.5 rounded-lg bg-red-950/80 border border-red-500/40 text-red-300 text-xs font-semibold text-center animate-in fade-in">
+            <div className="p-3 rounded-xl bg-red-950/80 border border-red-500/40 text-red-200 text-xs font-semibold text-center animate-in fade-in">
               {errorMsg}
             </div>
           )}
@@ -175,17 +259,18 @@ export const LoginScreen: React.FC = () => {
           <button
             type="submit"
             disabled={isSubmitting}
-            className={`w-full mt-2 py-2.5 px-4 rounded-lg text-white font-bold text-sm shadow-md transition cursor-pointer flex items-center justify-center gap-2 ${getButtonStyle(
+            className={`w-full mt-2 py-3 px-4 rounded-xl text-white font-black text-sm shadow-lg transition cursor-pointer flex items-center justify-center gap-2 active:scale-95 ${getButtonStyle(
               loginTheme
             )}`}
           >
-            {isSubmitting ? 'Logging in...' : 'Login'}
+            {isSubmitting ? 'Authenticating...' : 'Sign In to Terminal'}
           </button>
         </form>
       </div>
 
-      {/* Theme Selection Buttons below Login Box (Exact match with reference UI) */}
-      <div className="flex items-center justify-center gap-1.5 mt-6 px-4 py-1.5 rounded-full bg-black/20 backdrop-blur-sm border border-slate-300 dark:border-white/10">
+      {/* Theme Selection Buttons below Login Box */}
+      <div className="flex items-center justify-center gap-1.5 mt-6 px-3.5 py-1.5 rounded-full bg-black/30 backdrop-blur-md border border-white/10 shadow-lg">
+        <span className="text-[11px] font-mono text-stone-400 mr-1 hidden sm:inline">Theme:</span>
         {themePills.map((pill) => {
           const isActive = loginTheme === pill.id;
           return (
@@ -193,9 +278,9 @@ export const LoginScreen: React.FC = () => {
               key={pill.id}
               type="button"
               onClick={() => setLoginTheme(pill.id)}
-              className={`px-3 py-1 rounded-md text-xs font-bold transition cursor-pointer ${
+              className={`px-2.5 py-1 rounded-lg text-[11px] font-bold capitalize transition cursor-pointer ${
                 pill.colorClass
-              } ${isActive ? 'ring-2 ring-white scale-105 shadow-lg' : 'opacity-80 hover:opacity-100'}`}
+              } ${isActive ? 'ring-2 ring-white scale-105 shadow-md' : 'opacity-70 hover:opacity-100'}`}
             >
               {pill.label}
             </button>

@@ -271,110 +271,110 @@ export const AdminSalesOverview: React.FC = () => {
       {/* Top Banner: Real-Time Live KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         {/* KPI 1: Net Sales */}
-        <div className={`border rounded-2xl p-4.5 shadow-xs relative overflow-hidden flex flex-col justify-between transition-all duration-100 ${
+        <div className={`border rounded-2xl p-4.5 shadow-sm relative overflow-hidden flex flex-col justify-between transition-all duration-150 ${
           theme === 'dark' 
-            ? 'bg-white dark:bg-stone-900/90 border-slate-300 dark:border-white/10 hover:border-emerald-500/40 text-white' 
-            : 'bg-white border-slate-200 hover:border-emerald-500/40 shadow-xs'
+            ? 'bg-[#12141c] border-white/10 hover:border-emerald-500/40 text-white' 
+            : 'bg-white border-slate-200 hover:border-emerald-500/40'
         }`}>
           <div className="flex items-center justify-between">
-            <span className={`text-xs font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`}>Today's Net Sales</span>
+            <span className={`text-[11px] font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`}>Today's Net Sales</span>
             <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
               <DollarSign className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-3">
-            <div className={`text-2xl font-black tracking-tight font-mono tabular-nums ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>
+            <div className={`text-2xl font-black tracking-tight font-mono tabular-nums ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
               PKR {todayNetSales.toLocaleString()}
             </div>
             <div className="flex items-center gap-1.5 mt-1 text-[11px] font-medium text-emerald-400 flex-wrap">
               <Sparkles className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-              <span>Real-time reconciled sales</span>
-              <span className={`ml-1 font-mono tabular-nums ${theme === 'dark' ? 'text-slate-400 dark:text-stone-500' : 'text-slate-400'}`}>Gross: {todayGrossSales.toLocaleString()}</span>
+              <span>Real-time reconciled</span>
+              <span className={`ml-1 font-mono tabular-nums ${theme === 'dark' ? 'text-stone-400' : 'text-slate-400'}`}>Gross: {todayGrossSales.toLocaleString()}</span>
             </div>
           </div>
         </div>
 
         {/* KPI 2: Total Orders Processed */}
-        <div className={`border rounded-2xl p-4.5 shadow-xs relative overflow-hidden flex flex-col justify-between transition-all duration-100 ${
+        <div className={`border rounded-2xl p-4.5 shadow-sm relative overflow-hidden flex flex-col justify-between transition-all duration-150 ${
           theme === 'dark' 
-            ? 'bg-white dark:bg-stone-900/90 border-slate-300 dark:border-white/10 hover:border-blue-500/40 text-white' 
-            : 'bg-white border-slate-200 hover:border-blue-500/40 shadow-xs'
+            ? 'bg-[#12141c] border-white/10 hover:border-blue-500/40 text-white' 
+            : 'bg-white border-slate-200 hover:border-blue-500/40'
         }`}>
           <div className="flex items-center justify-between">
-            <span className={`text-xs font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`}>Total Orders</span>
+            <span className={`text-[11px] font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`}>Total Orders</span>
             <div className="p-2 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20">
               <ShoppingBag className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-3">
-            <div className={`text-2xl font-black tracking-tight font-mono tabular-nums ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>
-              {totalOrdersProcessed} <span className={`text-sm font-normal font-sans ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`}>tickets</span>
+            <div className={`text-2xl font-black tracking-tight font-mono tabular-nums ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
+              {totalOrdersProcessed} <span className={`text-sm font-normal font-sans ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`}>tickets</span>
             </div>
             <div className="flex items-center gap-1.5 mt-1 text-[11px] font-medium text-blue-400">
               <Clock className="w-3.5 h-3.5" />
-              <span>{orders.filter(o => o.status === 'completed').length} completed this session</span>
+              <span>{orders.filter(o => o.status === 'completed').length} completed</span>
             </div>
           </div>
         </div>
 
         {/* KPI 3: Average Order Value (AOV) */}
-        <div className={`border rounded-2xl p-4.5 shadow-xs relative overflow-hidden flex flex-col justify-between transition-all duration-100 ${
+        <div className={`border rounded-2xl p-4.5 shadow-sm relative overflow-hidden flex flex-col justify-between transition-all duration-150 ${
           theme === 'dark' 
-            ? 'bg-white dark:bg-stone-900/90 border-slate-300 dark:border-white/10 hover:border-purple-500/40 text-white' 
-            : 'bg-white border-slate-200 hover:border-purple-500/40 shadow-xs'
+            ? 'bg-[#12141c] border-white/10 hover:border-purple-500/40 text-white' 
+            : 'bg-white border-slate-200 hover:border-purple-500/40'
         }`}>
           <div className="flex items-center justify-between">
-            <span className={`text-xs font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`}>Average Ticket (AOV)</span>
+            <span className={`text-[11px] font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`}>Average Ticket (AOV)</span>
             <div className="p-2 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
               <TrendingUp className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-3">
-            <div className={`text-2xl font-black tracking-tight font-mono tabular-nums ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>
+            <div className={`text-2xl font-black tracking-tight font-mono tabular-nums ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
               PKR {averageOrderValue.toLocaleString()}
             </div>
             <div className="flex items-center gap-1.5 mt-1 text-[11px] font-medium text-purple-400">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>Calculated from active shift tickets</span>
+              <span>Active shift average</span>
             </div>
           </div>
         </div>
 
         {/* KPI 4: Active Cashiers & Adjustments */}
-        <div className={`border rounded-2xl p-4.5 shadow-xs relative overflow-hidden flex flex-col justify-between hover:border-amber-500/30 transition-all duration-200 ${
+        <div className={`border rounded-2xl p-4.5 shadow-sm relative overflow-hidden flex flex-col justify-between hover:border-amber-500/30 transition-all duration-150 ${
           theme === 'dark' 
-            ? 'bg-gradient-to-b from-stone-900/90 to-[#141414]/90 border-slate-300 dark:border-white/10' 
-            : 'bg-white border-slate-200 shadow-sm'
+            ? 'bg-[#12141c] border-white/10 text-white' 
+            : 'bg-white border-slate-200'
         }`}>
           <div className="flex items-center justify-between">
-            <span className={`text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`}>Active Staff & Dels</span>
-            <div className="p-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 shadow-[0_0_12px_rgba(245,158,11,0.15)]">
+            <span className={`text-[11px] font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`}>Active Staff & Dels</span>
+            <div className="p-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
               <Users className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-3">
-            <div className={`text-2xl font-black tracking-tight flex items-center justify-between ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>
+            <div className={`text-2xl font-black tracking-tight flex items-center justify-between ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
               <span>{activeCashiersCount} Cashiers</span>
-              <span className="text-xs px-2.5 py-0.5 rounded-full bg-red-500/20 text-red-300 border border-red-500/30 font-mono">
+              <span className="text-xs px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/30 font-mono">
                 -{salesAdjustments.length} Adjustments
               </span>
             </div>
-            <div className={`flex items-center gap-1.5 mt-1 text-[11px] font-medium ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`}>
+            <div className={`flex items-center gap-1.5 mt-1 text-[11px] font-medium ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`}>
               <AlertOctagon className="w-3.5 h-3.5 text-amber-400" />
-              <span>Shift #{currentShift?.shiftNumber || '101'} active in terminal</span>
+              <span>Shift #{currentShift?.shiftNumber || '101'} active</span>
             </div>
           </div>
         </div>
 
         {/* KPI 5: Petty Cash Management */}
-        <div className={`border rounded-2xl p-4.5 shadow-xs relative overflow-hidden flex flex-col justify-between hover:border-orange-500/30 transition-all duration-200 ${
+        <div className={`border rounded-2xl p-4.5 shadow-sm relative overflow-hidden flex flex-col justify-between hover:border-orange-500/30 transition-all duration-150 ${
           theme === 'dark' 
-            ? 'bg-gradient-to-b from-stone-900/90 to-[#141414]/90 border-slate-300 dark:border-white/10' 
-            : 'bg-white border-slate-200 shadow-sm'
+            ? 'bg-[#12141c] border-white/10 text-white' 
+            : 'bg-white border-slate-200'
         }`}>
           <div className="flex items-center justify-between">
-            <span className={`text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`}>Petty Cash</span>
-            <div className="p-2 rounded-xl bg-orange-500/10 text-orange-400 border border-orange-500/20 shadow-[0_0_12px_rgba(249,115,22,0.15)]">
+            <span className={`text-[11px] font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`}>Petty Cash Float</span>
+            <div className="p-2 rounded-xl bg-orange-500/10 text-orange-400 border border-orange-500/20">
               <Layers className="w-4 h-4" />
             </div>
           </div>
@@ -386,7 +386,7 @@ export const AdminSalesOverview: React.FC = () => {
                   value={pettyCashInput}
                   onChange={(e) => setPettyCashInput(e.target.value)}
                   className={`w-full px-2.5 py-1 rounded-xl text-sm font-mono focus:outline-none focus:border-emerald-500 ${
-                    theme === 'dark' ? 'bg-stone-950/80 border border-slate-300 dark:border-white/10 text-white' : 'bg-slate-50 border border-slate-200 text-slate-800'
+                    theme === 'dark' ? 'bg-[#08090d] border border-white/10 text-white' : 'bg-slate-50 border border-slate-200 text-slate-800'
                   }`}
                   autoFocus
                 />
@@ -395,19 +395,19 @@ export const AdminSalesOverview: React.FC = () => {
                     updatePettyCash(Number(pettyCashInput) || 0);
                     setIsEditingPettyCash(false);
                   }}
-                  className="p-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 text-white hover:from-emerald-500 hover:to-emerald-600 transition shadow cursor-pointer"
+                  className="p-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white transition shadow cursor-pointer"
                 >
                   <CheckCircle className="w-4 h-4" />
                 </button>
               </div>
             ) : (
-              <div className={`text-2xl font-black tracking-tight flex items-center justify-between ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>
+              <div className={`text-2xl font-black tracking-tight flex items-center justify-between ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
                 <span>PKR {(currentShift?.openingFloat || 0).toLocaleString()}</span>
                 <button
                   onClick={() => setIsEditingPettyCash(true)}
                   className={`text-[10px] uppercase font-bold px-2.5 py-1 rounded-lg transition border active:scale-95 cursor-pointer ${
                     theme === 'dark' 
-                      ? 'bg-slate-50 dark:bg-stone-800/80 text-slate-700 dark:text-stone-300 hover:text-white hover:bg-stone-700 border-slate-300 dark:border-white/10' 
+                      ? 'bg-stone-800 text-stone-300 hover:text-white hover:bg-stone-700 border-white/10' 
                       : 'bg-slate-100 text-slate-600 hover:text-slate-900 hover:bg-slate-200 border-slate-200'
                   }`}
                 >
@@ -427,54 +427,54 @@ export const AdminSalesOverview: React.FC = () => {
       {/* Main Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left 2 Cols: Revenue Trajectory Chart */}
-        <div className={`lg:col-span-2 backdrop-blur-md rounded-2xl p-5 shadow-lg flex flex-col justify-between border ${
+        <div className={`lg:col-span-2 rounded-2xl p-5 shadow-sm flex flex-col justify-between border ${
           theme === 'dark' 
-            ? 'bg-gradient-to-b from-stone-900/90 to-[#141414]/90 border-slate-300 dark:border-white/10' 
-            : 'bg-white border-slate-200 shadow-sm'
+            ? 'bg-[#12141c] border-white/10' 
+            : 'bg-white border-slate-200'
         }`}>
           <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b ${
-            theme === 'dark' ? 'border-slate-200 dark:border-white/5' : 'border-slate-200'
+            theme === 'dark' ? 'border-white/5' : 'border-slate-200'
           }`}>
             <div>
-              <h3 className={`text-base font-bold flex items-center gap-2 ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>
+              <h3 className={`text-base font-bold flex items-center gap-2 ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
                 <TrendingUp className="w-5 h-5 text-emerald-400" />
                 Sales & Revenue Dynamics
               </h3>
-              <p className={`text-xs mt-0.5 ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`}>
+              <p className={`text-xs mt-0.5 ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`}>
                 Dynamic visual tracking of floor sales and net revenues after cancellations
               </p>
             </div>
 
             {/* Time Toggle */}
             <div className={`flex items-center p-1 rounded-xl border text-xs font-semibold ${
-              theme === 'dark' ? 'bg-stone-950/80 border-slate-300 dark:border-white/10' : 'bg-slate-100 border-slate-200'
+              theme === 'dark' ? 'bg-[#08090d] border-white/10' : 'bg-slate-100 border-slate-200'
             }`}>
               <button
                 onClick={() => setTimeRange('hourly')}
-                className={`px-3 py-1.5 rounded-lg transition-all duration-200 cursor-pointer ${
+                className={`px-3 py-1.5 rounded-lg transition-all duration-150 cursor-pointer ${
                   timeRange === 'hourly'
-                    ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-[0_0_10px_rgba(16,185,129,0.25)]'
-                    : (theme === 'dark' ? 'text-slate-500 dark:text-stone-400 hover:text-stone-200' : 'text-slate-500 hover:text-slate-800')
+                    ? 'bg-emerald-600 text-white shadow-xs'
+                    : (theme === 'dark' ? 'text-stone-400 hover:text-white' : 'text-slate-600 hover:text-slate-900')
                 }`}
               >
                 Hourly Peak
               </button>
               <button
                 onClick={() => setTimeRange('daily')}
-                className={`px-3 py-1.5 rounded-lg transition-all duration-200 cursor-pointer ${
+                className={`px-3 py-1.5 rounded-lg transition-all duration-150 cursor-pointer ${
                   timeRange === 'daily'
-                    ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-[0_0_10px_rgba(16,185,129,0.25)]'
-                    : (theme === 'dark' ? 'text-slate-500 dark:text-stone-400 hover:text-stone-200' : 'text-slate-500 hover:text-slate-800')
+                    ? 'bg-emerald-600 text-white shadow-xs'
+                    : (theme === 'dark' ? 'text-stone-400 hover:text-white' : 'text-slate-600 hover:text-slate-900')
                 }`}
               >
                 Last 7 Days
               </button>
               <button
                 onClick={() => setTimeRange('weekly')}
-                className={`px-3 py-1.5 rounded-lg transition-all duration-200 cursor-pointer ${
+                className={`px-3 py-1.5 rounded-lg transition-all duration-150 cursor-pointer ${
                   timeRange === 'weekly'
-                    ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-[0_0_10px_rgba(16,185,129,0.25)]'
-                    : (theme === 'dark' ? 'text-slate-500 dark:text-stone-400 hover:text-stone-200' : 'text-slate-500 hover:text-slate-800')
+                    ? 'bg-emerald-600 text-white shadow-xs'
+                    : (theme === 'dark' ? 'text-stone-400 hover:text-white' : 'text-slate-600 hover:text-slate-900')
                 }`}
               >
                 Weekly Trend
@@ -492,22 +492,22 @@ export const AdminSalesOverview: React.FC = () => {
                       <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#292524" vertical={false} />
-                  <XAxis dataKey="hour" stroke="#78716c" fontSize={11} tickLine={false} />
-                  <YAxis stroke="#78716c" fontSize={11} tickLine={false} tickFormatter={(val) => `${val / 1000}k`} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={theme === 'dark' ? '#1e2230' : '#e2e8f0'} vertical={false} />
+                  <XAxis dataKey="hour" stroke={theme === 'dark' ? '#78716c' : '#94a3b8'} fontSize={11} tickLine={false} />
+                  <YAxis stroke={theme === 'dark' ? '#78716c' : '#94a3b8'} fontSize={11} tickLine={false} tickFormatter={(val) => `${val / 1000}k`} />
                   <Tooltip
-                    contentStyle={{ backgroundColor: '#18181b', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '0.75rem', color: '#f5f5f4', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5)' }}
+                    contentStyle={{ backgroundColor: theme === 'dark' ? '#12141c' : '#ffffff', borderColor: theme === 'dark' ? 'rgba(255,255,255,0.1)' : '#e2e8f0', borderRadius: '0.75rem', color: theme === 'dark' ? '#f5f5f4' : '#0f172a', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.3)' }}
                     formatter={(val: any) => [`PKR ${Number(val).toLocaleString()}`, 'Revenue']}
                   />
                   <Area type="monotone" dataKey="sales" stroke="#10b981" strokeWidth={2.5} fillOpacity={1} fill="url(#colorSales)" />
                 </AreaChart>
               ) : timeRange === 'daily' ? (
                 <BarChart data={dailyData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#292524" vertical={false} />
-                  <XAxis dataKey="date" stroke="#78716c" fontSize={11} tickLine={false} />
-                  <YAxis stroke="#78716c" fontSize={11} tickLine={false} tickFormatter={(val) => `${val / 1000}k`} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={theme === 'dark' ? '#1e2230' : '#e2e8f0'} vertical={false} />
+                  <XAxis dataKey="date" stroke={theme === 'dark' ? '#78716c' : '#94a3b8'} fontSize={11} tickLine={false} />
+                  <YAxis stroke={theme === 'dark' ? '#78716c' : '#94a3b8'} fontSize={11} tickLine={false} tickFormatter={(val) => `${val / 1000}k`} />
                   <Tooltip
-                    contentStyle={{ backgroundColor: '#18181b', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '0.75rem', color: '#f5f5f4', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5)' }}
+                    contentStyle={{ backgroundColor: theme === 'dark' ? '#12141c' : '#ffffff', borderColor: theme === 'dark' ? 'rgba(255,255,255,0.1)' : '#e2e8f0', borderRadius: '0.75rem', color: theme === 'dark' ? '#f5f5f4' : '#0f172a', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.3)' }}
                     formatter={(val: any, name: string) => [`PKR ${Number(val).toLocaleString()}`, name === 'gross' ? 'Gross Sales' : 'Net Sales']}
                   />
                   <Bar dataKey="gross" fill="#10b981" radius={[6, 6, 0, 0]} />
@@ -521,11 +521,11 @@ export const AdminSalesOverview: React.FC = () => {
                       <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#292524" vertical={false} />
-                  <XAxis dataKey="week" stroke="#78716c" fontSize={11} tickLine={false} />
-                  <YAxis stroke="#78716c" fontSize={11} tickLine={false} tickFormatter={(val) => `${val / 1000}k`} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={theme === 'dark' ? '#1e2230' : '#e2e8f0'} vertical={false} />
+                  <XAxis dataKey="week" stroke={theme === 'dark' ? '#78716c' : '#94a3b8'} fontSize={11} tickLine={false} />
+                  <YAxis stroke={theme === 'dark' ? '#78716c' : '#94a3b8'} fontSize={11} tickLine={false} tickFormatter={(val) => `${val / 1000}k`} />
                   <Tooltip
-                    contentStyle={{ backgroundColor: '#18181b', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '0.75rem', color: '#f5f5f4', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5)' }}
+                    contentStyle={{ backgroundColor: theme === 'dark' ? '#12141c' : '#ffffff', borderColor: theme === 'dark' ? 'rgba(255,255,255,0.1)' : '#e2e8f0', borderRadius: '0.75rem', color: theme === 'dark' ? '#f5f5f4' : '#0f172a', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.3)' }}
                     formatter={(val: any) => [`PKR ${Number(val).toLocaleString()}`, 'Net Revenue']}
                   />
                   <Area type="monotone" dataKey="net" stroke="#8b5cf6" strokeWidth={2.5} fillOpacity={1} fill="url(#colorWeek)" />
@@ -536,17 +536,17 @@ export const AdminSalesOverview: React.FC = () => {
         </div>
 
         {/* Right Col: Payment Breakdown & Settlement distribution */}
-        <div className={`backdrop-blur-md rounded-2xl p-5 shadow-lg flex flex-col justify-between border ${
+        <div className={`rounded-2xl p-5 shadow-sm flex flex-col justify-between border ${
           theme === 'dark' 
-            ? 'bg-gradient-to-b from-stone-900/90 to-[#141414]/90 border-slate-300 dark:border-white/10' 
-            : 'bg-white border-slate-200 shadow-sm'
+            ? 'bg-[#12141c] border-white/10' 
+            : 'bg-white border-slate-200'
         }`}>
-          <div className={`pb-3 border-b ${theme === 'dark' ? 'border-slate-200 dark:border-white/5' : 'border-slate-200'}`}>
-            <h3 className={`text-base font-bold flex items-center gap-2 ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>
+          <div className={`pb-3 border-b ${theme === 'dark' ? 'border-white/5' : 'border-slate-200'}`}>
+            <h3 className={`text-base font-bold flex items-center gap-2 ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
               <DollarSign className="w-5 h-5 text-blue-400" />
               Settlement Channels
             </h3>
-            <p className={`text-xs mt-0.5 ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`}>Tender breakdown by payment method</p>
+            <p className={`text-xs mt-0.5 ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`}>Tender breakdown by payment method</p>
           </div>
 
           <div className="h-52 w-full flex items-center justify-center my-2">
@@ -573,14 +573,14 @@ export const AdminSalesOverview: React.FC = () => {
             </ResponsiveContainer>
           </div>
 
-          <div className={`space-y-2 pt-2 border-t ${theme === 'dark' ? 'border-slate-200 dark:border-white/5' : 'border-slate-200'}`}>
+          <div className={`space-y-2 pt-2 border-t ${theme === 'dark' ? 'border-white/5' : 'border-slate-200'}`}>
             {paymentMethodData.map((item) => (
               <div key={item.name} className="flex items-center justify-between text-xs">
                 <div className="flex items-center gap-2">
                   <span className="w-2.5 h-2.5 rounded-full shadow-xs" style={{ backgroundColor: item.color }} />
-                  <span className={`font-medium ${theme === 'dark' ? 'text-slate-700 dark:text-stone-300' : 'text-slate-600'}`}>{item.name}</span>
+                  <span className={`font-medium ${theme === 'dark' ? 'text-stone-300' : 'text-slate-600'}`}>{item.name}</span>
                 </div>
-                <span className={`font-mono font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>{item.value}%</span>
+                <span className={`font-mono font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>{item.value}%</span>
               </div>
             ))}
           </div>
@@ -588,55 +588,55 @@ export const AdminSalesOverview: React.FC = () => {
       </div>
 
       {/* Live Sales Ledger Adjustments Stream */}
-      <div className={`backdrop-blur-md rounded-2xl p-5 shadow-lg space-y-4 border ${
+      <div className={`rounded-2xl p-5 shadow-sm space-y-4 border ${
         theme === 'dark' 
-          ? 'bg-gradient-to-b from-stone-900/90 to-[#141414]/90 border-slate-300 dark:border-white/10' 
-          : 'bg-white border-slate-200 shadow-sm'
+          ? 'bg-[#12141c] border-white/10' 
+          : 'bg-white border-slate-200'
       }`}>
         <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b ${
-          theme === 'dark' ? 'border-slate-200 dark:border-white/5' : 'border-slate-200'
+          theme === 'dark' ? 'border-white/5' : 'border-slate-200'
         }`}>
           <div>
-            <h3 className={`text-base font-bold flex items-center gap-2 ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>
+            <h3 className={`text-base font-bold flex items-center gap-2 ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
               <RotateCcw className="w-5 h-5 text-amber-400" />
               Live Sales Ledger Adjustments & Audit Trail
             </h3>
-            <p className={`text-xs mt-0.5 ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`}>
+            <p className={`text-xs mt-0.5 ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`}>
               Live tracking of order cancellations, item modifications, and manager ledger override deductions
             </p>
           </div>
 
           <div className="flex items-center gap-2">
-            <span className={`text-xs font-medium ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`}>Filter Type:</span>
+            <span className={`text-xs font-medium ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`}>Filter Type:</span>
             <div className={`flex p-1 rounded-xl border text-xs font-semibold ${
-              theme === 'dark' ? 'bg-stone-950/80 border-slate-300 dark:border-white/10' : 'bg-slate-100 border-slate-200'
+              theme === 'dark' ? 'bg-[#08090d] border-white/10' : 'bg-slate-100 border-slate-200'
             }`}>
               <button
                 onClick={() => setAdjustmentFilter('ALL')}
-                className={`px-2.5 py-1 rounded-lg transition-all duration-200 cursor-pointer ${
+                className={`px-2.5 py-1 rounded-lg transition-all duration-150 cursor-pointer ${
                   adjustmentFilter === 'ALL'
                     ? (theme === 'dark' ? 'bg-stone-700 text-white shadow-xs' : 'bg-white text-slate-800 shadow-xs border border-slate-300')
-                    : (theme === 'dark' ? 'text-slate-500 dark:text-stone-400 hover:text-stone-200' : 'text-slate-500 hover:text-slate-800')
+                    : (theme === 'dark' ? 'text-stone-400 hover:text-white' : 'text-slate-600 hover:text-slate-900')
                 }`}
               >
                 All ({salesAdjustments.length})
               </button>
               <button
                 onClick={() => setAdjustmentFilter('CANCELLATION')}
-                className={`px-2.5 py-1 rounded-lg transition-all duration-200 cursor-pointer ${
+                className={`px-2.5 py-1 rounded-lg transition-all duration-150 cursor-pointer ${
                   adjustmentFilter === 'CANCELLATION' 
-                    ? 'bg-red-500/30 text-red-300 border border-red-500/40 shadow-xs' 
-                    : (theme === 'dark' ? 'text-slate-500 dark:text-stone-400 hover:text-stone-200' : 'text-slate-500 hover:text-slate-800')
+                    ? 'bg-rose-500/30 text-rose-300 border border-rose-500/40 shadow-xs' 
+                    : (theme === 'dark' ? 'text-stone-400 hover:text-white' : 'text-slate-600 hover:text-slate-900')
                 }`}
               >
                 Cancellations
               </button>
               <button
                 onClick={() => setAdjustmentFilter('MODIFICATION')}
-                className={`px-2.5 py-1 rounded-lg transition-all duration-200 cursor-pointer ${
+                className={`px-2.5 py-1 rounded-lg transition-all duration-150 cursor-pointer ${
                   adjustmentFilter === 'MODIFICATION' 
                     ? 'bg-blue-500/30 text-blue-300 border border-blue-500/40 shadow-xs' 
-                    : (theme === 'dark' ? 'text-slate-500 dark:text-stone-400 hover:text-stone-200' : 'text-slate-500 hover:text-slate-800')
+                    : (theme === 'dark' ? 'text-stone-400 hover:text-white' : 'text-slate-600 hover:text-slate-900')
                 }`}
               >
                 Modifications
@@ -647,27 +647,27 @@ export const AdminSalesOverview: React.FC = () => {
 
         {/* Adjustments Table */}
         <div className="overflow-x-auto">
-          <table className={`w-full text-left text-xs border-collapse ${theme === 'dark' ? 'text-slate-700 dark:text-stone-300' : 'text-slate-700'}`}>
+          <table className={`w-full text-left text-xs border-collapse ${theme === 'dark' ? 'text-stone-300' : 'text-slate-700'}`}>
             <thead>
               <tr className={`border-b font-bold uppercase tracking-wider text-[10px] ${
-                theme === 'dark' ? 'border-slate-300 dark:border-white/10 text-slate-500 dark:text-stone-400' : 'border-slate-200 text-slate-500'
+                theme === 'dark' ? 'border-white/10 text-stone-400 bg-[#0c0d12]' : 'border-slate-200 text-slate-500 bg-slate-50'
               }`}>
-                <th className="py-2.5 px-3">Type</th>
-                <th className="py-2.5 px-3">Order #</th>
-                <th className="py-2.5 px-3">Authorizer</th>
-                <th className="py-2.5 px-3">Item Changes</th>
-                <th className="py-2.5 px-3 text-right">Old Total</th>
-                <th className="py-2.5 px-3 text-right">New Total</th>
-                <th className="py-2.5 px-3 text-right">Net Ledger Delta</th>
-                <th className="py-2.5 px-3">Reason Code</th>
-                <th className="py-2.5 px-3 text-right">Timestamp</th>
-                <th className="py-2.5 px-3 text-center">Inspect</th>
+                <th className="py-3 px-3">Type</th>
+                <th className="py-3 px-3">Order #</th>
+                <th className="py-3 px-3">Authorizer</th>
+                <th className="py-3 px-3">Item Changes</th>
+                <th className="py-3 px-3 text-right">Old Total</th>
+                <th className="py-3 px-3 text-right">New Total</th>
+                <th className="py-3 px-3 text-right">Net Delta</th>
+                <th className="py-3 px-3">Reason Code</th>
+                <th className="py-3 px-3 text-right">Timestamp</th>
+                <th className="py-3 px-3 text-center">Inspect</th>
               </tr>
             </thead>
-            <tbody className={`divide-y font-sans ${theme === 'dark' ? 'divide-white/5' : 'divide-slate-200'}`}>
+            <tbody className={`divide-y font-sans ${theme === 'dark' ? 'divide-white/5' : 'divide-slate-100'}`}>
               {filteredAdjustments.length === 0 ? (
                 <tr>
-                  <td colSpan={10} className="py-8 text-center text-slate-400 dark:text-stone-500 italic">
+                  <td colSpan={10} className="py-8 text-center text-stone-500 italic">
                     No sales adjustments found for the selected filter.
                   </td>
                 </tr>
@@ -698,19 +698,19 @@ export const AdminSalesOverview: React.FC = () => {
                   };
 
                   return (
-                    <tr key={adj.id} className={`transition ${theme === 'dark' ? 'hover:bg-white/[0.02]' : 'hover:bg-slate-50'}`}>
+                    <tr key={adj.id} className={`transition ${theme === 'dark' ? 'hover:bg-white/[0.03]' : 'hover:bg-slate-50/80'}`}>
                       <td className="py-2.5 px-3">
                         <span
                           className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase font-mono border ${
                             adj.type === 'CANCELLATION'
-                              ? 'bg-red-950/60 text-red-400 border-red-500/30'
+                              ? 'bg-rose-950/60 text-rose-400 border-rose-500/30'
                               : 'bg-blue-950/60 text-blue-400 border-blue-500/30'
                           }`}
                         >
                           {adj.type}
                         </span>
                       </td>
-                      <td className={`py-2.5 px-3 font-mono font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>
+                      <td className={`py-2.5 px-3 font-mono font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
                         <button
                           onClick={handleInspectOrder}
                           className="hover:text-blue-400 transition cursor-pointer text-left underline decoration-blue-500/30"
@@ -720,31 +720,31 @@ export const AdminSalesOverview: React.FC = () => {
                         </button>
                       </td>
                       <td className="py-2.5 px-3">
-                        <span className={`font-semibold ${theme === 'dark' ? 'text-stone-200' : 'text-slate-800'}`}>{adj.authorizerName}</span>
-                        <span className="text-[10px] text-slate-500 dark:text-stone-400 block uppercase font-mono">{adj.authorizerRole}</span>
+                        <span className={`font-semibold ${theme === 'dark' ? 'text-stone-200' : 'text-slate-900'}`}>{adj.authorizerName}</span>
+                        <span className="text-[10px] text-stone-400 dark:text-stone-500 block uppercase font-mono">{adj.authorizerRole}</span>
                       </td>
-                      <td className={`py-2.5 px-3 max-w-xs truncate ${theme === 'dark' ? 'text-slate-700 dark:text-stone-300' : 'text-slate-600'}`} title={adj.itemsSummary}>
+                      <td className={`py-2.5 px-3 max-w-xs truncate ${theme === 'dark' ? 'text-stone-300' : 'text-slate-600'}`} title={adj.itemsSummary}>
                         {adj.itemsSummary}
                       </td>
-                      <td className="py-2.5 px-3 text-right font-mono text-slate-500 dark:text-stone-400">PKR {adj.originalAmount.toLocaleString()}</td>
-                      <td className={`py-2.5 px-3 text-right font-mono font-semibold ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>PKR {adj.newAmount.toLocaleString()}</td>
+                      <td className={`py-2.5 px-3 text-right font-mono ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`}>PKR {adj.originalAmount.toLocaleString()}</td>
+                      <td className={`py-2.5 px-3 text-right font-mono font-semibold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>PKR {adj.newAmount.toLocaleString()}</td>
                       <td className="py-2.5 px-3 text-right font-mono font-bold">
                         <span
                           className={`inline-flex items-center gap-0.5 px-2 py-0.5 rounded text-xs ${
                             isNegative
-                              ? 'bg-red-500/20 text-red-400'
+                              ? 'bg-rose-500/20 text-rose-400'
                               : isPositive
                               ? 'bg-emerald-500/20 text-emerald-400'
-                              : 'bg-slate-50 dark:bg-stone-800 text-slate-500 dark:text-stone-400'
+                              : 'bg-stone-800 text-stone-400'
                           }`}
                         >
                           {isNegative ? '-' : isPositive ? '+' : ''}PKR {Math.abs(adj.netDelta).toLocaleString()}
                         </span>
                       </td>
-                      <td className="py-2.5 px-3 text-slate-500 dark:text-stone-400 italic max-w-xs truncate" title={adj.reason}>
+                      <td className="py-2.5 px-3 text-stone-400 italic max-w-xs truncate" title={adj.reason}>
                         {adj.reason}
                       </td>
-                      <td className="py-2.5 px-3 text-right font-mono text-[11px] text-slate-500 dark:text-stone-400 whitespace-nowrap">
+                      <td className="py-2.5 px-3 text-right font-mono text-[11px] text-stone-400 whitespace-nowrap">
                         {new Date(adj.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </td>
                       <td className="py-2.5 px-3 text-center">

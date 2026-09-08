@@ -527,178 +527,30 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
   };
 
   return (
-    <div className={`w-full h-full grid grid-cols-[68px_1fr] md:grid-cols-[80px_1fr] font-sans select-none overflow-hidden antialiased transition-colors duration-200 ${
+    <div className={`w-full h-full flex flex-col font-sans select-none overflow-hidden antialiased transition-colors duration-200 ${
       theme === 'dark' ? 'bg-[#0c0c0e] text-[#f4f4f6]' : 'bg-slate-100 text-slate-800'
     }`}>
-      
-      {/* Refined Sidebar Navigation Rail */}
-      <aside className={`border-r flex flex-col items-center py-5 gap-6 z-20 shadow-xl transition-colors duration-200 ${
-        theme === 'dark' ? 'bg-[#111216] border-slate-300 dark:border-white/10' : 'bg-white border-slate-200 shadow-sm'
-      }`}>
-        {/* Brand Emblem */}
-        <div 
-          onClick={onOpenPOS}
-          className="relative w-11 h-11 rounded-2xl bg-gradient-to-b from-[#1c1e28] via-[#12131b] to-[#0a0b10] flex flex-col items-center justify-center text-white cursor-pointer shadow-xl shadow-black/50 hover:scale-105 transition-all border border-blue-500/40 group p-1"
-          title="Floor POS Terminal"
-        >
-          <div className="absolute inset-0 rounded-2xl bg-radial from-blue-500/25 to-transparent opacity-60 group-hover:opacity-100 transition-opacity" />
-          <div className="absolute top-0 inset-x-2 h-[1px] bg-gradient-to-r from-transparent via-blue-300/60 to-transparent" />
-          <MasterPOSLogo className="w-6 h-6 text-blue-400 relative z-10" size={24} useColor={true} accent="cyan" />
-          <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 border border-[#12131b] animate-pulse" />
-        </div>
-
-        <div className={`w-8 h-[1px] ${theme === 'dark' ? 'bg-white/10' : 'bg-slate-200'}`} />
-
-        {/* Navigation Items */}
-        <div className="flex flex-col items-center gap-3 w-full px-2">
-          {/* Floor POS */}
-          <button 
-            onClick={onOpenPOS}
-            className={`w-full h-14 rounded-xl flex flex-col items-center justify-center gap-1 transition-all cursor-pointer group ${
-              theme === 'dark' ? 'text-slate-500 dark:text-stone-400 hover:text-white hover:bg-white/5' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
-            }`} 
-            title="Floor POS Workstation"
-          >
-            <Menu className="w-5 h-5 group-hover:scale-110 transition-transform" />
-            <span className="text-[10px] font-semibold tracking-wide">Floor POS</span>
-          </button>
-
-          {/* Call Center Order Punch */}
-          <button 
-            onClick={() => {
-              setLeftRailActive('phone');
-              setIsCallCenterModalOpen(true);
-            }}
-            className={`w-full h-14 rounded-xl flex flex-col items-center justify-center gap-1 transition-all cursor-pointer group relative ${
-              leftRailActive === 'phone' 
-                ? 'bg-blue-600/20 text-blue-500 border border-blue-500/40 shadow-[0_0_15px_rgba(59,130,246,0.2)]' 
-                : theme === 'dark' ? 'text-slate-500 dark:text-stone-400 hover:text-white hover:bg-white/5' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
-            }`}
-            title="Call Center Order Punch (F2)"
-          >
-            <Phone className="w-5 h-5 group-hover:scale-110 transition-transform" />
-            <span className="text-[10px] font-semibold tracking-wide">Call Center</span>
-          </button>
-
-          {/* Delivery Dispatch Console */}
-          <button 
-            onClick={() => {
-              setLeftRailActive('delivery');
-              setActiveTab('DELIVERY');
-            }}
-            className={`w-full h-14 rounded-xl flex flex-col items-center justify-center gap-1 transition-all cursor-pointer group relative ${
-              leftRailActive === 'delivery' 
-                ? 'bg-blue-600/20 text-blue-500 border border-blue-500/40 shadow-[0_0_15px_rgba(59,130,246,0.2)]' 
-                : theme === 'dark' ? 'text-slate-500 dark:text-stone-400 hover:text-white hover:bg-white/5' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
-            }`}
-            title="Live Delivery Monitoring"
-          >
-            <Truck className="w-5 h-5 group-hover:scale-110 transition-transform" />
-            <span className="text-[10px] font-semibold tracking-wide">Dispatch</span>
-            {activePipelineCount > 0 && (
-              <span className="absolute top-1.5 right-1.5 px-1.5 py-0.2 rounded-full bg-blue-500 text-white font-mono text-[9px] font-black animate-pulse shadow-sm">
-                {activePipelineCount}
-              </span>
-            )}
-          </button>
-
-          {/* Kitchen Display Screen (KDS) */}
-          <button 
-            onClick={onOpenKitchen}
-            className={`w-full h-14 rounded-xl flex flex-col items-center justify-center gap-1 transition-all cursor-pointer group relative ${
-              theme === 'dark' ? 'text-slate-500 dark:text-stone-400 hover:text-amber-300 hover:bg-white/5' : 'text-slate-500 hover:text-amber-600 hover:bg-slate-100'
-            }`} 
-            title="Kitchen Display Screen (KDS)"
-          >
-            <ChefHat className="w-5 h-5 group-hover:scale-110 transition-transform" />
-            <span className="text-[10px] font-semibold tracking-wide">Kitchen</span>
-            {kitchenOrdersCount > 0 && (
-              <span className="absolute top-1.5 right-1.5 px-1.5 py-0.2 rounded-full bg-amber-500 text-stone-950 font-mono text-[9px] font-black shadow-sm">
-                {kitchenOrdersCount}
-              </span>
-            )}
-          </button>
-
-          {/* Voided / Cancelled Orders */}
-          <button 
-            onClick={() => {
-              setLeftRailActive('ban');
-              setActiveTab('CANCELLED');
-              showToast('Viewing Cancelled / Voided Orders');
-            }}
-            className={`w-full h-14 rounded-xl flex flex-col items-center justify-center gap-1 transition-all cursor-pointer group relative ${
-              leftRailActive === 'ban' 
-                ? 'bg-rose-600/20 text-rose-500 border border-rose-500/40 shadow-[0_0_15px_rgba(244,63,94,0.2)]' 
-                : theme === 'dark' ? 'text-slate-500 dark:text-stone-400 hover:text-rose-400 hover:bg-white/5' : 'text-slate-500 hover:text-rose-600 hover:bg-slate-100'
-            }`}
-            title="Voided & Cancelled Deliveries"
-          >
-            <Ban className="w-5 h-5 group-hover:scale-110 transition-transform" />
-            <span className="text-[10px] font-semibold tracking-wide">Voided</span>
-            {cancelledOrdersCount > 0 && (
-              <span className="absolute top-1.5 right-1.5 px-1.5 py-0.2 rounded-full bg-rose-500/30 text-rose-400 font-mono text-[9px] font-bold">
-                {cancelledOrdersCount}
-              </span>
-            )}
-          </button>
-        </div>
-
-        {/* Bottom Utilities */}
-        <div className="mt-auto flex flex-col items-center gap-3 w-full px-2">
-          {/* Sound alert toggle */}
-          <button
-            onClick={() => {
-              setSoundEnabled(!soundEnabled);
-              showToast(soundEnabled ? '🔇 Dispatch sound alerts muted' : '🔊 Dispatch sound alerts enabled');
-            }}
-            className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all cursor-pointer border ${
-              soundEnabled 
-                ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20 hover:bg-emerald-500/20' 
-                : theme === 'dark' ? 'bg-slate-50 dark:bg-stone-800 text-slate-400 dark:text-stone-500 border-slate-200 dark:border-white/5 hover:text-stone-300' : 'bg-slate-100 text-slate-400 border-slate-200 hover:text-slate-700'
-            }`}
-            title={soundEnabled ? 'Audio alerts active (Click to mute)' : 'Audio alerts muted (Click to enable)'}
-          >
-            {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
-          </button>
-
-          {/* Admin Reports */}
-          <button 
-            onClick={onOpenAdmin}
-            className={`w-full h-14 rounded-xl flex flex-col items-center justify-center gap-1 transition-all cursor-pointer group ${
-              theme === 'dark' ? 'text-slate-500 dark:text-stone-400 hover:text-amber-300 hover:bg-white/5' : 'text-slate-500 hover:text-amber-600 hover:bg-slate-100'
-            }`} 
-            title="Executive Admin & Financial Reports"
-          >
-            <ShieldCheck className="w-5 h-5 group-hover:scale-110 transition-transform" />
-            <span className="text-[10px] font-semibold tracking-wide">Admin</span>
-          </button>
-        </div>
-      </aside>
-
       {/* Main Command Center Surface */}
-      <main className={`flex flex-col h-full overflow-hidden relative transition-colors duration-200 ${
+      <main className={`flex-1 flex flex-col h-full overflow-hidden relative transition-colors duration-200 ${
         theme === 'dark' ? 'bg-gradient-to-br from-[#121318] via-[#0e0f13] to-[#090a0d]' : 'bg-slate-50'
       }`}>
-        
-        {/* Executive Header Bar */}
-        <header className={`px-4 sm:px-6 lg:px-8 py-3.5 border-b flex justify-between items-center shrink-0 backdrop-blur-md z-30 transition-colors duration-200 ${
+        {/* Executive Dispatch Toolbar */}
+        <header className={`px-4 sm:px-6 lg:px-8 py-3 border-b flex flex-wrap justify-between items-center gap-3 shrink-0 backdrop-blur-md z-30 transition-colors duration-200 ${
           theme === 'dark' ? 'bg-[#121318]/90 border-slate-300 dark:border-white/10 text-white' : 'bg-white/95 border-slate-200 text-slate-900 shadow-xs'
         }`}>
           <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-            <div className="relative w-9 h-9 rounded-xl bg-gradient-to-b from-[#1c1e28] via-[#12131b] to-[#0a0b10] flex items-center justify-center shadow-lg shadow-black/40 border border-emerald-500/30 shrink-0">
-              <div className="absolute inset-0 rounded-xl bg-radial from-emerald-500/25 to-transparent opacity-60" />
-              <div className="absolute top-0 inset-x-1 h-[1px] bg-gradient-to-r from-transparent via-emerald-300/50 to-transparent" />
-              <MasterPOSLogo className="w-5 h-5 text-emerald-400 relative z-10" size={20} useColor={true} accent="emerald" />
+            <div className="relative w-9 h-9 rounded-xl bg-gradient-to-b from-[#1c1e28] via-[#12131b] to-[#0a0b10] flex items-center justify-center shadow-lg shadow-black/40 border border-blue-500/30 shrink-0">
+              <Truck className="w-5 h-5 text-blue-400 relative z-10" />
             </div>
             <div>
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-2.5 flex-wrap">
                 <span className={`font-black text-base sm:text-lg tracking-tight font-sans ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
-                  MASTER <span className="text-emerald-500">POS</span>
-                </span>
-                <span className="px-2 py-0.5 rounded-full bg-blue-500/15 border border-blue-500/30 text-blue-500 text-[10px] font-mono font-bold uppercase tracking-wider">
                   Live Dispatch Command
                 </span>
-                <span className="hidden lg:flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[10px] font-bold">
+                <span className="px-2 py-0.5 rounded-full bg-blue-500/15 border border-blue-500/30 text-blue-500 text-[10px] font-mono font-bold uppercase tracking-wider">
+                  Active Fleet: {deliveryDrivers.length} Riders
+                </span>
+                <span className="hidden sm:flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[10px] font-bold">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                   Synced
                 </span>
@@ -712,8 +564,24 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
             </div>
           </div>
 
-          {/* Quick Actions & Profile */}
-          <div className="flex items-center gap-3">
+          {/* Quick Actions & Utilities */}
+          <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap">
+            {/* Audio Alert Toggle */}
+            <button
+              onClick={() => {
+                setSoundEnabled(!soundEnabled);
+                showToast(soundEnabled ? '🔇 Dispatch sound alerts muted' : '🔊 Dispatch sound alerts enabled');
+              }}
+              className={`p-2 rounded-xl border text-xs font-semibold transition cursor-pointer flex items-center gap-1.5 ${
+                soundEnabled
+                  ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20 hover:bg-emerald-500/20'
+                  : theme === 'dark' ? 'bg-slate-50 dark:bg-stone-800 text-slate-400 dark:text-stone-500 border-slate-200 dark:border-white/5 hover:text-stone-300' : 'bg-slate-100 text-slate-400 border-slate-200 hover:text-slate-700'
+              }`}
+              title={soundEnabled ? 'Audio alerts active (Click to mute)' : 'Audio alerts muted (Click to enable)'}
+            >
+              {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+            </button>
+
             {/* Auto Refresh pill */}
             <button
               onClick={() => {
@@ -731,32 +599,10 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
               Auto Sync {isAutoRefresh ? 'ON' : 'PAUSED'}
             </button>
 
-            {/* Theme Toggle Button (Button 2) */}
-            <button
-              id="theme-toggle-btn"
-              onClick={() => {
-                toggleTheme();
-                showToast(theme === 'dark' ? '☀️ Switched to Light Theme' : '🌙 Switched to Dark Theme');
-              }}
-              className={`p-2 rounded-xl border transition-all duration-300 cursor-pointer active:scale-90 flex items-center justify-center group shadow-sm relative overflow-hidden ${
-                theme === 'dark'
-                  ? 'bg-slate-50 dark:bg-stone-800/90 hover:bg-stone-700 text-amber-400 border-slate-300 dark:border-white/10 hover:border-amber-400/50 hover:shadow-[0_0_16px_rgba(251,191,36,0.3)]'
-                  : 'bg-amber-50 hover:bg-amber-100 text-amber-600 border-amber-300/80 hover:border-amber-400 hover:shadow-[0_0_16px_rgba(245,158,11,0.25)]'
-              }`}
-              title={theme === 'dark' ? 'Switch to Light Theme (Current: Dark)' : 'Switch to Dark Theme (Current: Light)'}
-              aria-label={theme === 'dark' ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
-            >
-              {theme === 'dark' ? (
-                <Sun className="w-4 h-4 text-amber-400 group-hover:rotate-90 group-hover:scale-110 transition-transform duration-300 drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]" />
-              ) : (
-                <Moon className="w-4 h-4 text-indigo-600 group-hover:-rotate-12 group-hover:scale-110 transition-transform duration-300 drop-shadow-[0_0_8px_rgba(79,70,229,0.4)]" />
-              )}
-            </button>
-
             {/* Manual Sync */}
             <button
               onClick={handleManualRefresh}
-              className={`p-2 rounded-xl transition cursor-pointer active:scale-95 border ${
+              className={`p-2 rounded-xl transition cursor-pointer active:scale-95 border flex items-center gap-1.5 text-xs font-semibold ${
                 theme === 'dark' 
                   ? 'bg-slate-50 dark:bg-stone-800/80 hover:bg-stone-700 text-slate-700 dark:text-stone-300 hover:text-white border-slate-300 dark:border-white/10' 
                   : 'bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 border-slate-200 shadow-xs'
@@ -764,35 +610,16 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
               title="Sync latest live orders"
             >
               <RotateCw className={`w-4 h-4 ${isSpinning ? 'animate-spin text-blue-500' : ''}`} />
+              <span className="hidden md:inline">Refresh</span>
             </button>
 
-            <div className={`w-[1px] h-6 mx-1 hidden sm:block ${theme === 'dark' ? 'bg-white/10' : 'bg-slate-200'}`} />
-
-            {/* Sign Out Button */}
+            {/* Call Center Order Punch (F2) Button */}
             <button
-              onClick={() => {
-                logoutUser();
-                showToast(`✓ Signed out of account (${currentUser?.name || 'Operator'})`);
-              }}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border transition cursor-pointer group shadow-sm ${
-                theme === 'dark' 
-                  ? 'bg-white dark:bg-stone-900/80 hover:bg-red-950/60 hover:border-red-500/40 border-slate-300 dark:border-white/10' 
-                  : 'bg-slate-100 hover:bg-red-50 hover:border-red-300 border-slate-200'
-              }`}
-              title={`Sign Out (${currentUser?.name || 'Operator'})`}
+              onClick={() => setIsCallCenterModalOpen(true)}
+              className="bg-blue-600 hover:bg-blue-500 active:scale-95 text-white px-3 sm:px-4 py-1.5 rounded-xl font-bold text-xs border border-blue-400/30 cursor-pointer flex items-center gap-1.5 transition shadow-md shadow-blue-600/30 whitespace-nowrap"
             >
-              <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white text-xs font-bold shadow-xs">
-                {currentUser?.name ? currentUser.name[0].toUpperCase() : 'U'}
-              </div>
-              <div className="text-left hidden md:block">
-                <div className={`text-xs font-bold transition-colors leading-tight ${theme === 'dark' ? 'text-white group-hover:text-red-300' : 'text-slate-800 group-hover:text-red-600'}`}>
-                  {currentUser?.name || 'Operator'}
-                </div>
-                <div className={`text-[10px] font-mono uppercase tracking-wider ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`}>
-                  {currentUser?.role || 'Dispatcher'}
-                </div>
-              </div>
-              <LogOut className="w-4 h-4 text-red-400 ml-1 shrink-0" />
+              <Phone className="w-4 h-4" />
+              <span>Call Center (F2)</span>
             </button>
           </div>
         </header>

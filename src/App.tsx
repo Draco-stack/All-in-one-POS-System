@@ -188,9 +188,13 @@ const AppContent: React.FC = () => {
 
         {/* Global Toast Notification */}
         {toast && (
-          <div className="fixed bottom-4 right-4 z-50 bg-white dark:bg-stone-900 text-white px-4 py-2 rounded-xl shadow-2xl border border-stone-700 text-xs font-semibold flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2 duration-200">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            {toast}
+          <div className={`fixed bottom-5 right-5 z-50 px-4 py-2.5 rounded-xl shadow-2xl border text-xs font-semibold flex items-center gap-2.5 animate-in fade-in slide-in-from-bottom-3 duration-200 backdrop-blur-md select-none ${
+            theme === 'dark'
+              ? 'bg-[#12141c]/95 border-emerald-500/30 text-stone-100 shadow-black/60 shadow-lg'
+              : 'bg-white/95 border-emerald-500/40 text-slate-800 shadow-slate-300/60 shadow-lg'
+          }`}>
+            <div className="w-2 h-2 rounded-full bg-emerald-400 shrink-0 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+            <span className="font-medium tracking-tight">{toast}</span>
           </div>
         )}
       </main>
