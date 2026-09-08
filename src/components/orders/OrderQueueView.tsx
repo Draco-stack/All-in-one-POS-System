@@ -116,31 +116,31 @@ export const OrderQueueView: React.FC = () => {
       nextLabel: 'Complete Order',
     },
     dispatched: {
-      label: 'Out with Rider',
-      bg: 'bg-blue-500/20 border-blue-500/40',
-      text: 'text-blue-400',
+      label: 'On The Way',
+      bg: 'bg-amber-500/25 border-amber-400/50 shadow-[0_0_12px_rgba(245,158,11,0.35)] ring-1 ring-orange-400/30',
+      text: 'text-amber-300',
       nextStatus: 'completed',
       nextLabel: 'Delivered & Close',
     },
     completed: {
-      label: 'Completed',
-      bg: 'bg-slate-50 dark:bg-stone-800 border-slate-300 dark:border-stone-700',
-      text: 'text-slate-500 dark:text-stone-400',
+      label: 'Completed / Delivered',
+      bg: 'bg-emerald-500/25 border-emerald-400/50 shadow-[0_0_12px_rgba(52,211,153,0.35)] ring-1 ring-emerald-400/30',
+      text: 'text-emerald-300',
     },
     cancelled: {
       label: 'Cancelled / Void',
-      bg: 'bg-red-950/40 border-red-800/40',
-      text: 'text-red-400',
+      bg: 'bg-rose-500/25 border-rose-500/60 shadow-[0_0_14px_rgba(244,63,94,0.4)] ring-1 ring-rose-500/30',
+      text: 'text-rose-300',
     },
     refunded: {
-      label: 'Refunded',
-      bg: 'bg-purple-950/40 border-purple-800/40',
-      text: 'text-purple-400',
+      label: 'Refunded / Void',
+      bg: 'bg-rose-500/25 border-rose-500/60 shadow-[0_0_14px_rgba(244,63,94,0.4)] ring-1 ring-rose-500/30',
+      text: 'text-rose-300',
     },
     delivered: {
       label: 'Delivered',
-      bg: 'bg-emerald-950/40 border-emerald-800/40',
-      text: 'text-emerald-400',
+      bg: 'bg-emerald-500/25 border-emerald-400/50 shadow-[0_0_12px_rgba(52,211,153,0.35)] ring-1 ring-emerald-400/30',
+      text: 'text-emerald-300',
     },
   };
 
@@ -307,6 +307,46 @@ export const OrderQueueView: React.FC = () => {
               const elapsedMins = Math.floor((Date.now() - new Date(order.createdAt).getTime()) / 60000);
               const isUrgent = elapsedMins >= 20;
               const isWarming = elapsedMins >= 10 && elapsedMins < 20;
+              const currentSt = (order.status || 'pending').toLowerCase();
+              const isCancelled = currentSt === 'cancelled' || currentSt === 'refunded' || currentSt === 'void';
+              const isDelivered = currentSt === 'delivered' || currentSt === 'completed' || currentSt === 'ready';
+              const isOnTheWay = currentSt === 'dispatched' || currentSt === 'on_the_way' || currentSt === 'in_transit' || currentSt === 'out_for_delivery';
+              const isKitchen = currentSt === 'in_kitchen';
+              const isPunched = currentSt === 'punched' || currentSt === 'open' || currentSt === 'pending' || currentSt === 'modified';
+
+              // Visual styling adhering strictly to light reflection rules:
+              // 1. Cancelled -> Reflects Red Light
+              // 2. Delivered / Ready -> Reflects Green Light
+              // 3. On The Way / Dispatched -> Reflects Yellow-Orange Light
+              const darkCardStyle = isCancelled
+                ? 'bg-gradient-to-b from-[#281016] via-[#170e12] to-[#0d070a] border-rose-500/95 shadow-[0_0_28px_rgba(244,63,94,0.38)] ring-1 ring-rose-500/50'
+                : isDelivered
+                ? 'bg-gradient-to-b from-[#0c2217] via-[#0f1914] to-[#080f0c] border-emerald-400/95 shadow-[0_0_28px_rgba(52,211,153,0.38)] ring-1 ring-emerald-400/50'
+                : isOnTheWay
+                ? 'bg-gradient-to-b from-[#26170a] via-[#1a130d] to-[#0f0c08] border-amber-400/95 shadow-[0_0_28px_rgba(245,158,11,0.38)] ring-1 ring-orange-400/50'
+                : isUrgent
+                ? 'bg-gradient-to-b from-[#211116] via-[#161017] to-[#0f0c12] border-rose-500/90 shadow-[0_0_26px_rgba(244,63,94,0.32)] ring-1 ring-rose-500/40'
+                : isWarming
+                ? 'bg-gradient-to-b from-[#20180d] via-[#171410] to-[#0e0e12] border-amber-400/90 shadow-[0_0_22px_rgba(245,158,11,0.25)] ring-1 ring-amber-400/30'
+                : isKitchen
+                ? 'bg-gradient-to-b from-[#1c1424] via-[#14121a] to-[#0c0d14] border-indigo-400/85 shadow-[0_0_22px_rgba(99,102,241,0.25)] ring-1 ring-indigo-400/30'
+                : isPunched
+                ? 'bg-gradient-to-b from-[#0c181f] via-[#10141b] to-[#0a0c12] border-cyan-400/80 shadow-[0_0_20px_rgba(6,182,212,0.22)] ring-1 ring-cyan-400/30'
+                : 'bg-[#12141c] border-white/10 shadow-md hover:border-stone-700';
+
+              const lightCardStyle = isCancelled
+                ? 'bg-red-50/80 border-2 border-red-500 shadow-lg shadow-red-200/50'
+                : isDelivered
+                ? 'bg-emerald-50/80 border-2 border-emerald-500 shadow-md shadow-emerald-200/40'
+                : isOnTheWay
+                ? 'bg-amber-50/80 border-2 border-amber-500 shadow-md shadow-amber-200/40'
+                : isUrgent
+                ? 'bg-red-50/70 border-2 border-red-500 shadow-lg shadow-red-200/50'
+                : isWarming
+                ? 'bg-amber-50/70 border-2 border-amber-400 shadow-md shadow-amber-200/40'
+                : isKitchen
+                ? 'bg-indigo-50/70 border-2 border-indigo-400 shadow-md shadow-indigo-200/40'
+                : 'bg-white border-slate-200 shadow-xs hover:shadow-md';
 
               return (
               <motion.div
@@ -316,62 +356,77 @@ export const OrderQueueView: React.FC = () => {
                 exit={{ opacity: 0, scale: 0.98 }}
                 transition={{ duration: 0.1, delay: Math.min(idx * 0.015, 0.1) }}
                 key={order.id}
-                className={`border rounded-2xl p-4 flex flex-col justify-between space-y-3.5 transition-all duration-150 ${
-                  theme === 'dark'
-                    ? isUrgent
-                      ? 'bg-[#151217] border-red-500/40 shadow-lg shadow-red-950/20'
-                      : isWarming
-                      ? 'bg-[#151412] border-amber-500/40 shadow-lg shadow-amber-950/20'
-                      : 'bg-[#12141c] border-white/10 shadow-md hover:border-stone-700'
-                    : isUrgent
-                    ? 'bg-red-50/40 border-red-300 shadow-md'
-                    : isWarming
-                    ? 'bg-amber-50/40 border-amber-300 shadow-md'
-                    : 'bg-white border-slate-200 shadow-xs hover:shadow-md'
+                className={`relative border-2 rounded-2xl p-4 flex flex-col justify-between space-y-3.5 transition-all duration-150 overflow-hidden ${
+                  theme === 'dark' ? darkCardStyle : lightCardStyle
                 }`}
               >
+                {/* Luminous top ambient glow bar reflecting status light */}
+                {theme === 'dark' && (
+                  <div
+                    className={`absolute top-0 left-0 right-0 h-1 ${
+                      isCancelled
+                        ? 'bg-gradient-to-r from-red-600 via-rose-300 to-red-600 shadow-[0_0_14px_rgba(244,63,94,0.95)]'
+                        : isDelivered
+                        ? 'bg-gradient-to-r from-emerald-500 via-green-300 to-emerald-500 shadow-[0_0_14px_rgba(52,211,153,0.95)]'
+                        : isOnTheWay
+                        ? 'bg-gradient-to-r from-amber-400 via-orange-400 to-yellow-300 shadow-[0_0_14px_rgba(245,158,11,0.95)]'
+                        : isUrgent
+                        ? 'bg-gradient-to-r from-rose-500 via-rose-300 to-rose-500 shadow-[0_0_12px_rgba(244,63,94,0.9)]'
+                        : isWarming
+                        ? 'bg-gradient-to-r from-amber-500 via-amber-200 to-amber-500 shadow-[0_0_12px_rgba(245,158,11,0.8)]'
+                        : isKitchen
+                        ? 'bg-gradient-to-r from-indigo-500 via-purple-300 to-indigo-500 shadow-[0_0_12px_rgba(99,102,241,0.85)]'
+                        : isPunched
+                        ? 'bg-gradient-to-r from-cyan-500 via-teal-300 to-cyan-500 shadow-[0_0_12px_rgba(6,182,212,0.8)]'
+                        : 'bg-white/10'
+                    }`}
+                  />
+                )}
+
                 {/* Header */}
-                <div className={`flex items-start justify-between border-b pb-3 ${
+                <div className={`flex items-start justify-between border-b pb-3 pt-0.5 ${
                   theme === 'dark' ? 'border-white/10' : 'border-slate-100'
                 }`}>
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className={`font-mono font-black text-base tabular-nums ${
+                      <span className={`font-mono font-black text-lg tabular-nums tracking-tight drop-shadow-xs ${
                         theme === 'dark' ? 'text-white' : 'text-slate-900'
                       }`}>
                         {order.orderNumber}
                       </span>
                       <span className={`px-2 py-0.5 rounded-md text-[10px] uppercase font-black border ${
                         theme === 'dark'
-                          ? 'bg-[#08090d] text-stone-300 border-white/10'
-                          : 'bg-slate-100 text-slate-700 border-slate-200'
+                          ? 'bg-[#08090d]/90 text-stone-200 border-white/20 shadow-xs'
+                          : 'bg-slate-100 text-slate-800 border-slate-300 shadow-2xs'
                       }`}>
                         {(order.type || order.orderType || 'takeaway').replace('_', ' ')}
                       </span>
                     </div>
-                    <p className={`text-xs mt-0.5 font-medium ${
-                      theme === 'dark' ? 'text-stone-400' : 'text-slate-500'
+                    <p className={`text-xs mt-1 font-semibold ${
+                      theme === 'dark' ? 'text-stone-300' : 'text-slate-700'
                     }`}>
                       {order.type === 'dine_in'
-                        ? order.tableNumber || 'Table'
+                        ? `🍽️ Table ${order.tableNumber || 'Floor'}`
                         : order.type === 'delivery'
-                        ? `Delivery: ${order.customer?.name || 'Customer'} • ${order.customer?.phone || 'No phone'}`
-                        : `Takeaway: ${order.customer?.name || 'Walk-in'}`}
+                        ? `🛵 ${order.customer?.name || 'Customer'} • ${order.customer?.phone || 'No phone'}`
+                        : `🛍️ Takeaway: ${order.customer?.name || 'Walk-in'}`}
                     </p>
                   </div>
 
-                  <div className="text-right">
-                    <span className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${conf.bg} ${conf.text}`}>
+                  <div className="text-right flex flex-col items-end">
+                    <span className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider border shadow-xs ${conf.bg} ${conf.text} ${
+                      theme === 'dark' && isUrgent ? 'shadow-[0_0_10px_rgba(244,63,94,0.35)]' : ''
+                    }`}>
                       {conf.label}
                     </span>
-                    <span className={`text-[10px] font-mono flex items-center justify-end gap-1 mt-1 font-bold ${
+                    <span className={`text-[11px] font-mono flex items-center justify-end gap-1 mt-1.5 font-bold px-2 py-0.5 rounded-full ${
                       isUrgent
-                        ? 'text-red-400'
+                        ? 'text-rose-300 bg-rose-500/20 border border-rose-500/50 animate-pulse shadow-[0_0_8px_rgba(244,63,94,0.3)]'
                         : isWarming
-                        ? 'text-amber-400'
+                        ? 'text-amber-300 bg-amber-500/20 border border-amber-500/40'
                         : theme === 'dark'
-                        ? 'text-stone-400'
-                        : 'text-slate-500'
+                        ? 'text-stone-300 bg-white/5 border border-white/10'
+                        : 'text-slate-600 bg-slate-100 border border-slate-200'
                     }`}>
                       <Timer className="w-3 h-3" />
                       {elapsedMins}m ago
@@ -386,27 +441,37 @@ export const OrderQueueView: React.FC = () => {
                       key={itemIdx}
                       className={`p-2.5 rounded-xl border flex items-center justify-between text-xs transition-colors ${
                         theme === 'dark'
-                          ? 'bg-[#08090d]/80 border-white/10 text-stone-200'
-                          : 'bg-slate-50 border-slate-200 text-slate-800'
+                          ? 'bg-[#08090d]/90 border-white/15 text-stone-100 hover:border-white/30'
+                          : 'bg-white border-slate-200 text-slate-900 shadow-2xs'
                       }`}
                     >
-                      <div className="flex items-center gap-2">
-                        <span className="w-5 h-5 rounded bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 font-mono font-bold flex items-center justify-center text-[11px]">
+                      <div className="flex items-start gap-2.5">
+                        <span className={`w-6 h-6 rounded-lg font-mono font-black flex items-center justify-center text-xs shrink-0 ${
+                          theme === 'dark'
+                            ? 'bg-emerald-500/25 border border-emerald-400/60 text-emerald-300 shadow-[0_0_8px_rgba(52,211,153,0.25)]'
+                            : 'bg-emerald-100 border border-emerald-300 text-emerald-800'
+                        }`}>
                           {item.quantity}x
                         </span>
                         <div>
-                          <span className={`font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
+                          <span className={`font-bold text-sm leading-snug ${
+                            theme === 'dark' ? 'text-white drop-shadow-xs' : 'text-slate-900'
+                          }`}>
                             {item.name}
                           </span>
                           {item.flavor && (
-                            <p className="text-[10px] text-amber-400 font-medium mt-0.5">
-                              {item.flavor}
+                            <p className={`text-[11px] font-semibold mt-1 px-2 py-0.5 rounded-md inline-block border ${
+                              theme === 'dark'
+                                ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-xs'
+                                : 'bg-amber-100 text-amber-900 border-amber-300'
+                            }`}>
+                              ✦ {item.flavor}
                             </p>
                           )}
                         </div>
                       </div>
-                      <span className={`font-mono text-[11px] font-semibold ${
-                        theme === 'dark' ? 'text-stone-400' : 'text-slate-600'
+                      <span className={`font-mono text-xs font-bold shrink-0 ${
+                        theme === 'dark' ? 'text-stone-300' : 'text-slate-700'
                       }`}>
                         PKR {(item.price * item.quantity).toLocaleString()}
                       </span>
@@ -418,23 +483,25 @@ export const OrderQueueView: React.FC = () => {
                 {order.type === 'delivery' && order.customer?.address && (
                   <div className={`p-2.5 rounded-xl border text-[11px] ${
                     theme === 'dark'
-                      ? 'bg-[#08090d] border-white/10 text-stone-400'
-                      : 'bg-slate-50 border-slate-200 text-slate-600'
+                      ? 'bg-[#08090d]/90 border-white/15 text-stone-300'
+                      : 'bg-slate-50 border-slate-200 text-slate-700'
                   }`}>
-                    <span className={`font-bold block ${theme === 'dark' ? 'text-stone-300' : 'text-slate-800'}`}>
-                      Address:
+                    <span className={`font-black block mb-0.5 ${theme === 'dark' ? 'text-stone-200' : 'text-slate-900'}`}>
+                      📍 Delivery Address:
                     </span>
-                    {order.customer.address}
+                    <span className="leading-snug">{order.customer.address}</span>
                   </div>
                 )}
 
                 {/* Total & Action Footer */}
-                <div className={`pt-3 border-t flex items-center justify-between ${
+                <div className={`pt-3 border-t flex items-center justify-between gap-2 ${
                   theme === 'dark' ? 'border-white/10' : 'border-slate-100'
                 }`}>
                   <div className="font-mono text-xs">
                     <span className={theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}>Total: </span>
-                    <span className="font-bold text-emerald-400 text-sm">
+                    <span className={`font-black text-sm ${
+                      theme === 'dark' ? 'text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.3)]' : 'text-emerald-700'
+                    }`}>
                       PKR {order.total.toLocaleString()}
                     </span>
                   </div>
@@ -443,10 +510,10 @@ export const OrderQueueView: React.FC = () => {
                     {/* Inspect View Details */}
                     <button
                       onClick={() => setSelectedOrderForInspect(order)}
-                      className="px-2.5 py-1.5 rounded-xl bg-blue-600/15 hover:bg-blue-600 text-blue-400 hover:text-white text-[11px] font-bold transition flex items-center gap-1 cursor-pointer border border-blue-500/30 active:scale-95"
+                      className="px-2.5 py-1.5 rounded-xl bg-blue-600/20 hover:bg-blue-600 text-blue-400 hover:text-white text-[11px] font-bold transition flex items-center gap-1 cursor-pointer border border-blue-500/40 active:scale-95 shadow-xs"
                       title="Inspect complete order details"
                     >
-                      <Eye className="w-3 h-3" />
+                      <Eye className="w-3.5 h-3.5" />
                       View
                     </button>
 
@@ -455,12 +522,12 @@ export const OrderQueueView: React.FC = () => {
                       onClick={() => setSelectedOrderForManage(order)}
                       className={`px-2.5 py-1.5 rounded-xl text-[11px] font-bold transition flex items-center gap-1 cursor-pointer active:scale-95 ${
                         theme === 'dark'
-                          ? 'bg-stone-800 hover:bg-stone-700 text-stone-200 border border-white/10'
-                          : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200'
+                          ? 'bg-stone-800 hover:bg-stone-700 text-stone-200 border border-white/15 shadow-xs'
+                          : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300'
                       }`}
                       title="Edit / Cancel Ticket (Manager Auth)"
                     >
-                      <Edit3 className="w-3 h-3 text-amber-400" />
+                      <Edit3 className="w-3.5 h-3.5 text-amber-400" />
                       Manage
                     </button>
 
@@ -471,11 +538,11 @@ export const OrderQueueView: React.FC = () => {
                           setSelectedRiderForDispatch(order.deliveryDriver || order.riderName || deliveryDrivers[0] || '');
                           setDispatchModalOrder(order);
                         }}
-                        className={`px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition shadow-sm flex items-center gap-1 cursor-pointer active:scale-95 ${
+                        className={`px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-black transition shadow-[0_0_15px_rgba(59,130,246,0.35)] hover:shadow-[0_0_20px_rgba(59,130,246,0.5)] flex items-center gap-1.5 cursor-pointer active:scale-95 ${
                           transitioningOrderId === order.id ? 'opacity-60 cursor-not-allowed animate-pulse' : ''
                         }`}
                       >
-                        <Truck className="w-3 h-3" />
+                        <Truck className="w-3.5 h-3.5" />
                         Dispatch Rider
                       </button>
                     ) : conf.nextStatus && conf.nextLabel && (
@@ -495,7 +562,7 @@ export const OrderQueueView: React.FC = () => {
 
                           handleTransitionStatus(order.id, conf.nextStatus!, order.paymentStatus);
                         }}
-                        className={`px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow-sm cursor-pointer active:scale-95 ${
+                        className={`px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black transition shadow-[0_0_15px_rgba(16,185,129,0.35)] hover:shadow-[0_0_20px_rgba(16,185,129,0.5)] cursor-pointer active:scale-95 ${
                           transitioningOrderId === order.id ? 'opacity-60 cursor-not-allowed animate-pulse' : ''
                         }`}
                       >

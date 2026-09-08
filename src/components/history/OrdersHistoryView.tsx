@@ -265,21 +265,30 @@ export const OrdersHistoryView: React.FC = () => {
                         {order.items.map((i) => `${i.quantity}x ${i.name}`).join(', ')}
                       </td>
                       <td className="p-3">
-                        <span
-                          className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${
-                            isCancelled
-                              ? 'bg-red-500/20 text-red-400 border border-red-500/30'
-                              : isRefunded
-                              ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
-                              : order.status === 'completed'
-                              ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                              : 'bg-teal-500/20 text-teal-400 border border-teal-500/30'
-                          }`}
-                        >
-                          {order.status.replace('_', ' ')}
-                        </span>
+                        {(() => {
+                          const st = (order.status || '').toLowerCase();
+                          const isCanc = st === 'cancelled' || st === 'refunded' || st === 'void';
+                          const isDeliv = st === 'delivered' || st === 'completed' || st === 'ready';
+                          const isOnWay = st === 'dispatched' || st === 'on_the_way';
+
+                          return (
+                            <span
+                              className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider inline-flex items-center gap-1 ${
+                                isCanc
+                                  ? 'bg-rose-500/25 text-rose-300 border border-rose-500/50 shadow-[0_0_10px_rgba(244,63,94,0.35)]'
+                                  : isDeliv
+                                  ? 'bg-emerald-500/25 text-emerald-300 border border-emerald-400/50 shadow-[0_0_10px_rgba(52,211,153,0.35)]'
+                                  : isOnWay
+                                  ? 'bg-amber-500/25 text-amber-300 border border-amber-400/50 shadow-[0_0_10px_rgba(245,158,11,0.35)]'
+                                  : 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
+                              }`}
+                            >
+                              {order.status.replace('_', ' ')}
+                            </span>
+                          );
+                        })()}
                         {order.cancelReason && (
-                          <div className="text-[9px] text-red-400 mt-0.5 italic truncate max-w-[120px]">
+                          <div className="text-[9px] text-rose-400 mt-0.5 italic truncate max-w-[120px]">
                             {order.cancelReason}
                           </div>
                         )}

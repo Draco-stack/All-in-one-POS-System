@@ -106,46 +106,82 @@ export const ActiveTicketsView: React.FC = () => {
             {displayedOrders.map((order) => {
               const elapsed = getElapsedTimeMinutes(order.createdAt);
               const isUrgent = elapsed > 15;
-              const isReady = order.status === 'ready';
+              const isWarming = elapsed >= 8 && elapsed <= 15;
+              const ordSt = (order.status || '').toLowerCase();
+              const isCancelled = ordSt === 'cancelled' || ordSt === 'refunded' || ordSt === 'void';
+              const isDelivered = ordSt === 'delivered' || ordSt === 'completed' || ordSt === 'ready';
+              const isOnTheWay = ordSt === 'dispatched' || ordSt === 'on_the_way';
+              const isReady = ordSt === 'ready';
 
               return (
                 <div
                   key={order.id}
-                  className={`bg-white dark:bg-stone-900 border rounded-2xl p-4 flex flex-col justify-between shadow-lg transition ${
-                    isReady
-                      ? 'border-emerald-500/60 shadow-emerald-950/30'
+                  className={`relative overflow-hidden border-2 rounded-2xl p-4 flex flex-col justify-between transition-all duration-150 ${
+                    isCancelled
+                      ? 'bg-gradient-to-b from-[#261016] via-[#170e12] to-[#0c0709] border-rose-500/95 shadow-[0_0_24px_rgba(244,63,94,0.35)] ring-1 ring-rose-500/40'
+                      : isDelivered
+                      ? 'bg-gradient-to-b from-[#0e1d15] via-[#111617] to-[#0b0e12] border-emerald-400/95 shadow-[0_0_24px_rgba(52,211,153,0.32)] ring-1 ring-emerald-400/40'
+                      : isOnTheWay
+                      ? 'bg-gradient-to-b from-[#24170a] via-[#17120d] to-[#0d0a06] border-amber-400/95 shadow-[0_0_24px_rgba(245,158,11,0.32)] ring-1 ring-orange-400/40'
                       : isUrgent
-                      ? 'border-rose-500/60 shadow-rose-950/30'
-                      : 'border-slate-200 dark:border-stone-800'
+                      ? 'bg-gradient-to-b from-[#211116] via-[#161017] to-[#0f0c12] border-rose-500/90 shadow-[0_0_26px_rgba(244,63,94,0.32)] ring-1 ring-rose-500/40'
+                      : isWarming
+                      ? 'bg-gradient-to-b from-[#20180d] via-[#171410] to-[#0e0e12] border-amber-400/90 shadow-[0_0_20px_rgba(245,158,11,0.25)] ring-1 ring-amber-400/30'
+                      : 'bg-white dark:bg-stone-900/95 border-slate-200 dark:border-white/15 dark:shadow-[0_0_15px_rgba(255,255,255,0.03)]'
                   }`}
                 >
+                  {/* Top Glowing Ambient Bar reflecting status light */}
+                  <div
+                    className={`absolute top-0 left-0 right-0 h-1 ${
+                      isCancelled
+                        ? 'bg-gradient-to-r from-red-600 via-rose-300 to-red-600 shadow-[0_0_12px_rgba(244,63,94,0.95)]'
+                        : isDelivered
+                        ? 'bg-gradient-to-r from-emerald-500 via-green-300 to-emerald-500 shadow-[0_0_12px_rgba(52,211,153,0.95)]'
+                        : isOnTheWay
+                        ? 'bg-gradient-to-r from-amber-400 via-orange-400 to-yellow-300 shadow-[0_0_12px_rgba(245,158,11,0.95)]'
+                        : isUrgent
+                        ? 'bg-gradient-to-r from-rose-500 via-rose-300 to-rose-500 shadow-[0_0_12px_rgba(244,63,94,0.9)]'
+                        : isWarming
+                        ? 'bg-gradient-to-r from-amber-500 via-amber-200 to-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.7)]'
+                        : 'bg-gradient-to-r from-teal-500 via-emerald-300 to-teal-500 opacity-60'
+                    }`}
+                  />
+
                   {/* Card Header */}
-                  <div className="space-y-2 border-b border-slate-200 dark:border-stone-800 pb-3">
+                  <div className="space-y-2 border-b border-slate-200 dark:border-white/10 pb-3 pt-0.5">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-black text-teal-400 font-mono">
+                      <span className="text-base font-black text-teal-400 dark:text-teal-300 font-mono tracking-tight drop-shadow-xs">
                         {order.orderNumber}
                       </span>
                       <span
-                        className={`px-2 py-0.5 rounded-lg text-xs font-mono font-bold flex items-center gap-1 ${
+                        className={`px-2.5 py-0.5 rounded-lg text-xs font-mono font-black flex items-center gap-1.5 border shadow-xs ${
                           isUrgent
-                            ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30 animate-pulse'
-                            : 'bg-slate-50 dark:bg-stone-800 text-slate-700 dark:text-stone-300'
+                            ? 'bg-rose-500/20 text-rose-300 border-rose-500/50 animate-pulse shadow-[0_0_8px_rgba(244,63,94,0.3)]'
+                            : isWarming
+                            ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                            : isReady
+                            ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                            : 'bg-slate-100 dark:bg-stone-800 text-slate-700 dark:text-stone-300 border-slate-200 dark:border-white/10'
                         }`}
                       >
-                        <Clock className="w-3 h-3" />
-                        {elapsed} min ago
+                        <Clock className="w-3.5 h-3.5" />
+                        {elapsed}m ago
                       </span>
                     </div>
 
                     <div className="flex items-center justify-between text-xs">
                       <div className="flex items-center gap-1.5 font-bold text-white">
-                        <span className="px-2 py-0.5 rounded bg-teal-500/20 text-teal-300 border border-teal-500/30 uppercase text-[10px]">
+                        <span className="px-2 py-0.5 rounded-md bg-teal-500/20 text-teal-300 border border-teal-500/40 uppercase text-[10px] font-black tracking-wider">
                           {order.type.replace('_', ' ')}
                         </span>
-                        {order.tableNumber && <span>{order.tableNumber}</span>}
+                        {order.tableNumber && (
+                          <span className="text-stone-200 font-bold bg-white/5 border border-white/10 px-2 py-0.5 rounded-md text-[11px]">
+                            {order.tableNumber}
+                          </span>
+                        )}
                       </div>
 
-                      <span className="text-slate-500 dark:text-stone-400 text-[11px] truncate max-w-[130px]">
+                      <span className="text-slate-600 dark:text-stone-300 text-xs font-semibold truncate max-w-[140px]">
                         {order.customer?.name || 'Walk-in'}
                       </span>
                     </div>
@@ -154,18 +190,21 @@ export const ActiveTicketsView: React.FC = () => {
                   {/* Items List */}
                   <div className="py-3 space-y-2 flex-1 overflow-y-auto max-h-52">
                     {order.items.map((item, idx) => (
-                      <div key={idx} className="space-y-0.5 text-xs">
-                        <div className="flex items-start justify-between font-semibold text-stone-200">
+                      <div key={idx} className="p-2 rounded-xl bg-slate-50 dark:bg-[#08090d]/90 border border-slate-200 dark:border-white/10 space-y-1 text-xs">
+                        <div className="flex items-start justify-between font-bold text-slate-900 dark:text-white">
                           <div className="flex items-center gap-2">
-                            <span className="w-5 h-5 rounded bg-slate-50 dark:bg-stone-800 text-teal-400 font-mono font-bold flex items-center justify-center text-xs">
-                              {item.quantity}
+                            <span className="w-5 h-5 rounded-md bg-teal-500/25 border border-teal-400/50 text-teal-300 font-mono font-black flex items-center justify-center text-xs shadow-xs">
+                              {item.quantity}x
                             </span>
-                            <span className="truncate max-w-[180px]">{item.name}</span>
+                            <span className="truncate max-w-[180px] leading-snug">{item.name}</span>
                           </div>
                         </div>
 
                         {item.customization && (
-                          <p className="text-[10px] text-teal-400/90 italic pl-7">↳ {item.customization}</p>
+                          <p className="text-[11px] text-teal-300 font-medium italic pl-7">↳ {item.customization}</p>
+                        )}
+                        {item.flavor && (
+                          <p className="text-[11px] text-amber-300 font-semibold pl-7">✦ {item.flavor}</p>
                         )}
                         {item.selectedOptions && item.selectedOptions.length > 0 && (
                           <div className="text-[10px] text-slate-500 dark:text-stone-400 pl-7">
@@ -181,10 +220,10 @@ export const ActiveTicketsView: React.FC = () => {
                   </div>
 
                   {/* Card Actions */}
-                  <div className="pt-3 border-t border-slate-200 dark:border-stone-800 flex items-center justify-between gap-2">
+                  <div className="pt-3 border-t border-slate-200 dark:border-white/10 flex items-center justify-between gap-2">
                     <button
                       onClick={() => setActiveReceiptOrder(order)}
-                      className="p-2 rounded-xl bg-slate-50 dark:bg-stone-800 hover:bg-stone-700 text-slate-700 dark:text-stone-300 transition cursor-pointer"
+                      className="p-2.5 rounded-xl bg-slate-100 dark:bg-stone-800 hover:bg-slate-200 dark:hover:bg-stone-700 text-slate-700 dark:text-stone-300 border border-slate-300 dark:border-white/10 transition cursor-pointer active:scale-95 shadow-xs"
                       title="View / Print Receipt"
                     >
                       <Receipt className="w-4 h-4" />
@@ -192,10 +231,10 @@ export const ActiveTicketsView: React.FC = () => {
 
                     <button
                       onClick={() => handleAdvanceStatus(order)}
-                      className={`flex-1 py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer shadow ${
+                      className={`flex-1 py-2.5 rounded-xl font-black text-xs flex items-center justify-center gap-1.5 transition cursor-pointer active:scale-95 border ${
                         isReady
-                          ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/30'
-                          : 'bg-[#00897b] hover:bg-[#00796b] text-white shadow-teal-900/30'
+                          ? 'bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-400/30 shadow-[0_0_15px_rgba(16,185,129,0.35)]'
+                          : 'bg-teal-600 hover:bg-teal-500 text-white border-teal-400/30 shadow-[0_0_15px_rgba(20,184,166,0.35)]'
                       }`}
                     >
                       <CheckCircle2 className="w-4 h-4" />

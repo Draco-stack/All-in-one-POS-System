@@ -783,26 +783,30 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
     setIsReceiptModalOpen(true);
   };
 
-  // Helper for Status Badge Styling
+  // Helper for Status Badge Styling with status light reflections
   const getStatusBadgeStyle = (status: OrderStatus) => {
     switch (status) {
       case 'pending':
       case 'open':
       case 'PUNCHED':
-        return 'bg-teal-100 text-teal-900 border-teal-300';
+      case 'MODIFIED':
+        return 'bg-cyan-500/20 text-cyan-300 border-cyan-400/50 shadow-[0_0_8px_rgba(6,182,212,0.25)]';
       case 'in_kitchen':
-        return 'bg-amber-100 text-amber-900 border-amber-300';
+        return 'bg-indigo-500/20 text-indigo-300 border-indigo-400/50 shadow-[0_0_8px_rgba(99,102,241,0.25)]';
       case 'ready':
-        return 'bg-emerald-100 text-emerald-900 border-emerald-300';
-      case 'dispatched':
-        return 'bg-purple-100 text-purple-900 border-purple-300';
       case 'completed':
-        return 'bg-stone-100 text-stone-700 border-stone-300';
+      case 'delivered':
+        // Reflects Green Light
+        return 'bg-emerald-500/25 text-emerald-300 border-emerald-400/60 shadow-[0_0_12px_rgba(52,211,153,0.4)] ring-1 ring-emerald-400/30';
+      case 'dispatched':
+        // Reflects Yellow-Orange Light
+        return 'bg-amber-500/25 text-amber-300 border-amber-400/60 shadow-[0_0_12px_rgba(245,158,11,0.4)] ring-1 ring-orange-400/30';
       case 'cancelled':
       case 'refunded':
-        return 'bg-red-100 text-red-800 border-red-300';
+        // Reflects Red Light
+        return 'bg-rose-500/25 text-rose-300 border-rose-500/60 shadow-[0_0_12px_rgba(244,63,94,0.4)] ring-1 ring-rose-500/30';
       default:
-        return 'bg-stone-100 text-stone-700 border-stone-300';
+        return 'bg-stone-500/20 text-stone-300 border-stone-400/40';
     }
   };
 
@@ -1135,6 +1139,15 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
               ) : (
                 ongoingOrders.map((ord) => {
                   const isSelected = selectedOrderId === ord.id;
+                  const elapsedMins = Math.floor((Date.now() - new Date(ord.createdAt).getTime()) / 60000);
+                  const isUrgent = elapsedMins >= 20;
+                  const isWarming = elapsedMins >= 10 && elapsedMins < 20;
+                  const ordSt = (ord.status || '').toLowerCase();
+                  const isCancelled = ordSt === 'cancelled' || ordSt === 'refunded' || ordSt === 'void';
+                  const isDelivered = ordSt === 'delivered' || ordSt === 'completed' || ordSt === 'ready';
+                  const isOnTheWay = ordSt === 'dispatched' || ordSt === 'on_the_way';
+                  const isKitchen = ordSt === 'in_kitchen';
+
                   return (
                     <div
                       key={ord.id}
@@ -1142,51 +1155,91 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                         setSelectedOrderId(ord.id);
                         setMiddleTab('order_details');
                       }}
-                      className={`bg-gradient-to-b from-stone-900/90 to-stone-950/90 rounded-xl p-2.5 text-xs transition-all duration-200 cursor-pointer border ${isSelected ? 'border-emerald-500/60 ring-1 ring-emerald-500/40 bg-white dark:bg-stone-900 shadow-lg shadow-emerald-950/20' : 'border-slate-200 dark:border-white/5 hover:border-emerald-500/30 hover:shadow-md'}`}
+                      className={`relative overflow-hidden rounded-xl p-3 text-xs transition-all duration-200 cursor-pointer border-2 ${
+                        isSelected
+                          ? 'border-emerald-400 bg-gradient-to-b from-stone-900 to-stone-950 shadow-[0_0_20px_rgba(52,211,153,0.35)] ring-1 ring-emerald-400/50'
+                          : isCancelled
+                          ? 'bg-gradient-to-b from-[#261016] to-[#140b0f] border-rose-500/95 shadow-[0_0_20px_rgba(244,63,94,0.35)] ring-1 ring-rose-500/40'
+                          : isDelivered
+                          ? 'bg-gradient-to-b from-[#0e2216] to-[#0a140f] border-emerald-400/90 shadow-[0_0_18px_rgba(52,211,153,0.3)] ring-1 ring-emerald-400/40'
+                          : isOnTheWay
+                          ? 'bg-gradient-to-b from-[#24170a] to-[#140f09] border-amber-400/90 shadow-[0_0_18px_rgba(245,158,11,0.3)] ring-1 ring-orange-400/40'
+                          : isUrgent
+                          ? 'bg-gradient-to-b from-[#221217] to-[#120c11] border-rose-500/90 shadow-[0_0_18px_rgba(244,63,94,0.25)] ring-1 ring-rose-500/30'
+                          : isWarming
+                          ? 'bg-gradient-to-b from-[#221a0f] to-[#14100c] border-amber-400/90 shadow-[0_0_16px_rgba(245,158,11,0.22)] ring-1 ring-amber-400/30'
+                          : isKitchen
+                          ? 'bg-gradient-to-b from-[#1c1322] to-[#100d16] border-indigo-400/80 shadow-[0_0_16px_rgba(99,102,241,0.2)] ring-1 ring-indigo-400/30'
+                          : 'bg-gradient-to-b from-stone-900/95 to-stone-950/95 border-white/15 dark:shadow-[0_0_12px_rgba(255,255,255,0.03)] hover:border-emerald-400/60 hover:shadow-md'
+                      }`}
                     >
-                      <div className="flex justify-between items-center border-b border-slate-200 dark:border-white/5 pb-1.5 mb-1.5">
-                        <span className="font-mono text-stone-200 font-bold">#{ord.orderNumber.replace('ORD-', '')}</span>
-                        <span className="text-emerald-400 font-black font-mono">PKR {ord.total.toLocaleString()}</span>
+                      {/* Luminous Top Accent Indicator */}
+                      <div
+                        className={`absolute top-0 left-0 right-0 h-0.5 ${
+                          isSelected
+                            ? 'bg-gradient-to-r from-emerald-400 via-teal-300 to-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]'
+                            : isCancelled
+                            ? 'bg-gradient-to-r from-rose-500 via-rose-300 to-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.9)]'
+                            : isDelivered
+                            ? 'bg-gradient-to-r from-emerald-500 via-green-300 to-emerald-500 shadow-[0_0_10px_rgba(52,211,153,0.9)]'
+                            : isOnTheWay
+                            ? 'bg-gradient-to-r from-amber-400 via-orange-400 to-yellow-300 shadow-[0_0_10px_rgba(245,158,11,0.9)]'
+                            : isUrgent
+                            ? 'bg-gradient-to-r from-rose-500 via-rose-300 to-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.8)]'
+                            : isWarming
+                            ? 'bg-gradient-to-r from-amber-500 via-amber-200 to-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.7)]'
+                            : isKitchen
+                            ? 'bg-gradient-to-r from-indigo-500 via-purple-300 to-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.7)]'
+                            : 'bg-transparent'
+                        }`}
+                      />
+
+                      <div className="flex justify-between items-center border-b border-white/10 pb-1.5 mb-1.5">
+                        <span className="font-mono text-white font-black text-sm tracking-tight drop-shadow-xs">#{ord.orderNumber.replace('ORD-', '')}</span>
+                        <span className="text-emerald-400 font-black font-mono text-xs drop-shadow-[0_0_6px_rgba(52,211,153,0.3)]">PKR {ord.total.toLocaleString()}</span>
                       </div>
-                      <div className="flex items-center gap-1.5 text-[10px] text-slate-500 dark:text-stone-400 mb-1.5">
-                        <span className="capitalize font-medium">{ord.type.replace('_', ' ')}</span>
+                      <div className="flex items-center gap-1.5 text-[10px] text-stone-300 mb-2">
+                        <span className="capitalize font-bold text-stone-200 bg-white/5 border border-white/10 px-1.5 py-0.5 rounded">{ord.type.replace('_', ' ')}</span>
                         <span>•</span>
-                        <span className={`px-2 py-0.5 rounded-md font-bold text-[9px] uppercase tracking-wider ${getStatusBadgeStyle(ord.status)}`}>
+                        <span className={`px-2 py-0.5 rounded-md font-black text-[9px] uppercase tracking-wider border ${getStatusBadgeStyle(ord.status)}`}>
                           {getStatusLabel(ord.status)}
+                        </span>
+                        <span className={`ml-auto font-mono text-[10px] font-bold ${isUrgent ? 'text-rose-400 animate-pulse' : isWarming ? 'text-amber-400' : 'text-stone-400'}`}>
+                          {elapsedMins}m ago
                         </span>
                       </div>
                       {(ord.customer?.name || ord.customer?.phone || ord.customer?.address) && (
-                        <div className="flex flex-col gap-1 text-[10.5px] text-slate-700 dark:text-stone-300 mb-2 p-1.5 bg-slate-100 dark:bg-stone-950/50 rounded-lg border border-slate-200 dark:border-white/5">
+                        <div className="flex flex-col gap-1 text-[10.5px] text-stone-200 mb-2 p-1.5 bg-black/40 rounded-lg border border-white/10">
                           <div className="flex items-center gap-1.5 truncate">
-                            <User className="w-3.5 h-3.5 text-emerald-500/70 shrink-0" />
-                            <span className="font-semibold text-stone-200">{ord.customer?.name || 'Guest'}</span>
+                            <User className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                            <span className="font-bold text-white">{ord.customer?.name || 'Guest'}</span>
                             {ord.customer?.phone && (
                               <>
-                                <span className="text-stone-600 mx-0.5">•</span>
-                                <span className="text-slate-500 dark:text-stone-400 font-mono text-[9px]">{ord.customer.phone}</span>
+                                <span className="text-stone-500 mx-0.5">•</span>
+                                <span className="text-stone-300 font-mono text-[9.5px]">{ord.customer.phone}</span>
                               </>
                             )}
                           </div>
                           {ord.customer?.address && (
-                            <div className="flex items-start gap-1.5 text-[9.5px] text-slate-500 dark:text-stone-400 mt-0.5 leading-snug">
+                            <div className="flex items-start gap-1.5 text-[9.5px] text-stone-300 mt-0.5 leading-snug">
                               <MapPin className="w-3 h-3 text-emerald-400 shrink-0 mt-0.5" />
                               <span className="truncate whitespace-normal line-clamp-2">{ord.customer.address}</span>
                             </div>
                           )}
                         </div>
                       )}
-                      <div className="text-slate-700 dark:text-stone-300 text-[11px] truncate leading-tight mb-2 font-normal">
+                      <div className="text-stone-200 text-[11.5px] truncate leading-tight mb-2.5 font-medium">
                         {ord.items.map((i) => `${i.quantity}x ${i.name}`).join(', ')}
                       </div>
-                      <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-slate-200 dark:border-white/5">
+                      <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-white/10">
                         {ord.status !== 'completed' && ord.status !== 'cancelled' && (
                           <button 
                             onClick={(e) => { e.stopPropagation(); setSelectedOrderId(ord.id); handleOneClickDispatch(ord); }}
-                            className={`px-2 py-1 border rounded-lg text-[10px] font-bold tracking-wide transition-all duration-150 flex-1 hover:scale-[1.02] cursor-pointer ${
+                            className={`px-2.5 py-1.5 border rounded-lg text-[10px] font-black tracking-wide transition-all duration-150 flex-1 hover:scale-[1.02] cursor-pointer shadow-xs ${
                               ((ord.type !== 'delivery' && ord.orderType !== 'delivery') && ord.status === 'ready') ||
                               ((ord.type === 'delivery' || ord.orderType === 'delivery') && (ord.status === 'dispatched' || ord.status === 'delivered'))
-                                ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 hover:bg-emerald-600 hover:text-white'
-                                : 'bg-blue-500/10 text-blue-400 border-blue-500/20 hover:bg-blue-500 hover:text-white'
+                                ? 'bg-emerald-500/25 text-emerald-300 border-emerald-400/60 hover:bg-emerald-600 hover:text-white shadow-[0_0_10px_rgba(52,211,153,0.3)]'
+                                : 'bg-blue-500/20 text-blue-300 border-blue-400/50 hover:bg-blue-500 hover:text-white shadow-[0_0_10px_rgba(59,130,246,0.25)]'
                             }`}
                           >
                             {ord.status === 'pending' || ord.status === 'open' || ord.status === 'PUNCHED' || ord.status === 'MODIFIED' ? 'To Kitchen' 
@@ -1198,29 +1251,29 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                         {ord.status !== 'completed' && ord.status !== 'cancelled' && (
                           <button 
                             onClick={(e) => { e.stopPropagation(); setSelectedOrderId(ord.id); handleOneClickCashout(ord); }}
-                            className="px-2 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-600 hover:text-white rounded-lg text-[10px] font-bold tracking-wide transition-all duration-150 flex-1 hover:scale-[1.02] cursor-pointer shadow-xs"
+                            className="px-2.5 py-1.5 bg-emerald-500/20 text-emerald-300 border border-emerald-400/50 hover:bg-emerald-600 hover:text-white rounded-lg text-[10px] font-black tracking-wide transition-all duration-150 flex-1 hover:scale-[1.02] cursor-pointer shadow-xs"
                           >
                             Cashout
                           </button>
                         )}
                         <button
                           onClick={(e) => { e.stopPropagation(); handlePrintReceipt(ord); }}
-                          className="p-1.5 bg-slate-50 dark:bg-stone-800 hover:bg-stone-700 text-slate-700 dark:text-stone-300 hover:text-white rounded-lg text-[10px] font-bold border border-slate-300 dark:border-white/10 transition-all hover:scale-105 cursor-pointer shrink-0"
+                          className="p-1.5 bg-stone-800 hover:bg-stone-700 text-stone-200 hover:text-white rounded-lg text-[10px] font-bold border border-white/15 transition-all hover:scale-105 cursor-pointer shrink-0 shadow-xs"
                           title="Print Receipt"
                         >
-                          <Printer className="w-3 h-3" />
+                          <Printer className="w-3.5 h-3.5" />
                         </button>
                         <button
                           onClick={(e) => { e.stopPropagation(); handlePrintKOT(ord); }}
-                          className="p-1.5 bg-amber-500/10 hover:bg-amber-500/25 text-amber-400 hover:text-amber-300 rounded-lg text-[10px] font-bold border border-amber-500/20 transition-all hover:scale-105 cursor-pointer shrink-0"
+                          className="p-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 rounded-lg text-[10px] font-bold border border-amber-400/40 transition-all hover:scale-105 cursor-pointer shrink-0 shadow-xs"
                           title="Print Kitchen Slip (KOT)"
                         >
-                          <ChefHat className="w-3 h-3" />
+                          <ChefHat className="w-3.5 h-3.5" />
                         </button>
                         {(currentUser.role === 'manager' || currentUser.role === 'owner') && (
                           <button 
                             onClick={(e) => { e.stopPropagation(); setSelectedOrderId(ord.id); handleOneClickEdit(ord); }}
-                            className="px-2 py-1 bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500 hover:text-white rounded-lg text-[10px] font-bold tracking-wide transition-all duration-150 hover:scale-[1.02] cursor-pointer"
+                            className="px-2 py-1 bg-amber-500/15 text-amber-300 border border-amber-400/40 hover:bg-amber-500 hover:text-white rounded-lg text-[10px] font-bold tracking-wide transition-all duration-150 hover:scale-[1.02] cursor-pointer"
                           >
                             Edit
                           </button>
@@ -1228,7 +1281,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                         {(currentUser.role === 'manager' || currentUser.role === 'owner') && (
                           <button 
                             onClick={(e) => { e.stopPropagation(); setSelectedOrderId(ord.id); handleOneClickCancel(ord.id, ord.orderNumber); }}
-                            className="px-2 py-1 bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500 hover:text-white rounded-lg text-[10px] font-bold tracking-wide transition-all duration-150 hover:scale-[1.02] cursor-pointer"
+                            className="px-2 py-1 bg-red-500/15 text-red-300 border border-red-400/40 hover:bg-red-500 hover:text-white rounded-lg text-[10px] font-bold tracking-wide transition-all duration-150 hover:scale-[1.02] cursor-pointer"
                           >
                             Cancel
                           </button>
@@ -2482,6 +2535,11 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                 <div className="space-y-1.5">
                 {filteredAllOrders.map((ord) => {
                   const isSelected = selectedOrderId === ord.id;
+                  const ordSt = (ord.status || '').toLowerCase();
+                  const isCancelled = ordSt === 'cancelled' || ordSt === 'refunded' || ordSt === 'void';
+                  const isDelivered = ordSt === 'delivered' || ordSt === 'completed' || ordSt === 'ready';
+                  const isOnTheWay = ordSt === 'dispatched' || ordSt === 'on_the_way';
+
                   return (
                     <div
                       key={ord.id}
@@ -2489,14 +2547,38 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                         setSelectedOrderId(ord.id);
                         setMiddleTab('order_details');
                       }}
-                      className={`border rounded-xl p-2.5 transition cursor-pointer text-xs space-y-1.5 ${
+                      className={`relative overflow-hidden border-2 rounded-xl p-2.5 transition cursor-pointer text-xs space-y-1.5 ${
                         isSelected 
-                          ? 'border-amber-500/60 ring-1 ring-amber-500/40' 
+                          ? 'border-emerald-400/90 ring-1 ring-emerald-400/50 bg-stone-900/90 shadow-[0_0_15px_rgba(52,211,153,0.25)]' 
+                          : isCancelled
+                          ? theme === 'dark'
+                            ? 'bg-gradient-to-b from-[#241016] to-[#120a0d] border-rose-500/80 shadow-[0_0_14px_rgba(244,63,94,0.25)] ring-1 ring-rose-500/30'
+                            : 'bg-red-50/60 border-red-400 shadow-xs'
+                          : isDelivered
+                          ? theme === 'dark'
+                            ? 'bg-gradient-to-b from-[#0c2015] to-[#08120c] border-emerald-400/80 shadow-[0_0_14px_rgba(52,211,153,0.22)] ring-1 ring-emerald-400/30'
+                            : 'bg-emerald-50/60 border-emerald-400 shadow-xs'
+                          : isOnTheWay
+                          ? theme === 'dark'
+                            ? 'bg-gradient-to-b from-[#22160a] to-[#120d06] border-amber-400/80 shadow-[0_0_14px_rgba(245,158,11,0.22)] ring-1 ring-orange-400/30'
+                            : 'bg-amber-50/60 border-amber-400 shadow-xs'
                           : theme === 'dark'
-                          ? 'bg-white dark:bg-stone-900/90 hover:bg-slate-100 dark:hover:bg-stone-800/90 border-slate-200 dark:border-white/5'
+                          ? 'bg-white dark:bg-stone-900/90 hover:bg-slate-100 dark:hover:bg-stone-800/90 border-slate-200 dark:border-white/10'
                           : 'bg-white hover:bg-slate-50 border-slate-200 shadow-xs'
                       }`}
                     >
+                      {/* Top Ambient Glow Strip */}
+                      <div
+                        className={`absolute top-0 left-0 right-0 h-0.5 ${
+                          isCancelled
+                            ? 'bg-gradient-to-r from-rose-500 via-rose-300 to-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.9)]'
+                            : isDelivered
+                            ? 'bg-gradient-to-r from-emerald-500 via-green-300 to-emerald-500 shadow-[0_0_8px_rgba(52,211,153,0.9)]'
+                            : isOnTheWay
+                            ? 'bg-gradient-to-r from-amber-400 via-orange-400 to-yellow-300 shadow-[0_0_8px_rgba(245,158,11,0.9)]'
+                            : 'bg-transparent'
+                        }`}
+                      />
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-1.5">
                           <span className={`font-mono font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
