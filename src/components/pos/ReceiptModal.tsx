@@ -31,23 +31,23 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ order, onClose }) =>
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-150 print:p-0 print:bg-white print:static select-none">
-      <div className="bg-stone-900 border border-stone-800 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl flex flex-col my-auto print:border-none print:shadow-none print:bg-white print:max-w-none print:w-full">
+      <div className="bg-white dark:bg-stone-900 border border-slate-200 dark:border-stone-800 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl flex flex-col my-auto print:border-none print:shadow-none print:bg-white print:max-w-none print:w-full">
         {/* Modal Top Bar - Hidden during printing */}
-        <div className="p-4 bg-stone-950 border-b border-stone-800 flex items-center justify-between print:hidden">
+        <div className="p-4 bg-white dark:bg-stone-950 border-b border-slate-200 dark:border-stone-800 flex items-center justify-between print:hidden">
           <div className="flex items-center gap-2 text-emerald-400">
             <CheckCircle className="w-5 h-5" />
             <span className="text-sm font-bold text-white">Order Punched Successfully</span>
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 flex items-center justify-center transition cursor-pointer"
+            className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-stone-800 hover:bg-stone-700 text-slate-700 dark:text-stone-300 flex items-center justify-center transition cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Thermal Receipt Paper Card */}
-        <div className="p-6 bg-stone-950/60 print:bg-white print:p-4">
+        <div className="p-6 bg-white/60 dark:bg-stone-950/60 print:bg-white print:p-4">
           <div
             id="thermal-receipt"
             className="bg-white text-stone-900 font-mono p-6 rounded-2xl shadow-md space-y-4 text-xs border border-stone-200 print:border-none print:shadow-none print:p-0 print:rounded-none"
@@ -56,8 +56,8 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ order, onClose }) =>
             <div className="text-center space-y-1 pb-3 border-b-2 border-dashed border-stone-300">
               <h2 className="text-lg font-black tracking-wider uppercase font-sans text-stone-950">Master POS</h2>
               <p className="text-[11px] font-bold text-stone-700">Pizza, Fast Food & Grill</p>
-              <p className="text-[10px] text-stone-500">Main Commercial Hub, Islamabad</p>
-              <p className="text-[10px] text-stone-500">UAN: (051) 111-227-853 • NTN: #7391024-1</p>
+              <p className="text-[10px] text-slate-400 dark:text-stone-500">Main Commercial Hub, Islamabad</p>
+              <p className="text-[10px] text-slate-400 dark:text-stone-500">UAN: (051) 111-227-853 • NTN: #7391024-1</p>
             </div>
 
             {/* Receipt Meta */}
@@ -110,10 +110,10 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ order, onClose }) =>
                     <span className="font-bold">Rs. {(item.quantity * item.price).toFixed(0)}</span>
                   </div>
                   {item.customization && (
-                    <p className="text-[9px] text-stone-500 italic pl-2">↳ {item.customization}</p>
+                    <p className="text-[9px] text-slate-400 dark:text-stone-500 italic pl-2">↳ {item.customization}</p>
                   )}
                   {item.selectedOptions && item.selectedOptions.length > 0 && (
-                    <div className="text-[9px] text-stone-500 pl-2">
+                    <div className="text-[9px] text-slate-400 dark:text-stone-500 pl-2">
                       {item.selectedOptions.map((opt, i) => (
                         <span key={i} className="mr-2">
                           + {opt.choice} ({opt.extraPrice > 0 ? `Rs. ${opt.extraPrice}` : 'inc'})
@@ -180,16 +180,16 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ order, onClose }) =>
               <div className="font-mono text-xs tracking-widest text-stone-600 bg-stone-100 py-1 rounded">
                 * * * {order.orderNumber} * * *
               </div>
-              <p className="text-[9px] text-stone-400">Wifi: MasterPOSGuest • Pass: masterpospizza</p>
+              <p className="text-[9px] text-slate-500 dark:text-stone-400">Wifi: MasterPOSGuest • Pass: masterpospizza</p>
             </div>
           </div>
         </div>
 
         {/* Modal Actions - Hidden during printing */}
-        <div className="p-4 bg-stone-950 border-t border-stone-800 flex items-center justify-between print:hidden">
+        <div className="p-4 bg-white dark:bg-stone-950 border-t border-slate-200 dark:border-stone-800 flex items-center justify-between print:hidden">
           <button
             onClick={onClose}
-            className="px-4 py-2.5 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-300 text-xs font-semibold transition cursor-pointer"
+            className="px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-stone-800 hover:bg-stone-700 text-slate-700 dark:text-stone-300 text-xs font-semibold transition cursor-pointer"
           >
             Done (Esc)
           </button>

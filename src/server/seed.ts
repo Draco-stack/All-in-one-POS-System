@@ -122,7 +122,23 @@ export async function seedDatabaseIfNeeded() {
       });
     }
 
-    // 2. Seed Categories & Menu Items if none exist
+    // 2. Seed Categories & Menu Items (Auto-migrates if old menu is detected)
+    const hasNewMenu = await prisma.menuItem.findFirst({
+      where: { title: 'BBQ Pizza (Small)' }
+    });
+
+    if (!hasNewMenu) {
+      console.log('[Seed] Old menu detected or menu empty. Clearing old menu items and categories...');
+      // Safely nullify menuItemId on existing OrderItem records to avoid foreign key violations
+      await prisma.orderItem.updateMany({
+        where: { NOT: { menuItemId: null } },
+        data: { menuItemId: null }
+      });
+      await prisma.menuItem.deleteMany();
+      await prisma.category.deleteMany();
+      console.log('[Seed] Old menu catalog cleaned successfully.');
+    }
+
     const categoryCount = await prisma.category.count();
     if (categoryCount === 0) {
       console.log('[Seed] Seeding categories & menu items...');

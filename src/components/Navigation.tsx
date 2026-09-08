@@ -61,7 +61,7 @@ export const Navigation: React.FC<NavigationProps> = ({
   ];
 
   return (
-    <header className="bg-stone-900/95 backdrop-blur border-b border-stone-800 text-stone-100 px-3 sm:px-4 py-2 flex items-center justify-between gap-2.5 sm:gap-3.5 sticky top-0 z-40 select-none shadow-md min-h-[52px] h-[52px] sm:h-[56px]">
+    <header className="bg-white dark:bg-stone-900/95 backdrop-blur border-b border-slate-200 dark:border-stone-800 text-slate-900 dark:text-stone-100 px-3 sm:px-4 py-2 flex items-center justify-between gap-2.5 sm:gap-3.5 sticky top-0 z-40 select-none shadow-md min-h-[52px] h-[52px] sm:h-[56px]">
       {/* Brand & Outlet */}
       <div className="flex items-center gap-2.5 shrink-0 max-w-[140px] sm:max-w-[190px] md:max-w-[220px] lg:max-w-none">
         <div className="w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-[#00897b] to-emerald-700 flex items-center justify-center text-white shadow-inner border border-emerald-400/30 shrink-0">
@@ -76,7 +76,7 @@ export const Navigation: React.FC<NavigationProps> = ({
               </span>
             </h1>
           </div>
-          <p className="text-[10px] sm:text-[10.5px] text-stone-400 font-mono leading-tight mt-0.5 truncate hidden sm:block">
+          <p className="text-[10px] sm:text-[10.5px] text-slate-500 dark:text-stone-400 font-mono leading-tight mt-0.5 truncate hidden sm:block">
             {currentUser.outlet || 'Main Branch'} • Terminal 01
           </p>
         </div>
@@ -84,7 +84,7 @@ export const Navigation: React.FC<NavigationProps> = ({
 
       {/* Center Navigation Tabs with Horizontal Scroll & Flex-Safe Boundary */}
       <div className="flex-1 min-w-0 flex items-center justify-start md:justify-center overflow-hidden relative">
-        <nav className="flex items-center gap-1 bg-stone-950/70 p-1 rounded-xl border border-stone-800 overflow-x-auto no-scrollbar scroll-smooth overscroll-x-contain touch-pan-x min-w-0 max-w-full">
+        <nav className="flex items-center gap-1 bg-stone-950/70 p-1 rounded-xl border border-slate-200 dark:border-stone-800 overflow-x-auto no-scrollbar scroll-smooth overscroll-x-contain touch-pan-x min-w-0 max-w-full">
           {navItems.map((item) => {
             if (item.requiredRole && !item.requiredRole.includes(currentUser.role)) {
               return null;
@@ -101,7 +101,7 @@ export const Navigation: React.FC<NavigationProps> = ({
                 className={`flex items-center gap-1.5 sm:gap-2 h-8 px-2.5 sm:px-3 rounded-lg text-xs font-semibold transition-all relative cursor-pointer whitespace-nowrap shrink-0 active:scale-95 ${
                   isActive
                     ? 'bg-[#00897b] text-white shadow-md'
-                    : 'text-stone-300 hover:text-white hover:bg-stone-800/60'
+                    : 'text-slate-700 dark:text-stone-300 hover:text-white hover:bg-slate-100 dark:hover:bg-stone-800/60'
                 }`}
               >
                 <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
@@ -120,7 +120,7 @@ export const Navigation: React.FC<NavigationProps> = ({
       {/* Right Controls: Shift, User & Theme with Zero Clipping Protection */}
       <div className="flex items-center gap-2 sm:gap-2.5 font-mono text-xs shrink-0 select-none ml-auto">
         {/* Live Clock (shown on larger screens) */}
-        <div className="hidden xl:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-stone-950/60 border border-stone-800 text-stone-300 shrink-0 h-8">
+        <div className="hidden xl:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/60 dark:bg-stone-950/60 border border-slate-200 dark:border-stone-800 text-slate-700 dark:text-stone-300 shrink-0 h-8">
           <Clock className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
           <span>{time}</span>
         </div>
@@ -143,7 +143,7 @@ export const Navigation: React.FC<NavigationProps> = ({
             logoutUser();
             showToast(`✓ Signed out of account (${currentUser.name})`);
           }}
-          className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 rounded-xl bg-stone-800/90 hover:bg-red-950/60 border border-stone-700 hover:border-red-500/40 text-stone-200 hover:text-red-300 transition cursor-pointer shadow-sm shrink-0 h-8"
+          className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 rounded-xl bg-slate-50 dark:bg-stone-800/90 hover:bg-red-950/60 border border-slate-300 dark:border-stone-700 hover:border-red-500/40 text-stone-200 hover:text-red-300 transition cursor-pointer shadow-sm shrink-0 h-8"
           title={`Sign Out (${currentUser.name})`}
         >
           <div className="w-5 h-5 rounded-md bg-[#00897b]/30 border border-[#00897b]/50 flex items-center justify-center text-[10px] sm:text-xs font-bold text-emerald-300 shrink-0">
@@ -151,7 +151,7 @@ export const Navigation: React.FC<NavigationProps> = ({
           </div>
           <div className="text-left font-sans">
             <p className="text-xs font-bold leading-tight max-w-[55px] sm:max-w-[80px] md:max-w-[100px] truncate">{currentUser.name.split(' ')[0]}</p>
-            <p className="text-[9px] sm:text-[10px] text-stone-400 uppercase tracking-wider font-semibold font-mono hidden sm:block">
+            <p className="text-[9px] sm:text-[10px] text-slate-500 dark:text-stone-400 uppercase tracking-wider font-semibold font-mono hidden sm:block">
               {currentUser.role}
             </p>
           </div>
@@ -161,7 +161,7 @@ export const Navigation: React.FC<NavigationProps> = ({
         {/* Theme Toggle */}
         <button
           onClick={toggleTheme}
-          className="h-8 w-8 rounded-xl bg-stone-800/60 hover:bg-stone-700/80 border border-stone-700 text-stone-300 transition cursor-pointer shrink-0 flex items-center justify-center active:scale-90"
+          className="h-8 w-8 rounded-xl bg-slate-50 dark:bg-stone-800/60 hover:bg-stone-700/80 border border-slate-300 dark:border-stone-700 text-slate-700 dark:text-stone-300 transition cursor-pointer shrink-0 flex items-center justify-center active:scale-90"
           title="Toggle Light/Dark Display"
         >
           {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-blue-400" />}

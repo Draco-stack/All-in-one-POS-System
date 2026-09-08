@@ -77,9 +77,9 @@ export const OrdersHistoryView: React.FC = () => {
   };
 
   return (
-    <div className="h-[calc(100vh-4rem)] flex flex-col bg-stone-950 text-stone-100 overflow-hidden select-none">
+    <div className="h-[calc(100vh-4rem)] flex flex-col bg-white dark:bg-stone-950 text-slate-900 dark:text-stone-100 overflow-hidden select-none">
       {/* Top Filter Bar */}
-      <div className="p-3.5 bg-stone-900 border-b border-stone-800 flex flex-wrap items-center justify-between gap-3">
+      <div className="p-3.5 bg-white dark:bg-stone-900 border-b border-slate-200 dark:border-stone-800 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-[#00897b]/10 border border-[#00897b]/30 flex items-center justify-center text-[#00897b]">
             <History className="w-5 h-5" />
@@ -87,35 +87,35 @@ export const OrdersHistoryView: React.FC = () => {
           <div>
             <h2 className="text-sm font-bold text-white flex items-center gap-2">
               <span>Orders History & Invoicing</span>
-              <span className="text-xs font-mono text-stone-400 font-normal">
+              <span className="text-xs font-mono text-slate-500 dark:text-stone-400 font-normal">
                 ({filteredOrders.length} records)
               </span>
             </h2>
-            <p className="text-xs text-stone-400">Reprint receipts, driver dispatch slips, manager audits and refunds</p>
+            <p className="text-xs text-slate-500 dark:text-stone-400">Reprint receipts, driver dispatch slips, manager audits and refunds</p>
           </div>
         </div>
 
         {/* Search, Filters & Export */}
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative">
-            <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-stone-400" />
+            <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-500 dark:text-stone-400" />
             <input
               type="text"
               placeholder="Search order #, customer, driver..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="bg-stone-950 border border-stone-700 rounded-xl pl-8 pr-3 py-1.5 text-xs text-stone-200 focus:outline-none focus:border-teal-500 font-medium w-52"
+              className="bg-white dark:bg-stone-950 border border-slate-300 dark:border-stone-700 rounded-xl pl-8 pr-3 py-1.5 text-xs text-stone-200 focus:outline-none focus:border-teal-500 font-medium w-52"
             />
           </div>
 
           {/* Type filter */}
-          <div className="flex items-center bg-stone-950 p-1 rounded-xl border border-stone-800 text-xs">
+          <div className="flex items-center bg-white dark:bg-stone-950 p-1 rounded-xl border border-slate-200 dark:border-stone-800 text-xs">
             {(['all', 'dine_in', 'takeaway', 'delivery'] as const).map((t) => (
               <button
                 key={t}
                 onClick={() => setTypeFilter(t)}
                 className={`px-2.5 py-1 rounded-lg text-xs font-bold uppercase transition cursor-pointer ${
-                  typeFilter === t ? 'bg-[#00897b] text-white' : 'text-stone-400 hover:text-stone-200'
+                  typeFilter === t ? 'bg-[#00897b] text-white' : 'text-slate-500 dark:text-stone-400 hover:text-stone-200'
                 }`}
               >
                 {t.replace('_', ' ')}
@@ -124,13 +124,13 @@ export const OrdersHistoryView: React.FC = () => {
           </div>
 
           {/* Payment filter */}
-          <div className="flex items-center bg-stone-950 p-1 rounded-xl border border-stone-800 text-xs">
+          <div className="flex items-center bg-white dark:bg-stone-950 p-1 rounded-xl border border-slate-200 dark:border-stone-800 text-xs">
             {(['all', 'cash', 'card'] as const).map((pm) => (
               <button
                 key={pm}
                 onClick={() => setPaymentFilter(pm)}
                 className={`px-2.5 py-1 rounded-lg text-xs font-bold uppercase transition cursor-pointer ${
-                  paymentFilter === pm ? 'bg-[#00897b] text-white' : 'text-stone-400 hover:text-stone-200'
+                  paymentFilter === pm ? 'bg-[#00897b] text-white' : 'text-slate-500 dark:text-stone-400 hover:text-stone-200'
                 }`}
               >
                 {pm}
@@ -141,7 +141,7 @@ export const OrdersHistoryView: React.FC = () => {
           {/* Export to CSV */}
           <button
             onClick={handleExportCSV}
-            className="px-3 py-1.5 bg-stone-800 hover:bg-stone-700 text-stone-200 rounded-xl border border-stone-700 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer"
+            className="px-3 py-1.5 bg-slate-50 dark:bg-stone-800 hover:bg-stone-700 text-stone-200 rounded-xl border border-slate-300 dark:border-stone-700 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer"
             title="Export transactions to CSV spreadsheet"
           >
             <Download className="w-3.5 h-3.5 text-teal-400" />
@@ -152,9 +152,9 @@ export const OrdersHistoryView: React.FC = () => {
 
       {/* Transactions Table */}
       <div className="flex-1 p-4 overflow-y-auto">
-        <div className="bg-stone-900 border border-stone-800 rounded-2xl overflow-hidden shadow-xl">
+        <div className="bg-white dark:bg-stone-900 border border-slate-200 dark:border-stone-800 rounded-2xl overflow-hidden shadow-xl">
           <table className="w-full text-left text-xs">
-            <thead className="bg-stone-950 border-b border-stone-800 text-[10px] font-bold uppercase text-stone-400 tracking-wider">
+            <thead className="bg-white dark:bg-stone-950 border-b border-slate-200 dark:border-stone-800 text-[10px] font-bold uppercase text-slate-500 dark:text-stone-400 tracking-wider">
               <tr>
                 <th className="p-3">Order #</th>
                 <th className="p-3">Time</th>
@@ -169,7 +169,7 @@ export const OrdersHistoryView: React.FC = () => {
             <tbody className="divide-y divide-stone-800 font-medium">
               {filteredOrders.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="p-12 text-center text-stone-500">
+                  <td colSpan={8} className="p-12 text-center text-slate-400 dark:text-stone-500">
                     <Receipt className="w-10 h-10 mx-auto mb-2 opacity-30" />
                     <p className="text-sm font-semibold">No transactions found</p>
                   </td>
@@ -188,11 +188,11 @@ export const OrdersHistoryView: React.FC = () => {
                       <td className="p-3 font-bold font-mono text-teal-400">
                         {order.orderNumber}
                       </td>
-                      <td className="p-3 text-stone-400 font-mono">{dateFormatted}</td>
+                      <td className="p-3 text-slate-500 dark:text-stone-400 font-mono">{dateFormatted}</td>
                       <td className="p-3">
                         <div className="font-bold text-white">{order.customer?.name || 'Walk-in'}</div>
                         {order.customer?.phone && (
-                          <div className="text-[11px] text-stone-400 font-mono">{order.customer?.phone}</div>
+                          <div className="text-[11px] text-slate-500 dark:text-stone-400 font-mono">{order.customer?.phone}</div>
                         )}
                         {order.customer?.address && (
                           <div className="text-[10px] text-teal-300/80 truncate max-w-[180px]" title={order.customer.address}>
@@ -205,14 +205,14 @@ export const OrdersHistoryView: React.FC = () => {
                           {order.type.replace('_', ' ')}
                         </span>
                         {order.tableNumber && (
-                          <span className="text-[10px] text-stone-400">Table {order.tableNumber}</span>
+                          <span className="text-[10px] text-slate-500 dark:text-stone-400">Table {order.tableNumber}</span>
                         )}
                         {order.type === 'delivery' && (
                           <div className="mt-1">
                             <select
                               value={order.deliveryDriver || deliveryDrivers[0] || 'Rider 1 (Farhan)'}
                               onChange={(e) => assignDeliveryDriver(order.id, e.target.value)}
-                              className="bg-stone-950 text-teal-300 text-[10px] font-semibold px-2 py-0.5 rounded border border-stone-700 focus:outline-none focus:border-teal-500"
+                              className="bg-white dark:bg-stone-950 text-teal-300 text-[10px] font-semibold px-2 py-0.5 rounded border border-slate-300 dark:border-stone-700 focus:outline-none focus:border-teal-500"
                               title="Assign Driver"
                             >
                               {deliveryDrivers.map((driver) => (
@@ -224,7 +224,7 @@ export const OrdersHistoryView: React.FC = () => {
                           </div>
                         )}
                       </td>
-                      <td className="p-3 text-stone-300 max-w-xs truncate">
+                      <td className="p-3 text-slate-700 dark:text-stone-300 max-w-xs truncate">
                         {order.items.map((i) => `${i.quantity}x ${i.name}`).join(', ')}
                       </td>
                       <td className="p-3">
@@ -269,7 +269,7 @@ export const OrdersHistoryView: React.FC = () => {
                           <button
                             id={`receipt-order-${order.id}`}
                             onClick={() => setActiveReceiptOrder(order)}
-                            className="px-2 py-1 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-semibold flex items-center gap-1 transition cursor-pointer"
+                            className="px-2 py-1 rounded-lg bg-slate-50 dark:bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-semibold flex items-center gap-1 transition cursor-pointer"
                             title="View Receipt"
                           >
                             <Receipt className="w-3.5 h-3.5" />
@@ -298,7 +298,7 @@ export const OrdersHistoryView: React.FC = () => {
                               <button
                                 id={`edit-order-${order.id}`}
                                 onClick={() => setEditingOrder(order)}
-                                className="px-2 py-1 rounded-lg bg-stone-800 hover:bg-stone-700 text-teal-400 text-xs font-semibold flex items-center gap-1 transition cursor-pointer"
+                                className="px-2 py-1 rounded-lg bg-slate-50 dark:bg-stone-800 hover:bg-stone-700 text-teal-400 text-xs font-semibold flex items-center gap-1 transition cursor-pointer"
                                 title="Edit Order Details"
                               >
                                 <Edit className="w-3.5 h-3.5" />
@@ -313,7 +313,7 @@ export const OrdersHistoryView: React.FC = () => {
                               <button
                                 id={`cancel-order-${order.id}`}
                                 onClick={() => setCancellingOrder(order)}
-                                className="px-2 py-1 rounded-lg bg-stone-800 hover:bg-red-950/40 text-stone-400 hover:text-red-400 text-xs font-semibold flex items-center gap-1 transition cursor-pointer"
+                                className="px-2 py-1 rounded-lg bg-slate-50 dark:bg-stone-800 hover:bg-red-950/40 text-slate-500 dark:text-stone-400 hover:text-red-400 text-xs font-semibold flex items-center gap-1 transition cursor-pointer"
                                 title="Cancel Order"
                               >
                                 <XCircle className="w-3.5 h-3.5" />
@@ -322,7 +322,7 @@ export const OrdersHistoryView: React.FC = () => {
                             ) : (
                               <button
                                 onClick={() => alert('Only Managers and Owners are authorized to cancel orders.')}
-                                className="px-2 py-1 rounded-lg bg-stone-900 text-stone-600 text-xs font-semibold flex items-center gap-1 cursor-not-allowed"
+                                className="px-2 py-1 rounded-lg bg-white dark:bg-stone-900 text-stone-600 text-xs font-semibold flex items-center gap-1 cursor-not-allowed"
                                 title="Manager permission required"
                               >
                                 <XCircle className="w-3.5 h-3.5" />
@@ -337,7 +337,7 @@ export const OrdersHistoryView: React.FC = () => {
                               <button
                                 id={`refund-order-${order.id}`}
                                 onClick={() => setRefundModalOrder(order)}
-                                className="px-2 py-1 rounded-lg bg-stone-800 hover:bg-rose-950/40 text-stone-400 hover:text-rose-400 text-xs font-semibold flex items-center gap-1 transition cursor-pointer"
+                                className="px-2 py-1 rounded-lg bg-slate-50 dark:bg-stone-800 hover:bg-rose-950/40 text-slate-500 dark:text-stone-400 hover:text-rose-400 text-xs font-semibold flex items-center gap-1 transition cursor-pointer"
                                 title="Issue Refund"
                               >
                                 <RotateCcw className="w-3.5 h-3.5" />
@@ -383,43 +383,43 @@ export const OrdersHistoryView: React.FC = () => {
       {/* Refund Confirmation Modal */}
       {refundModalOrder && (
         <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
-          <div className="bg-stone-900 border border-stone-800 rounded-2xl w-full max-w-md p-5 space-y-4 shadow-2xl">
+          <div className="bg-white dark:bg-stone-900 border border-slate-200 dark:border-stone-800 rounded-2xl w-full max-w-md p-5 space-y-4 shadow-2xl">
             <div className="flex items-center gap-2 text-rose-400 font-bold text-base">
               <RotateCcw className="w-5 h-5" />
               <span>Issue Refund for {refundModalOrder.orderNumber}</span>
             </div>
 
-            <div className="p-3 bg-stone-950 rounded-xl border border-stone-800 space-y-1 text-xs">
-              <div className="flex justify-between text-stone-400">
+            <div className="p-3 bg-white dark:bg-stone-950 rounded-xl border border-slate-200 dark:border-stone-800 space-y-1 text-xs">
+              <div className="flex justify-between text-slate-500 dark:text-stone-400">
                 <span>Customer:</span>
                 <span className="font-bold text-white">{refundModalOrder.customer?.name}</span>
               </div>
-              <div className="flex justify-between text-stone-400">
+              <div className="flex justify-between text-slate-500 dark:text-stone-400">
                 <span>Total to Refund:</span>
                 <span className="font-black text-rose-400 text-sm font-mono">
                   Rs. {refundModalOrder.total.toFixed(0)}
                 </span>
               </div>
-              <div className="flex justify-between text-stone-400">
+              <div className="flex justify-between text-slate-500 dark:text-stone-400">
                 <span>Payment Method:</span>
                 <span className="uppercase">{refundModalOrder.paymentMethod}</span>
               </div>
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-bold uppercase text-stone-300">Refund Reason</label>
+              <label className="text-xs font-bold uppercase text-slate-700 dark:text-stone-300">Refund Reason</label>
               <input
                 type="text"
                 value={refundReason}
                 onChange={(e) => setRefundReason(e.target.value)}
-                className="w-full bg-stone-950 border border-stone-700 rounded-xl px-3 py-2 text-xs text-stone-200 focus:outline-none focus:border-rose-500"
+                className="w-full bg-white dark:bg-stone-950 border border-slate-300 dark:border-stone-700 rounded-xl px-3 py-2 text-xs text-stone-200 focus:outline-none focus:border-rose-500"
               />
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-2 border-t border-stone-800">
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-200 dark:border-stone-800">
               <button
                 onClick={() => setRefundModalOrder(null)}
-                className="px-4 py-2 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-300 text-xs font-semibold cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-slate-50 dark:bg-stone-800 hover:bg-stone-700 text-slate-700 dark:text-stone-300 text-xs font-semibold cursor-pointer"
               >
                 Cancel
               </button>

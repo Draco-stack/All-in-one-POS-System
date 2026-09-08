@@ -52,14 +52,14 @@ export const MenuItemThumbnail: React.FC<MenuItemThumbnailProps> = ({
     if (norm.includes('deal') || norm.includes('fifa') || norm.includes('special')) {
       return 'from-emerald-950/80 via-teal-950/60 to-stone-900 text-emerald-400 border-emerald-500/20';
     }
-    return 'from-stone-850 via-stone-900 to-stone-950 text-stone-300 border-white/10';
+    return 'from-stone-850 via-stone-900 to-stone-950 text-slate-700 dark:text-stone-300 border-slate-300 dark:border-white/10';
   };
 
   const gradientClass = getCategoryGradient(category);
 
   if (image && !imgError) {
     return (
-      <div className={`relative overflow-hidden shrink-0 border border-white/10 ${sizeClasses[size]} ${className}`}>
+      <div className={`relative overflow-hidden shrink-0 border border-slate-300 dark:border-white/10 ${sizeClasses[size]} ${className}`}>
         <img
           src={image}
           alt={name}
@@ -69,7 +69,7 @@ export const MenuItemThumbnail: React.FC<MenuItemThumbnailProps> = ({
           loading="lazy"
         />
         {showCategoryBadge && (
-          <div className="absolute bottom-1 right-1 p-1 rounded-md bg-black/60 backdrop-blur-xs border border-white/10 text-white shadow-xs">
+          <div className="absolute bottom-1 right-1 p-1 rounded-md bg-slate-900/40 dark:bg-black/60 backdrop-blur-xs border border-slate-300 dark:border-white/10 text-white shadow-xs">
             <IconComponent className="w-3 h-3" />
           </div>
         )}

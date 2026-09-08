@@ -62,10 +62,10 @@ export const ItemOptionsModal: React.FC<ItemOptionsModalProps> = ({ item, onClos
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-150">
-      <div className="bg-gradient-to-b from-stone-900 to-[#121212] border border-white/10 ring-1 ring-white/10 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-50 bg-slate-900/40 dark:bg-black/60 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-150">
+      <div className="bg-gradient-to-b from-stone-900 to-[#121212] border border-slate-300 dark:border-white/10 ring-1 ring-white/10 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
         {/* Header */}
-        <div className="p-4 bg-stone-950/60 backdrop-blur-xs border-b border-white/5 flex items-center justify-between">
+        <div className="p-4 bg-white/60 dark:bg-stone-950/60 backdrop-blur-xs border-b border-slate-200 dark:border-white/5 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <MenuItemThumbnail
               image={item.image}
@@ -76,12 +76,12 @@ export const ItemOptionsModal: React.FC<ItemOptionsModalProps> = ({ item, onClos
             />
             <div>
               <h3 className="text-base font-extrabold text-white leading-tight">{item.name}</h3>
-              <p className="text-xs text-stone-400 font-mono font-bold">Base: PKR {item.price.toFixed(0)}</p>
+              <p className="text-xs text-slate-500 dark:text-stone-400 font-mono font-bold">Base: PKR {item.price.toFixed(0)}</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-xl hover:bg-white/5 text-stone-400 hover:text-white transition-all cursor-pointer"
+            className="p-1.5 rounded-xl hover:bg-white/5 text-slate-500 dark:text-stone-400 hover:text-white transition-all cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -92,7 +92,7 @@ export const ItemOptionsModal: React.FC<ItemOptionsModalProps> = ({ item, onClos
           {item.options && item.options.length > 0 ? (
             item.options.map((opt) => (
               <div key={opt.name} className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-stone-300 flex items-center justify-between">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-700 dark:text-stone-300 flex items-center justify-between">
                   <span>{opt.name}</span>
                   <span className="text-[10px] text-emerald-400 font-bold uppercase">Select one</span>
                 </label>
@@ -109,14 +109,14 @@ export const ItemOptionsModal: React.FC<ItemOptionsModalProps> = ({ item, onClos
                         className={`p-3 rounded-xl border text-left flex flex-col justify-between transition-all cursor-pointer ${
                           isSelected
                             ? 'bg-emerald-950/40 border-emerald-500 text-emerald-300 ring-1 ring-emerald-500/30'
-                            : 'bg-stone-900 border-white/5 text-stone-300 hover:bg-stone-800 hover:border-white/10'
+                            : 'bg-white dark:bg-stone-900 border-slate-200 dark:border-white/5 text-slate-700 dark:text-stone-300 hover:bg-slate-100 dark:hover:bg-stone-800 hover:border-white/10'
                         }`}
                       >
                         <div className="flex items-center justify-between w-full">
                           <span className="text-xs font-bold">{choiceLabel}</span>
                           {isSelected && <Check className="w-3.5 h-3.5 text-emerald-400" />}
                         </div>
-                        <span className="text-[10px] font-mono text-stone-400 font-bold mt-1.5">
+                        <span className="text-[10px] font-mono text-slate-500 dark:text-stone-400 font-bold mt-1.5">
                           {choiceExtraPrice > 0 ? `+PKR ${choiceExtraPrice.toFixed(0)}` : 'Included'}
                         </span>
                       </button>
@@ -126,12 +126,12 @@ export const ItemOptionsModal: React.FC<ItemOptionsModalProps> = ({ item, onClos
               </div>
             ))
           ) : (
-            <p className="text-xs text-stone-500">No default modifiers defined for this dish.</p>
+            <p className="text-xs text-slate-400 dark:text-stone-500">No default modifiers defined for this dish.</p>
           )}
 
           {/* Kitchen / Special Instructions */}
-          <div className="space-y-2 pt-2 border-t border-white/5">
-            <label className="text-[10px] font-bold uppercase tracking-wider text-stone-300">
+          <div className="space-y-2 pt-2 border-t border-slate-200 dark:border-white/5">
+            <label className="text-[10px] font-bold uppercase tracking-wider text-slate-700 dark:text-stone-300">
               Kitchen Notes / Custom Instructions
             </label>
             <input
@@ -139,21 +139,21 @@ export const ItemOptionsModal: React.FC<ItemOptionsModalProps> = ({ item, onClos
               placeholder="e.g. Extra spicy, dressing on side, no ice, allergy alert"
               value={specialInstructions}
               onChange={(e) => setSpecialInstructions(e.target.value)}
-              className="w-full bg-stone-900 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-stone-500 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 transition-all"
+              className="w-full bg-white dark:bg-stone-900 border border-slate-300 dark:border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white placeholder-stone-500 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 transition-all"
             />
           </div>
         </div>
 
         {/* Footer */}
-        <div className="p-4 bg-stone-950/60 border-t border-white/5 flex items-center justify-between">
+        <div className="p-4 bg-white/60 dark:bg-stone-950/60 border-t border-slate-200 dark:border-white/5 flex items-center justify-between">
           <div>
-            <span className="text-[10px] text-stone-400 font-bold uppercase tracking-wider block">Total Line Price</span>
+            <span className="text-[10px] text-slate-500 dark:text-stone-400 font-bold uppercase tracking-wider block">Total Line Price</span>
             <span className="text-lg font-black text-emerald-400 font-mono">PKR {finalPrice.toFixed(0)}</span>
           </div>
           <div className="flex items-center gap-2.5">
             <button
               onClick={onClose}
-              className="px-4 py-2.5 rounded-xl bg-stone-900 hover:bg-stone-800 text-stone-300 border border-white/5 text-xs font-bold transition-all cursor-pointer"
+              className="px-4 py-2.5 rounded-xl bg-white dark:bg-stone-900 hover:bg-slate-100 dark:hover:bg-stone-800 text-slate-700 dark:text-stone-300 border border-slate-200 dark:border-white/5 text-xs font-bold transition-all cursor-pointer"
             >
               Cancel
             </button>

@@ -54,10 +54,10 @@ export const DeliveryDriverSlipModal: React.FC<DeliveryDriverSlipModalProps> = (
   const isCashOnDelivery = order.paymentStatus !== 'paid' || (order.paymentMethod as string) === 'unpaid';
 
   return (
-    <div id="delivery-slip-modal" className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto print:p-0 print:bg-white print:static select-none animate-in fade-in duration-150">
-      <div className="bg-gradient-to-b from-stone-900 to-[#121212] border border-white/10 ring-1 ring-white/10 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col my-auto print:border-none print:shadow-none print:bg-white print:max-w-none print:w-full">
+    <div id="delivery-slip-modal" className="fixed inset-0 z-50 bg-slate-900/40 dark:bg-black/60 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto print:p-0 print:bg-white print:static select-none animate-in fade-in duration-150">
+      <div className="bg-gradient-to-b from-stone-900 to-[#121212] border border-slate-300 dark:border-white/10 ring-1 ring-white/10 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col my-auto print:border-none print:shadow-none print:bg-white print:max-w-none print:w-full">
         {/* Modal Controls Bar - Hidden in Print */}
-        <div className="p-4 bg-stone-950/60 backdrop-blur-xs border-b border-white/5 flex items-center justify-between print:hidden">
+        <div className="p-4 bg-white/60 dark:bg-stone-950/60 backdrop-blur-xs border-b border-slate-200 dark:border-white/5 flex items-center justify-between print:hidden">
           <div className="flex items-center gap-2.5 text-emerald-400">
             <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-sm">
               <Truck className="w-4 h-4" />
@@ -72,22 +72,22 @@ export const DeliveryDriverSlipModal: React.FC<DeliveryDriverSlipModalProps> = (
           <button
             id="close-driver-slip-btn"
             onClick={onClose}
-            className="p-1.5 rounded-xl hover:bg-white/5 text-stone-400 hover:text-white transition-all cursor-pointer"
+            className="p-1.5 rounded-xl hover:bg-white/5 text-slate-500 dark:text-stone-400 hover:text-white transition-all cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Driver Assignment Toolbar - Hidden in Print */}
-        <div className="p-3.5 bg-stone-950/80 border-b border-white/5 flex flex-wrap items-center justify-between gap-2.5 print:hidden text-xs">
+        <div className="p-3.5 bg-stone-950/80 border-b border-slate-200 dark:border-white/5 flex flex-wrap items-center justify-between gap-2.5 print:hidden text-xs">
           <div className="flex items-center gap-2">
-            <UserCheck className="w-4 h-4 text-stone-400" />
-            <span className="text-stone-300 font-bold text-[10px] uppercase tracking-wider">Assign Driver:</span>
+            <UserCheck className="w-4 h-4 text-slate-500 dark:text-stone-400" />
+            <span className="text-slate-700 dark:text-stone-300 font-bold text-[10px] uppercase tracking-wider">Assign Driver:</span>
             <select
               id="driver-select-dropdown"
               value={selectedDriver}
               onChange={(e) => handleDriverChange(e.target.value)}
-              className="bg-stone-900 text-emerald-300 font-bold text-xs px-3 py-1.5 rounded-xl border border-white/10 focus:outline-none focus:border-emerald-500/50 max-w-[260px] truncate cursor-pointer shadow-inner"
+              className="bg-white dark:bg-stone-900 text-emerald-300 font-bold text-xs px-3 py-1.5 rounded-xl border border-slate-300 dark:border-white/10 focus:outline-none focus:border-emerald-500/50 max-w-[260px] truncate cursor-pointer shadow-inner"
             >
               {deliveryDrivers.map((driver) => {
                 const stats = getRiderStats(driver);
@@ -104,7 +104,7 @@ export const DeliveryDriverSlipModal: React.FC<DeliveryDriverSlipModalProps> = (
             <button
               id="add-new-driver-btn"
               onClick={() => setShowAddDriver(true)}
-              className="px-3 py-1.5 bg-stone-900 border border-white/5 hover:bg-stone-800 text-stone-300 rounded-xl flex items-center gap-1 font-bold text-xs cursor-pointer transition-all"
+              className="px-3 py-1.5 bg-white dark:bg-stone-900 border border-slate-200 dark:border-white/5 hover:bg-slate-100 dark:hover:bg-stone-800 text-slate-700 dark:text-stone-300 rounded-xl flex items-center gap-1 font-bold text-xs cursor-pointer transition-all"
             >
               <Plus className="w-3.5 h-3.5 text-emerald-400" />
               <span>New Driver</span>
@@ -116,7 +116,7 @@ export const DeliveryDriverSlipModal: React.FC<DeliveryDriverSlipModalProps> = (
                 value={newDriverName}
                 onChange={(e) => setNewDriverName(e.target.value)}
                 placeholder="Driver Name"
-                className="bg-stone-900 text-white px-2.5 py-1.5 rounded-xl border border-white/10 text-xs w-32 focus:outline-none focus:border-emerald-500/50"
+                className="bg-white dark:bg-stone-900 text-slate-900 dark:text-white px-2.5 py-1.5 rounded-xl border border-slate-300 dark:border-white/10 text-xs w-32 focus:outline-none focus:border-emerald-500/50"
               />
               <button
                 onClick={handleAddNewDriver}
@@ -126,7 +126,7 @@ export const DeliveryDriverSlipModal: React.FC<DeliveryDriverSlipModalProps> = (
               </button>
               <button
                 onClick={() => setShowAddDriver(false)}
-                className="px-2 py-1.5 bg-stone-900 border border-white/5 text-stone-400 rounded-xl text-xs hover:bg-stone-800 cursor-pointer"
+                className="px-2 py-1.5 bg-white dark:bg-stone-900 border border-slate-200 dark:border-white/5 text-slate-500 dark:text-stone-400 rounded-xl text-xs hover:bg-slate-100 dark:hover:bg-stone-800 cursor-pointer"
               >
                 Cancel
               </button>
@@ -135,14 +135,14 @@ export const DeliveryDriverSlipModal: React.FC<DeliveryDriverSlipModalProps> = (
         </div>
 
         {/* Printable Driver Thermal Slip */}
-        <div className="p-6 bg-stone-950/40 print:bg-white print:p-2">
+        <div className="p-6 bg-white/40 dark:bg-stone-950/40 print:bg-white print:p-2">
           <div
             id="driver-thermal-slip"
             className="bg-white text-stone-900 font-mono p-6 rounded-2xl shadow-xl space-y-4 text-xs border border-stone-200 print:border-none print:shadow-none print:p-0 print:rounded-none"
           >
             {/* Header */}
             <div className="text-center space-y-1 pb-3 border-b-2 border-dashed border-stone-400">
-              <div className="inline-block bg-stone-950 text-white font-sans font-black text-[10px] px-3 py-1 rounded-md tracking-wider uppercase">
+              <div className="inline-block bg-white dark:bg-stone-950 text-slate-900 dark:text-white font-sans font-black text-[10px] px-3 py-1 rounded-md tracking-wider uppercase">
                 *** DELIVERY DRIVER SLIP ***
               </div>
               <h2 className="text-base font-black tracking-wider uppercase font-sans text-stone-950 pt-1">White's Castle</h2>
@@ -151,17 +151,17 @@ export const DeliveryDriverSlipModal: React.FC<DeliveryDriverSlipModalProps> = (
 
             {/* Prominent Assigned Driver Box */}
             <div className="bg-stone-100 p-2.5 rounded-xl border-2 border-stone-950 text-center">
-              <span className="text-[10px] uppercase font-bold text-stone-500 block">Assigned Rider</span>
+              <span className="text-[10px] uppercase font-bold text-slate-400 dark:text-stone-500 block">Assigned Rider</span>
               <span className="text-base font-black text-stone-950 uppercase tracking-wide">{selectedDriver || 'Unassigned'}</span>
             </div>
 
             {/* Slip Meta Info */}
             <div className="grid grid-cols-2 text-[11px] pb-2 border-b border-stone-200">
               <div>
-                <span className="text-stone-500">Order:</span> <strong className="text-stone-950">{order.orderNumber}</strong>
+                <span className="text-slate-400 dark:text-stone-500">Order:</span> <strong className="text-stone-950">{order.orderNumber}</strong>
               </div>
               <div className="text-right">
-                <span className="text-stone-500">Time:</span> <strong className="text-stone-950">{formattedDate}</strong>
+                <span className="text-slate-400 dark:text-stone-500">Time:</span> <strong className="text-stone-950">{formattedDate}</strong>
               </div>
             </div>
 
@@ -257,17 +257,17 @@ export const DeliveryDriverSlipModal: React.FC<DeliveryDriverSlipModalProps> = (
             {/* Driver Signature Line */}
             <div className="pt-4 text-center space-y-3">
               <div className="border-b border-stone-400 w-3/4 mx-auto mt-4"></div>
-              <p className="text-[9px] text-stone-500 uppercase">Customer Receiving Signature</p>
+              <p className="text-[9px] text-slate-400 dark:text-stone-500 uppercase">Customer Receiving Signature</p>
             </div>
           </div>
         </div>
 
         {/* Modal Footer Actions - Hidden in Print */}
-        <div className="p-4 bg-stone-950/60 border-t border-white/5 flex items-center justify-between print:hidden">
+        <div className="p-4 bg-white/60 dark:bg-stone-950/60 border-t border-slate-200 dark:border-white/5 flex items-center justify-between print:hidden">
           <button
             id="dismiss-driver-slip-btn"
             onClick={onClose}
-            className="px-4 py-2.5 rounded-xl bg-stone-900 hover:bg-stone-800 text-stone-300 text-xs font-bold border border-white/5 cursor-pointer transition-all"
+            className="px-4 py-2.5 rounded-xl bg-white dark:bg-stone-900 hover:bg-slate-100 dark:hover:bg-stone-800 text-slate-700 dark:text-stone-300 text-xs font-bold border border-slate-200 dark:border-white/5 cursor-pointer transition-all"
           >
             Close
           </button>

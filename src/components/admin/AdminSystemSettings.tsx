@@ -52,7 +52,7 @@ export const AdminSystemSettings: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Manage Branches Panel */}
         <div className={`border rounded-xl p-5 shadow-lg flex flex-col justify-between ${
-          theme === 'dark' ? 'bg-[#111111] border-stone-800' : 'bg-white border-slate-200'
+          theme === 'dark' ? 'bg-[#111111] border-slate-200 dark:border-stone-800' : 'bg-white border-slate-200'
         }`}>
           <div>
             <h3 className={`font-bold mb-4 flex items-center gap-2 ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>
@@ -66,7 +66,7 @@ export const AdminSystemSettings: React.FC = () => {
                 value={newOutletName} 
                 onChange={(e) => setNewOutletName(e.target.value)}
                 className={`flex-1 border rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-[#00897b] ${
-                  theme === 'dark' ? 'bg-[#1a1a1a] border-stone-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
+                  theme === 'dark' ? 'bg-[#1a1a1a] border-slate-300 dark:border-stone-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
                 }`}
               />
               <button 
@@ -80,13 +80,13 @@ export const AdminSystemSettings: React.FC = () => {
             <div className="space-y-2">
               {outlets.map(outlet => (
                 <div key={outlet} className={`flex items-center justify-between border p-3 rounded-lg ${
-                  theme === 'dark' ? 'bg-[#1a1a1a] border-stone-800 text-white' : 'bg-slate-50 border-slate-150 text-slate-800'
+                  theme === 'dark' ? 'bg-[#1a1a1a] border-slate-200 dark:border-stone-800 text-white' : 'bg-slate-50 border-slate-150 text-slate-800'
                 }`}>
                   <span className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-slate-700'}`}>{outlet}</span>
                   <button 
                     onClick={() => handleDeleteOutlet(outlet)}
                     className={`p-1.5 hover:bg-red-900/50 hover:text-red-400 rounded-lg transition cursor-pointer ${
-                      theme === 'dark' ? 'bg-stone-800 text-stone-400' : 'bg-slate-200/60 text-slate-500'
+                      theme === 'dark' ? 'bg-slate-50 dark:bg-stone-800 text-slate-500 dark:text-stone-400' : 'bg-slate-200/60 text-slate-500'
                     }`}
                     title="Delete Branch"
                   >
@@ -95,7 +95,7 @@ export const AdminSystemSettings: React.FC = () => {
                 </div>
               ))}
               {outlets.length === 0 && (
-                <div className="text-stone-500 text-sm text-center py-4">No custom branches configured.</div>
+                <div className="text-slate-400 dark:text-stone-500 text-sm text-center py-4">No custom branches configured.</div>
               )}
             </div>
           </div>
@@ -103,7 +103,7 @@ export const AdminSystemSettings: React.FC = () => {
 
         {/* Manage Tables Panel */}
         <div className={`border rounded-xl p-5 shadow-lg ${
-          theme === 'dark' ? 'bg-[#111111] border-stone-800' : 'bg-white border-slate-200'
+          theme === 'dark' ? 'bg-[#111111] border-slate-200 dark:border-stone-800' : 'bg-white border-slate-200'
         }`}>
           <h3 className={`font-bold mb-4 flex items-center gap-2 ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>
             <Table2 className="w-4 h-4 text-[#00897b]" /> Manage Dining Tables (Dine-In)
@@ -116,14 +116,14 @@ export const AdminSystemSettings: React.FC = () => {
               value={newTableNumber} 
               onChange={(e) => setNewTableNumber(e.target.value)}
               className={`w-full sm:flex-1 border rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-[#00897b] ${
-                theme === 'dark' ? 'bg-[#1a1a1a] border-stone-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
+                theme === 'dark' ? 'bg-[#1a1a1a] border-slate-300 dark:border-stone-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
               }`}
             />
             <select
               value={newTableCapacity}
               onChange={(e) => setNewTableCapacity(e.target.value)}
               className={`w-full sm:w-28 border rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#00897b] cursor-pointer ${
-                theme === 'dark' ? 'bg-[#1a1a1a] border-stone-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
+                theme === 'dark' ? 'bg-[#1a1a1a] border-slate-300 dark:border-stone-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
               }`}
             >
               <option value="2">2 Pax</option>
@@ -143,7 +143,7 @@ export const AdminSystemSettings: React.FC = () => {
           <div className="space-y-2 max-h-80 overflow-y-auto pr-1 no-scrollbar">
             {tables.map(table => (
               <div key={table.id} className={`flex items-center justify-between border p-3 rounded-lg ${
-                theme === 'dark' ? 'bg-[#1a1a1a] border-stone-800 text-white' : 'bg-slate-50 border-slate-150 text-slate-800'
+                theme === 'dark' ? 'bg-[#1a1a1a] border-slate-200 dark:border-stone-800 text-white' : 'bg-slate-50 border-slate-150 text-slate-800'
               }`}>
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center text-xs font-mono font-bold">
@@ -151,13 +151,13 @@ export const AdminSystemSettings: React.FC = () => {
                   </div>
                   <div>
                     <span className={`font-medium text-sm block ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>Table {table.number}</span>
-                    <span className={`text-stone-500 text-[11px] font-mono capitalize`}>{table.capacity} Seats • {table.status.toLowerCase()}</span>
+                    <span className={`text-slate-400 dark:text-stone-500 text-[11px] font-mono capitalize`}>{table.capacity} Seats • {table.status.toLowerCase()}</span>
                   </div>
                 </div>
                 <button 
                   onClick={() => handleDeleteTable(table.id)}
                   className={`p-1.5 hover:bg-red-900/50 hover:text-red-400 rounded-lg transition cursor-pointer ${
-                    theme === 'dark' ? 'bg-stone-800 text-stone-400' : 'bg-slate-200/60 text-slate-500'
+                    theme === 'dark' ? 'bg-slate-50 dark:bg-stone-800 text-slate-500 dark:text-stone-400' : 'bg-slate-200/60 text-slate-500'
                   }`}
                   title="Delete Table"
                 >
@@ -166,7 +166,7 @@ export const AdminSystemSettings: React.FC = () => {
               </div>
             ))}
             {tables.length === 0 && (
-              <div className="text-stone-500 text-sm text-center py-4">No custom tables configured.</div>
+              <div className="text-slate-400 dark:text-stone-500 text-sm text-center py-4">No custom tables configured.</div>
             )}
           </div>
         </div>

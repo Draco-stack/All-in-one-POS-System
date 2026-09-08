@@ -185,7 +185,7 @@ export const LoginScreen: React.FC = () => {
       </div>
 
       {/* Theme Selection Buttons below Login Box (Exact match with reference UI) */}
-      <div className="flex items-center justify-center gap-1.5 mt-6 px-4 py-1.5 rounded-full bg-black/20 backdrop-blur-sm border border-white/10">
+      <div className="flex items-center justify-center gap-1.5 mt-6 px-4 py-1.5 rounded-full bg-black/20 backdrop-blur-sm border border-slate-300 dark:border-white/10">
         {themePills.map((pill) => {
           const isActive = loginTheme === pill.id;
           return (

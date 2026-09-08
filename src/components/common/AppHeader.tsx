@@ -145,14 +145,14 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
     <header
       className={`px-3 sm:px-4 py-2 border-b flex items-center justify-between gap-2.5 sm:gap-4 shrink-0 sticky top-0 z-40 h-[54px] sm:h-[58px] select-none transition-colors duration-200 ${
         isDark
-          ? 'bg-[#0f1118]/90 backdrop-blur-xl border-stone-800/80 text-stone-100 shadow-md'
+          ? 'bg-[#0f1118]/90 backdrop-blur-xl border-slate-200 dark:border-stone-800/80 text-slate-900 dark:text-stone-100 shadow-md'
           : 'bg-white/90 backdrop-blur-xl border-slate-200/90 text-slate-800 shadow-xs'
       }`}
     >
       {/* 1. BRAND EMBLEM & DYNAMIC VIEW TITLE */}
       <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0 shrink-0">
         <div
-          className={`w-9 h-9 sm:w-9.5 sm:h-9.5 rounded-xl bg-gradient-to-br ${currentViewInfo.iconBg} flex items-center justify-center text-stone-950 shadow-md border border-white/20 shrink-0 hover-lift cursor-pointer`}
+          className={`w-9 h-9 sm:w-9.5 sm:h-9.5 rounded-xl bg-gradient-to-br ${currentViewInfo.iconBg} flex items-center justify-center text-stone-950 shadow-md border border-slate-300 dark:border-white/20 shrink-0 hover-lift cursor-pointer`}
           title="Master POS Operating System"
         >
           <MasterPOSLogo className="w-5 h-5 text-stone-950" size={22} />
@@ -174,7 +174,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           </div>
           <p
             className={`text-[10.5px] hidden xl:block leading-tight font-medium mt-0.5 truncate ${
-              isDark ? 'text-stone-400' : 'text-slate-500'
+              isDark ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'
             }`}
           >
             {currentViewInfo.subtitle}
@@ -185,7 +185,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
       {/* VERTICAL DIVIDER */}
       <div
         className={`hidden md:block h-6 w-px shrink-0 ${
-          isDark ? 'bg-stone-800' : 'bg-slate-200'
+          isDark ? 'bg-slate-50 dark:bg-stone-800' : 'bg-slate-200'
         }`}
       />
 
@@ -194,7 +194,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         <nav
           className={`flex items-center gap-1 p-1 rounded-2xl border overflow-x-auto no-scrollbar scroll-smooth overscroll-x-contain touch-pan-x min-w-0 max-w-full ${
             isDark
-              ? 'bg-[#090a0f]/80 border-stone-800/90 shadow-inner'
+              ? 'bg-[#090a0f]/80 border-slate-200 dark:border-stone-800/90 shadow-inner'
               : 'bg-slate-100/90 border-slate-200/90 shadow-2xs'
           }`}
         >
@@ -206,7 +206,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                 activeView === 'pos'
                   ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md border border-emerald-400/30'
                   : isDark
-                  ? 'text-stone-300 hover:text-white hover:bg-stone-800/60'
+                  ? 'text-slate-700 dark:text-stone-300 hover:text-white hover:bg-slate-100 dark:hover:bg-stone-800/60'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70'
               }`}
             >
@@ -223,7 +223,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                 activeView === 'delivery'
                   ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md border border-blue-400/30'
                   : isDark
-                  ? 'text-stone-300 hover:text-white hover:bg-stone-800/60'
+                  ? 'text-slate-700 dark:text-stone-300 hover:text-white hover:bg-slate-100 dark:hover:bg-stone-800/60'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70'
               }`}
             >
@@ -248,7 +248,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                 activeView === 'orders' && orderSubTab === 'kitchen'
                   ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-stone-950 font-black shadow-md border border-amber-300/40'
                   : isDark
-                  ? 'text-stone-300 hover:text-white hover:bg-stone-800/60'
+                  ? 'text-slate-700 dark:text-stone-300 hover:text-white hover:bg-slate-100 dark:hover:bg-stone-800/60'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70'
               }`}
             >
@@ -272,14 +272,14 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                     ? 'bg-stone-700 text-white shadow-md border border-stone-500/30'
                     : 'bg-slate-700 text-white shadow-md'
                   : isDark
-                  ? 'text-stone-300 hover:text-white hover:bg-stone-800/60'
+                  ? 'text-slate-700 dark:text-stone-300 hover:text-white hover:bg-slate-100 dark:hover:bg-stone-800/60'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70'
               }`}
             >
               <Layers className="w-3.5 h-3.5 shrink-0" />
               <span>All Orders</span>
               {orders.length > 0 && (
-                <span className="px-1.5 py-0.5 rounded-full bg-stone-800 text-stone-300 text-[9.5px] font-mono font-bold leading-none border border-stone-700">
+                <span className="px-1.5 py-0.5 rounded-full bg-slate-50 dark:bg-stone-800 text-slate-700 dark:text-stone-300 text-[9.5px] font-mono font-bold leading-none border border-slate-300 dark:border-stone-700">
                   {orders.length}
                 </span>
               )}
@@ -294,7 +294,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                 activeView === 'shifts'
                   ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md border border-purple-400/30'
                   : isDark
-                  ? 'text-stone-300 hover:text-white hover:bg-stone-800/60'
+                  ? 'text-slate-700 dark:text-stone-300 hover:text-white hover:bg-slate-100 dark:hover:bg-stone-800/60'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70'
               }`}
             >
@@ -311,7 +311,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                 activeView === 'admin'
                   ? 'bg-gradient-to-r from-rose-600 to-pink-600 text-white shadow-md border border-rose-400/30'
                   : isDark
-                  ? 'text-stone-300 hover:text-white hover:bg-stone-800/60'
+                  ? 'text-slate-700 dark:text-stone-300 hover:text-white hover:bg-slate-100 dark:hover:bg-stone-800/60'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70'
               }`}
             >
@@ -329,7 +329,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           <div
             className={`hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-xl border font-mono text-[11px] font-bold ${
               isDark
-                ? 'bg-[#090a0f] border-stone-800 text-emerald-400'
+                ? 'bg-[#090a0f] border-slate-200 dark:border-stone-800 text-emerald-400'
                 : 'bg-slate-100 border-slate-200 text-slate-700'
             }`}
             title="Terminal Local Time"
@@ -363,7 +363,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             isFullscreen
               ? 'border-emerald-500/40 bg-emerald-500/15 text-emerald-400'
               : isDark
-              ? 'bg-stone-800/80 hover:bg-stone-700 text-stone-300 border-stone-700'
+              ? 'bg-slate-50 dark:bg-stone-800/80 hover:bg-stone-700 text-slate-700 dark:text-stone-300 border-slate-300 dark:border-stone-700'
               : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300'
           }`}
           title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
@@ -376,7 +376,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           onClick={toggleTheme}
           className={`h-8 w-8 rounded-xl border flex items-center justify-center transition-all cursor-pointer active:scale-90 shrink-0 ${
             isDark
-              ? 'bg-stone-800 hover:bg-stone-700 text-amber-400 border-stone-700'
+              ? 'bg-slate-50 dark:bg-stone-800 hover:bg-stone-700 text-amber-400 border-slate-300 dark:border-stone-700'
               : 'bg-amber-50 hover:bg-amber-100 text-amber-600 border-amber-200'
           }`}
           title={isDark ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
@@ -392,7 +392,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           }}
           className={`h-8 px-2.5 sm:px-3 rounded-xl border text-xs font-bold flex items-center gap-1.5 sm:gap-2 transition cursor-pointer active:scale-95 shrink-0 ${
             isDark
-              ? 'bg-stone-900/90 hover:bg-red-950/60 text-stone-200 hover:text-red-300 border-stone-800 hover:border-red-500/40 shadow-sm'
+              ? 'bg-white dark:bg-stone-900/90 hover:bg-red-950/60 text-stone-200 hover:text-red-300 border-slate-200 dark:border-stone-800 hover:border-red-500/40 shadow-sm'
               : 'bg-slate-100 hover:bg-red-50 text-slate-800 hover:text-red-600 border-slate-200 hover:border-red-300 shadow-xs'
           }`}
           title={`Sign Out (${currentUser?.name || 'Staff User'} - ${currentUser?.role?.toUpperCase() || ''})`}

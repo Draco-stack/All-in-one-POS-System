@@ -51,16 +51,16 @@ export const BlockedCustomerAlertModal: React.FC<BlockedCustomerAlertModalProps>
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-      <div className="bg-gradient-to-b from-stone-900 via-[#16161a] to-[#101014] border-2 border-red-500/70 ring-1 ring-red-500/40 rounded-3xl w-full max-w-lg overflow-hidden text-stone-100 shadow-[0_0_50px_rgba(239,68,68,0.35)] animate-in fade-in zoom-in-95 duration-150">
+      <div className="bg-gradient-to-b from-stone-900 via-[#16161a] to-[#101014] border-2 border-red-500/70 ring-1 ring-red-500/40 rounded-3xl w-full max-w-lg overflow-hidden text-slate-900 dark:text-stone-100 shadow-[0_0_50px_rgba(239,68,68,0.35)] animate-in fade-in zoom-in-95 duration-150">
         {/* Top Danger Banner */}
         <div className="bg-gradient-to-r from-red-600 via-rose-600 to-red-700 px-6 py-4 flex items-center justify-between text-white shadow-md">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-white/20 border border-white/30 flex items-center justify-center text-white shrink-0 shadow-inner">
+            <div className="w-10 h-10 rounded-2xl bg-white/20 border border-white/30 flex items-center justify-center text-slate-900 dark:text-white shrink-0 shadow-inner">
               <Ban className="w-6 h-6 stroke-[2.5]" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="bg-black/30 text-white text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border border-white/20">
+                <span className="bg-black/30 text-white text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border border-slate-300 dark:border-white/20">
                   SYSTEM SECURITY BLOCK
                 </span>
               </div>
@@ -93,9 +93,9 @@ export const BlockedCustomerAlertModal: React.FC<BlockedCustomerAlertModalProps>
           </div>
 
           {/* Customer & Reason Dossier */}
-          <div className="bg-stone-950/90 border border-white/10 rounded-2xl p-4 space-y-3 shadow-inner">
-            <div className="flex items-center justify-between border-b border-white/5 pb-2.5">
-              <div className="flex items-center gap-2 text-xs font-semibold text-stone-300">
+          <div className="bg-stone-950/90 border border-slate-300 dark:border-white/10 rounded-2xl p-4 space-y-3 shadow-inner">
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/5 pb-2.5">
+              <div className="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-stone-300">
                 <User className="w-4 h-4 text-emerald-400" />
                 <span className="font-bold text-white text-sm">{displayName}</span>
               </div>
@@ -111,20 +111,20 @@ export const BlockedCustomerAlertModal: React.FC<BlockedCustomerAlertModalProps>
                 <AlertCircle className="w-3.5 h-3.5" />
                 Mandatory Block Reason Logged:
               </span>
-              <p className="text-xs font-medium text-red-100 bg-black/40 p-2.5 rounded-lg border border-red-500/20 font-sans leading-relaxed">
+              <p className="text-xs font-medium text-red-100 bg-slate-900/20 dark:bg-black/40 p-2.5 rounded-lg border border-red-500/20 font-sans leading-relaxed">
                 &ldquo;{blockReason}&rdquo;
               </p>
             </div>
 
             {/* Meta details */}
-            <div className="grid grid-cols-2 gap-2 text-[11px] text-stone-400 pt-1">
+            <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-500 dark:text-stone-400 pt-1">
               <div className="flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5 text-stone-500" />
-                <span>Blocked: <strong className="text-stone-300">{blockedAt}</strong></span>
+                <Calendar className="w-3.5 h-3.5 text-slate-400 dark:text-stone-500" />
+                <span>Blocked: <strong className="text-slate-700 dark:text-stone-300">{blockedAt}</strong></span>
               </div>
               <div className="flex items-center gap-1.5">
-                <User className="w-3.5 h-3.5 text-stone-500" />
-                <span>Logged By: <strong className="text-stone-300">{blockedBy}</strong></span>
+                <User className="w-3.5 h-3.5 text-slate-400 dark:text-stone-500" />
+                <span>Logged By: <strong className="text-slate-700 dark:text-stone-300">{blockedBy}</strong></span>
               </div>
             </div>
           </div>
@@ -139,9 +139,9 @@ export const BlockedCustomerAlertModal: React.FC<BlockedCustomerAlertModalProps>
                     onClearCustomer();
                     onClose();
                   }}
-                  className="w-full py-2.5 px-4 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-bold transition flex items-center justify-center gap-2 border border-white/10 cursor-pointer"
+                  className="w-full py-2.5 px-4 rounded-xl bg-slate-50 dark:bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-bold transition flex items-center justify-center gap-2 border border-slate-300 dark:border-white/10 cursor-pointer"
                 >
-                  <Trash2 className="w-4 h-4 text-stone-400" />
+                  <Trash2 className="w-4 h-4 text-slate-500 dark:text-stone-400" />
                   Clear Customer From Cart
                 </button>
               )}
@@ -153,7 +153,7 @@ export const BlockedCustomerAlertModal: React.FC<BlockedCustomerAlertModalProps>
                     onViewHistory();
                     onClose();
                   }}
-                  className="w-full py-2.5 px-4 rounded-xl bg-stone-900 hover:bg-stone-800 text-stone-300 text-xs font-semibold transition flex items-center justify-center gap-2 border border-white/10 cursor-pointer"
+                  className="w-full py-2.5 px-4 rounded-xl bg-white dark:bg-stone-900 hover:bg-slate-100 dark:hover:bg-stone-800 text-slate-700 dark:text-stone-300 text-xs font-semibold transition flex items-center justify-center gap-2 border border-slate-300 dark:border-white/10 cursor-pointer"
                 >
                   <History className="w-4 h-4 text-amber-400" />
                   View Incident & Order History
@@ -161,7 +161,7 @@ export const BlockedCustomerAlertModal: React.FC<BlockedCustomerAlertModalProps>
               )}
             </div>
 
-            <div className="flex items-center justify-between gap-3 pt-2 border-t border-white/10">
+            <div className="flex items-center justify-between gap-3 pt-2 border-t border-slate-300 dark:border-white/10">
               {onUnblockCustomer && (
                 <button
                   type="button"

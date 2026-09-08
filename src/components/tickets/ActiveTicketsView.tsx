@@ -46,9 +46,9 @@ export const ActiveTicketsView: React.FC = () => {
   };
 
   return (
-    <div className="h-[calc(100vh-4rem)] flex flex-col bg-stone-950 text-stone-100 overflow-hidden select-none">
+    <div className="h-[calc(100vh-4rem)] flex flex-col bg-white dark:bg-stone-950 text-slate-900 dark:text-stone-100 overflow-hidden select-none">
       {/* Top Filter Bar */}
-      <div className="p-4 bg-stone-900 border-b border-stone-800 flex flex-wrap items-center justify-between gap-3">
+      <div className="p-4 bg-white dark:bg-stone-900 border-b border-slate-200 dark:border-stone-800 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-2xl bg-[#00897b]/10 border border-[#00897b]/30 flex items-center justify-center text-[#00897b]">
             <ChefHat className="w-5 h-5" />
@@ -60,30 +60,30 @@ export const ActiveTicketsView: React.FC = () => {
                 {activeOrders.length} active
               </span>
             </h2>
-            <p className="text-xs text-stone-400">Live tracker for kitchen food prep, dispatch chits, and table status</p>
+            <p className="text-xs text-slate-500 dark:text-stone-400">Live tracker for kitchen food prep, dispatch chits, and table status</p>
           </div>
         </div>
 
         {/* Filters */}
         <div className="flex items-center gap-2">
           <div className="relative">
-            <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-stone-400" />
+            <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-500 dark:text-stone-400" />
             <input
               type="text"
               placeholder="Search table or ticket #"
               value={searchTicket}
               onChange={(e) => setSearchTicket(e.target.value)}
-              className="bg-stone-950 border border-stone-700 rounded-xl pl-8 pr-3 py-1.5 text-xs text-stone-200 focus:outline-none focus:border-teal-500 font-medium"
+              className="bg-white dark:bg-stone-950 border border-slate-300 dark:border-stone-700 rounded-xl pl-8 pr-3 py-1.5 text-xs text-stone-200 focus:outline-none focus:border-teal-500 font-medium"
             />
           </div>
 
-          <div className="flex items-center bg-stone-950 p-1 rounded-xl border border-stone-800">
+          <div className="flex items-center bg-white dark:bg-stone-950 p-1 rounded-xl border border-slate-200 dark:border-stone-800">
             {(['all', 'dine_in', 'takeaway', 'delivery'] as const).map((t) => (
               <button
                 key={t}
                 onClick={() => setFilterType(t)}
                 className={`px-3 py-1 rounded-lg text-xs font-bold uppercase transition cursor-pointer ${
-                  filterType === t ? 'bg-[#00897b] text-white shadow' : 'text-stone-400 hover:text-stone-200'
+                  filterType === t ? 'bg-[#00897b] text-white shadow' : 'text-slate-500 dark:text-stone-400 hover:text-stone-200'
                 }`}
               >
                 {t.replace('_', ' ')}
@@ -96,10 +96,10 @@ export const ActiveTicketsView: React.FC = () => {
       {/* Tickets Cards Grid */}
       <div className="flex-1 p-5 overflow-y-auto">
         {filteredOrders.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-stone-500 py-16">
+          <div className="h-full flex flex-col items-center justify-center text-slate-400 dark:text-stone-500 py-16">
             <CheckCircle2 className="w-12 h-12 opacity-30 text-emerald-500 mb-2" />
-            <p className="text-base font-bold text-stone-300">All caught up! No active tickets</p>
-            <p className="text-xs text-stone-400 mt-1">New orders punched on the POS register will appear here immediately</p>
+            <p className="text-base font-bold text-slate-700 dark:text-stone-300">All caught up! No active tickets</p>
+            <p className="text-xs text-slate-500 dark:text-stone-400 mt-1">New orders punched on the POS register will appear here immediately</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -111,16 +111,16 @@ export const ActiveTicketsView: React.FC = () => {
               return (
                 <div
                   key={order.id}
-                  className={`bg-stone-900 border rounded-2xl p-4 flex flex-col justify-between shadow-lg transition ${
+                  className={`bg-white dark:bg-stone-900 border rounded-2xl p-4 flex flex-col justify-between shadow-lg transition ${
                     isReady
                       ? 'border-emerald-500/60 shadow-emerald-950/30'
                       : isUrgent
                       ? 'border-rose-500/60 shadow-rose-950/30'
-                      : 'border-stone-800'
+                      : 'border-slate-200 dark:border-stone-800'
                   }`}
                 >
                   {/* Card Header */}
-                  <div className="space-y-2 border-b border-stone-800 pb-3">
+                  <div className="space-y-2 border-b border-slate-200 dark:border-stone-800 pb-3">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-black text-teal-400 font-mono">
                         {order.orderNumber}
@@ -129,7 +129,7 @@ export const ActiveTicketsView: React.FC = () => {
                         className={`px-2 py-0.5 rounded-lg text-xs font-mono font-bold flex items-center gap-1 ${
                           isUrgent
                             ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30 animate-pulse'
-                            : 'bg-stone-800 text-stone-300'
+                            : 'bg-slate-50 dark:bg-stone-800 text-slate-700 dark:text-stone-300'
                         }`}
                       >
                         <Clock className="w-3 h-3" />
@@ -145,7 +145,7 @@ export const ActiveTicketsView: React.FC = () => {
                         {order.tableNumber && <span>{order.tableNumber}</span>}
                       </div>
 
-                      <span className="text-stone-400 text-[11px] truncate max-w-[130px]">
+                      <span className="text-slate-500 dark:text-stone-400 text-[11px] truncate max-w-[130px]">
                         {order.customer?.name || 'Walk-in'}
                       </span>
                     </div>
@@ -157,7 +157,7 @@ export const ActiveTicketsView: React.FC = () => {
                       <div key={idx} className="space-y-0.5 text-xs">
                         <div className="flex items-start justify-between font-semibold text-stone-200">
                           <div className="flex items-center gap-2">
-                            <span className="w-5 h-5 rounded bg-stone-800 text-teal-400 font-mono font-bold flex items-center justify-center text-xs">
+                            <span className="w-5 h-5 rounded bg-slate-50 dark:bg-stone-800 text-teal-400 font-mono font-bold flex items-center justify-center text-xs">
                               {item.quantity}
                             </span>
                             <span className="truncate max-w-[180px]">{item.name}</span>
@@ -168,7 +168,7 @@ export const ActiveTicketsView: React.FC = () => {
                           <p className="text-[10px] text-teal-400/90 italic pl-7">↳ {item.customization}</p>
                         )}
                         {item.selectedOptions && item.selectedOptions.length > 0 && (
-                          <div className="text-[10px] text-stone-400 pl-7">
+                          <div className="text-[10px] text-slate-500 dark:text-stone-400 pl-7">
                             {item.selectedOptions.map((opt, i) => (
                               <span key={i} className="mr-2">
                                 + {opt.choice}
@@ -181,10 +181,10 @@ export const ActiveTicketsView: React.FC = () => {
                   </div>
 
                   {/* Card Actions */}
-                  <div className="pt-3 border-t border-stone-800 flex items-center justify-between gap-2">
+                  <div className="pt-3 border-t border-slate-200 dark:border-stone-800 flex items-center justify-between gap-2">
                     <button
                       onClick={() => setActiveReceiptOrder(order)}
-                      className="p-2 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-300 transition cursor-pointer"
+                      className="p-2 rounded-xl bg-slate-50 dark:bg-stone-800 hover:bg-stone-700 text-slate-700 dark:text-stone-300 transition cursor-pointer"
                       title="View / Print Receipt"
                     >
                       <Receipt className="w-4 h-4" />
@@ -209,8 +209,8 @@ export const ActiveTicketsView: React.FC = () => {
         )}
 
         {filteredOrders.length > 10 && (
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-stone-900 p-4 rounded-2xl border border-stone-800 shadow-md mt-4">
-            <div className="text-xs text-stone-400 font-mono flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white dark:bg-stone-900 p-4 rounded-2xl border border-slate-200 dark:border-stone-800 shadow-md mt-4">
+            <div className="text-xs text-slate-500 dark:text-stone-400 font-mono flex items-center gap-2">
               <span>Showing <strong className="text-white">{displayedOrders.length}</strong> of <strong className="text-white">{filteredOrders.length}</strong> tickets</span>
               {filteredOrders.length > visibleCount && (
                 <span className="px-2 py-0.5 rounded-full bg-teal-500/10 text-teal-300 text-[10px] font-bold border border-teal-500/20">
@@ -235,7 +235,7 @@ export const ActiveTicketsView: React.FC = () => {
               {visibleCount > 10 && (
                 <button
                   onClick={() => setVisibleCount(10)}
-                  className="px-3 py-2 bg-stone-800 hover:bg-stone-700 text-stone-300 font-semibold text-xs rounded-xl transition cursor-pointer border border-stone-700"
+                  className="px-3 py-2 bg-slate-50 dark:bg-stone-800 hover:bg-stone-700 text-slate-700 dark:text-stone-300 font-semibold text-xs rounded-xl transition cursor-pointer border border-slate-300 dark:border-stone-700"
                 >
                   Reset to 10
                 </button>

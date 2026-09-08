@@ -523,7 +523,7 @@ export const AllOrdersSearchView: React.FC = () => {
     if (s.includes('app')) return 'bg-blue-950/80 text-blue-300 border-blue-800/50';
     if (s.includes('branch')) return 'bg-emerald-950/80 text-emerald-300 border-emerald-800/50';
     if (s.includes('takeaway')) return 'bg-amber-950/80 text-amber-300 border-amber-800/50';
-    return 'bg-stone-800 text-stone-300 border-stone-700';
+    return 'bg-slate-50 dark:bg-stone-800 text-slate-700 dark:text-stone-300 border-slate-300 dark:border-stone-700';
   };
 
   // Helper for Outlet Code Pill
@@ -578,13 +578,13 @@ export const AllOrdersSearchView: React.FC = () => {
   return (
     <div
       className={`flex-1 flex flex-col h-full overflow-hidden font-sans select-none ${
-        isDark ? 'bg-[#090a0d] text-stone-100' : 'bg-slate-900 text-stone-100'
+        isDark ? 'bg-[#090a0d] text-slate-900 dark:text-stone-100' : 'bg-slate-900 text-slate-900 dark:text-stone-100'
       }`}
     >
       {/* TOP HEADER BAR */}
       <header
         className={`px-3 sm:px-4 py-2.5 border-b flex flex-wrap md:flex-nowrap items-center justify-between gap-3 shrink-0 z-30 ${
-          isDark ? 'bg-[#111319] border-stone-800' : 'bg-slate-800 border-slate-700'
+          isDark ? 'bg-[#111319] border-slate-200 dark:border-stone-800' : 'bg-slate-800 border-slate-700'
         }`}
       >
         <div className="flex items-center gap-2.5 sm:gap-3 shrink-0 min-w-0">
@@ -599,7 +599,7 @@ export const AllOrdersSearchView: React.FC = () => {
                 Live Sync
               </span>
             </h1>
-            <p className="text-[10px] text-stone-400 font-mono truncate hidden sm:block">
+            <p className="text-[10px] text-slate-500 dark:text-stone-400 font-mono truncate hidden sm:block">
               High-performance query & virtualized rendering across all outlet records
             </p>
           </div>
@@ -614,7 +614,7 @@ export const AllOrdersSearchView: React.FC = () => {
               isFilterPanelOpen
                 ? 'bg-emerald-600 text-white border-emerald-500 shadow-xs'
                 : isDark
-                ? 'bg-stone-800/80 hover:bg-stone-700 text-stone-300 border-stone-700'
+                ? 'bg-slate-50 dark:bg-stone-800/80 hover:bg-stone-700 text-slate-700 dark:text-stone-300 border-slate-300 dark:border-stone-700'
                 : 'bg-slate-700 hover:bg-slate-600 text-white border-slate-600'
             }`}
             title="Toggle Dedicated Filter Panel"
@@ -629,7 +629,7 @@ export const AllOrdersSearchView: React.FC = () => {
           </button>
 
           {/* Quick Status Tab Pills */}
-          <div className="flex items-center gap-1 bg-[#090a0d] p-1 rounded-xl border border-stone-800 overflow-x-auto no-scrollbar scroll-smooth overscroll-x-contain touch-pan-x max-w-full">
+          <div className="flex items-center gap-1 bg-[#090a0d] p-1 rounded-xl border border-slate-200 dark:border-stone-800 overflow-x-auto no-scrollbar scroll-smooth overscroll-x-contain touch-pan-x max-w-full">
             <button
               onClick={() => {
                 setQuickTab('ALL');
@@ -638,7 +638,7 @@ export const AllOrdersSearchView: React.FC = () => {
               className={`h-7 px-2.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 shrink-0 whitespace-nowrap active:scale-95 ${
                 quickTab === 'ALL'
                   ? 'bg-emerald-600 text-white shadow-xs'
-                  : 'text-stone-400 hover:text-stone-200 hover:bg-stone-800/50'
+                  : 'text-slate-500 dark:text-stone-400 hover:text-stone-200 hover:bg-slate-100 dark:hover:bg-stone-800/50'
               }`}
             >
               <span>All</span>
@@ -710,10 +710,10 @@ export const AllOrdersSearchView: React.FC = () => {
       {activeFiltersCount > 0 && (
         <div
           className={`px-4 py-2 border-b flex flex-wrap items-center gap-2 text-xs shrink-0 ${
-            isDark ? 'bg-[#0f1118] border-stone-800' : 'bg-slate-800 border-slate-700'
+            isDark ? 'bg-[#0f1118] border-slate-200 dark:border-stone-800' : 'bg-slate-800 border-slate-700'
           }`}
         >
-          <span className="text-[11px] font-bold text-stone-400 uppercase tracking-wider flex items-center gap-1">
+          <span className="text-[11px] font-bold text-slate-500 dark:text-stone-400 uppercase tracking-wider flex items-center gap-1">
             <ListFilter className="w-3.5 h-3.5 text-emerald-400" />
             Active Filters:
           </span>
@@ -728,7 +728,7 @@ export const AllOrdersSearchView: React.FC = () => {
           )}
 
           {selectedOutlet !== 'all' && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-stone-800 text-stone-200 border border-stone-700 text-[11px]">
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-50 dark:bg-stone-800 text-stone-200 border border-slate-300 dark:border-stone-700 text-[11px]">
               Outlet: {selectedOutlet}
               <button onClick={() => setSelectedOutlet('all')} className="hover:text-white cursor-pointer ml-1">
                 <X className="w-3 h-3" />
@@ -737,7 +737,7 @@ export const AllOrdersSearchView: React.FC = () => {
           )}
 
           {selectedSource !== 'all' && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-stone-800 text-stone-200 border border-stone-700 text-[11px]">
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-50 dark:bg-stone-800 text-stone-200 border border-slate-300 dark:border-stone-700 text-[11px]">
               Source: {selectedSource}
               <button onClick={() => setSelectedSource('all')} className="hover:text-white cursor-pointer ml-1">
                 <X className="w-3 h-3" />
@@ -746,7 +746,7 @@ export const AllOrdersSearchView: React.FC = () => {
           )}
 
           {selectedStatus !== 'all' && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-stone-800 text-stone-200 border border-stone-700 text-[11px]">
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-50 dark:bg-stone-800 text-stone-200 border border-slate-300 dark:border-stone-700 text-[11px]">
               Status: {selectedStatus}
               <button onClick={() => setSelectedStatus('all')} className="hover:text-white cursor-pointer ml-1">
                 <X className="w-3 h-3" />
@@ -755,7 +755,7 @@ export const AllOrdersSearchView: React.FC = () => {
           )}
 
           {selectedUser !== 'all' && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-stone-800 text-stone-200 border border-stone-700 text-[11px]">
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-50 dark:bg-stone-800 text-stone-200 border border-slate-300 dark:border-stone-700 text-[11px]">
               User: {selectedUser}
               <button onClick={() => setSelectedUser('all')} className="hover:text-white cursor-pointer ml-1">
                 <X className="w-3 h-3" />
@@ -764,7 +764,7 @@ export const AllOrdersSearchView: React.FC = () => {
           )}
 
           {selectedDate && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-stone-800 text-stone-200 border border-stone-700 text-[11px]">
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-50 dark:bg-stone-800 text-stone-200 border border-slate-300 dark:border-stone-700 text-[11px]">
               Date: {selectedDate}
               <button onClick={() => setSelectedDate('')} className="hover:text-white cursor-pointer ml-1">
                 <X className="w-3 h-3" />
@@ -773,7 +773,7 @@ export const AllOrdersSearchView: React.FC = () => {
           )}
 
           {orderTypeFilter !== 'all' && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-stone-800 text-stone-200 border border-stone-700 text-[11px]">
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-50 dark:bg-stone-800 text-stone-200 border border-slate-300 dark:border-stone-700 text-[11px]">
               Type: {orderTypeFilter.toUpperCase()}
               <button onClick={() => setOrderTypeFilter('all')} className="hover:text-white cursor-pointer ml-1">
                 <X className="w-3 h-3" />
@@ -782,7 +782,7 @@ export const AllOrdersSearchView: React.FC = () => {
           )}
 
           {(minAmount || maxAmount) && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-stone-800 text-stone-200 border border-stone-700 text-[11px] font-mono">
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-50 dark:bg-stone-800 text-stone-200 border border-slate-300 dark:border-stone-700 text-[11px] font-mono">
               PKR {minAmount || 0} - {maxAmount || '∞'}
               <button
                 onClick={() => {
@@ -853,7 +853,7 @@ export const AllOrdersSearchView: React.FC = () => {
                 <span className="p-1 rounded bg-emerald-500/10 text-emerald-400 font-bold border border-emerald-500/20 font-mono">
                   {selectedOrderIds.length} Selected
                 </span>
-                <span className="text-stone-300 font-medium">Batch Update Status:</span>
+                <span className="text-slate-700 dark:text-stone-300 font-medium">Batch Update Status:</span>
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
@@ -896,14 +896,14 @@ export const AllOrdersSearchView: React.FC = () => {
                 <button
                   onClick={() => selectAllFiltered(filteredOrders)}
                   disabled={isBatchProcessing}
-                  className="px-2.5 py-1.5 rounded bg-stone-800 hover:bg-stone-700 text-stone-200 border border-stone-700 font-bold transition cursor-pointer"
+                  className="px-2.5 py-1.5 rounded bg-slate-50 dark:bg-stone-800 hover:bg-stone-700 text-stone-200 border border-slate-300 dark:border-stone-700 font-bold transition cursor-pointer"
                 >
                   Select All ({filteredOrders.length})
                 </button>
                 <button
                   onClick={clearSelection}
                   disabled={isBatchProcessing}
-                  className="px-2.5 py-1.5 rounded bg-stone-900 hover:bg-stone-800 text-stone-400 font-bold transition cursor-pointer"
+                  className="px-2.5 py-1.5 rounded bg-white dark:bg-stone-900 hover:bg-slate-100 dark:hover:bg-stone-800 text-slate-500 dark:text-stone-400 font-bold transition cursor-pointer"
                 >
                   Clear
                 </button>
@@ -917,12 +917,12 @@ export const AllOrdersSearchView: React.FC = () => {
               {/* STICKY TABLE HEADER */}
               <table className="w-full text-left border-collapse font-sans text-xs">
                 <thead className="sticky top-0 z-10 shadow-xs">
-                  <tr className="bg-[#111319] text-stone-300 font-bold border-b border-stone-800 uppercase tracking-wider text-[11px]">
+                  <tr className="bg-[#111319] text-slate-700 dark:text-stone-300 font-bold border-b border-slate-200 dark:border-stone-800 uppercase tracking-wider text-[11px]">
                     <th className="py-2.5 px-3 w-10 text-center">
                       <button
                         type="button"
                         onClick={() => toggleSelectAllVisible(displayedOrders)}
-                        className="text-stone-400 hover:text-white transition focus:outline-none flex items-center justify-center mx-auto"
+                        className="text-slate-500 dark:text-stone-400 hover:text-white transition focus:outline-none flex items-center justify-center mx-auto"
                         title="Toggle Select All in View"
                       >
                         {displayedOrders.length > 0 &&
@@ -958,11 +958,11 @@ export const AllOrdersSearchView: React.FC = () => {
                 >
                   {displayedOrders.length === 0 ? (
                     <tr>
-                      <td colSpan={13} className="py-24 text-center text-stone-500">
+                      <td colSpan={13} className="py-24 text-center text-slate-400 dark:text-stone-500">
                         <div className="max-w-xs mx-auto space-y-3">
                           <Search className="w-12 h-12 text-stone-600 mx-auto" />
-                          <p className="text-stone-300 font-bold text-sm">No Orders Match Search Criteria</p>
-                          <p className="text-xs text-stone-500 font-sans">
+                          <p className="text-slate-700 dark:text-stone-300 font-bold text-sm">No Orders Match Search Criteria</p>
+                          <p className="text-xs text-slate-400 dark:text-stone-500 font-sans">
                             Try adjusting your filters in the panel or clearing search criteria.
                           </p>
                           <button
@@ -1005,7 +1005,7 @@ export const AllOrdersSearchView: React.FC = () => {
                           key={order.id || virtualRow.key}
                           data-index={virtualRow.index}
                           ref={rowVirtualizer.measureElement}
-                          className={`hover:bg-white/[0.04] transition-colors border-b border-stone-800/40 text-stone-200 absolute top-0 left-0 w-full flex items-center ${
+                          className={`hover:bg-white/[0.04] transition-colors border-b border-slate-200 dark:border-stone-800/40 text-stone-200 absolute top-0 left-0 w-full flex items-center ${
                             isSelected ? 'bg-emerald-500/[0.05]' : ''
                           }`}
                           style={{
@@ -1018,7 +1018,7 @@ export const AllOrdersSearchView: React.FC = () => {
                             <button
                               type="button"
                               onClick={() => toggleSelectOrder(order.id)}
-                              className="text-stone-400 hover:text-emerald-400 transition focus:outline-none flex items-center justify-center mx-auto"
+                              className="text-slate-500 dark:text-stone-400 hover:text-emerald-400 transition focus:outline-none flex items-center justify-center mx-auto"
                             >
                               {isSelected ? (
                                 <CheckSquare className="w-4 h-4 text-emerald-400" />
@@ -1029,7 +1029,7 @@ export const AllOrdersSearchView: React.FC = () => {
                           </td>
 
                           {/* Sr */}
-                          <td className="py-2.5 px-3 w-12 text-center text-stone-400 font-bold shrink-0">
+                          <td className="py-2.5 px-3 w-12 text-center text-slate-500 dark:text-stone-400 font-bold shrink-0">
                             {srNum}
                           </td>
 
@@ -1058,19 +1058,19 @@ export const AllOrdersSearchView: React.FC = () => {
                             >
                               {customerName}
                             </button>
-                            <span className="text-[10px] text-stone-500 font-mono block">
+                            <span className="text-[10px] text-slate-400 dark:text-stone-500 font-mono block">
                               #{order.orderNumber || order.id.slice(-6)}
                             </span>
                           </td>
 
                           {/* Phone */}
-                          <td className="py-2.5 px-3 w-28 font-mono text-stone-300 shrink-0">
+                          <td className="py-2.5 px-3 w-28 font-mono text-slate-700 dark:text-stone-300 shrink-0">
                             {customerPhone}
                           </td>
 
                           {/* Address */}
                           <td
-                            className="py-2.5 px-3 font-sans text-stone-300 truncate flex-1 min-w-[180px]"
+                            className="py-2.5 px-3 font-sans text-slate-700 dark:text-stone-300 truncate flex-1 min-w-[180px]"
                             title={addressText}
                           >
                             {addressText}
@@ -1078,7 +1078,7 @@ export const AllOrdersSearchView: React.FC = () => {
 
                           {/* Outlet */}
                           <td className="py-2.5 px-3 w-16 text-center shrink-0">
-                            <span className="px-1.5 py-0.5 rounded bg-stone-800 border border-stone-700 text-stone-300 font-mono text-[10px] font-bold">
+                            <span className="px-1.5 py-0.5 rounded bg-slate-50 dark:bg-stone-800 border border-slate-300 dark:border-stone-700 text-slate-700 dark:text-stone-300 font-mono text-[10px] font-bold">
                               {outletCode}
                             </span>
                           </td>
@@ -1098,7 +1098,7 @@ export const AllOrdersSearchView: React.FC = () => {
 
                           {/* Punched By */}
                           <td
-                            className="py-2.5 px-3 w-32 font-sans text-stone-300 text-xs truncate shrink-0"
+                            className="py-2.5 px-3 w-32 font-sans text-slate-700 dark:text-stone-300 text-xs truncate shrink-0"
                             title={punchedBy}
                           >
                             {punchedBy}
@@ -1126,14 +1126,14 @@ export const AllOrdersSearchView: React.FC = () => {
                               </button>
                               <button
                                 onClick={() => setPrintQueueOrder(order)}
-                                className="p-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-amber-400 hover:text-amber-300 transition cursor-pointer inline-flex items-center justify-center border border-stone-700"
+                                className="p-1.5 rounded-lg bg-slate-50 dark:bg-stone-800 hover:bg-stone-700 text-amber-400 hover:text-amber-300 transition cursor-pointer inline-flex items-center justify-center border border-slate-300 dark:border-stone-700"
                                 title="Print Receipt"
                               >
                                 <Printer className="w-3.5 h-3.5" />
                               </button>
                               <button
                                 onClick={() => setActiveReceiptOrder(order)}
-                                className="p-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 hover:text-white transition cursor-pointer inline-flex items-center justify-center border border-stone-700"
+                                className="p-1.5 rounded-lg bg-slate-50 dark:bg-stone-800 hover:bg-stone-700 text-slate-700 dark:text-stone-300 hover:text-white transition cursor-pointer inline-flex items-center justify-center border border-slate-300 dark:border-stone-700"
                                 title="View Thermal Slip"
                               >
                                 <Receipt className="w-3.5 h-3.5" />
@@ -1150,16 +1150,16 @@ export const AllOrdersSearchView: React.FC = () => {
           </div>
 
           {/* FOOTER BAR: VIRTUALIZATION ENGINE TELEMETRY & EXPORT ACTIONS */}
-          <div className="bg-[#111319] border-t border-stone-800 px-4 py-2.5 shrink-0 flex flex-col md:flex-row items-center justify-between gap-3 text-xs font-mono">
+          <div className="bg-[#111319] border-t border-slate-200 dark:border-stone-800 px-4 py-2.5 shrink-0 flex flex-col md:flex-row items-center justify-between gap-3 text-xs font-mono">
             {/* Left: View Mode Toggle & Telemetry */}
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1 bg-[#090a0d] p-0.5 rounded-lg border border-stone-800">
+              <div className="flex items-center gap-1 bg-[#090a0d] p-0.5 rounded-lg border border-slate-200 dark:border-stone-800">
                 <button
                   onClick={() => setViewMode('virtual')}
                   className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition flex items-center gap-1 cursor-pointer ${
                     viewMode === 'virtual'
                       ? 'bg-emerald-600 text-white shadow-xs'
-                      : 'text-stone-400 hover:text-stone-200'
+                      : 'text-slate-500 dark:text-stone-400 hover:text-stone-200'
                   }`}
                   title="Virtual Infinite Scroll: renders thousands of entries with zero lag"
                 >
@@ -1171,7 +1171,7 @@ export const AllOrdersSearchView: React.FC = () => {
                   className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition cursor-pointer ${
                     viewMode === 'paginated'
                       ? 'bg-emerald-600 text-white shadow-xs'
-                      : 'text-stone-400 hover:text-stone-200'
+                      : 'text-slate-500 dark:text-stone-400 hover:text-stone-200'
                   }`}
                   title="Paginated Mode: step through results page by page"
                 >
@@ -1180,7 +1180,7 @@ export const AllOrdersSearchView: React.FC = () => {
               </div>
 
               {viewMode === 'virtual' ? (
-                <span className="text-stone-400 text-xs hidden sm:inline">
+                <span className="text-slate-500 dark:text-stone-400 text-xs hidden sm:inline">
                   ⚡ <strong>{rowVirtualizer.getVirtualItems().length}</strong> active DOM rows for{' '}
                   <strong className="text-white">{filteredOrders.length.toLocaleString()}</strong> records
                 </span>
@@ -1192,14 +1192,14 @@ export const AllOrdersSearchView: React.FC = () => {
                       setEntriesPerPage(Number(e.target.value));
                       setCurrentPage(1);
                     }}
-                    className="bg-[#090a0d] border border-stone-700 rounded-lg px-2 py-1 text-stone-200 text-xs focus:outline-none cursor-pointer"
+                    className="bg-[#090a0d] border border-slate-300 dark:border-stone-700 rounded-lg px-2 py-1 text-stone-200 text-xs focus:outline-none cursor-pointer"
                   >
                     <option value={20}>20 / page</option>
                     <option value={50}>50 / page</option>
                     <option value={100}>100 / page</option>
                     <option value={250}>250 / page</option>
                   </select>
-                  <span className="text-stone-400 text-xs">
+                  <span className="text-slate-500 dark:text-stone-400 text-xs">
                     {totalEntries === 0
                       ? '0 Entries'
                       : `${startIndex + 1}-${Math.min(startIndex + entriesPerPage, totalEntries)} of ${totalEntries}`}
@@ -1214,7 +1214,7 @@ export const AllOrdersSearchView: React.FC = () => {
                 <button
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                   disabled={safeCurrentPage === 1}
-                  className="px-2 py-1 rounded-lg bg-stone-800 hover:bg-stone-700 disabled:opacity-30 disabled:cursor-not-allowed text-stone-300 font-bold transition cursor-pointer border border-stone-700"
+                  className="px-2 py-1 rounded-lg bg-slate-50 dark:bg-stone-800 hover:bg-stone-700 disabled:opacity-30 disabled:cursor-not-allowed text-slate-700 dark:text-stone-300 font-bold transition cursor-pointer border border-slate-300 dark:border-stone-700"
                 >
                   &lt;
                 </button>
@@ -1234,7 +1234,7 @@ export const AllOrdersSearchView: React.FC = () => {
                       className={`px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer border ${
                         safeCurrentPage === pageNum
                           ? 'bg-emerald-600 text-white border-emerald-500 shadow-xs'
-                          : 'bg-stone-900 text-stone-400 hover:text-white border-stone-800'
+                          : 'bg-white dark:bg-stone-900 text-slate-500 dark:text-stone-400 hover:text-white border-slate-200 dark:border-stone-800'
                       }`}
                     >
                       {pageNum}
@@ -1245,7 +1245,7 @@ export const AllOrdersSearchView: React.FC = () => {
                 <button
                   onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                   disabled={safeCurrentPage >= totalPages}
-                  className="px-2 py-1 rounded-lg bg-stone-800 hover:bg-stone-700 disabled:opacity-30 disabled:cursor-not-allowed text-stone-300 font-bold transition cursor-pointer border border-stone-700"
+                  className="px-2 py-1 rounded-lg bg-slate-50 dark:bg-stone-800 hover:bg-stone-700 disabled:opacity-30 disabled:cursor-not-allowed text-slate-700 dark:text-stone-300 font-bold transition cursor-pointer border border-slate-300 dark:border-stone-700"
                 >
                   &gt;
                 </button>
@@ -1274,7 +1274,7 @@ export const AllOrdersSearchView: React.FC = () => {
 
               <button
                 onClick={() => window.print()}
-                className="px-3 py-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 hover:text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer border border-stone-700 shadow-xs"
+                className="px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-stone-800 hover:bg-stone-700 text-slate-700 dark:text-stone-300 hover:text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer border border-slate-300 dark:border-stone-700 shadow-xs"
                 title="Print Orders View"
               >
                 <Printer className="w-3.5 h-3.5" />

@@ -86,23 +86,23 @@ export const ManagerAuthModal: React.FC<ManagerAuthModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
-      <div className="bg-gradient-to-b from-stone-900 to-[#121212] border border-white/10 ring-1 ring-white/10 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+    <div className="fixed inset-0 z-50 bg-slate-900/40 dark:bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
+      <div className="bg-gradient-to-b from-stone-900 to-[#121212] border border-slate-300 dark:border-white/10 ring-1 ring-white/10 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
         
         {/* Header */}
-        <div className="p-4 border-b border-white/5 bg-stone-950/60 backdrop-blur-xs flex items-center justify-between">
+        <div className="p-4 border-b border-slate-200 dark:border-white/5 bg-white/60 dark:bg-stone-950/60 backdrop-blur-xs flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center shadow-sm">
               <ShieldAlert className="w-4.5 h-4.5" />
             </div>
             <div>
               <h3 className="font-extrabold text-white text-base">Manager PIN Authorization</h3>
-              <p className="text-[10px] uppercase font-bold tracking-wider text-stone-400">{actionTitle}</p>
+              <p className="text-[10px] uppercase font-bold tracking-wider text-slate-500 dark:text-stone-400">{actionTitle}</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-xl hover:bg-white/5 text-stone-400 hover:text-white transition-all cursor-pointer"
+            className="p-1.5 rounded-xl hover:bg-white/5 text-slate-500 dark:text-stone-400 hover:text-white transition-all cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -117,7 +117,7 @@ export const ManagerAuthModal: React.FC<ManagerAuthModalProps> = ({
 
           {/* Manager Selector */}
           <div>
-            <label className="text-[10px] uppercase font-bold tracking-wider text-stone-400 block mb-1.5">
+            <label className="text-[10px] uppercase font-bold tracking-wider text-slate-500 dark:text-stone-400 block mb-1.5">
               Select Authorizing Manager / Owner:
             </label>
             <div className="grid grid-cols-2 gap-2">
@@ -135,13 +135,13 @@ export const ManagerAuthModal: React.FC<ManagerAuthModalProps> = ({
                     className={`p-2.5 rounded-xl border text-left flex items-center gap-2 transition-all cursor-pointer ${
                       isSelected
                         ? 'bg-gradient-to-b from-emerald-950/60 to-emerald-900/30 border-emerald-500/50 text-white ring-1 ring-emerald-500/30 shadow-md'
-                        : 'bg-stone-950/80 border-white/5 text-stone-400 hover:bg-stone-800/80 hover:text-stone-200'
+                        : 'bg-stone-950/80 border-slate-200 dark:border-white/5 text-slate-500 dark:text-stone-400 hover:bg-slate-100 dark:hover:bg-stone-800/80 hover:text-stone-200'
                     }`}
                   >
                     <UserCheck className="w-4 h-4 text-emerald-400" />
                     <div>
                       <span className="font-bold text-xs block text-stone-200">{mgr.name}</span>
-                      <span className="text-[9px] uppercase font-mono font-bold text-stone-400">
+                      <span className="text-[9px] uppercase font-mono font-bold text-slate-500 dark:text-stone-400">
                         {mgr.role}
                       </span>
                     </div>
@@ -153,7 +153,7 @@ export const ManagerAuthModal: React.FC<ManagerAuthModalProps> = ({
 
           {/* Mandatory Reason Input */}
           <div>
-            <label className="text-[10px] uppercase font-bold tracking-wider text-stone-400 block mb-1">
+            <label className="text-[10px] uppercase font-bold tracking-wider text-slate-500 dark:text-stone-400 block mb-1">
               Audit Reason (Mandatory) *:
             </label>
             <input
@@ -165,13 +165,13 @@ export const ManagerAuthModal: React.FC<ManagerAuthModalProps> = ({
                 setErrorMessage(null);
               }}
               required
-              className="w-full bg-stone-950/90 border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder:text-stone-600 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 transition-all shadow-inner"
+              className="w-full bg-stone-950/90 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder:text-stone-600 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 transition-all shadow-inner"
             />
           </div>
 
           {/* PIN Input Indicator */}
           <div>
-            <label className="text-[10px] uppercase font-bold tracking-wider text-stone-400 block mb-1.5 text-center">
+            <label className="text-[10px] uppercase font-bold tracking-wider text-slate-500 dark:text-stone-400 block mb-1.5 text-center">
               Enter 4-Digit Security PIN:
             </label>
             <div className="flex justify-center gap-3 my-2">
@@ -183,7 +183,7 @@ export const ManagerAuthModal: React.FC<ManagerAuthModalProps> = ({
                     className={`w-10 h-12 rounded-xl border flex items-center justify-center text-lg font-black transition-all shadow-inner ${
                       isFilled
                         ? 'bg-emerald-950/60 border-emerald-500/60 text-emerald-400 scale-105 shadow-emerald-950/30'
-                        : 'bg-stone-950/90 border-white/10 text-stone-600'
+                        : 'bg-stone-950/90 border-slate-300 dark:border-white/10 text-stone-600'
                     }`}
                   >
                     {isFilled ? '●' : '—'}
@@ -210,8 +210,8 @@ export const ManagerAuthModal: React.FC<ManagerAuthModalProps> = ({
                   k === 'C'
                     ? 'bg-red-950/40 hover:bg-red-900/60 text-red-400 border border-red-900/40'
                     : k === 'BS'
-                    ? 'bg-stone-800 hover:bg-stone-700 text-stone-300 border border-white/5'
-                    : 'bg-stone-900 hover:bg-stone-800 text-stone-100 border border-white/5'
+                    ? 'bg-slate-50 dark:bg-stone-800 hover:bg-stone-700 text-slate-700 dark:text-stone-300 border border-slate-200 dark:border-white/5'
+                    : 'bg-white dark:bg-stone-900 hover:bg-slate-100 dark:hover:bg-stone-800 text-slate-900 dark:text-stone-100 border border-slate-200 dark:border-white/5'
                 }`}
               >
                 {k === 'BS' ? '⌫' : k}
@@ -219,11 +219,11 @@ export const ManagerAuthModal: React.FC<ManagerAuthModalProps> = ({
             ))}
           </div>
 
-          <div className="flex items-center justify-end gap-2 pt-3 border-t border-white/5">
+          <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200 dark:border-white/5">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-xl text-xs font-bold text-stone-400 hover:text-white transition-all cursor-pointer"
+              className="px-4 py-2 rounded-xl text-xs font-bold text-slate-500 dark:text-stone-400 hover:text-white transition-all cursor-pointer"
             >
               Cancel
             </button>

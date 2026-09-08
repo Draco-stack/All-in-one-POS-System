@@ -76,21 +76,21 @@ export const ManagerOverrideModal: React.FC<ManagerOverrideModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
-      <div className="bg-stone-900 border border-stone-800 rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 flex flex-col">
+      <div className="bg-white dark:bg-stone-900 border border-slate-200 dark:border-stone-800 rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 flex flex-col">
         {/* Header */}
-        <div className="p-4 border-b border-stone-800 bg-stone-950 flex items-center justify-between">
+        <div className="p-4 border-b border-slate-200 dark:border-stone-800 bg-white dark:bg-stone-950 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-400 flex items-center justify-center">
               <ShieldAlert className="w-5 h-5" />
             </div>
             <div>
               <h3 className="font-extrabold text-white text-base">{title}</h3>
-              <p className="text-xs text-stone-400">{actionDescription}</p>
+              <p className="text-xs text-slate-500 dark:text-stone-400">{actionDescription}</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-stone-800 text-stone-400 hover:text-white transition"
+            className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-stone-800 text-slate-500 dark:text-stone-400 hover:text-white transition"
           >
             <X className="w-5 h-5" />
           </button>
@@ -99,7 +99,7 @@ export const ManagerOverrideModal: React.FC<ManagerOverrideModalProps> = ({
         <div className="p-6 space-y-4">
           {/* Manager Selector */}
           <div>
-            <label className="text-xs font-bold text-stone-400 uppercase tracking-wider block mb-2">
+            <label className="text-xs font-bold text-slate-500 dark:text-stone-400 uppercase tracking-wider block mb-2">
               Authorizing Manager / Owner:
             </label>
             <div className="grid grid-cols-2 gap-2">
@@ -116,12 +116,12 @@ export const ManagerOverrideModal: React.FC<ManagerOverrideModalProps> = ({
                     className={`p-3 rounded-2xl border text-left transition flex items-center gap-3 cursor-pointer ${
                       isSelected
                         ? 'bg-amber-500/20 border-amber-500 shadow-md'
-                        : 'bg-stone-950 border-stone-800 hover:bg-stone-800/80 text-stone-400'
+                        : 'bg-white dark:bg-stone-950 border-slate-200 dark:border-stone-800 hover:bg-slate-100 dark:hover:bg-stone-800/80 text-slate-500 dark:text-stone-400'
                     }`}
                   >
                     <div
                       className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs ${
-                        isSelected ? 'bg-amber-500 text-stone-950 font-black' : 'bg-stone-800 text-stone-300'
+                        isSelected ? 'bg-amber-500 text-stone-950 font-black' : 'bg-slate-50 dark:bg-stone-800 text-slate-700 dark:text-stone-300'
                       }`}
                     >
                       {mgr.name[0]}
@@ -138,7 +138,7 @@ export const ManagerOverrideModal: React.FC<ManagerOverrideModalProps> = ({
 
           {/* Reason Input (Audit Log) */}
           <div>
-            <label className="text-xs font-bold text-stone-400 uppercase tracking-wider block mb-1.5">
+            <label className="text-xs font-bold text-slate-500 dark:text-stone-400 uppercase tracking-wider block mb-1.5">
               Reason for Modification / Cancellation <span className="text-red-400">*</span>:
             </label>
             <input
@@ -146,14 +146,14 @@ export const ManagerOverrideModal: React.FC<ManagerOverrideModalProps> = ({
               placeholder="e.g. Customer changed item / Kitchen shortage / Wrong price"
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              className="w-full px-3 py-2 bg-stone-950 border border-stone-800 rounded-xl text-xs text-white placeholder:text-stone-600 focus:outline-none focus:border-amber-500"
+              className="w-full px-3 py-2 bg-white dark:bg-stone-950 border border-slate-200 dark:border-stone-800 rounded-xl text-xs text-slate-900 dark:text-white placeholder:text-stone-600 focus:outline-none focus:border-amber-500"
             />
           </div>
 
           {/* PIN Input Dots & Keypad */}
           <div className="space-y-3 max-w-xs mx-auto pt-1">
             <div className="text-center">
-              <span className="text-xs font-bold text-stone-400 uppercase">Enter Manager 4-Digit PIN:</span>
+              <span className="text-xs font-bold text-slate-500 dark:text-stone-400 uppercase">Enter Manager 4-Digit PIN:</span>
               <div className="flex justify-center gap-3 my-2">
                 {[0, 1, 2, 3].map((idx) => {
                   const filled = pin.length > idx;
@@ -163,7 +163,7 @@ export const ManagerOverrideModal: React.FC<ManagerOverrideModalProps> = ({
                       className={`w-4 h-4 rounded-full border transition-all ${
                         filled
                           ? 'bg-amber-400 border-amber-400 scale-110 shadow-lg shadow-amber-500/50'
-                          : 'bg-stone-950 border-stone-700'
+                          : 'bg-white dark:bg-stone-950 border-slate-300 dark:border-stone-700'
                       }`}
                     />
                   );
@@ -181,7 +181,7 @@ export const ManagerOverrideModal: React.FC<ManagerOverrideModalProps> = ({
                 <button
                   key={k}
                   onClick={() => handleKeypadPress(k)}
-                  className="py-2.5 rounded-2xl bg-stone-950 hover:bg-stone-800 text-stone-200 font-mono font-bold text-base border border-stone-800/80 transition active:scale-95 cursor-pointer shadow-sm"
+                  className="py-2.5 rounded-2xl bg-white dark:bg-stone-950 hover:bg-slate-100 dark:hover:bg-stone-800 text-stone-200 font-mono font-bold text-base border border-slate-200 dark:border-stone-800/80 transition active:scale-95 cursor-pointer shadow-sm"
                 >
                   {k === 'BS' ? '⌫' : k}
                 </button>
@@ -189,10 +189,10 @@ export const ManagerOverrideModal: React.FC<ManagerOverrideModalProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-2 pt-3 border-t border-stone-800">
+          <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200 dark:border-stone-800">
             <button
               onClick={onClose}
-              className="px-4 py-2 rounded-xl text-xs font-bold text-stone-400 hover:text-white"
+              className="px-4 py-2 rounded-xl text-xs font-bold text-slate-500 dark:text-stone-400 hover:text-white"
             >
               Cancel
             </button>

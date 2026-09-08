@@ -125,9 +125,9 @@ export const ShiftCloseModal: React.FC<ShiftCloseModalProps> = ({
       if (shiftEndTime && orderTime > (shiftEndTime + 60000)) return false;
 
       // 4. Strict Cashier Attribution
-      if (shiftCashier && o.cashierName && o.cashierName !== shiftCashier) {
-        return false;
-      }
+      // if (shiftCashier && o.cashierName && o.cashierName !== shiftCashier) {
+      //   return false;
+      // }
 
       return true;
     });
@@ -284,10 +284,10 @@ export const ShiftCloseModal: React.FC<ShiftCloseModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto no-scrollbar">
-      <div className="bg-stone-900 border border-stone-800 rounded-2xl w-full max-w-3xl shadow-2xl overflow-hidden flex flex-col my-auto max-h-[92vh]">
+      <div className="bg-white dark:bg-stone-900 border border-slate-200 dark:border-stone-800 rounded-2xl w-full max-w-3xl shadow-2xl overflow-hidden flex flex-col my-auto max-h-[92vh]">
         
         {/* Modal Header */}
-        <div className="p-4 border-b border-stone-800 bg-stone-950 flex items-center justify-between shrink-0">
+        <div className="p-4 border-b border-slate-200 dark:border-stone-800 bg-white dark:bg-stone-950 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-[#00897b]/20 border border-[#00897b]/40 text-[#00897b] flex items-center justify-center">
               <Calculator className="w-5 h-5" />
@@ -295,18 +295,18 @@ export const ShiftCloseModal: React.FC<ShiftCloseModalProps> = ({
             <div>
               <h3 className="font-extrabold text-white text-base flex items-center gap-2">
                 {isShiftOpen ? 'Register Shift Close & Reconciliation' : 'Register Shift Management'}
-                <span className={`text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded border ${isShiftOpen ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-stone-800 text-stone-400 border-stone-700'}`}>
+                <span className={`text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded border ${isShiftOpen ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-slate-50 dark:bg-stone-800 text-slate-500 dark:text-stone-400 border-slate-300 dark:border-stone-700'}`}>
                   {isShiftOpen ? (currentShift?.shiftNumber || 'ACTIVE SHIFT') : 'SHIFT CLOSED'}
                 </span>
               </h3>
-              <p className="text-xs text-stone-400">
+              <p className="text-xs text-slate-500 dark:text-stone-400">
                 Cashier: <strong className="text-stone-200">{currentUser.name}</strong> • Outlet: {currentUser.outlet || 'Main Branch'}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-stone-800 text-stone-400 hover:text-white transition cursor-pointer"
+            className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-stone-800 text-slate-500 dark:text-stone-400 hover:text-white transition cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -320,7 +320,7 @@ export const ShiftCloseModal: React.FC<ShiftCloseModalProps> = ({
                 <CheckCircle className="w-6 h-6" />
               </div>
               <h4 className="text-lg font-black text-white">Shift Closed & Z-Report Generated</h4>
-              <p className="text-xs text-stone-400">
+              <p className="text-xs text-slate-500 dark:text-stone-400">
                 Session closed at {new Date(closedAuditData.endTime).toLocaleTimeString()} on {new Date().toLocaleDateString()}
               </p>
             </div>
@@ -330,7 +330,7 @@ export const ShiftCloseModal: React.FC<ShiftCloseModalProps> = ({
               <div className="text-center border-b border-dashed border-stone-400 pb-2">
                 <h5 className="font-black text-sm tracking-wider uppercase">MASTER POS PRO POS</h5>
                 <p className="text-[10px] text-stone-600">END OF SHIFT Z-REPORT (AUDIT # {closedAuditData.id.slice(-6)})</p>
-                <p className="text-[10px] text-stone-500">Cashier: {closedAuditData.cashierName}</p>
+                <p className="text-[10px] text-slate-400 dark:text-stone-500">Cashier: {closedAuditData.cashierName}</p>
               </div>
 
               <div className="space-y-1 border-b border-dashed border-stone-400 pb-2">
@@ -411,7 +411,7 @@ export const ShiftCloseModal: React.FC<ShiftCloseModalProps> = ({
                 onClick={() => {
                   onClose();
                 }}
-                className="px-4 py-2.5 bg-stone-800 hover:bg-stone-700 text-stone-200 rounded-xl text-xs font-bold transition cursor-pointer"
+                className="px-4 py-2.5 bg-slate-50 dark:bg-stone-800 hover:bg-stone-700 text-stone-200 rounded-xl text-xs font-bold transition cursor-pointer"
               >
                 Done & Return to POS
               </button>
@@ -420,7 +420,7 @@ export const ShiftCloseModal: React.FC<ShiftCloseModalProps> = ({
                   onClose();
                   logoutUser();
                 }}
-                className="px-4 py-2.5 bg-stone-900 border border-stone-700 hover:bg-stone-800 text-stone-300 rounded-xl text-xs font-bold transition cursor-pointer"
+                className="px-4 py-2.5 bg-white dark:bg-stone-900 border border-slate-300 dark:border-stone-700 hover:bg-slate-100 dark:hover:bg-stone-800 text-slate-700 dark:text-stone-300 rounded-xl text-xs font-bold transition cursor-pointer"
               >
                 Switch Cashier
               </button>
@@ -429,19 +429,19 @@ export const ShiftCloseModal: React.FC<ShiftCloseModalProps> = ({
         ) : !isShiftOpen ? (
           /* Shift Closed - Open Shift Panel */
           <div className="p-6 overflow-y-auto space-y-6">
-            <div className="bg-stone-950 p-5 rounded-2xl border border-stone-800 text-center space-y-2">
+            <div className="bg-white dark:bg-stone-950 p-5 rounded-2xl border border-slate-200 dark:border-stone-800 text-center space-y-2">
               <div className="w-12 h-12 rounded-2xl bg-[#00897b]/20 border border-[#00897b]/30 text-[#00897b] flex items-center justify-center mx-auto">
                 <Unlock className="w-6 h-6" />
               </div>
               <h4 className="text-lg font-black text-white">No Active Shift Session</h4>
-              <p className="text-xs text-stone-400 max-w-md mx-auto">
+              <p className="text-xs text-slate-500 dark:text-stone-400 max-w-md mx-auto">
                 Open a new register shift to begin order billing and enable automated cash drawer tracking.
               </p>
             </div>
 
             <form onSubmit={handleOpenNewShift} className="space-y-4 max-w-md mx-auto">
               <div>
-                <label className="text-xs font-bold text-stone-300 block mb-1">
+                <label className="text-xs font-bold text-slate-700 dark:text-stone-300 block mb-1">
                   Opening Cash Float (PKR):
                 </label>
                 <input
@@ -449,7 +449,7 @@ export const ShiftCloseModal: React.FC<ShiftCloseModalProps> = ({
                   min="0"
                   value={openingFloatInput}
                   onChange={(e) => setOpeningFloatInput(e.target.value)}
-                  className="w-full bg-stone-950 border border-stone-800 rounded-xl p-3 text-sm font-mono font-bold text-white focus:outline-none focus:border-[#00897b]"
+                  className="w-full bg-white dark:bg-stone-950 border border-slate-200 dark:border-stone-800 rounded-xl p-3 text-sm font-mono font-bold text-slate-900 dark:text-white focus:outline-none focus:border-[#00897b]"
                 />
               </div>
 
@@ -460,7 +460,7 @@ export const ShiftCloseModal: React.FC<ShiftCloseModalProps> = ({
                     key={f}
                     type="button"
                     onClick={() => setOpeningFloatInput(f)}
-                    className="flex-1 py-2 bg-stone-950 hover:bg-stone-800 border border-stone-800 rounded-xl text-xs font-mono font-bold text-stone-300 transition cursor-pointer"
+                    className="flex-1 py-2 bg-white dark:bg-stone-950 hover:bg-slate-100 dark:hover:bg-stone-800 border border-slate-200 dark:border-stone-800 rounded-xl text-xs font-mono font-bold text-slate-700 dark:text-stone-300 transition cursor-pointer"
                   >
                     PKR {Number(f).toLocaleString()}
                   </button>
@@ -468,7 +468,7 @@ export const ShiftCloseModal: React.FC<ShiftCloseModalProps> = ({
               </div>
 
               <div>
-                <label className="text-xs font-bold text-stone-300 block mb-1">
+                <label className="text-xs font-bold text-slate-700 dark:text-stone-300 block mb-1">
                   Shift Opening Notes (Optional):
                 </label>
                 <input
@@ -476,7 +476,7 @@ export const ShiftCloseModal: React.FC<ShiftCloseModalProps> = ({
                   placeholder="e.g. Standard morning float assigned by manager"
                   value={openingNotesInput}
                   onChange={(e) => setOpeningNotesInput(e.target.value)}
-                  className="w-full bg-stone-950 border border-stone-800 rounded-xl p-2.5 text-xs text-white focus:outline-none"
+                  className="w-full bg-white dark:bg-stone-950 border border-slate-200 dark:border-stone-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none"
                 />
               </div>
 
@@ -484,7 +484,7 @@ export const ShiftCloseModal: React.FC<ShiftCloseModalProps> = ({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-4 py-2.5 rounded-xl text-xs font-bold text-stone-400 hover:text-white transition cursor-pointer"
+                  className="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-500 dark:text-stone-400 hover:text-white transition cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -518,42 +518,40 @@ export const ShiftCloseModal: React.FC<ShiftCloseModalProps> = ({
 
             {/* Top Stats Overview */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
-              <div className="bg-stone-950 p-3 rounded-xl border border-stone-800">
-                <span className="text-[10px] uppercase font-bold text-stone-400">Starting Petty Cash</span>
+              <div className="bg-white dark:bg-stone-950 p-3 rounded-xl border border-slate-200 dark:border-stone-800">
+                <span className="text-[10px] uppercase font-bold text-slate-500 dark:text-stone-400">Starting Petty Cash</span>
                 <p className="text-base font-black text-amber-400 font-mono mt-0.5">
                   PKR {openingFloatVal.toLocaleString()}
                 </p>
               </div>
 
-              <div className="bg-stone-950 p-3 rounded-xl border border-stone-800">
-                <span className="text-[10px] uppercase font-bold text-stone-400">Shift Cash Sales</span>
+              <div className="bg-white dark:bg-stone-950 p-3 rounded-xl border border-slate-200 dark:border-stone-800">
+                <span className="text-[10px] uppercase font-bold text-slate-500 dark:text-stone-400">Shift Cash Sales</span>
                 <p className="text-base font-black text-emerald-400 font-mono mt-0.5">
                   PKR {cashSalesVal.toLocaleString()}
                 </p>
               </div>
 
-              <div className="bg-stone-950 p-3 rounded-xl border border-stone-800">
-                <span className="text-[10px] uppercase font-bold text-stone-400">Card & Online</span>
+              <div className="bg-white dark:bg-stone-950 p-3 rounded-xl border border-slate-200 dark:border-stone-800">
+                <span className="text-[10px] uppercase font-bold text-slate-500 dark:text-stone-400">Card & Online</span>
                 <p className="text-base font-black text-blue-400 font-mono mt-0.5">
                   PKR {cardSalesVal.toLocaleString()}
                 </p>
               </div>
 
-              {['admin', 'manager', 'owner'].includes(currentUser.role) && (
-                <div className="bg-stone-950 p-3 rounded-xl border border-stone-800">
-                  <span className="text-[10px] uppercase font-bold text-stone-400">System Expected Cash</span>
-                  <p className="text-base font-black text-cyan-400 font-mono mt-0.5">
-                    PKR {expectedCashInDrawer.toLocaleString()}
-                  </p>
-                </div>
-              )}
+              <div className="bg-white dark:bg-stone-950 p-3 rounded-xl border border-slate-200 dark:border-stone-800">
+                <span className="text-[10px] uppercase font-bold text-slate-500 dark:text-stone-400">System Expected Cash</span>
+                <p className="text-base font-black text-cyan-400 font-mono mt-0.5">
+                  PKR {expectedCashInDrawer.toLocaleString()}
+                </p>
+              </div>
             </div>
 
             {/* Petty Cash Float Adjustment */}
-            <div className="bg-stone-950/60 p-3.5 rounded-xl border border-stone-800 space-y-1.5 opacity-80">
+            <div className="bg-white/60 dark:bg-stone-950/60 p-3.5 rounded-xl border border-slate-200 dark:border-stone-800 space-y-1.5 opacity-80">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-bold text-stone-300 flex items-center gap-1.5">
-                  <Lock className="w-3.5 h-3.5 text-stone-500" />
+                <label className="text-xs font-bold text-slate-700 dark:text-stone-300 flex items-center gap-1.5">
+                  <Lock className="w-3.5 h-3.5 text-slate-400 dark:text-stone-500" />
                   Petty Cash Float / Starting Balance (PKR):
                 </label>
                 <span className="text-[11px] text-amber-500 font-bold flex items-center gap-1">
@@ -565,20 +563,20 @@ export const ShiftCloseModal: React.FC<ShiftCloseModalProps> = ({
                 min="0"
                 value={pettyCash}
                 disabled
-                className="w-full bg-stone-900/40 border border-stone-800 rounded-lg px-3 py-2 text-sm font-mono font-bold text-stone-500 cursor-not-allowed select-none"
+                className="w-full bg-white dark:bg-stone-900/40 border border-slate-200 dark:border-stone-800 rounded-lg px-3 py-2 text-sm font-mono font-bold text-slate-400 dark:text-stone-500 cursor-not-allowed select-none"
                 placeholder="e.g. 2000"
               />
             </div>
 
             {/* Notes & Bills Counter Matrix */}
-            <div className="bg-stone-950/90 p-4 rounded-xl border border-stone-800 space-y-3">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-stone-800 pb-2 gap-2">
+            <div className="bg-stone-950/90 p-4 rounded-xl border border-slate-200 dark:border-stone-800 space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-200 dark:border-stone-800 pb-2 gap-2">
                 <div>
                   <h4 className="text-xs font-bold text-white flex items-center gap-1.5">
                     <Banknote className="w-4 h-4 text-[#00897b]" />
                     Banknotes & Currency Denomination Counter Matrix
                   </h4>
-                  <p className="text-[11px] text-stone-400">
+                  <p className="text-[11px] text-slate-500 dark:text-stone-400">
                     Input individual physical note counts: Total = ∑(Note × Quantity)
                   </p>
                 </div>
@@ -595,14 +593,14 @@ export const ShiftCloseModal: React.FC<ShiftCloseModalProps> = ({
                   <button
                     type="button"
                     onClick={handleResetCounts}
-                    className="px-2.5 py-1 bg-stone-850 hover:bg-stone-800 text-stone-400 hover:text-white border border-stone-700 rounded-lg text-[10px] font-bold transition flex items-center gap-1 cursor-pointer"
+                    className="px-2.5 py-1 bg-stone-850 hover:bg-slate-100 dark:hover:bg-stone-800 text-slate-500 dark:text-stone-400 hover:text-white border border-slate-300 dark:border-stone-700 rounded-lg text-[10px] font-bold transition flex items-center gap-1 cursor-pointer"
                     title="Clear all denomination counts"
                   >
                     <RotateCcw className="w-3 h-3" />
                     Clear
                   </button>
-                  <div className="text-right pl-2 border-l border-stone-800">
-                    <span className="text-[10px] uppercase text-stone-400 font-bold block">Counted</span>
+                  <div className="text-right pl-2 border-l border-slate-200 dark:border-stone-800">
+                    <span className="text-[10px] uppercase text-slate-500 dark:text-stone-400 font-bold block">Counted</span>
                     <p className="text-sm font-black text-emerald-400 font-mono">
                       PKR {totalPhysicalCashCounted.toLocaleString()}
                     </p>
@@ -618,13 +616,13 @@ export const ShiftCloseModal: React.FC<ShiftCloseModalProps> = ({
                   return (
                     <div
                       key={denom}
-                      className="bg-stone-900 border border-stone-800 rounded-xl p-2.5 flex flex-col justify-between space-y-1.5 focus-within:border-[#00897b] transition"
+                      className="bg-white dark:bg-stone-900 border border-slate-200 dark:border-stone-800 rounded-xl p-2.5 flex flex-col justify-between space-y-1.5 focus-within:border-[#00897b] transition"
                     >
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-black text-white font-mono bg-stone-950 px-2 py-0.5 rounded border border-stone-800">
+                        <span className="text-xs font-black text-slate-900 dark:text-white font-mono bg-white dark:bg-stone-950 px-2 py-0.5 rounded border border-slate-200 dark:border-stone-800">
                           Rs. {denom}
                         </span>
-                        <span className="text-[10px] font-mono text-stone-400">
+                        <span className="text-[10px] font-mono text-slate-500 dark:text-stone-400">
                           = {lineTotal.toLocaleString()}
                         </span>
                       </div>
@@ -637,7 +635,7 @@ export const ShiftCloseModal: React.FC<ShiftCloseModalProps> = ({
                           value={qty === 0 ? '' : qty}
                           placeholder="0 pcs"
                           onChange={(e) => handleDenomChange(denom, e.target.value)}
-                          className="w-full bg-stone-950 border border-stone-800 rounded-lg px-2 py-1.5 text-xs font-mono font-bold text-center text-white placeholder:text-stone-600 focus:outline-none focus:border-[#00897b]"
+                          className="w-full bg-white dark:bg-stone-950 border border-slate-200 dark:border-stone-800 rounded-lg px-2 py-1.5 text-xs font-mono font-bold text-center text-slate-900 dark:text-white placeholder:text-stone-600 focus:outline-none focus:border-[#00897b]"
                         />
                       </div>
                     </div>
@@ -645,12 +643,12 @@ export const ShiftCloseModal: React.FC<ShiftCloseModalProps> = ({
                 })}
 
                 {/* Loose Coins / Small Change */}
-                <div className="bg-stone-900 border border-stone-800 rounded-xl p-2.5 flex flex-col justify-between space-y-1.5 focus-within:border-[#00897b] transition">
+                <div className="bg-white dark:bg-stone-900 border border-slate-200 dark:border-stone-800 rounded-xl p-2.5 flex flex-col justify-between space-y-1.5 focus-within:border-[#00897b] transition">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-black text-amber-300 font-mono bg-stone-950 px-2 py-0.5 rounded border border-stone-800">
+                    <span className="text-xs font-black text-amber-300 font-mono bg-white dark:bg-stone-950 px-2 py-0.5 rounded border border-slate-200 dark:border-stone-800">
                       Coins (PKR)
                     </span>
-                    <span className="text-[10px] font-mono text-stone-400">
+                    <span className="text-[10px] font-mono text-slate-500 dark:text-stone-400">
                       = {coinsAmount.toLocaleString()}
                     </span>
                   </div>
@@ -661,7 +659,7 @@ export const ShiftCloseModal: React.FC<ShiftCloseModalProps> = ({
                     value={coinsAmount === 0 ? '' : coinsAmount}
                     placeholder="Coins sum"
                     onChange={(e) => setCoinsAmount(parseFloat(e.target.value) || 0)}
-                    className="w-full bg-stone-950 border border-stone-800 rounded-lg px-2 py-1.5 text-xs font-mono font-bold text-center text-white placeholder:text-stone-600 focus:outline-none focus:border-[#00897b]"
+                    className="w-full bg-white dark:bg-stone-950 border border-slate-200 dark:border-stone-800 rounded-lg px-2 py-1.5 text-xs font-mono font-bold text-center text-slate-900 dark:text-white placeholder:text-stone-600 focus:outline-none focus:border-[#00897b]"
                   />
                 </div>
               </div>
@@ -669,9 +667,9 @@ export const ShiftCloseModal: React.FC<ShiftCloseModalProps> = ({
 
             {/* Next Shift Float / Locker Deposit Split */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="bg-stone-950/60 p-3.5 rounded-xl border border-stone-800 space-y-1.5">
+              <div className="bg-white/60 dark:bg-stone-950/60 p-3.5 rounded-xl border border-slate-200 dark:border-stone-800 space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold text-stone-300 flex items-center gap-1.5">
+                  <label className="text-xs font-bold text-slate-700 dark:text-stone-300 flex items-center gap-1.5">
                     <Lock className="w-4 h-4 text-[#00897b]" />
                     Next Shift Float Kept (PKR):
                   </label>
@@ -681,7 +679,7 @@ export const ShiftCloseModal: React.FC<ShiftCloseModalProps> = ({
                   min="0"
                   value={floatRetained}
                   onChange={(e) => setFloatRetained(parseFloat(e.target.value) || 0)}
-                  className="w-full bg-stone-900 border border-stone-800 rounded-lg px-3 py-2 text-sm font-mono font-bold text-white focus:outline-none focus:border-[#00897b]"
+                  className="w-full bg-white dark:bg-stone-900 border border-slate-200 dark:border-stone-800 rounded-lg px-3 py-2 text-sm font-mono font-bold text-slate-900 dark:text-white focus:outline-none focus:border-[#00897b]"
                   placeholder="Amount left in drawer"
                 />
               </div>
@@ -691,7 +689,7 @@ export const ShiftCloseModal: React.FC<ShiftCloseModalProps> = ({
                 <p className="text-xl font-black text-emerald-400 font-mono">
                   PKR {(totalPhysicalCashCounted - floatRetained).toLocaleString()}
                 </p>
-                <p className="text-[10px] text-stone-400">Actual Cash Counted - Next Shift Float Kept</p>
+                <p className="text-[10px] text-slate-500 dark:text-stone-400">Actual Cash Counted - Next Shift Float Kept</p>
               </div>
             </div>
 
@@ -729,14 +727,14 @@ export const ShiftCloseModal: React.FC<ShiftCloseModalProps> = ({
                       ? `Cash Overage Detected (+PKR ${discrepancy.toLocaleString()})`
                       : `Cash Shortage Detected (-PKR ${Math.abs(discrepancy).toLocaleString()})`}
                   </h4>
-                  <p className="text-xs text-stone-400 mt-0.5">
+                  <p className="text-xs text-slate-500 dark:text-stone-400 mt-0.5">
                     Physical Count: PKR {totalPhysicalCashCounted.toLocaleString()} | System Expected: PKR {expectedCashInDrawer.toLocaleString()}
                   </p>
                 </div>
               </div>
 
               <div className="text-right shrink-0">
-                <span className="text-[10px] uppercase font-bold tracking-wider text-stone-400 block">
+                <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500 dark:text-stone-400 block">
                   Variance
                 </span>
                 <span
@@ -755,7 +753,7 @@ export const ShiftCloseModal: React.FC<ShiftCloseModalProps> = ({
 
             {/* Shift Discrepancy & Handover Notes */}
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-stone-300">
+              <label className="text-xs font-bold text-slate-700 dark:text-stone-300">
                 Shift Handover / Audit Notes (Optional):
               </label>
               <textarea
@@ -763,16 +761,16 @@ export const ShiftCloseModal: React.FC<ShiftCloseModalProps> = ({
                 placeholder="Enter any drawer discrepancy explanations or handover notes for the incoming cashier..."
                 value={shiftNotes}
                 onChange={(e) => setShiftNotes(e.target.value)}
-                className="w-full bg-stone-950 border border-stone-800 rounded-xl p-3 text-xs text-white placeholder:text-stone-600 focus:outline-none focus:border-[#00897b]"
+                className="w-full bg-white dark:bg-stone-950 border border-slate-200 dark:border-stone-800 rounded-xl p-3 text-xs text-slate-900 dark:text-white placeholder:text-stone-600 focus:outline-none focus:border-[#00897b]"
               />
             </div>
 
             {/* Form Action Buttons */}
-            <div className="flex items-center justify-end gap-3 pt-2 border-t border-stone-800">
+            <div className="flex items-center justify-end gap-3 pt-2 border-t border-slate-200 dark:border-stone-800">
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2.5 rounded-xl text-xs font-bold text-stone-400 hover:text-white transition cursor-pointer"
+                className="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-500 dark:text-stone-400 hover:text-white transition cursor-pointer"
               >
                 Cancel
               </button>

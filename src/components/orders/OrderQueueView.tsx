@@ -121,8 +121,8 @@ export const OrderQueueView: React.FC = () => {
     },
     completed: {
       label: 'Completed',
-      bg: 'bg-stone-800 border-stone-700',
-      text: 'text-stone-400',
+      bg: 'bg-slate-50 dark:bg-stone-800 border-slate-300 dark:border-stone-700',
+      text: 'text-slate-500 dark:text-stone-400',
     },
     cancelled: {
       label: 'Cancelled / Void',
@@ -188,11 +188,11 @@ export const OrderQueueView: React.FC = () => {
 
   return (
     <div className={`flex-1 p-4 md:p-6 overflow-y-auto font-sans space-y-6 no-scrollbar transition-colors duration-200 ${
-      theme === 'dark' ? 'bg-[#0f1117] text-stone-100' : 'bg-slate-100 text-slate-900'
+      theme === 'dark' ? 'bg-[#0f1117] text-slate-900 dark:text-stone-100' : 'bg-slate-100 text-slate-900'
     }`}>
       {/* Top Header & Metrics Bar */}
       <div className={`flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-2xl border transition-colors ${
-        theme === 'dark' ? 'bg-[#151821] border-stone-800 shadow-lg' : 'bg-white border-slate-200 shadow-xs'
+        theme === 'dark' ? 'bg-[#151821] border-slate-200 dark:border-stone-800 shadow-lg' : 'bg-white border-slate-200 shadow-xs'
       }`}>
         <div>
           <h2 className={`text-lg md:text-xl font-black flex items-center gap-2 ${
@@ -202,7 +202,7 @@ export const OrderQueueView: React.FC = () => {
             Live Kitchen Display & Order Dispatch
           </h2>
           <p className={`text-xs mt-0.5 ${
-            theme === 'dark' ? 'text-stone-400' : 'text-slate-500'
+            theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'
           }`}>
             Real-time kitchen ticket flow, dispatch status tracking, and RBAC manager order modifications.
           </p>
@@ -212,7 +212,7 @@ export const OrderQueueView: React.FC = () => {
         <div className="flex flex-wrap items-center gap-2 text-xs">
           <div className="relative">
             <Search className={`w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 ${
-              theme === 'dark' ? 'text-stone-400' : 'text-slate-400'
+              theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-400'
             }`} />
             <input
               type="text"
@@ -221,7 +221,7 @@ export const OrderQueueView: React.FC = () => {
               onChange={(e) => setSearch(e.target.value)}
               className={`pl-8 pr-3 py-1.5 border rounded-xl text-xs focus:outline-none transition-colors ${
                 theme === 'dark'
-                  ? 'bg-[#0c0e14] border-stone-700 text-white placeholder-stone-500 focus:border-emerald-500'
+                  ? 'bg-[#0c0e14] border-slate-300 dark:border-stone-700 text-white placeholder-stone-500 focus:border-emerald-500'
                   : 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400 focus:border-emerald-600'
               }`}
             />
@@ -232,7 +232,7 @@ export const OrderQueueView: React.FC = () => {
             onChange={(e) => setFilterStatus(e.target.value)}
             className={`px-3 py-1.5 border rounded-xl focus:outline-none text-xs font-semibold cursor-pointer transition-colors ${
               theme === 'dark'
-                ? 'bg-[#0c0e14] border-stone-700 text-stone-200 focus:border-emerald-500'
+                ? 'bg-[#0c0e14] border-slate-300 dark:border-stone-700 text-stone-200 focus:border-emerald-500'
                 : 'bg-slate-50 border-slate-300 text-slate-800 focus:border-emerald-600'
             }`}
           >
@@ -251,7 +251,7 @@ export const OrderQueueView: React.FC = () => {
             onChange={(e) => setFilterType(e.target.value)}
             className={`px-3 py-1.5 border rounded-xl focus:outline-none text-xs font-semibold cursor-pointer transition-colors ${
               theme === 'dark'
-                ? 'bg-[#0c0e14] border-stone-700 text-stone-200 focus:border-emerald-500'
+                ? 'bg-[#0c0e14] border-slate-300 dark:border-stone-700 text-stone-200 focus:border-emerald-500'
                 : 'bg-slate-50 border-slate-300 text-slate-800 focus:border-emerald-600'
             }`}
           >
@@ -267,7 +267,7 @@ export const OrderQueueView: React.FC = () => {
       {filteredOrders.length === 0 ? (
         <div className={`py-20 px-6 text-center rounded-3xl border border-dashed transition-all duration-100 flex flex-col items-center justify-center space-y-4 ${
           theme === 'dark'
-            ? 'bg-[#0c0e14] border-stone-800 text-stone-400 shadow-sm'
+            ? 'bg-[#0c0e14] border-slate-200 dark:border-stone-800 text-slate-500 dark:text-stone-400 shadow-sm'
             : 'bg-slate-50 border-slate-300 text-slate-500 shadow-2xs'
         }`}>
           <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center">
@@ -277,7 +277,7 @@ export const OrderQueueView: React.FC = () => {
             <h3 className={`text-base font-black tracking-wide uppercase ${theme === 'dark' ? 'text-stone-200' : 'text-slate-800'}`}>
               No Kitchen Orders in Queue
             </h3>
-            <p className="text-xs leading-relaxed text-stone-400 font-medium">
+            <p className="text-xs leading-relaxed text-slate-500 dark:text-stone-400 font-medium">
               Punch new orders from the POS terminal or online dispatch to see live kitchen tickets populated here in real time.
             </p>
           </div>
@@ -303,13 +303,13 @@ export const OrderQueueView: React.FC = () => {
                 key={order.id}
                 className={`border rounded-2xl p-4 flex flex-col justify-between space-y-3 transition-all duration-100 active:scale-[0.99] ${
                   theme === 'dark'
-                    ? 'bg-[#12141c] border-stone-800/90 shadow-md hover:border-stone-700'
+                    ? 'bg-[#12141c] border-slate-200 dark:border-stone-800/90 shadow-md hover:border-stone-700'
                     : 'bg-white border-slate-200 shadow-sm hover:shadow-md'
                 }`}
               >
                 {/* Header */}
                 <div className={`flex items-start justify-between border-b pb-3 ${
-                  theme === 'dark' ? 'border-stone-800' : 'border-slate-100'
+                  theme === 'dark' ? 'border-slate-200 dark:border-stone-800' : 'border-slate-100'
                 }`}>
                   <div>
                     <div className="flex items-center gap-2">
@@ -320,14 +320,14 @@ export const OrderQueueView: React.FC = () => {
                       </span>
                       <span className={`px-2 py-0.5 rounded-md text-[10px] uppercase font-black border ${
                         theme === 'dark'
-                          ? 'bg-[#0c0e14] text-stone-300 border-stone-800'
+                          ? 'bg-[#0c0e14] text-slate-700 dark:text-stone-300 border-slate-200 dark:border-stone-800'
                           : 'bg-slate-100 text-slate-700 border-slate-200'
                       }`}>
                         {(order.type || order.orderType || 'takeaway').replace('_', ' ')}
                       </span>
                     </div>
                     <p className={`text-xs mt-0.5 ${
-                      theme === 'dark' ? 'text-stone-400' : 'text-slate-500'
+                      theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'
                     }`}>
                       {order.type === 'dine_in'
                         ? order.tableNumber || 'Table'
@@ -342,7 +342,7 @@ export const OrderQueueView: React.FC = () => {
                       {conf.label}
                     </span>
                     <span className={`text-[10px] font-mono block mt-1 ${
-                      theme === 'dark' ? 'text-stone-500' : 'text-slate-400'
+                      theme === 'dark' ? 'text-slate-400 dark:text-stone-500' : 'text-slate-400'
                     }`}>
                       {elapsedMins}m ago
                     </span>
@@ -356,7 +356,7 @@ export const OrderQueueView: React.FC = () => {
                       key={itemIdx}
                       className={`p-2.5 rounded-xl border flex items-center justify-between text-xs transition-colors ${
                         theme === 'dark'
-                          ? 'bg-[#0c0e14]/80 border-stone-800/80 text-stone-200'
+                          ? 'bg-[#0c0e14]/80 border-slate-200 dark:border-stone-800/80 text-stone-200'
                           : 'bg-slate-50 border-slate-200 text-slate-800'
                       }`}
                     >
@@ -376,7 +376,7 @@ export const OrderQueueView: React.FC = () => {
                         </div>
                       </div>
                       <span className={`font-mono text-[11px] font-semibold ${
-                        theme === 'dark' ? 'text-stone-400' : 'text-slate-600'
+                        theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-600'
                       }`}>
                         PKR {(item.price * item.quantity).toLocaleString()}
                       </span>
@@ -388,10 +388,10 @@ export const OrderQueueView: React.FC = () => {
                 {order.type === 'delivery' && order.customer?.address && (
                   <div className={`p-2.5 rounded-xl border text-[11px] ${
                     theme === 'dark'
-                      ? 'bg-[#0c0e14] border-stone-800 text-stone-400'
+                      ? 'bg-[#0c0e14] border-slate-200 dark:border-stone-800 text-slate-500 dark:text-stone-400'
                       : 'bg-slate-50 border-slate-200 text-slate-600'
                   }`}>
-                    <span className={`font-bold block ${theme === 'dark' ? 'text-stone-300' : 'text-slate-800'}`}>
+                    <span className={`font-bold block ${theme === 'dark' ? 'text-slate-700 dark:text-stone-300' : 'text-slate-800'}`}>
                       Address:
                     </span>
                     {order.customer.address}
@@ -400,10 +400,10 @@ export const OrderQueueView: React.FC = () => {
 
                 {/* Total & Action Footer */}
                 <div className={`pt-2.5 border-t flex items-center justify-between ${
-                  theme === 'dark' ? 'border-stone-800' : 'border-slate-100'
+                  theme === 'dark' ? 'border-slate-200 dark:border-stone-800' : 'border-slate-100'
                 }`}>
                   <div className="font-mono text-xs">
-                    <span className={theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}>Total: </span>
+                    <span className={theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}>Total: </span>
                     <span className="font-bold text-emerald-500 text-sm">
                       PKR {order.total.toLocaleString()}
                     </span>
@@ -425,7 +425,7 @@ export const OrderQueueView: React.FC = () => {
                       onClick={() => setSelectedOrderForManage(order)}
                       className={`px-2.5 py-1.5 rounded-xl text-[11px] font-bold transition flex items-center gap-1 cursor-pointer active:scale-95 ${
                         theme === 'dark'
-                          ? 'bg-stone-800 hover:bg-stone-700 text-stone-300'
+                          ? 'bg-slate-50 dark:bg-stone-800 hover:bg-stone-700 text-slate-700 dark:text-stone-300'
                           : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200'
                       }`}
                       title="Edit / Cancel Ticket (Manager Auth)"
@@ -482,10 +482,10 @@ export const OrderQueueView: React.FC = () => {
 
         {filteredOrders.length > 10 && (
           <div className={`flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-2xl border shadow-md transition-colors ${
-            theme === 'dark' ? 'bg-[#151821] border-stone-800' : 'bg-white border-slate-200'
+            theme === 'dark' ? 'bg-[#151821] border-slate-200 dark:border-stone-800' : 'bg-white border-slate-200'
           }`}>
             <div className={`text-xs font-mono flex items-center gap-2 ${
-              theme === 'dark' ? 'text-stone-400' : 'text-slate-500'
+              theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'
             }`}>
               <span>Showing <strong className={theme === 'dark' ? 'text-white' : 'text-slate-900'}>{displayedOrders.length}</strong> of <strong className={theme === 'dark' ? 'text-white' : 'text-slate-900'}>{filteredOrders.length}</strong> orders</span>
               {filteredOrders.length > visibleCount && (
@@ -513,7 +513,7 @@ export const OrderQueueView: React.FC = () => {
                   onClick={() => setVisibleCount(10)}
                   className={`px-3 py-2 font-semibold text-xs rounded-xl transition cursor-pointer active:scale-95 ${
                     theme === 'dark'
-                      ? 'bg-stone-800 hover:bg-stone-700 text-stone-300 border border-stone-700'
+                      ? 'bg-slate-50 dark:bg-stone-800 hover:bg-stone-700 text-slate-700 dark:text-stone-300 border border-slate-300 dark:border-stone-700'
                       : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200'
                   }`}
                 >
@@ -563,31 +563,31 @@ export const OrderQueueView: React.FC = () => {
       {/* REFUND AUTHORIZATION MODAL */}
       {selectedOrderForRefund && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-stone-900 border border-stone-800 rounded-2xl w-full max-w-md p-5 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center gap-2 text-red-400 font-bold text-base border-b border-stone-800 pb-3">
+          <div className="bg-white dark:bg-stone-900 border border-slate-200 dark:border-stone-800 rounded-2xl w-full max-w-md p-5 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center gap-2 text-red-400 font-bold text-base border-b border-slate-200 dark:border-stone-800 pb-3">
               <AlertCircle className="w-5 h-5" />
               Authorize Order Refund ({selectedOrderForRefund.orderNumber})
             </div>
 
-            <p className="text-xs text-stone-400">
+            <p className="text-xs text-slate-500 dark:text-stone-400">
               Authorized by <strong className="text-white">{currentUser.name}</strong> ({currentUser.role}). Please provide the customer reason for audit trail.
             </p>
 
             <div className="space-y-1.5">
-              <label className="text-xs text-stone-300 font-semibold">Refund Reason:</label>
+              <label className="text-xs text-slate-700 dark:text-stone-300 font-semibold">Refund Reason:</label>
               <textarea
                 rows={3}
                 placeholder="e.g. Wrong items delivered, customer cancelled before kitchen dispatch..."
                 value={refundReason}
                 onChange={(e) => setRefundReason(e.target.value)}
-                className="w-full bg-stone-950 border border-stone-800 rounded-xl p-3 text-xs text-stone-200 focus:outline-none focus:border-red-500"
+                className="w-full bg-white dark:bg-stone-950 border border-slate-200 dark:border-stone-800 rounded-xl p-3 text-xs text-stone-200 focus:outline-none focus:border-red-500"
               />
             </div>
 
-            <div className="flex justify-end gap-2 pt-2 border-t border-stone-800">
+            <div className="flex justify-end gap-2 pt-2 border-t border-slate-200 dark:border-stone-800">
               <button
                 onClick={() => setSelectedOrderForRefund(null)}
-                className="px-4 py-2 rounded-xl bg-stone-800 text-stone-300 text-xs font-semibold"
+                className="px-4 py-2 rounded-xl bg-slate-50 dark:bg-stone-800 text-slate-700 dark:text-stone-300 text-xs font-semibold"
               >
                 Cancel
               </button>
@@ -606,25 +606,25 @@ export const OrderQueueView: React.FC = () => {
       {/* DISPATCH RIDER SELECTION MODAL */}
       {dispatchModalOrder && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-stone-900 border border-stone-800 rounded-2xl w-full max-w-md p-5 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center gap-2 text-blue-400 font-bold text-base border-b border-stone-800 pb-3">
+          <div className="bg-white dark:bg-stone-900 border border-slate-200 dark:border-stone-800 rounded-2xl w-full max-w-md p-5 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center gap-2 text-blue-400 font-bold text-base border-b border-slate-200 dark:border-stone-800 pb-3">
               <Truck className="w-5 h-5" />
               Dispatch Order {dispatchModalOrder.orderNumber} to Rider
             </div>
 
-            <div className="bg-stone-950 p-3 rounded-xl border border-stone-800 text-xs space-y-1">
+            <div className="bg-white dark:bg-stone-950 p-3 rounded-xl border border-slate-200 dark:border-stone-800 text-xs space-y-1">
               <div className="flex justify-between">
-                <span className="text-stone-400">Customer:</span>
+                <span className="text-slate-500 dark:text-stone-400">Customer:</span>
                 <span className="text-white font-bold">{dispatchModalOrder.customer?.name || 'Walk-in Delivery'}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-stone-400">Address:</span>
-                <span className="text-stone-300 font-medium truncate max-w-[220px]">
+                <span className="text-slate-500 dark:text-stone-400">Address:</span>
+                <span className="text-slate-700 dark:text-stone-300 font-medium truncate max-w-[220px]">
                   {dispatchModalOrder.customer?.address || 'No address specified'}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-stone-400">Order Value:</span>
+                <span className="text-slate-500 dark:text-stone-400">Order Value:</span>
                 <span className="text-emerald-400 font-bold font-mono">
                   PKR {dispatchModalOrder.total.toLocaleString()}
                 </span>
@@ -633,7 +633,7 @@ export const OrderQueueView: React.FC = () => {
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <label className="text-xs text-stone-300 font-bold block">
+                <label className="text-xs text-slate-700 dark:text-stone-300 font-bold block">
                   Select Delivery Rider *
                 </label>
                 {!selectedRiderForDispatch && (
@@ -646,8 +646,8 @@ export const OrderQueueView: React.FC = () => {
                 value={selectedRiderForDispatch}
                 onChange={(e) => setSelectedRiderForDispatch(e.target.value)}
                 required
-                className={`w-full bg-stone-950 border rounded-xl p-3 text-xs text-white focus:outline-none font-bold transition ${
-                  !selectedRiderForDispatch ? 'border-amber-500/70 text-amber-300 ring-1 ring-amber-500/30' : 'border-stone-800 focus:border-blue-500'
+                className={`w-full bg-white dark:bg-stone-950 border rounded-xl p-3 text-xs text-white focus:outline-none font-bold transition ${
+                  !selectedRiderForDispatch ? 'border-amber-500/70 text-amber-300 ring-1 ring-amber-500/30' : 'border-slate-200 dark:border-stone-800 focus:border-blue-500'
                 }`}
               >
                 <option value="">-- Select Rider (Required for Delivery)* --</option>
@@ -673,10 +673,10 @@ export const OrderQueueView: React.FC = () => {
               </div>
             )}
 
-            <div className="flex justify-end gap-2 pt-2 border-t border-stone-800">
+            <div className="flex justify-end gap-2 pt-2 border-t border-slate-200 dark:border-stone-800">
               <button
                 onClick={() => setDispatchModalOrder(null)}
-                className="px-4 py-2 rounded-xl bg-stone-800 text-stone-300 text-xs font-semibold cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-slate-50 dark:bg-stone-800 text-slate-700 dark:text-stone-300 text-xs font-semibold cursor-pointer"
               >
                 Cancel
               </button>

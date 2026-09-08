@@ -143,10 +143,10 @@ export const DeliveryOrderDetailsModal: React.FC<DeliveryOrderDetailsModalProps>
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 overflow-y-auto animate-in fade-in duration-200 print:hidden">
-      <div className="bg-[#14161f] border border-white/10 rounded-2xl w-full max-w-4xl max-h-[92vh] flex flex-col shadow-2xl text-stone-100 overflow-hidden">
+      <div className="bg-[#14161f] border border-slate-300 dark:border-white/10 rounded-2xl w-full max-w-4xl max-h-[92vh] flex flex-col shadow-2xl text-slate-900 dark:text-stone-100 overflow-hidden">
         
         {/* Modal Header */}
-        <header className="px-6 py-4 bg-[#10121a] border-b border-white/10 flex items-center justify-between shrink-0">
+        <header className="px-6 py-4 bg-[#10121a] border-b border-slate-300 dark:border-white/10 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3.5">
             <div className="w-11 h-11 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400 shadow-sm">
               <Truck className="w-6 h-6" />
@@ -159,14 +159,14 @@ export const DeliveryOrderDetailsModal: React.FC<DeliveryOrderDetailsModalProps>
                 <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${sla.bg}`}>
                   {sla.label}
                 </span>
-                <span className="px-2 py-0.5 rounded-md bg-stone-800/80 border border-white/10 text-stone-300 text-xs font-medium">
+                <span className="px-2 py-0.5 rounded-md bg-slate-50 dark:bg-stone-800/80 border border-slate-300 dark:border-white/10 text-slate-700 dark:text-stone-300 text-xs font-medium">
                   {order.branchName || order.outlet || 'Main Branch'}
                 </span>
               </div>
-              <p className="text-xs text-stone-400 font-mono mt-0.5 flex items-center gap-2">
+              <p className="text-xs text-slate-500 dark:text-stone-400 font-mono mt-0.5 flex items-center gap-2">
                 <span>Punched: {punchedTime}</span>
                 <span className="text-stone-600">•</span>
-                <span>Source: <strong className="text-stone-300 font-semibold">{order.source || 'Call Center'}</strong></span>
+                <span>Source: <strong className="text-slate-700 dark:text-stone-300 font-semibold">{order.source || 'Call Center'}</strong></span>
                 <span className="text-stone-600">•</span>
                 <span>Cashier: <strong className="text-emerald-400 font-semibold">{order.punchedBy || order.cashierName || 'Staff'}</strong></span>
               </p>
@@ -176,7 +176,7 @@ export const DeliveryOrderDetailsModal: React.FC<DeliveryOrderDetailsModalProps>
           <div className="flex items-center gap-2">
             <button
               onClick={handlePrintSlip}
-              className="px-3.5 py-2 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-bold transition flex items-center gap-1.5 border border-white/10 cursor-pointer shadow-sm"
+              className="px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-bold transition flex items-center gap-1.5 border border-slate-300 dark:border-white/10 cursor-pointer shadow-sm"
               title="Print Order Dispatch Slip"
             >
               <Printer className="w-4 h-4 text-amber-400" />
@@ -184,7 +184,7 @@ export const DeliveryOrderDetailsModal: React.FC<DeliveryOrderDetailsModalProps>
             </button>
             <button
               onClick={onClose}
-              className="p-2 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-400 hover:text-white transition cursor-pointer border border-white/10"
+              className="p-2 rounded-xl bg-slate-50 dark:bg-stone-800 hover:bg-stone-700 text-slate-500 dark:text-stone-400 hover:text-white transition cursor-pointer border border-slate-300 dark:border-white/10"
               title="Close Details Modal"
             >
               <X className="w-5 h-5" />
@@ -196,9 +196,9 @@ export const DeliveryOrderDetailsModal: React.FC<DeliveryOrderDetailsModalProps>
         <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
           
           {/* Status Quick Bar */}
-          <div className="bg-[#181a24] p-4 rounded-xl border border-white/10 flex flex-wrap items-center justify-between gap-4 shadow-sm">
+          <div className="bg-[#181a24] p-4 rounded-xl border border-slate-300 dark:border-white/10 flex flex-wrap items-center justify-between gap-4 shadow-sm">
             <div>
-              <span className="text-[11px] text-stone-400 font-bold uppercase tracking-wider block mb-1">
+              <span className="text-[11px] text-slate-500 dark:text-stone-400 font-bold uppercase tracking-wider block mb-1">
                 Order Lifecycle Stage &amp; Payment Status
               </span>
               <div className="flex items-center gap-2.5">
@@ -210,7 +210,7 @@ export const DeliveryOrderDetailsModal: React.FC<DeliveryOrderDetailsModalProps>
                   }`} />
                   {order.status.replace(/_/g, ' ')}
                 </span>
-                <span className="text-xs text-stone-400">
+                <span className="text-xs text-slate-500 dark:text-stone-400">
                   • Tender: <strong className={order.paymentStatus === 'paid' ? 'text-emerald-400 font-mono' : 'text-amber-400 font-mono'}>
                     {(order.paymentStatus || 'Pending').toUpperCase()} ({(order.paymentMethod || 'COD Cash').toUpperCase()})
                   </strong>
@@ -252,7 +252,7 @@ export const DeliveryOrderDetailsModal: React.FC<DeliveryOrderDetailsModalProps>
                     className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer border ${
                       isActive
                         ? `${opt.activeClass} border-transparent shadow-md ring-2 ring-white/20`
-                        : 'bg-[#12131b] hover:bg-stone-800 text-stone-400 hover:text-stone-200 border-white/5'
+                        : 'bg-[#12131b] hover:bg-slate-100 dark:hover:bg-stone-800 text-slate-500 dark:text-stone-400 hover:text-stone-200 border-slate-200 dark:border-white/5'
                     }`}
                   >
                     {opt.label}
@@ -265,27 +265,27 @@ export const DeliveryOrderDetailsModal: React.FC<DeliveryOrderDetailsModalProps>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             
             {/* Customer & Delivery Destination Card */}
-            <div className="bg-[#181a24] p-5 rounded-xl border border-white/10 space-y-4 shadow-sm">
-              <div className="flex items-center justify-between border-b border-white/10 pb-3">
+            <div className="bg-[#181a24] p-5 rounded-xl border border-slate-300 dark:border-white/10 space-y-4 shadow-sm">
+              <div className="flex items-center justify-between border-b border-slate-300 dark:border-white/10 pb-3">
                 <h3 className="text-xs font-black uppercase tracking-wider text-blue-400 flex items-center gap-2">
                   <User className="w-4 h-4" />
                   Customer &amp; Destination Details
                 </h3>
                 {order.customer?.id && (
-                  <span className="text-[11px] font-mono text-stone-400">
+                  <span className="text-[11px] font-mono text-slate-500 dark:text-stone-400">
                     ID: {order.customer.id}
                   </span>
                 )}
               </div>
 
               <div className="space-y-3 text-xs">
-                <div className="flex justify-between items-center py-1 border-b border-white/5">
-                  <span className="text-stone-400">Customer Name:</span>
+                <div className="flex justify-between items-center py-1 border-b border-slate-200 dark:border-white/5">
+                  <span className="text-slate-500 dark:text-stone-400">Customer Name:</span>
                   <span className="font-bold text-white text-sm">{customerName}</span>
                 </div>
 
-                <div className="flex justify-between items-center py-1 border-b border-white/5">
-                  <span className="text-stone-400">Phone Contact:</span>
+                <div className="flex justify-between items-center py-1 border-b border-slate-200 dark:border-white/5">
+                  <span className="text-slate-500 dark:text-stone-400">Phone Contact:</span>
                   <div className="flex items-center gap-2">
                     <span className="font-mono font-bold text-emerald-400">
                       {customerPhone || 'Not Provided'}
@@ -295,7 +295,7 @@ export const DeliveryOrderDetailsModal: React.FC<DeliveryOrderDetailsModalProps>
                         <a
                           href={`tel:${customerPhone}`}
                           title="Call Customer"
-                          className="p-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-emerald-400 transition hover:scale-105"
+                          className="p-1.5 rounded-lg bg-slate-50 dark:bg-stone-800 hover:bg-stone-700 text-emerald-400 transition hover:scale-105"
                         >
                           <Phone className="w-3.5 h-3.5" />
                         </a>
@@ -318,9 +318,9 @@ export const DeliveryOrderDetailsModal: React.FC<DeliveryOrderDetailsModalProps>
                   </div>
                 </div>
 
-                <div className="py-1 border-b border-white/5">
-                  <span className="text-stone-400 block mb-1">Delivery Address:</span>
-                  <p className="text-stone-200 bg-[#101219] p-3 rounded-xl border border-white/5 flex items-start gap-2 text-xs">
+                <div className="py-1 border-b border-slate-200 dark:border-white/5">
+                  <span className="text-slate-500 dark:text-stone-400 block mb-1">Delivery Address:</span>
+                  <p className="text-stone-200 bg-[#101219] p-3 rounded-xl border border-slate-200 dark:border-white/5 flex items-start gap-2 text-xs">
                     <MapPin className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
                     <span>{customerAddress}</span>
                   </p>
@@ -338,8 +338,8 @@ export const DeliveryOrderDetailsModal: React.FC<DeliveryOrderDetailsModalProps>
             </div>
 
             {/* Rider & Dispatch Assignment Card */}
-            <div className="bg-[#181a24] p-5 rounded-xl border border-white/10 space-y-4 shadow-sm">
-              <div className="flex items-center justify-between border-b border-white/10 pb-3">
+            <div className="bg-[#181a24] p-5 rounded-xl border border-slate-300 dark:border-white/10 space-y-4 shadow-sm">
+              <div className="flex items-center justify-between border-b border-slate-300 dark:border-white/10 pb-3">
                 <h3 className="text-xs font-black uppercase tracking-wider text-amber-400 flex items-center gap-2">
                   <Truck className="w-4 h-4" />
                   Assigned Delivery Rider
@@ -354,13 +354,13 @@ export const DeliveryOrderDetailsModal: React.FC<DeliveryOrderDetailsModalProps>
               </div>
 
               {isEditingRider ? (
-                <div className="space-y-3 bg-[#101219] p-4 rounded-xl border border-white/5 text-xs">
+                <div className="space-y-3 bg-[#101219] p-4 rounded-xl border border-slate-200 dark:border-white/5 text-xs">
                   <div>
-                    <label className="block text-stone-300 mb-1 font-bold">Select Active Rider:</label>
+                    <label className="block text-slate-700 dark:text-stone-300 mb-1 font-bold">Select Active Rider:</label>
                     <select
                       value={selectedRider}
                       onChange={(e) => setSelectedRider(e.target.value)}
-                      className="w-full bg-[#181a24] border border-white/10 rounded-xl px-3 py-2 text-white font-bold focus:outline-none focus:border-blue-500 cursor-pointer"
+                      className="w-full bg-[#181a24] border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-white font-bold focus:outline-none focus:border-blue-500 cursor-pointer"
                     >
                       <option value="">-- Choose Rider --</option>
                       {deliveryDrivers.map((d) => (
@@ -372,24 +372,24 @@ export const DeliveryOrderDetailsModal: React.FC<DeliveryOrderDetailsModalProps>
                   </div>
 
                   <div>
-                    <label className="block text-stone-300 mb-1 font-semibold">Rider Phone (Optional):</label>
+                    <label className="block text-slate-700 dark:text-stone-300 mb-1 font-semibold">Rider Phone (Optional):</label>
                     <input
                       type="text"
                       placeholder="e.g. 0300-1234567"
                       value={riderPhoneInput}
                       onChange={(e) => setRiderPhoneInput(e.target.value)}
-                      className="w-full bg-[#181a24] border border-white/10 rounded-xl px-3 py-2 text-white font-mono focus:outline-none focus:border-blue-500"
+                      className="w-full bg-[#181a24] border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-white font-mono focus:outline-none focus:border-blue-500"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-stone-300 mb-1 font-semibold">Vehicle / Bike Registration (Optional):</label>
+                    <label className="block text-slate-700 dark:text-stone-300 mb-1 font-semibold">Vehicle / Bike Registration (Optional):</label>
                     <input
                       type="text"
                       placeholder="e.g. Bike (LEA-1234)"
                       value={riderVehicleInput}
                       onChange={(e) => setRiderVehicleInput(e.target.value)}
-                      className="w-full bg-[#181a24] border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-blue-500"
+                      className="w-full bg-[#181a24] border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-blue-500"
                     />
                   </div>
 
@@ -403,8 +403,8 @@ export const DeliveryOrderDetailsModal: React.FC<DeliveryOrderDetailsModalProps>
                 </div>
               ) : (
                 <div className="space-y-3 text-xs">
-                  <div className="flex justify-between items-center py-1 border-b border-white/5">
-                    <span className="text-stone-400">Assigned Rider:</span>
+                  <div className="flex justify-between items-center py-1 border-b border-slate-200 dark:border-white/5">
+                    <span className="text-slate-500 dark:text-stone-400">Assigned Rider:</span>
                     <span className="font-bold text-white text-sm">
                       {order.riderName || order.deliveryDriver ? (
                         <span className="text-emerald-400 flex items-center gap-1">
@@ -421,21 +421,21 @@ export const DeliveryOrderDetailsModal: React.FC<DeliveryOrderDetailsModalProps>
                     </span>
                   </div>
 
-                  <div className="flex justify-between items-center py-1 border-b border-white/5">
-                    <span className="text-stone-400">Rider Contact:</span>
-                    <span className="font-mono text-stone-300">
+                  <div className="flex justify-between items-center py-1 border-b border-slate-200 dark:border-white/5">
+                    <span className="text-slate-500 dark:text-stone-400">Rider Contact:</span>
+                    <span className="font-mono text-slate-700 dark:text-stone-300">
                       {order.riderPhone || 'Not on file'}
                     </span>
                   </div>
 
-                  <div className="flex justify-between items-center py-1 border-b border-white/5">
-                    <span className="text-stone-400">Vehicle / Bike:</span>
-                    <span className="font-semibold text-stone-300">
+                  <div className="flex justify-between items-center py-1 border-b border-slate-200 dark:border-white/5">
+                    <span className="text-slate-500 dark:text-stone-400">Vehicle / Bike:</span>
+                    <span className="font-semibold text-slate-700 dark:text-stone-300">
                       {order.riderVehicle || 'Fleet Motorcycle'}
                     </span>
                   </div>
 
-                  <div className="p-3 bg-[#101219] rounded-xl border border-white/5 text-[11px] text-stone-400 flex items-center gap-2">
+                  <div className="p-3 bg-[#101219] rounded-xl border border-slate-200 dark:border-white/5 text-[11px] text-slate-500 dark:text-stone-400 flex items-center gap-2">
                     <NavigationIcon className="w-4 h-4 text-emerald-400 shrink-0" />
                     <span>Dispatch Routing: {order.branchName || 'Main'} Branch to Destination</span>
                   </div>
@@ -445,7 +445,7 @@ export const DeliveryOrderDetailsModal: React.FC<DeliveryOrderDetailsModalProps>
           </div>
 
           {/* Live Delivery Timeline Stepper */}
-          <div className="bg-[#181a24] p-5 rounded-xl border border-white/10 space-y-3 shadow-sm">
+          <div className="bg-[#181a24] p-5 rounded-xl border border-slate-300 dark:border-white/10 space-y-3 shadow-sm">
             <h3 className="text-xs font-black uppercase tracking-wider text-emerald-400 flex items-center gap-2">
               <Clock className="w-4 h-4" />
               Order Stage Timeline
@@ -458,20 +458,20 @@ export const DeliveryOrderDetailsModal: React.FC<DeliveryOrderDetailsModalProps>
                   ✓
                 </span>
                 <p className="text-[11px] font-bold text-white">1. Punched</p>
-                <p className="text-[10px] text-stone-400 font-mono mt-0.5">{punchedTime}</p>
+                <p className="text-[10px] text-slate-500 dark:text-stone-400 font-mono mt-0.5">{punchedTime}</p>
               </div>
 
               {/* Stage 2: Kitchen Prep */}
               <div className={`p-3 rounded-xl border text-center ${
                 ['in_kitchen', 'ready', 'dispatched', 'delivered', 'completed'].includes(order.status)
                   ? 'bg-[#101219] border-blue-500/30'
-                  : 'bg-[#101219]/40 border-white/5 opacity-50'
+                  : 'bg-[#101219]/40 border-slate-200 dark:border-white/5 opacity-50'
               }`}>
                 <span className="w-6 h-6 mx-auto rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold text-xs mb-1.5">
                   🍳
                 </span>
                 <p className="text-[11px] font-bold text-white">2. In Kitchen</p>
-                <p className="text-[10px] text-stone-400 font-mono mt-0.5">
+                <p className="text-[10px] text-slate-500 dark:text-stone-400 font-mono mt-0.5">
                   {kitchenTime || (['in_kitchen', 'ready', 'dispatched', 'delivered'].includes(order.status) ? 'Active' : 'Pending')}
                 </p>
               </div>
@@ -480,13 +480,13 @@ export const DeliveryOrderDetailsModal: React.FC<DeliveryOrderDetailsModalProps>
               <div className={`p-3 rounded-xl border text-center ${
                 ['ready', 'dispatched', 'delivered', 'completed'].includes(order.status)
                   ? 'bg-[#101219] border-teal-500/30'
-                  : 'bg-[#101219]/40 border-white/5 opacity-50'
+                  : 'bg-[#101219]/40 border-slate-200 dark:border-white/5 opacity-50'
               }`}>
                 <span className="w-6 h-6 mx-auto rounded-full bg-teal-500/20 text-teal-400 flex items-center justify-center font-bold text-xs mb-1.5">
                   📦
                 </span>
                 <p className="text-[11px] font-bold text-white">3. Ready</p>
-                <p className="text-[10px] text-stone-400 font-mono mt-0.5">
+                <p className="text-[10px] text-slate-500 dark:text-stone-400 font-mono mt-0.5">
                   {readyTime || (['ready', 'dispatched', 'delivered'].includes(order.status) ? 'Ready' : 'Pending')}
                 </p>
               </div>
@@ -495,13 +495,13 @@ export const DeliveryOrderDetailsModal: React.FC<DeliveryOrderDetailsModalProps>
               <div className={`p-3 rounded-xl border text-center ${
                 ['dispatched', 'delivered', 'completed'].includes(order.status)
                   ? 'bg-[#101219] border-amber-500/40 ring-1 ring-amber-500/20'
-                  : 'bg-[#101219]/40 border-white/5 opacity-50'
+                  : 'bg-[#101219]/40 border-slate-200 dark:border-white/5 opacity-50'
               }`}>
                 <span className="w-6 h-6 mx-auto rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-xs mb-1.5">
                   🛵
                 </span>
                 <p className="text-[11px] font-bold text-white">4. Dispatched</p>
-                <p className="text-[10px] text-stone-400 font-mono mt-0.5">
+                <p className="text-[10px] text-slate-500 dark:text-stone-400 font-mono mt-0.5">
                   {dispatchedTime || (order.status === 'dispatched' ? 'In Transit' : 'Pending')}
                 </p>
               </div>
@@ -510,13 +510,13 @@ export const DeliveryOrderDetailsModal: React.FC<DeliveryOrderDetailsModalProps>
               <div className={`p-3 rounded-xl border text-center ${
                 order.status === 'delivered' || order.status === 'completed'
                   ? 'bg-[#101219] border-emerald-500/40 ring-1 ring-emerald-500/20'
-                  : 'bg-[#101219]/40 border-white/5 opacity-50'
+                  : 'bg-[#101219]/40 border-slate-200 dark:border-white/5 opacity-50'
               }`}>
                 <span className="w-6 h-6 mx-auto rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-xs mb-1.5">
                   🏠
                 </span>
                 <p className="text-[11px] font-bold text-white">5. Delivered</p>
-                <p className="text-[10px] text-stone-400 font-mono mt-0.5">
+                <p className="text-[10px] text-slate-500 dark:text-stone-400 font-mono mt-0.5">
                   {deliveredTime || (order.status === 'delivered' ? 'Completed' : 'Pending')}
                 </p>
               </div>
@@ -524,23 +524,23 @@ export const DeliveryOrderDetailsModal: React.FC<DeliveryOrderDetailsModalProps>
           </div>
 
           {/* Itemized Order List & Financial Breakdown */}
-          <div className="bg-[#181a24] p-5 rounded-xl border border-white/10 space-y-4 shadow-sm">
-            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+          <div className="bg-[#181a24] p-5 rounded-xl border border-slate-300 dark:border-white/10 space-y-4 shadow-sm">
+            <div className="flex items-center justify-between border-b border-slate-300 dark:border-white/10 pb-3">
               <h3 className="text-xs font-black uppercase tracking-wider text-purple-400 flex items-center gap-2">
                 <Package className="w-4 h-4" />
                 Itemized Order Basket ({order.items?.length || 0} items)
               </h3>
-              <span className="text-xs font-mono font-bold text-stone-400">
+              <span className="text-xs font-mono font-bold text-slate-500 dark:text-stone-400">
                 Type: {(order.orderType || 'Delivery').toUpperCase()}
               </span>
             </div>
 
-            <div className="divide-y divide-white/5 border border-white/10 rounded-xl overflow-hidden bg-[#101219]">
+            <div className="divide-y divide-white/5 border border-slate-300 dark:border-white/10 rounded-xl overflow-hidden bg-[#101219]">
               {order.items && order.items.length > 0 ? (
                 order.items.map((item, idx) => (
                   <div key={idx} className="p-3.5 flex items-center justify-between text-xs hover:bg-white/[0.02] transition">
                     <div className="flex items-center gap-3">
-                      <span className="w-7 h-7 rounded-lg bg-stone-800 text-white font-mono font-bold flex items-center justify-center text-xs border border-white/10">
+                      <span className="w-7 h-7 rounded-lg bg-slate-50 dark:bg-stone-800 text-slate-900 dark:text-white font-mono font-bold flex items-center justify-center text-xs border border-slate-300 dark:border-white/10">
                         {item.quantity}x
                       </span>
                       <div>
@@ -551,7 +551,7 @@ export const DeliveryOrderDetailsModal: React.FC<DeliveryOrderDetailsModalProps>
                           </span>
                         )}
                         {item.itemNote && (
-                          <span className="text-[11px] text-stone-400 italic block">
+                          <span className="text-[11px] text-slate-500 dark:text-stone-400 italic block">
                             Note: {item.itemNote}
                           </span>
                         )}
@@ -563,22 +563,22 @@ export const DeliveryOrderDetailsModal: React.FC<DeliveryOrderDetailsModalProps>
                   </div>
                 ))
               ) : (
-                <div className="p-6 text-center text-stone-400 text-xs">
+                <div className="p-6 text-center text-slate-500 dark:text-stone-400 text-xs">
                   No line items attached to this order record.
                 </div>
               )}
             </div>
 
             {/* Bill Financial Summary */}
-            <div className="p-4 bg-[#101219] rounded-xl border border-white/10 space-y-2 text-xs">
-              <div className="flex justify-between text-stone-400">
+            <div className="p-4 bg-[#101219] rounded-xl border border-slate-300 dark:border-white/10 space-y-2 text-xs">
+              <div className="flex justify-between text-slate-500 dark:text-stone-400">
                 <span>Subtotal Items:</span>
                 <span className="font-mono font-semibold text-stone-200">
                   PKR {orderSubtotal.toLocaleString()}
                 </span>
               </div>
               {orderFee > 0 && (
-                <div className="flex justify-between text-stone-400">
+                <div className="flex justify-between text-slate-500 dark:text-stone-400">
                   <span>Delivery Dispatch Fee:</span>
                   <span className="font-mono font-semibold text-stone-200">
                     PKR {orderFee.toLocaleString()}
@@ -591,7 +591,7 @@ export const DeliveryOrderDetailsModal: React.FC<DeliveryOrderDetailsModalProps>
                   <span className="font-mono font-semibold">- PKR {orderDiscount.toLocaleString()}</span>
                 </div>
               )}
-              <div className="border-t border-white/10 pt-2.5 flex justify-between items-center text-sm font-black text-white">
+              <div className="border-t border-slate-300 dark:border-white/10 pt-2.5 flex justify-between items-center text-sm font-black text-white">
                 <span>Total Amount Due (PKR):</span>
                 <span className="text-emerald-400 font-mono text-lg">
                   PKR {orderTotal.toLocaleString()}
@@ -602,13 +602,13 @@ export const DeliveryOrderDetailsModal: React.FC<DeliveryOrderDetailsModalProps>
         </div>
 
         {/* Modal Footer */}
-        <footer className="px-6 py-3.5 bg-[#10121a] border-t border-white/10 flex items-center justify-between shrink-0">
-          <div className="text-xs text-stone-400">
+        <footer className="px-6 py-3.5 bg-[#10121a] border-t border-slate-300 dark:border-white/10 flex items-center justify-between shrink-0">
+          <div className="text-xs text-slate-500 dark:text-stone-400">
             Assigned Outlet: <span className="text-white font-bold">{order.branchName || 'Main Branch'}</span>
           </div>
           <button
             onClick={onClose}
-            className="px-5 py-2 rounded-xl bg-stone-800 hover:bg-stone-700 text-white text-xs font-bold transition cursor-pointer border border-white/10"
+            className="px-5 py-2 rounded-xl bg-slate-50 dark:bg-stone-800 hover:bg-stone-700 text-slate-900 dark:text-white text-xs font-bold transition cursor-pointer border border-slate-300 dark:border-white/10"
           >
             Close Viewer
           </button>

@@ -27,20 +27,16 @@ function processFile(filePath) {
 
     if (content !== original) {
         fs.writeFileSync(filePath, content, 'utf8');
-        console.log(`Updated ${filePath}`);
     }
 }
 
-function walk(dir) {
     fs.readdirSync(dir).forEach(file => {
         const fullPath = path.join(dir, file);
         if (fs.statSync(fullPath).isDirectory()) {
-            walk(fullPath);
         } else if (fullPath.endsWith('.tsx') || fullPath.endsWith('.ts')) {
             processFile(fullPath);
         }
     });
 }
 
-walk('./src/components');
-console.log("Done.");
+processFile('./src/App.tsx'); processFile('./src/main.tsx');

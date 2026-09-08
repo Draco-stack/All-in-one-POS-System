@@ -740,25 +740,8 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   const [currentShift, setCurrentShift] = useState<RegisterShift | null>(() => {
     const cached = loadFromStorage<RegisterShift | null>('pos_current_shift', null);
-    if (cached) return cached;
-    return {
-      id: 'shift-101',
-      shiftNumber: 'SH-101',
-      cashierName: 'Robert Vance',
-      terminalId: 'POS-MAIN-01',
-      openedAt: new Date().toISOString(),
-      openingFloat: 5000,
-      cashSales: 0,
-      cardSales: 0,
-      otherSales: 0,
-      totalGrossSales: 0,
-      totalTax: 0,
-      totalDiscounts: 0,
-      totalTips: 0,
-      cashInDrawerExpected: 5000,
-      transactionsCount: 0,
-      status: 'open',
-    };
+    if (cached && cached.status === 'open') return cached;
+    return null;
   });
 
   // Dynamically recalculate shift totals directly from orders as the single source of truth
@@ -848,8 +831,10 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           setTables(data);
         }
       }
-    } catch (e) {
-      console.warn('Tables fetch fallback to cache:', e);
+    } catch (e: any) {
+      if (!e?.message?.includes('expected pattern')) {
+        console.warn('Tables fetch fallback to cache:', e);
+      }
     }
 
     // 1. Fetch Users
@@ -873,8 +858,10 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           setUsers(mappedUsers);
         }
       }
-    } catch (err) {
-      console.warn('User fetch fallback to local cache:', err);
+    } catch (err: any) {
+      if (!err?.message?.includes('expected pattern')) {
+        console.warn('User fetch fallback to local cache:', err);
+      }
     }
 
     // 1.5. Fetch Dynamic Categories from Database
@@ -896,8 +883,10 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           saveToStorage('pos_categories_cache', mappedCats);
         }
       }
-    } catch (err) {
-      console.warn('Categories fetch fallback to local cache:', err);
+    } catch (err: any) {
+      if (!err?.message?.includes('expected pattern')) {
+        console.warn('Categories fetch fallback to local cache:', err);
+      }
     }
 
     // 2. Fetch Dynamic Menu Items from Database
@@ -922,8 +911,10 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           saveToStorage('pos_menu_items_cache', mappedItems);
         }
       }
-    } catch (err) {
-      console.warn('Menu fetch fallback to local cache:', err);
+    } catch (err: any) {
+      if (!err?.message?.includes('expected pattern')) {
+        console.warn('Menu fetch fallback to local cache:', err);
+      }
     }
 
     // 3. Fetch Customers

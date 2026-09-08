@@ -898,7 +898,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
               isFullscreen
                 ? 'border-emerald-500/40 bg-emerald-500/15 text-emerald-400 shadow-sm'
                 : theme === 'dark'
-                ? 'border-white/10 bg-stone-900/60 text-stone-400 hover:bg-stone-800 hover:text-white hover:border-white/20'
+                ? 'border-slate-300 dark:border-white/10 bg-white dark:bg-stone-900/60 text-slate-500 dark:text-stone-400 hover:bg-slate-100 dark:hover:bg-stone-800 hover:text-white hover:border-white/20'
                 : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 hover:text-slate-900'
             }`}
             aria-label="Toggle Fullscreen"
@@ -906,7 +906,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
             {isFullscreen ? (
               <Minimize2 className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform" />
             ) : (
-              <Maximize2 className="w-4 h-4 text-stone-400 group-hover:text-emerald-400 group-hover:scale-110 transition-transform" />
+              <Maximize2 className="w-4 h-4 text-slate-500 dark:text-stone-400 group-hover:text-emerald-400 group-hover:scale-110 transition-transform" />
             )}
           </button>
 
@@ -921,7 +921,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
               !isLeftStreamCollapsed
                 ? 'border-blue-500/30 bg-blue-500/10 text-blue-400'
                 : theme === 'dark'
-                ? 'border-white/10 bg-stone-900/60 text-stone-400 hover:bg-stone-800 hover:text-white'
+                ? 'border-slate-300 dark:border-white/10 bg-white dark:bg-stone-900/60 text-slate-500 dark:text-stone-400 hover:bg-slate-100 dark:hover:bg-stone-800 hover:text-white'
                 : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 hover:text-slate-900'
             }`}
             aria-label="Toggle Orders Stream Pane"
@@ -949,7 +949,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
             title={theme === 'dark' ? 'Switch to Light Theme' : 'Switch to Dark Theme'} 
             className={`w-10 h-10 rounded-xl border transition-all duration-200 cursor-pointer flex items-center justify-center group active:scale-95 ${
               theme === 'dark' 
-                ? 'border-white/10 bg-stone-900/60 text-amber-400 hover:bg-stone-800 hover:text-amber-300 hover:border-amber-400/40 shadow-xs' 
+                ? 'border-slate-300 dark:border-white/10 bg-white dark:bg-stone-900/60 text-amber-400 hover:bg-slate-100 dark:hover:bg-stone-800 hover:text-amber-300 hover:border-amber-400/40 shadow-xs' 
                 : 'border-amber-200 bg-amber-50 text-amber-600 hover:bg-amber-100 hover:text-amber-700 hover:border-amber-300 shadow-xs'
             }`}
             aria-label={theme === 'dark' ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
@@ -982,7 +982,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
               onClick={onOpenOrdersView}
               title="Live Kitchen Display (KDS) & Order Queue"
               className={`w-10 h-10 rounded-xl border border-transparent transition-all cursor-pointer flex items-center justify-center ${
-                theme === 'dark' ? 'text-stone-400 hover:bg-[#141417] hover:text-amber-400' : 'text-slate-400 hover:bg-slate-100 hover:text-amber-600'
+                theme === 'dark' ? 'text-slate-500 dark:text-stone-400 hover:bg-[#141417] hover:text-amber-400' : 'text-slate-400 hover:bg-slate-100 hover:text-amber-600'
               }`}
             >
               <ChefHat className="w-4 h-4" />
@@ -1012,10 +1012,10 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
             }}
             title={`Sign Out (${currentUser.name} - ${currentUser.role.toUpperCase()})`}
             className={`w-10 h-10 rounded-xl font-bold flex items-center justify-center cursor-pointer transition-all hover:bg-red-950/60 hover:border-red-500/40 hover:text-red-400 ${
-              theme === 'dark' ? 'bg-[#141417] text-stone-300 border border-white/10' : 'bg-slate-100 text-slate-800 border border-slate-300'
+              theme === 'dark' ? 'bg-[#141417] text-slate-700 dark:text-stone-300 border border-slate-300 dark:border-white/10' : 'bg-slate-100 text-slate-800 border border-slate-300'
             }`}
           >
-            <LogOut className="w-4.5 h-4.5 text-stone-300 hover:text-red-400 transition" />
+            <LogOut className="w-4.5 h-4.5 text-slate-700 dark:text-stone-300 hover:text-red-400 transition" />
           </button>
         </div>
 
@@ -1072,7 +1072,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                 />
               </div>
               <button onClick={() => { setSearchOrdersInput(''); showToast('Ongoing orders list refreshed'); }} className={`p-1.5 rounded-xl cursor-pointer shrink-0 border transition-all hover:scale-105 ${
-                theme === 'dark' ? 'bg-stone-800/80 hover:bg-stone-700 text-stone-300 hover:text-white border-white/5' : 'bg-white hover:bg-slate-100 text-slate-600 hover:text-slate-900 border-slate-200 shadow-xs'
+                theme === 'dark' ? 'bg-slate-50 dark:bg-stone-800/80 hover:bg-stone-700 text-slate-700 dark:text-stone-300 hover:text-white border-slate-200 dark:border-white/5' : 'bg-white hover:bg-slate-100 text-slate-600 hover:text-slate-900 border-slate-200 shadow-xs'
               }`}>
                 <RotateCw className="w-3.5 h-3.5" />
               </button>
@@ -1085,7 +1085,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
           <div className="flex-1 flex flex-col overflow-hidden bg-transparent">
             <div className="flex-1 overflow-y-auto p-2 space-y-2 no-scrollbar">
               {ongoingOrders.length === 0 ? (
-                <div className="h-full flex flex-col items-center justify-center p-6 text-center text-stone-500 space-y-2">
+                <div className="h-full flex flex-col items-center justify-center p-6 text-center text-slate-400 dark:text-stone-500 space-y-2">
                   <Database className="w-8 h-8 stroke-1 text-stone-700" />
                   <p className="text-xs font-semibold">No active orders</p>
                 </div>
@@ -1099,13 +1099,13 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                         setSelectedOrderId(ord.id);
                         setMiddleTab('order_details');
                       }}
-                      className={`bg-gradient-to-b from-stone-900/90 to-stone-950/90 rounded-xl p-2.5 text-xs transition-all duration-200 cursor-pointer border ${isSelected ? 'border-emerald-500/60 ring-1 ring-emerald-500/40 bg-stone-900 shadow-lg shadow-emerald-950/20' : 'border-white/5 hover:border-emerald-500/30 hover:shadow-md'}`}
+                      className={`bg-gradient-to-b from-stone-900/90 to-stone-950/90 rounded-xl p-2.5 text-xs transition-all duration-200 cursor-pointer border ${isSelected ? 'border-emerald-500/60 ring-1 ring-emerald-500/40 bg-white dark:bg-stone-900 shadow-lg shadow-emerald-950/20' : 'border-slate-200 dark:border-white/5 hover:border-emerald-500/30 hover:shadow-md'}`}
                     >
-                      <div className="flex justify-between items-center border-b border-white/5 pb-1.5 mb-1.5">
+                      <div className="flex justify-between items-center border-b border-slate-200 dark:border-white/5 pb-1.5 mb-1.5">
                         <span className="font-mono text-stone-200 font-bold">#{ord.orderNumber.replace('ORD-', '')}</span>
                         <span className="text-emerald-400 font-black font-mono">PKR {ord.total.toLocaleString()}</span>
                       </div>
-                      <div className="flex items-center gap-1.5 text-[10px] text-stone-400 mb-1.5">
+                      <div className="flex items-center gap-1.5 text-[10px] text-slate-500 dark:text-stone-400 mb-1.5">
                         <span className="capitalize font-medium">{ord.type.replace('_', ' ')}</span>
                         <span>•</span>
                         <span className={`px-2 py-0.5 rounded-md font-bold text-[9px] uppercase tracking-wider ${getStatusBadgeStyle(ord.status)}`}>
@@ -1113,29 +1113,29 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                         </span>
                       </div>
                       {(ord.customer?.name || ord.customer?.phone || ord.customer?.address) && (
-                        <div className="flex flex-col gap-1 text-[10.5px] text-stone-300 mb-2 p-1.5 bg-stone-950/50 rounded-lg border border-white/5">
+                        <div className="flex flex-col gap-1 text-[10.5px] text-slate-700 dark:text-stone-300 mb-2 p-1.5 bg-slate-100 dark:bg-stone-950/50 rounded-lg border border-slate-200 dark:border-white/5">
                           <div className="flex items-center gap-1.5 truncate">
                             <User className="w-3.5 h-3.5 text-emerald-500/70 shrink-0" />
                             <span className="font-semibold text-stone-200">{ord.customer?.name || 'Guest'}</span>
                             {ord.customer?.phone && (
                               <>
                                 <span className="text-stone-600 mx-0.5">•</span>
-                                <span className="text-stone-400 font-mono text-[9px]">{ord.customer.phone}</span>
+                                <span className="text-slate-500 dark:text-stone-400 font-mono text-[9px]">{ord.customer.phone}</span>
                               </>
                             )}
                           </div>
                           {ord.customer?.address && (
-                            <div className="flex items-start gap-1.5 text-[9.5px] text-stone-400 mt-0.5 leading-snug">
+                            <div className="flex items-start gap-1.5 text-[9.5px] text-slate-500 dark:text-stone-400 mt-0.5 leading-snug">
                               <MapPin className="w-3 h-3 text-emerald-400 shrink-0 mt-0.5" />
                               <span className="truncate whitespace-normal line-clamp-2">{ord.customer.address}</span>
                             </div>
                           )}
                         </div>
                       )}
-                      <div className="text-stone-300 text-[11px] truncate leading-tight mb-2 font-normal">
+                      <div className="text-slate-700 dark:text-stone-300 text-[11px] truncate leading-tight mb-2 font-normal">
                         {ord.items.map((i) => `${i.quantity}x ${i.name}`).join(', ')}
                       </div>
-                      <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-white/5">
+                      <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-slate-200 dark:border-white/5">
                         {ord.status !== 'completed' && ord.status !== 'cancelled' && (
                           <button 
                             onClick={(e) => { e.stopPropagation(); setSelectedOrderId(ord.id); handleOneClickDispatch(ord); }}
@@ -1162,7 +1162,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                         )}
                         <button
                           onClick={(e) => { e.stopPropagation(); handlePrintReceipt(ord); }}
-                          className="p-1.5 bg-stone-800 hover:bg-stone-700 text-stone-300 hover:text-white rounded-lg text-[10px] font-bold border border-white/10 transition-all hover:scale-105 cursor-pointer shrink-0"
+                          className="p-1.5 bg-slate-50 dark:bg-stone-800 hover:bg-stone-700 text-slate-700 dark:text-stone-300 hover:text-white rounded-lg text-[10px] font-bold border border-slate-300 dark:border-white/10 transition-all hover:scale-105 cursor-pointer shrink-0"
                           title="Print Receipt"
                         >
                           <Printer className="w-3 h-3" />
@@ -1207,12 +1207,12 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
         
         {/* Top 3rem Search Bar Header covering the top space */}
         <div className={`h-[3rem] px-3.5 flex items-center border-b shrink-0 transition-colors duration-200 ${
-          theme === 'dark' ? 'bg-[#101014] border-white/10' : 'bg-white border-slate-200 shadow-2xs'
+          theme === 'dark' ? 'bg-[#101014] border-slate-300 dark:border-white/10' : 'bg-white border-slate-200 shadow-2xs'
         }`}>
           <div className="flex items-center gap-2 w-full">
             <div className="relative flex-1">
               <Search className={`w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none ${
-                theme === 'dark' ? 'text-stone-400' : 'text-slate-400'
+                theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-400'
               }`} />
               <input
                 id="pos-menu-search-input"
@@ -1222,7 +1222,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className={`w-full border rounded-xl pl-9 pr-3 py-1.5 text-xs focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 transition-all ${
                   theme === 'dark'
-                    ? 'bg-stone-950/90 border-white/10 text-white placeholder:text-stone-500'
+                    ? 'bg-slate-100 dark:bg-stone-950/90 border-slate-300 dark:border-white/10 text-slate-900 dark:text-white placeholder:text-slate-400 dark:text-stone-500'
                     : 'bg-slate-50 border-slate-300 text-slate-900 placeholder:text-slate-400 shadow-inner'
                 }`}
               />
@@ -1241,7 +1241,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
 
         {/* Dynamic Category Strip */}
         <div className={`border-b px-3 py-2 shrink-0 backdrop-blur-xs shadow-xs transition-colors duration-200 ${
-          theme === 'dark' ? 'bg-[#161616]/95 border-white/5' : 'bg-white/95 border-slate-200'
+          theme === 'dark' ? 'bg-[#161616]/95 border-slate-200 dark:border-white/5' : 'bg-white/95 border-slate-200'
         }`}>
           {/* Scrollable Category Chips */}
           <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 w-full">
@@ -1252,7 +1252,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                 selectedCategory === 'all'
                   ? 'bg-gradient-to-r from-red-600 to-red-700 text-white border-red-400/40 shadow-sm'
                   : theme === 'dark'
-                  ? 'bg-stone-900/80 text-stone-400 border-white/5 hover:bg-stone-800 hover:text-stone-200'
+                  ? 'bg-white dark:bg-stone-900/80 text-slate-500 dark:text-stone-400 border-slate-200 dark:border-white/5 hover:bg-slate-100 dark:hover:bg-stone-800 hover:text-stone-200'
                   : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-200 hover:text-slate-900'
               }`}
             >
@@ -1279,7 +1279,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                     isSelected
                       ? 'bg-gradient-to-r from-red-600 to-red-700 text-white border-red-400/40 shadow-sm'
                       : theme === 'dark'
-                      ? 'bg-stone-900/80 text-stone-400 border-white/5 hover:bg-stone-800 hover:text-stone-200'
+                      ? 'bg-white dark:bg-stone-900/80 text-slate-500 dark:text-stone-400 border-slate-200 dark:border-white/5 hover:bg-slate-100 dark:hover:bg-stone-800 hover:text-stone-200'
                       : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-200 hover:text-slate-900'
                   }`}
                 >
@@ -1302,16 +1302,16 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                   onClick={() => handleItemTap(item)}
                   className={`pos-menu-card border rounded-2xl flex flex-col overflow-hidden relative cursor-pointer active:scale-[0.98] select-none ${
                     theme === 'dark'
-                      ? 'border-white/5 bg-gradient-to-b from-stone-900 to-stone-950 hover:border-emerald-500/40'
+                      ? 'border-slate-200 dark:border-white/5 bg-gradient-to-b from-stone-900 to-stone-950 hover:border-emerald-500/40'
                       : 'border-slate-200 bg-white hover:border-emerald-500/50 shadow-xs'
                   }`}
                 >
                   {/* Title */}
                   <div className={`pos-card-title px-2.5 py-1 text-center z-10 shrink-0 flex items-center justify-center backdrop-blur-xs border-b ${
-                    theme === 'dark' ? 'bg-stone-900/90 border-white/5' : 'bg-slate-50/95 border-slate-200'
+                    theme === 'dark' ? 'bg-white dark:bg-stone-900/90 border-slate-200 dark:border-white/5' : 'bg-slate-50/95 border-slate-200'
                   }`}>
                     <h4 className={`font-semibold leading-tight line-clamp-2 transition-colors ${
-                      theme === 'dark' ? 'text-stone-100 group-hover:text-emerald-300' : 'text-slate-800 group-hover:text-emerald-600'
+                      theme === 'dark' ? 'text-slate-900 dark:text-stone-100 group-hover:text-emerald-300' : 'text-slate-800 group-hover:text-emerald-600'
                     }`}>
                       {item.name}
                     </h4>
@@ -1332,20 +1332,20 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                           ? 'bg-gradient-to-br from-stone-900 via-stone-950 to-black text-stone-700' 
                           : 'bg-gradient-to-br from-slate-100 via-slate-200 to-slate-100 text-slate-400'
                       }`}>
-                        <div className="p-3 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-center shadow-inner group-hover:text-emerald-400">
+                        <div className="p-3 rounded-2xl bg-white/5 border border-slate-200 dark:border-white/5 flex items-center justify-center shadow-inner group-hover:text-emerald-400">
                           <ItemCategoryIcon className="w-8 h-8 stroke-[1.7]" />
                         </div>
                       </div>
                     )}
                     
                     {/* Category SVG badge top-left */}
-                    <div className="absolute top-2 left-2 z-10 p-1 rounded-md bg-black/60 backdrop-blur-xs border border-white/10 text-white/80 group-hover:text-white shadow-xs">
+                    <div className="absolute top-2 left-2 z-10 p-1 rounded-md bg-slate-900/40 dark:bg-black/60 backdrop-blur-xs border border-slate-300 dark:border-white/10 text-white/80 group-hover:text-white shadow-xs">
                       <ItemCategoryIcon className="w-3 h-3" />
                     </div>
 
                     {/* Price Badge */}
                     <div className={`pos-price-badge relative z-10 border font-black font-mono m-2 leading-none rounded-lg shadow-md backdrop-blur-xs ${
-                      theme === 'dark' ? 'border-white/10 bg-stone-950/90 text-emerald-400' : 'border-emerald-200 bg-white/95 text-emerald-600'
+                      theme === 'dark' ? 'border-slate-300 dark:border-white/10 bg-slate-100 dark:bg-stone-950/90 text-emerald-400' : 'border-emerald-200 bg-white/95 text-emerald-600'
                     }`}>
                       PKR {item.price.toLocaleString()}
                     </div>
@@ -1366,7 +1366,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
         
         {/* Pane 2 Top View Tabs */}
         <div className={`flex items-center border-b px-4 py-2.5 gap-2 shrink-0 transition-colors duration-200 ${
-          theme === 'dark' ? 'border-white/10 bg-black/40' : 'border-slate-200 bg-white shadow-2xs'
+          theme === 'dark' ? 'border-slate-300 dark:border-white/10 bg-slate-900/20 dark:bg-black/40' : 'border-slate-200 bg-white shadow-2xs'
         }`}>
           <button
             type="button"
@@ -1375,7 +1375,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
               middleTab === 'active_ticket'
                 ? 'bg-emerald-500 text-stone-950 font-black shadow-sm'
                 : theme === 'dark'
-                ? 'text-stone-400 hover:text-white hover:bg-white/5'
+                ? 'text-slate-500 dark:text-stone-400 hover:text-white hover:bg-white/5'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
@@ -1383,7 +1383,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
             <span>Ticket</span>
             {posCart.items.length > 0 && (
               <span className={`text-[10px] font-black px-1.5 py-0.2 rounded-full leading-none ${
-                middleTab === 'active_ticket' ? 'bg-stone-950 text-emerald-400' : 'bg-emerald-500 text-stone-950'
+                middleTab === 'active_ticket' ? 'bg-slate-100 dark:bg-stone-950 text-emerald-400' : 'bg-emerald-500 text-stone-950'
               }`}>
                 {posCart.items.reduce((s, it) => s + it.quantity, 0)}
               </span>
@@ -1406,7 +1406,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
               middleTab === 'order_details'
                 ? 'bg-emerald-500 text-stone-950 font-black shadow-sm'
                 : theme === 'dark'
-                ? 'text-stone-400 hover:text-white hover:bg-white/5'
+                ? 'text-slate-500 dark:text-stone-400 hover:text-white hover:bg-white/5'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
@@ -1421,7 +1421,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
               middleTab === 'all_orders'
                 ? 'bg-emerald-500 text-stone-950 font-black shadow-sm'
                 : theme === 'dark'
-                ? 'text-stone-400 hover:text-white hover:bg-white/5'
+                ? 'text-slate-500 dark:text-stone-400 hover:text-white hover:bg-white/5'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
@@ -1429,8 +1429,8 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
             <span>All Orders</span>
             <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded-full leading-none ${
               middleTab === 'all_orders'
-                ? 'bg-stone-950 text-emerald-400'
-                : theme === 'dark' ? 'bg-stone-800 text-stone-300' : 'bg-slate-200 text-slate-700'
+                ? 'bg-slate-100 dark:bg-stone-950 text-emerald-400'
+                : theme === 'dark' ? 'bg-slate-50 dark:bg-stone-800 text-slate-700 dark:text-stone-300' : 'bg-slate-200 text-slate-700'
             }`}>
               {orders.length}
             </span>
@@ -1474,17 +1474,17 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
               {/* Row 2: Order Type & Source */}
               <div className="flex items-center gap-1.5">
                 <div className={`flex rounded-xl overflow-hidden shrink-0 border p-0.5 shadow-inner ${
-                  theme === 'dark' ? 'border-white/10 bg-stone-950/80' : 'border-slate-300 bg-slate-200/80'
+                  theme === 'dark' ? 'border-slate-300 dark:border-white/10 bg-slate-100 dark:bg-stone-950/80' : 'border-slate-300 bg-slate-200/80'
                 }`}>
-                  <button onClick={() => setPosOrderType('dine_in')} className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all duration-150 cursor-pointer ${posCart.orderType === 'dine_in' ? 'bg-gradient-to-r from-amber-600 to-amber-700 text-white shadow-sm border border-amber-400/30' : theme === 'dark' ? 'text-stone-400 hover:text-white' : 'text-slate-600 hover:text-slate-900'}`}>DineIn</button>
-                  <button onClick={() => setPosOrderType('takeaway')} className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all duration-150 cursor-pointer ${posCart.orderType === 'takeaway' ? 'bg-gradient-to-r from-stone-700 to-stone-800 text-white shadow-sm border border-white/10' : theme === 'dark' ? 'text-stone-400 hover:text-white' : 'text-slate-600 hover:text-slate-900'}`}>TakeAway</button>
-                  <button onClick={() => setPosOrderType('delivery')} className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all duration-150 cursor-pointer ${posCart.orderType === 'delivery' ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-sm border border-emerald-400/30' : theme === 'dark' ? 'text-stone-400 hover:text-white' : 'text-slate-600 hover:text-slate-900'}`}>Delivery</button>
+                  <button onClick={() => setPosOrderType('dine_in')} className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all duration-150 cursor-pointer ${posCart.orderType === 'dine_in' ? 'bg-gradient-to-r from-amber-600 to-amber-700 text-white shadow-sm border border-amber-400/30' : theme === 'dark' ? 'text-slate-500 dark:text-stone-400 hover:text-white' : 'text-slate-600 hover:text-slate-900'}`}>DineIn</button>
+                  <button onClick={() => setPosOrderType('takeaway')} className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all duration-150 cursor-pointer ${posCart.orderType === 'takeaway' ? 'bg-gradient-to-r from-stone-700 to-stone-800 text-white shadow-sm border border-slate-300 dark:border-white/10' : theme === 'dark' ? 'text-slate-500 dark:text-stone-400 hover:text-white' : 'text-slate-600 hover:text-slate-900'}`}>TakeAway</button>
+                  <button onClick={() => setPosOrderType('delivery')} className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all duration-150 cursor-pointer ${posCart.orderType === 'delivery' ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-sm border border-emerald-400/30' : theme === 'dark' ? 'text-slate-500 dark:text-stone-400 hover:text-white' : 'text-slate-600 hover:text-slate-900'}`}>Delivery</button>
                 </div>
                 <select 
                   value={selectedSource} 
                   onChange={(e) => setSelectedSource(e.target.value)} 
                   className={`border rounded-xl px-2.5 py-1.5 text-xs font-semibold focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 flex-1 cursor-pointer transition-all ${
-                    theme === 'dark' ? 'bg-stone-950/80 border-white/10 text-white' : 'bg-white border-slate-300 text-slate-800 shadow-xs'
+                    theme === 'dark' ? 'bg-slate-100 dark:bg-stone-950/80 border-slate-300 dark:border-white/10 text-slate-900 dark:text-white' : 'bg-white border-slate-300 text-slate-800 shadow-xs'
                   }`}
                 >
                   <option value="Pos">Select Source</option>
@@ -1505,7 +1505,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                     onChange={(e) => setPhoneSearchInput(e.target.value)}
                     onKeyDown={(e) => { if (e.key === 'Enter') handlePhoneLookup(undefined, true); }}
                     className={`w-full border rounded-xl pl-8 pr-16 py-2 text-xs font-mono transition-all shadow-inner focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 ${
-                      theme === 'dark' ? 'bg-stone-950/80 border-white/10 text-white placeholder:text-stone-500' : 'bg-white border-slate-300 text-slate-900 placeholder:text-slate-400'
+                      theme === 'dark' ? 'bg-slate-100 dark:bg-stone-950/80 border-slate-300 dark:border-white/10 text-slate-900 dark:text-white placeholder:text-slate-400 dark:text-stone-500' : 'bg-white border-slate-300 text-slate-900 placeholder:text-slate-400'
                     }`}
                   />
                   <Phone className="w-3.5 h-3.5 text-emerald-500/70 absolute left-2.5 top-1/2 -translate-y-1/2" />
@@ -1516,7 +1516,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                       cleanPhoneDigits.length === 11 
                         ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
                         : cleanPhoneDigits.length > 0
-                        ? theme === 'dark' ? 'bg-stone-800 text-stone-400' : 'bg-slate-200 text-slate-600'
+                        ? theme === 'dark' ? 'bg-slate-50 dark:bg-stone-800 text-slate-500 dark:text-stone-400' : 'bg-slate-200 text-slate-600'
                         : theme === 'dark' ? 'text-stone-600' : 'text-slate-400'
                     }`}>
                       {cleanPhoneDigits.length === 11 ? '11/11 ✓' : `${cleanPhoneDigits.length}/11`}
@@ -1547,7 +1547,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                       posCart.customer?.isBlocked || foundCustomer?.isBlocked || isCustomerBlocked(cleanPhoneDigits).blocked
                         ? 'bg-red-600/30 text-red-400 border-red-500/50 hover:bg-red-600 hover:text-white'
                         : theme === 'dark'
-                        ? 'bg-stone-900 hover:bg-red-950/60 text-stone-400 hover:text-red-400 border-white/10 hover:border-red-500/30'
+                        ? 'bg-white dark:bg-stone-900 hover:bg-red-950/60 text-slate-500 dark:text-stone-400 hover:text-red-400 border-slate-300 dark:border-white/10 hover:border-red-500/30'
                         : 'bg-white hover:bg-red-50 text-slate-500 hover:text-red-600 border-slate-200 hover:border-red-300'
                     }`}
                     title="Block this phone number"
@@ -1572,7 +1572,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                         <h4 className="text-xs font-black text-white leading-tight">
                           Blocked customer can&apos;t place an order
                         </h4>
-                        <p className="text-[10.5px] text-red-200/90 mt-1 bg-black/40 p-1.5 rounded-lg border border-red-500/20 leading-snug">
+                        <p className="text-[10.5px] text-red-200/90 mt-1 bg-slate-900/20 dark:bg-black/40 p-1.5 rounded-lg border border-red-500/20 leading-snug">
                           <strong>Reason:</strong> {posCart.customer?.blockReason || foundCustomer?.blockReason || isCustomerBlocked(cleanPhoneDigits).reason || 'Store blacklist policy'}
                         </p>
                       </div>
@@ -1615,7 +1615,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                           }
                         }
                       }}
-                      className="px-2.5 py-1 bg-stone-800 hover:bg-stone-700 text-stone-200 rounded-lg text-[10.5px] font-semibold transition cursor-pointer border border-white/10"
+                      className="px-2.5 py-1 bg-slate-50 dark:bg-stone-800 hover:bg-stone-700 text-stone-200 rounded-lg text-[10.5px] font-semibold transition cursor-pointer border border-slate-300 dark:border-white/10"
                     >
                       Unblock
                     </button>
@@ -1633,40 +1633,40 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                        <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></div>
                        <span className="text-[0.65rem] uppercase font-bold tracking-wider text-blue-500">New Customer Profile</span>
                      </div>
-                     <span className={`text-[10px] font-mono font-bold ${theme === 'dark' ? 'text-stone-400' : 'text-slate-600'}`}>
+                     <span className={`text-[10px] font-mono font-bold ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-600'}`}>
                        {cleanPhoneDigits}
                      </span>
                    </div>
                    <div className="space-y-2">
                      <div className="relative">
-                       <User className={`w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 ${theme === 'dark' ? 'text-stone-500' : 'text-slate-400'}`} />
+                       <User className={`w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 ${theme === 'dark' ? 'text-slate-400 dark:text-stone-500' : 'text-slate-400'}`} />
                        <input
                          type="text"
                          placeholder="Full Name (Required) *"
                          value={posCart.customer?.name || ''}
                          onChange={(e) => setPosCustomerField('name', e.target.value)}
                          className={`w-full border rounded-lg pl-9 pr-3 py-2 text-xs focus:outline-none focus:border-blue-500/50 transition-colors ${
-                           theme === 'dark' ? 'bg-[#0c0c0e] border-white/10 text-white placeholder:text-stone-500' : 'bg-white border-slate-300 text-slate-900 placeholder:text-slate-400'
+                           theme === 'dark' ? 'bg-[#0c0c0e] border-slate-300 dark:border-white/10 text-white placeholder:text-slate-400 dark:text-stone-500' : 'bg-white border-slate-300 text-slate-900 placeholder:text-slate-400'
                          }`}
                        />
                      </div>
                      <div className="relative">
-                       <MapPin className={`w-4 h-4 absolute left-3 top-2.5 ${theme === 'dark' ? 'text-stone-500' : 'text-slate-400'}`} />
+                       <MapPin className={`w-4 h-4 absolute left-3 top-2.5 ${theme === 'dark' ? 'text-slate-400 dark:text-stone-500' : 'text-slate-400'}`} />
                        <textarea
                          rows={2}
                          placeholder="Delivery Address (Optional)"
                          value={posCart.customer?.address || ''}
                          onChange={(e) => setPosCustomerField('address', e.target.value)}
                          className={`w-full border rounded-lg pl-9 pr-3 py-2 text-xs focus:outline-none focus:border-blue-500/50 transition-colors resize-none ${
-                           theme === 'dark' ? 'bg-[#0c0c0e] border-white/10 text-white placeholder:text-stone-500' : 'bg-white border-slate-300 text-slate-900 placeholder:text-slate-400'
+                           theme === 'dark' ? 'bg-[#0c0c0e] border-slate-300 dark:border-white/10 text-white placeholder:text-slate-400 dark:text-stone-500' : 'bg-white border-slate-300 text-slate-900 placeholder:text-slate-400'
                          }`}
                        />
                      </div>
                    </div>
 
                    {/* Save Customer Explicit Button */}
-                   <div className={`flex items-center justify-between pt-1 border-t ${theme === 'dark' ? 'border-white/5' : 'border-slate-200'}`}>
-                     <span className={`text-[10px] ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`}>
+                   <div className={`flex items-center justify-between pt-1 border-t ${theme === 'dark' ? 'border-slate-200 dark:border-white/5' : 'border-slate-200'}`}>
+                     <span className={`text-[10px] ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`}>
                        Auto-saves with order or tap Save
                      </span>
                      <button
@@ -1690,7 +1690,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                 }`}>
                    <div className="absolute top-2 right-2 flex gap-1 opacity-100 transition-opacity">
                       <button onClick={() => setIsCustomerModalOpen(true)} className={`rounded-md p-1.5 transition-colors cursor-pointer border ${
-                        theme === 'dark' ? 'text-[#e4e4e7] bg-[#27272a] hover:bg-emerald-600 border-white/10' : 'text-slate-700 bg-white hover:bg-emerald-100 border-slate-200'
+                        theme === 'dark' ? 'text-[#e4e4e7] bg-[#27272a] hover:bg-emerald-600 border-slate-300 dark:border-white/10' : 'text-slate-700 bg-white hover:bg-emerald-100 border-slate-200'
                       }`} title="View Full Profile">
                         <Eye className="w-3.5 h-3.5" />
                       </button>
@@ -1700,26 +1700,26 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                        <User className="w-4.5 h-4.5 text-emerald-500" />
                      </div>
                      <div className="flex flex-col min-w-0 pr-8">
-                       <span className={`font-bold text-[0.85rem] truncate leading-tight ${theme === 'dark' ? 'text-stone-100' : 'text-slate-900'}`}>{posCart.customer.name}</span>
+                       <span className={`font-bold text-[0.85rem] truncate leading-tight ${theme === 'dark' ? 'text-slate-900 dark:text-stone-100' : 'text-slate-900'}`}>{posCart.customer.name}</span>
                        <span className="text-[0.75rem] text-emerald-600 font-mono font-bold leading-tight mt-0.5">{posCart.customer.phone}</span>
                      </div>
                    </div>
                    {posCart.customer.address && (
-                     <div className={`flex items-start gap-1.5 mt-2.5 border-t pt-2.5 ${theme === 'dark' ? 'border-white/10' : 'border-slate-200'}`}>
-                       <MapPin className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${theme === 'dark' ? 'text-stone-400' : 'text-slate-400'}`} />
-                       <span className={`text-[0.75rem] line-clamp-2 leading-snug ${theme === 'dark' ? 'text-stone-300' : 'text-slate-700'}`}>{posCart.customer.address}</span>
+                     <div className={`flex items-start gap-1.5 mt-2.5 border-t pt-2.5 ${theme === 'dark' ? 'border-slate-300 dark:border-white/10' : 'border-slate-200'}`}>
+                       <MapPin className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-400'}`} />
+                       <span className={`text-[0.75rem] line-clamp-2 leading-snug ${theme === 'dark' ? 'text-slate-700 dark:text-stone-300' : 'text-slate-700'}`}>{posCart.customer.address}</span>
                      </div>
                    )}
                    {foundCustomer && (
                      <div className={`flex items-center justify-between gap-4 mt-2.5 pt-2.5 border-t -mx-3 -mb-3 px-3 py-2 rounded-b-xl ${
-                       theme === 'dark' ? 'border-white/10 bg-[#0c0c0e]/50' : 'border-slate-200 bg-slate-100/80'
+                       theme === 'dark' ? 'border-slate-300 dark:border-white/10 bg-[#0c0c0e]/50' : 'border-slate-200 bg-slate-100/80'
                      }`}>
                        <div className="flex flex-col">
-                         <span className={`text-[0.6rem] uppercase font-bold tracking-wider ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`}>Visits</span>
+                         <span className={`text-[0.6rem] uppercase font-bold tracking-wider ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`}>Visits</span>
                          <span className={`text-[0.8rem] font-mono font-bold ${theme === 'dark' ? 'text-stone-200' : 'text-slate-800'}`}>{foundCustomer.totalVisits || 1}</span>
                        </div>
                        <div className="flex flex-col text-right">
-                         <span className={`text-[0.6rem] uppercase font-bold tracking-wider ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`}>Points</span>
+                         <span className={`text-[0.6rem] uppercase font-bold tracking-wider ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`}>Points</span>
                          <span className="text-[0.8rem] font-mono font-bold text-amber-500">{foundCustomer.loyaltyPoints || 0}</span>
                        </div>
                      </div>
@@ -1733,7 +1733,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                {posCart.items.length === 0 ? (
                   <div className={`h-full min-h-[220px] flex flex-col items-center justify-center p-6 text-center space-y-3 rounded-2xl border border-dashed transition-all ${
                     theme === 'dark' 
-                      ? 'bg-gradient-to-b from-stone-900/30 via-stone-950/50 to-[#0a0b10] border-stone-800/80 text-stone-400 shadow-inner' 
+                      ? 'bg-gradient-to-b from-stone-900/30 via-stone-950/50 to-[#0a0b10] border-slate-200 dark:border-stone-800/80 text-slate-500 dark:text-stone-400 shadow-inner' 
                       : 'bg-gradient-to-b from-slate-50/50 to-slate-100/50 border-slate-200 text-slate-500 shadow-2xs'
                   }`}>
                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500/20 via-teal-500/10 to-stone-900/40 border border-emerald-500/30 flex items-center justify-center shadow-lg shadow-emerald-500/10">
@@ -1743,7 +1743,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                         <p className={`text-xs font-black uppercase tracking-widest ${theme === 'dark' ? 'text-stone-200' : 'text-slate-800'}`}>
                            Active Ticket Empty
                         </p>
-                        <p className="text-[10.5px] leading-relaxed text-stone-500 font-medium">
+                        <p className="text-[10.5px] leading-relaxed text-slate-400 dark:text-stone-500 font-medium">
                            Tap menu items on the left grid or scan barcode to build order ticket.
                         </p>
                      </div>
@@ -1759,28 +1759,28 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                       key={cartItem.id} 
                       className={`border rounded-xl p-2 flex items-center justify-between text-xs transition-all duration-200 shadow-xs ${
                       theme === 'dark' 
-                        ? 'bg-gradient-to-r from-stone-900/90 to-stone-950/90 border-white/5 hover:border-emerald-500/30' 
+                        ? 'bg-gradient-to-r from-stone-900/90 to-stone-950/90 border-slate-200 dark:border-white/5 hover:border-emerald-500/30' 
                         : 'bg-white border-slate-200 hover:border-emerald-500/40 shadow-xs'
                     }`}>
                       <div className="flex-1 min-w-0 pr-2">
-                        <div className={`font-semibold truncate text-[11px] ${theme === 'dark' ? 'text-stone-100' : 'text-slate-900'}`}>{cartItem.name}</div>
+                        <div className={`font-semibold truncate text-[11px] ${theme === 'dark' ? 'text-slate-900 dark:text-stone-100' : 'text-slate-900'}`}>{cartItem.name}</div>
                         {cartItem.flavor && <div className="text-[10px] text-emerald-500 font-medium truncate">{cartItem.flavor}</div>}
-                        {cartItem.modifiers && cartItem.modifiers.length > 0 && <div className={`text-[9px] truncate ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`}>+{cartItem.modifiers.map(m=>m.name).join(', ')}</div>}
+                        {cartItem.modifiers && cartItem.modifiers.length > 0 && <div className={`text-[9px] truncate ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`}>+{cartItem.modifiers.map(m=>m.name).join(', ')}</div>}
                       </div>
                       <div className={`flex items-center gap-1.5 shrink-0 border rounded-lg p-0.5 ${
-                        theme === 'dark' ? 'bg-stone-950/90 border-white/5' : 'bg-slate-100 border-slate-200'
+                        theme === 'dark' ? 'bg-slate-100 dark:bg-stone-950/90 border-slate-200 dark:border-white/5' : 'bg-slate-100 border-slate-200'
                       }`}>
                         <button onClick={() => updateCartItemQty(cartItem.id, cartItem.quantity - 1)} className={`w-5 h-5 rounded-md font-bold flex items-center justify-center cursor-pointer transition text-[10px] ${
-                          theme === 'dark' ? 'bg-stone-800 hover:bg-stone-700 text-white' : 'bg-white hover:bg-slate-200 text-slate-800 shadow-xs'
+                          theme === 'dark' ? 'bg-slate-50 dark:bg-stone-800 hover:bg-stone-700 text-white' : 'bg-white hover:bg-slate-200 text-slate-800 shadow-xs'
                         }`}><Minus className="w-2.5 h-2.5" /></button>
                         <span className={`w-4 text-center font-mono font-bold text-[11px] ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>{cartItem.quantity}</span>
                         <button onClick={() => updateCartItemQty(cartItem.id, cartItem.quantity + 1)} className={`w-5 h-5 rounded-md font-bold flex items-center justify-center cursor-pointer transition text-[10px] ${
-                          theme === 'dark' ? 'bg-stone-800 hover:bg-stone-700 text-white' : 'bg-white hover:bg-slate-200 text-slate-800 shadow-xs'
+                          theme === 'dark' ? 'bg-slate-50 dark:bg-stone-800 hover:bg-stone-700 text-white' : 'bg-white hover:bg-slate-200 text-slate-800 shadow-xs'
                         }`}><Plus className="w-2.5 h-2.5" /></button>
                       </div>
                       <div className="text-right shrink-0 pl-2 min-w-[55px]">
                         <span className="font-mono font-black text-emerald-500 text-xs block truncate">{Number(cartItem.price * cartItem.quantity).toLocaleString()}</span>
-                        <button onClick={() => removeFromPosCart(cartItem.id)} className="text-stone-400 hover:text-red-500 text-[10px] transition cursor-pointer font-bold mt-0.5">X</button>
+                        <button onClick={() => removeFromPosCart(cartItem.id)} className="text-slate-500 dark:text-stone-400 hover:text-red-500 text-[10px] transition cursor-pointer font-bold mt-0.5">X</button>
                       </div>
                     </div>
                   ))}
@@ -1791,18 +1791,18 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
             {/* Bottom Action Controls */}
             <div className={`p-2.5 border-t space-y-2 shrink-0 shadow-lg ${
               theme === 'dark' 
-                ? 'bg-gradient-to-t from-[#141414] to-[#181818] border-white/5' 
+                ? 'bg-gradient-to-t from-[#141414] to-[#181818] border-slate-200 dark:border-white/5' 
                 : 'bg-white border-slate-200'
             }`}>
               <div className="flex items-center gap-2">
                 <div className={`w-12 border rounded-xl py-2 text-center font-mono font-bold text-xs shadow-inner ${
-                  theme === 'dark' ? 'bg-stone-950 border-white/10 text-stone-300' : 'bg-slate-100 border-slate-300 text-slate-700'
+                  theme === 'dark' ? 'bg-slate-100 dark:bg-stone-950 border-slate-300 dark:border-white/10 text-slate-700 dark:text-stone-300' : 'bg-slate-100 border-slate-300 text-slate-700'
                 }`}>0</div>
                 <button onClick={() => setShowDiscountPrompt(true)} className={`flex-1 border font-bold text-[11px] py-2 px-2 rounded-xl cursor-pointer transition-all duration-150 text-center shadow-xs truncate ${
-                  theme === 'dark' ? 'bg-stone-900 hover:bg-stone-800 border-white/10 text-stone-200' : 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-800'
+                  theme === 'dark' ? 'bg-white dark:bg-stone-900 hover:bg-slate-100 dark:hover:bg-stone-800 border-slate-300 dark:border-white/10 text-stone-200' : 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-800'
                 }`}>Discount {posCart.discountPercent > 0 ? `${(cartSubtotal * (posCart.discountPercent / 100)).toFixed(0)}(${posCart.discountPercent}%)` : '0(0%)'}</button>
                 <button onClick={() => setShowChargesPrompt(true)} className={`flex-1 border font-bold text-[11px] py-2 px-2 rounded-xl cursor-pointer transition-all duration-150 text-center shadow-xs truncate ${
-                  theme === 'dark' ? 'bg-stone-900 hover:bg-stone-800 border-white/10 text-stone-200' : 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-800'
+                  theme === 'dark' ? 'bg-white dark:bg-stone-900 hover:bg-slate-100 dark:hover:bg-stone-800 border-slate-300 dark:border-white/10 text-stone-200' : 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-800'
                 }`}>Charges {posCart.tipAmount || 0}</button>
               </div>
               {posCart.orderType === 'dine_in' && (
@@ -1811,7 +1811,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                     value={posCart.tableNumber || ''}
                     onChange={(e) => setPosTableNumber(e.target.value)}
                     className={`flex-1 border rounded-xl px-2.5 py-1.5 text-xs focus:outline-none focus:border-emerald-500/50 cursor-pointer ${
-                      theme === 'dark' ? 'bg-stone-950/80 border-white/10 text-white' : 'bg-white border-slate-300 text-slate-800'
+                      theme === 'dark' ? 'bg-slate-100 dark:bg-stone-950/80 border-slate-300 dark:border-white/10 text-slate-900 dark:text-white' : 'bg-white border-slate-300 text-slate-800'
                     }`}
                   >
                     <option value="">Select Table (Required)</option>
@@ -1831,7 +1831,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                       }
                     }}
                     className={`flex-1 border rounded-xl px-2.5 py-1.5 text-xs focus:outline-none focus:border-emerald-500/50 cursor-pointer ${
-                      theme === 'dark' ? 'bg-stone-950/80 border-white/10 text-white' : 'bg-white border-slate-300 text-slate-800'
+                      theme === 'dark' ? 'bg-slate-100 dark:bg-stone-950/80 border-slate-300 dark:border-white/10 text-slate-900 dark:text-white' : 'bg-white border-slate-300 text-slate-800'
                     }`}
                   >
                     <option value="">Select Server (Required)</option>
@@ -1866,7 +1866,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                           ? 'border-2 border-amber-500/70 bg-amber-950/40 text-amber-300 ring-2 ring-amber-500/20'
                           : 'border-2 border-amber-500 bg-amber-50 text-amber-900 ring-2 ring-amber-400/20'
                         : theme === 'dark'
-                        ? 'bg-stone-950/80 border border-white/10 text-white focus:border-emerald-500/50'
+                        ? 'bg-slate-100 dark:bg-stone-950/80 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white focus:border-emerald-500/50'
                         : 'bg-white border border-slate-300 text-slate-900 focus:border-emerald-500'
                     }`}
                   >
@@ -1883,12 +1883,12 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                 value={activeDeliveryNote} 
                 onChange={(e) => setActiveDeliveryNote(e.target.value)} 
                 className={`w-full border rounded-xl px-2.5 py-1.5 text-xs focus:outline-none focus:border-emerald-500/50 transition-all ${
-                  theme === 'dark' ? 'bg-stone-950/80 border-white/10 text-white placeholder:text-stone-500' : 'bg-white border-slate-300 text-slate-800 placeholder:text-slate-400'
+                  theme === 'dark' ? 'bg-slate-100 dark:bg-stone-950/80 border-slate-300 dark:border-white/10 text-slate-900 dark:text-white placeholder:text-slate-400 dark:text-stone-500' : 'bg-white border-slate-300 text-slate-800 placeholder:text-slate-400'
                 }`} 
               />
               <div className="flex items-center gap-2 pt-0.5">
                 <label className={`flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider cursor-pointer shrink-0 select-none ${
-                  theme === 'dark' ? 'text-stone-400' : 'text-slate-600'
+                  theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-600'
                 }`}>
                   <input type="checkbox" checked={isPreOrder} onChange={(e) => setIsPreOrder(e.target.checked)} className="rounded border-slate-300 text-emerald-500 focus:ring-0 cursor-pointer w-4 h-4" />
                   PreOrder
@@ -1915,11 +1915,11 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
           <div className="flex-1 flex flex-col overflow-hidden">
             {!selectedOrder ? (
               <div className={`flex-1 flex flex-col items-center justify-center p-6 text-center space-y-3 ${
-                theme === 'dark' ? 'text-stone-500' : 'text-slate-400'
+                theme === 'dark' ? 'text-slate-400 dark:text-stone-500' : 'text-slate-400'
               }`}>
                 <Receipt className={`w-10 h-10 stroke-1 ${theme === 'dark' ? 'text-stone-600' : 'text-slate-300'}`} />
-                <h4 className={`text-sm font-bold ${theme === 'dark' ? 'text-stone-300' : 'text-slate-700'}`}>No Order Selected</h4>
-                <p className={`text-xs max-w-[220px] ${theme === 'dark' ? 'text-stone-500' : 'text-slate-500'}`}>
+                <h4 className={`text-sm font-bold ${theme === 'dark' ? 'text-slate-700 dark:text-stone-300' : 'text-slate-700'}`}>No Order Selected</h4>
+                <p className={`text-xs max-w-[220px] ${theme === 'dark' ? 'text-slate-400 dark:text-stone-500' : 'text-slate-500'}`}>
                   Select an order from the ongoing stream on the left or tap below to start a new ticket.
                 </p>
                 <button
@@ -1933,7 +1933,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
               <div className="flex-1 flex flex-col overflow-hidden justify-between">
                 {/* Order Top Banner */}
                 <div className={`p-3 border-b shrink-0 ${
-                  theme === 'dark' ? 'bg-stone-950 border-white/10' : 'bg-white border-slate-200'
+                  theme === 'dark' ? 'bg-slate-100 dark:bg-stone-950 border-slate-300 dark:border-white/10' : 'bg-white border-slate-200'
                 }`}>
                   <div className="flex items-center justify-between gap-2 mb-1.5">
                     <div className="flex items-center gap-2">
@@ -1945,20 +1945,20 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                       </span>
                     </div>
                     <span className={`text-[11px] font-semibold capitalize px-2 py-0.5 rounded-md border ${
-                      theme === 'dark' ? 'text-stone-400 bg-stone-900 border-white/5' : 'text-slate-600 bg-slate-100 border-slate-200'
+                      theme === 'dark' ? 'text-slate-500 dark:text-stone-400 bg-white dark:bg-stone-900 border-slate-200 dark:border-white/5' : 'text-slate-600 bg-slate-100 border-slate-200'
                     }`}>
                       {selectedOrder.type.replace('_', ' ')}
                     </span>
                   </div>
 
-                  <div className={`flex items-center justify-between text-[10px] ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`}>
-                    <span>Outlet: <strong className={theme === 'dark' ? 'text-stone-300' : 'text-slate-700'}>{selectedOrder.outlet || selectedOrder.branchName || 'Main'}</strong></span>
+                  <div className={`flex items-center justify-between text-[10px] ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`}>
+                    <span>Outlet: <strong className={theme === 'dark' ? 'text-slate-700 dark:text-stone-300' : 'text-slate-700'}>{selectedOrder.outlet || selectedOrder.branchName || 'Main'}</strong></span>
                     <span>{new Date(selectedOrder.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                   </div>
 
                   {/* Status Progress Stepper */}
                   <div className={`grid grid-cols-4 gap-1 mt-2.5 pt-2 border-t text-[9px] font-bold text-center ${
-                    theme === 'dark' ? 'border-white/5' : 'border-slate-200'
+                    theme === 'dark' ? 'border-slate-200 dark:border-white/5' : 'border-slate-200'
                   }`}>
                     {['Punched', 'Kitchen', 'Ready', selectedOrder.type === 'delivery' ? 'Dispatched' : 'Completed'].map((stLabel, idx) => {
                       const curStatus = selectedOrder.status.toLowerCase();
@@ -1979,8 +1979,8 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                             isCurrent
                               ? 'bg-emerald-500/20 text-emerald-500 border-emerald-500/40 ring-1 ring-emerald-500/30 font-extrabold'
                               : isPastOrCurrent
-                              ? theme === 'dark' ? 'bg-stone-800 text-stone-300 border-white/10' : 'bg-slate-200 text-slate-700 border-slate-300'
-                              : theme === 'dark' ? 'bg-stone-950 text-stone-600 border-white/5' : 'bg-slate-50 text-slate-400 border-slate-200'
+                              ? theme === 'dark' ? 'bg-slate-50 dark:bg-stone-800 text-slate-700 dark:text-stone-300 border-slate-300 dark:border-white/10' : 'bg-slate-200 text-slate-700 border-slate-300'
+                              : theme === 'dark' ? 'bg-slate-100 dark:bg-stone-950 text-stone-600 border-slate-200 dark:border-white/5' : 'bg-slate-50 text-slate-400 border-slate-200'
                           }`}
                         >
                           {stLabel}
@@ -1995,7 +1995,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                   {/* Customer Info Card */}
                   {(selectedOrder.customer?.name || selectedOrder.customer?.phone || selectedOrder.tableNumber || selectedOrder.serverName) && (
                     <div className={`border rounded-xl p-2.5 space-y-1.5 text-xs ${
-                      theme === 'dark' ? 'bg-stone-900/80 border-white/5' : 'bg-white border-slate-200 shadow-xs'
+                      theme === 'dark' ? 'bg-white dark:bg-stone-900/80 border-slate-200 dark:border-white/5' : 'bg-white border-slate-200 shadow-xs'
                     }`}>
                       {selectedOrder.customer?.name && (
                         <div className="flex items-center justify-between">
@@ -2004,13 +2004,13 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                             <span>{selectedOrder.customer.name}</span>
                           </div>
                           {selectedOrder.customer?.phone && (
-                            <span className={`font-mono text-[11px] ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`}>{selectedOrder.customer.phone}</span>
+                            <span className={`font-mono text-[11px] ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`}>{selectedOrder.customer.phone}</span>
                           )}
                         </div>
                       )}
                       {selectedOrder.customer?.address && (
                         <div className={`flex items-start gap-1.5 text-[11px] pt-1 border-t ${
-                          theme === 'dark' ? 'text-stone-400 border-white/5' : 'text-slate-600 border-slate-200'
+                          theme === 'dark' ? 'text-slate-500 dark:text-stone-400 border-slate-200 dark:border-white/5' : 'text-slate-600 border-slate-200'
                         }`}>
                           <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" />
                           <span>{selectedOrder.customer.address}</span>
@@ -2018,7 +2018,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                       )}
                       {(selectedOrder.tableNumber || selectedOrder.serverName) && (
                         <div className={`flex items-center justify-between text-[11px] pt-1 border-t ${
-                          theme === 'dark' ? 'text-amber-300/90 border-white/5' : 'text-amber-700 border-slate-200'
+                          theme === 'dark' ? 'text-amber-300/90 border-slate-200 dark:border-white/5' : 'text-amber-700 border-slate-200'
                         }`}>
                           {selectedOrder.tableNumber && <span>Table: <strong>#{selectedOrder.tableNumber}</strong></span>}
                           {selectedOrder.serverName && <span>Server: <strong>{selectedOrder.serverName}</strong></span>}
@@ -2026,7 +2026,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                       )}
                       {selectedOrder.notes && (
                         <div className={`text-[10.5px] italic p-1.5 rounded-lg border ${
-                          theme === 'dark' ? 'text-stone-400 bg-stone-950/60 border-white/5' : 'text-slate-600 bg-slate-50 border-slate-200'
+                          theme === 'dark' ? 'text-slate-500 dark:text-stone-400 bg-slate-100 dark:bg-stone-950/60 border-slate-200 dark:border-white/5' : 'text-slate-600 bg-slate-50 border-slate-200'
                         }`}>
                           Note: {selectedOrder.notes}
                         </div>
@@ -2036,10 +2036,10 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
 
                   {/* Items Table */}
                   <div className={`border rounded-xl overflow-hidden ${
-                    theme === 'dark' ? 'bg-stone-900/60 border-white/5' : 'bg-white border-slate-200 shadow-xs'
+                    theme === 'dark' ? 'bg-white dark:bg-stone-900/60 border-slate-200 dark:border-white/5' : 'bg-white border-slate-200 shadow-xs'
                   }`}>
                     <div className={`p-2 border-b text-[10px] font-bold uppercase tracking-wider flex justify-between ${
-                      theme === 'dark' ? 'bg-stone-950/90 border-white/5 text-stone-400' : 'bg-slate-100 border-slate-200 text-slate-600'
+                      theme === 'dark' ? 'bg-slate-100 dark:bg-stone-950/90 border-slate-200 dark:border-white/5 text-slate-500 dark:text-stone-400' : 'bg-slate-100 border-slate-200 text-slate-600'
                     }`}>
                       <span>Item Description</span>
                       <span>Total</span>
@@ -2056,7 +2056,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                               <div className="text-[10px] text-amber-500 font-medium">{it.flavor}</div>
                             )}
                             {it.modifiers && it.modifiers.length > 0 && (
-                              <div className={`text-[9.5px] ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`}>
+                              <div className={`text-[9.5px] ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`}>
                                 +{it.modifiers.map(m => m.name).join(', ')}
                               </div>
                             )}
@@ -2071,9 +2071,9 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
 
                   {/* Financial Breakdown Card */}
                   <div className={`border rounded-xl p-2.5 space-y-1 text-xs font-mono ${
-                    theme === 'dark' ? 'bg-stone-900/80 border-white/5' : 'bg-white border-slate-200 shadow-xs'
+                    theme === 'dark' ? 'bg-white dark:bg-stone-900/80 border-slate-200 dark:border-white/5' : 'bg-white border-slate-200 shadow-xs'
                   }`}>
-                    <div className={`flex justify-between text-[11px] ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`}>
+                    <div className={`flex justify-between text-[11px] ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`}>
                       <span>Subtotal:</span>
                       <span>PKR {selectedOrder.subtotal?.toLocaleString() || selectedOrder.total.toLocaleString()}</span>
                     </div>
@@ -2084,13 +2084,13 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                       </div>
                     ) : null}
                     {selectedOrder.tax ? (
-                      <div className={`flex justify-between text-[11px] ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`}>
+                      <div className={`flex justify-between text-[11px] ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`}>
                         <span>GST Tax:</span>
                         <span>PKR {selectedOrder.tax.toLocaleString()}</span>
                       </div>
                     ) : null}
                     <div className={`flex justify-between font-bold text-sm pt-1 border-t ${
-                      theme === 'dark' ? 'text-white border-white/5' : 'text-slate-900 border-slate-200'
+                      theme === 'dark' ? 'text-white border-slate-200 dark:border-white/5' : 'text-slate-900 border-slate-200'
                     }`}>
                       <span>Net Total:</span>
                       <span className="text-emerald-500">PKR {selectedOrder.total.toLocaleString()}</span>
@@ -2112,7 +2112,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
 
                 {/* Bottom Order Action Bar */}
                 <div className={`p-2.5 border-t space-y-2 shrink-0 ${
-                  theme === 'dark' ? 'bg-stone-950 border-white/10' : 'bg-white border-slate-200 shadow-sm'
+                  theme === 'dark' ? 'bg-slate-100 dark:bg-stone-950 border-slate-300 dark:border-white/10' : 'bg-white border-slate-200 shadow-sm'
                 }`}>
                   {/* Primary Workflow Advance */}
                   {selectedOrder.status !== 'completed' && selectedOrder.status !== 'cancelled' && (
@@ -2183,7 +2183,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                     <button
                       onClick={() => handlePrintReceipt(selectedOrder)}
                       className={`py-1.5 font-bold text-[11px] rounded-xl border flex items-center justify-center gap-1 cursor-pointer transition ${
-                        theme === 'dark' ? 'bg-stone-800 hover:bg-stone-700 text-stone-200 hover:text-white border-white/10' : 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300'
+                        theme === 'dark' ? 'bg-slate-50 dark:bg-stone-800 hover:bg-stone-700 text-stone-200 hover:text-white border-slate-300 dark:border-white/10' : 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300'
                       }`}
                       title="Print Customer Receipt"
                     >
@@ -2201,7 +2201,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                     <button
                       onClick={() => setMiddleTab('active_ticket')}
                       className={`py-1.5 font-bold text-[11px] rounded-xl border flex items-center justify-center gap-1 cursor-pointer transition ${
-                        theme === 'dark' ? 'bg-stone-800 hover:bg-stone-700 text-emerald-400 border-white/10' : 'bg-slate-100 hover:bg-slate-200 text-emerald-600 border-slate-300'
+                        theme === 'dark' ? 'bg-slate-50 dark:bg-stone-800 hover:bg-stone-700 text-emerald-400 border-slate-300 dark:border-white/10' : 'bg-slate-100 hover:bg-slate-200 text-emerald-600 border-slate-300'
                       }`}
                       title="Punch New Ticket"
                     >
@@ -2222,7 +2222,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
           <div className="flex-1 flex flex-col overflow-hidden justify-between">
             {/* Filter Chips & Search */}
             <div className={`p-2 border-b space-y-1.5 shrink-0 ${
-              theme === 'dark' ? 'bg-stone-950 border-white/10' : 'bg-white border-slate-200'
+              theme === 'dark' ? 'bg-slate-100 dark:bg-stone-950 border-slate-300 dark:border-white/10' : 'bg-white border-slate-200'
             }`}>
               <div className="relative">
                 <input
@@ -2231,14 +2231,14 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                   value={allOrdersSearch}
                   onChange={(e) => setAllOrdersSearch(e.target.value)}
                   className={`w-full border rounded-xl pl-8 pr-2.5 py-1.5 text-xs focus:outline-none focus:border-amber-500/50 ${
-                    theme === 'dark' ? 'bg-stone-900 border-white/10 text-white placeholder:text-stone-500' : 'bg-slate-50 border-slate-300 text-slate-900 placeholder:text-slate-400'
+                    theme === 'dark' ? 'bg-white dark:bg-stone-900 border-slate-300 dark:border-white/10 text-white placeholder:text-slate-400 dark:text-stone-500' : 'bg-slate-50 border-slate-300 text-slate-900 placeholder:text-slate-400'
                   }`}
                 />
-                <Search className={`w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 ${theme === 'dark' ? 'text-stone-500' : 'text-slate-400'}`} />
+                <Search className={`w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 ${theme === 'dark' ? 'text-slate-400 dark:text-stone-500' : 'text-slate-400'}`} />
                 {allOrdersSearch && (
                   <button
                     onClick={() => setAllOrdersSearch('')}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-slate-700 text-xs font-bold cursor-pointer"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 dark:text-stone-400 hover:text-slate-700 text-xs font-bold cursor-pointer"
                   >
                     ×
                   </button>
@@ -2264,7 +2264,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                       allOrdersStatusFilter === st.id
                         ? 'bg-amber-500/20 text-amber-500 border-amber-500/40'
                         : theme === 'dark'
-                        ? 'bg-stone-900 text-stone-400 border-white/5 hover:text-white'
+                        ? 'bg-white dark:bg-stone-900 text-slate-500 dark:text-stone-400 border-slate-200 dark:border-white/5 hover:text-white'
                         : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200 hover:text-slate-900'
                     }`}
                   >
@@ -2278,7 +2278,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
             <div className="flex-1 overflow-y-auto p-2 space-y-1.5 no-scrollbar">
               {filteredAllOrders.length === 0 ? (
                 <div className={`h-full flex flex-col items-center justify-center p-6 text-center space-y-2 ${
-                  theme === 'dark' ? 'text-stone-500' : 'text-slate-400'
+                  theme === 'dark' ? 'text-slate-400 dark:text-stone-500' : 'text-slate-400'
                 }`}>
                   <Database className={`w-8 h-8 stroke-1 ${theme === 'dark' ? 'text-stone-700' : 'text-slate-300'}`} />
                   <p className="text-xs font-semibold">No matching orders found</p>
@@ -2298,7 +2298,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                         isSelected 
                           ? 'border-amber-500/60 ring-1 ring-amber-500/40' 
                           : theme === 'dark'
-                          ? 'bg-stone-900/90 hover:bg-stone-800/90 border-white/5'
+                          ? 'bg-white dark:bg-stone-900/90 hover:bg-slate-100 dark:hover:bg-stone-800/90 border-slate-200 dark:border-white/5'
                           : 'bg-white hover:bg-slate-50 border-slate-200 shadow-xs'
                       }`}
                     >
@@ -2316,22 +2316,22 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                         </span>
                       </div>
 
-                      <div className={`flex items-center justify-between text-[10.5px] ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`}>
+                      <div className={`flex items-center justify-between text-[10.5px] ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`}>
                         <span className="capitalize">{ord.type.replace('_', ' ')} {ord.tableNumber ? `• T#${ord.tableNumber}` : ''}</span>
                         <span>{new Date(ord.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                       </div>
 
                       {(ord.customer?.name || ord.customer?.phone) && (
-                        <div className={`text-[10px] truncate ${theme === 'dark' ? 'text-stone-300' : 'text-slate-700'}`}>
+                        <div className={`text-[10px] truncate ${theme === 'dark' ? 'text-slate-700 dark:text-stone-300' : 'text-slate-700'}`}>
                           {ord.customer.name} {ord.customer.phone ? `(${ord.customer.phone})` : ''}
                         </div>
                       )}
 
-                      <div className={`text-[10.5px] truncate ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`}>
+                      <div className={`text-[10.5px] truncate ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`}>
                         {ord.items.map(i => `${i.quantity}x ${i.name}`).join(', ')}
                       </div>
 
-                      <div className={`flex items-center gap-1 pt-1 border-t ${theme === 'dark' ? 'border-white/5' : 'border-slate-200'}`}>
+                      <div className={`flex items-center gap-1 pt-1 border-t ${theme === 'dark' ? 'border-slate-200 dark:border-white/5' : 'border-slate-200'}`}>
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
@@ -2339,7 +2339,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                             setMiddleTab('order_details');
                           }}
                           className={`px-2 py-1 text-[10px] font-bold rounded-lg border cursor-pointer flex-1 ${
-                            theme === 'dark' ? 'bg-stone-800 hover:bg-stone-700 text-stone-200 border-white/10' : 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300'
+                            theme === 'dark' ? 'bg-slate-50 dark:bg-stone-800 hover:bg-stone-700 text-stone-200 border-slate-300 dark:border-white/10' : 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300'
                           }`}
                         >
                           View Details
@@ -2350,7 +2350,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                             handlePrintReceipt(ord);
                           }}
                           className={`p-1 rounded-lg border cursor-pointer ${
-                            theme === 'dark' ? 'bg-stone-800 hover:bg-stone-700 text-stone-300 hover:text-white border-white/10' : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300'
+                            theme === 'dark' ? 'bg-slate-50 dark:bg-stone-800 hover:bg-stone-700 text-slate-700 dark:text-stone-300 hover:text-white border-slate-300 dark:border-white/10' : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300'
                           }`}
                           title="Print Receipt"
                         >
@@ -2387,7 +2387,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
 
             {/* Quick Action Footer */}
             <div className={`p-2 border-t shrink-0 ${
-              theme === 'dark' ? 'bg-stone-950 border-white/10' : 'bg-white border-slate-200'
+              theme === 'dark' ? 'bg-slate-100 dark:bg-stone-950 border-slate-300 dark:border-white/10' : 'bg-white border-slate-200'
             }`}>
               <button
                 onClick={() => setMiddleTab('active_ticket')}
@@ -2440,9 +2440,9 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
 
         return (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-4 overflow-y-auto">
-            <div className="bg-gradient-to-b from-stone-900 via-[#141414] to-stone-950 border border-white/10 ring-1 ring-white/10 rounded-2xl w-full max-w-lg shadow-2xl p-6 relative animate-in fade-in zoom-in-95 duration-150 my-auto">
+            <div className="bg-gradient-to-b from-stone-900 via-[#141414] to-stone-950 border border-slate-300 dark:border-white/10 ring-1 ring-white/10 rounded-2xl w-full max-w-lg shadow-2xl p-6 relative animate-in fade-in zoom-in-95 duration-150 my-auto">
               {/* Header */}
-              <div className="flex items-start justify-between border-b border-white/10 pb-4 mb-5">
+              <div className="flex items-start justify-between border-b border-slate-300 dark:border-white/10 pb-4 mb-5">
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -2450,25 +2450,25 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                       Cashout & Settle Order
                     </h3>
                   </div>
-                  <p className="text-xs text-stone-400 mt-1 flex items-center gap-2">
+                  <p className="text-xs text-slate-500 dark:text-stone-400 mt-1 flex items-center gap-2">
                     <span className="font-mono text-emerald-400 font-bold">
                       Order #{selectedOrderForCashout.orderNumber.replace('ORD-', '')}
                     </span>
                     <span>•</span>
-                    <span className="uppercase font-semibold text-stone-300">
+                    <span className="uppercase font-semibold text-slate-700 dark:text-stone-300">
                       {selectedOrderForCashout.type.replace('_', ' ')}
                     </span>
                     {selectedOrderForCashout.customer?.name && (
                       <>
                         <span>•</span>
-                        <span className="text-stone-300">{selectedOrderForCashout.customer.name}</span>
+                        <span className="text-slate-700 dark:text-stone-300">{selectedOrderForCashout.customer.name}</span>
                       </>
                     )}
                   </p>
                 </div>
                 <button
                   onClick={() => setIsCashoutModalOpen(false)}
-                  className="text-stone-400 hover:text-white p-1.5 rounded-xl hover:bg-white/10 transition-all cursor-pointer"
+                  className="text-slate-500 dark:text-stone-400 hover:text-white p-1.5 rounded-xl hover:bg-white/10 transition-all cursor-pointer"
                   title="Close modal"
                 >
                   <X className="w-5 h-5" />
@@ -2480,7 +2480,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                 <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-2xl pointer-events-none"></div>
                 <div className="flex items-center justify-between">
                   <div>
-                    <span className="text-[10px] tracking-wider text-stone-400 uppercase font-black block">
+                    <span className="text-[10px] tracking-wider text-slate-500 dark:text-stone-400 uppercase font-black block">
                       Total Payable Amount
                     </span>
                     <div className="text-3xl font-mono font-black text-emerald-400 mt-0.5">
@@ -2488,11 +2488,11 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                     </div>
                   </div>
                   <div className="text-right">
-                    <span className="text-[10px] text-stone-400 uppercase font-semibold block">Order Items</span>
-                    <span className="text-xs font-mono font-bold text-stone-300">
+                    <span className="text-[10px] text-slate-500 dark:text-stone-400 uppercase font-semibold block">Order Items</span>
+                    <span className="text-xs font-mono font-bold text-slate-700 dark:text-stone-300">
                       {selectedOrderForCashout.items.reduce((acc, i) => acc + i.quantity, 0)} Items
                     </span>
-                    <div className="text-[10px] text-stone-500 mt-0.5">
+                    <div className="text-[10px] text-slate-400 dark:text-stone-500 mt-0.5">
                       Subtotal: PKR {(selectedOrderForCashout.subtotal || orderTotal).toLocaleString()}
                     </div>
                   </div>
@@ -2501,7 +2501,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
 
               {/* Payment Method Selector (Cash, Card, Online) */}
               <div className="mb-5">
-                <label className="text-[11px] font-black uppercase tracking-wider text-stone-300 block mb-2">
+                <label className="text-[11px] font-black uppercase tracking-wider text-slate-700 dark:text-stone-300 block mb-2">
                   Select Payment Method
                 </label>
                 <div className="grid grid-cols-3 gap-2.5">
@@ -2512,10 +2512,10 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                     className={`py-3 px-3 rounded-xl font-bold text-xs flex flex-col items-center justify-center gap-1.5 transition-all duration-150 cursor-pointer border ${
                       cashoutPaymentMethod === 'cash'
                         ? 'bg-gradient-to-b from-emerald-600/30 to-emerald-950/40 text-emerald-300 border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.25)] ring-1 ring-emerald-400/50'
-                        : 'bg-stone-950/80 text-stone-400 border-white/10 hover:bg-stone-800 hover:text-white'
+                        : 'bg-slate-100 dark:bg-stone-950/80 text-slate-500 dark:text-stone-400 border-slate-300 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-stone-800 hover:text-slate-900 dark:text-white'
                     }`}
                   >
-                    <Banknote className={`w-5 h-5 ${cashoutPaymentMethod === 'cash' ? 'text-emerald-400' : 'text-stone-400'}`} />
+                    <Banknote className={`w-5 h-5 ${cashoutPaymentMethod === 'cash' ? 'text-emerald-400' : 'text-slate-500 dark:text-stone-400'}`} />
                     <span>Cash</span>
                   </button>
 
@@ -2526,10 +2526,10 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                     className={`py-3 px-3 rounded-xl font-bold text-xs flex flex-col items-center justify-center gap-1.5 transition-all duration-150 cursor-pointer border ${
                       cashoutPaymentMethod === 'card'
                         ? 'bg-gradient-to-b from-blue-600/30 to-blue-950/40 text-blue-300 border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.25)] ring-1 ring-blue-400/50'
-                        : 'bg-stone-950/80 text-stone-400 border-white/10 hover:bg-stone-800 hover:text-white'
+                        : 'bg-slate-100 dark:bg-stone-950/80 text-slate-500 dark:text-stone-400 border-slate-300 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-stone-800 hover:text-slate-900 dark:text-white'
                     }`}
                   >
-                    <CreditCard className={`w-5 h-5 ${cashoutPaymentMethod === 'card' ? 'text-blue-400' : 'text-stone-400'}`} />
+                    <CreditCard className={`w-5 h-5 ${cashoutPaymentMethod === 'card' ? 'text-blue-400' : 'text-slate-500 dark:text-stone-400'}`} />
                     <span>Card / POS</span>
                   </button>
 
@@ -2540,10 +2540,10 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                     className={`py-3 px-3 rounded-xl font-bold text-xs flex flex-col items-center justify-center gap-1.5 transition-all duration-150 cursor-pointer border ${
                       cashoutPaymentMethod === 'online'
                         ? 'bg-gradient-to-b from-purple-600/30 to-purple-950/40 text-purple-300 border-purple-500 shadow-[0_0_15px_rgba(168,85,247,0.25)] ring-1 ring-purple-400/50'
-                        : 'bg-stone-950/80 text-stone-400 border-white/10 hover:bg-stone-800 hover:text-white'
+                        : 'bg-slate-100 dark:bg-stone-950/80 text-slate-500 dark:text-stone-400 border-slate-300 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-stone-800 hover:text-slate-900 dark:text-white'
                     }`}
                   >
-                    <Globe className={`w-5 h-5 ${cashoutPaymentMethod === 'online' ? 'text-purple-400' : 'text-stone-400'}`} />
+                    <Globe className={`w-5 h-5 ${cashoutPaymentMethod === 'online' ? 'text-purple-400' : 'text-slate-500 dark:text-stone-400'}`} />
                     <span>Online / Raast</span>
                   </button>
                 </div>
@@ -2552,7 +2552,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
               {/* Tally / Amount Received Input */}
               <div className="mb-4">
                 <div className="flex items-center justify-between mb-2">
-                  <label className="text-[11px] font-black uppercase tracking-wider text-stone-300">
+                  <label className="text-[11px] font-black uppercase tracking-wider text-slate-700 dark:text-stone-300">
                     Amount Received in Tally / Register
                   </label>
                   <button
@@ -2565,7 +2565,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                 </div>
 
                 <div className="relative flex items-center">
-                  <span className="absolute left-3.5 text-stone-400 font-mono font-bold text-sm pointer-events-none">
+                  <span className="absolute left-3.5 text-slate-500 dark:text-stone-400 font-mono font-bold text-sm pointer-events-none">
                     PKR
                   </span>
                   <input
@@ -2576,13 +2576,13 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                     value={cashoutTenderedInput}
                     onChange={(e) => setCashoutTenderedInput(e.target.value)}
                     placeholder={`e.g. ${orderTotal.toLocaleString()} (Enter amount given)`}
-                    className="w-full bg-stone-950 border border-white/15 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-xl pl-14 pr-14 py-3 text-lg font-mono font-black text-white placeholder:text-stone-600 transition-all outline-none"
+                    className="w-full bg-slate-100 dark:bg-stone-950 border border-slate-300 dark:border-white/15 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-xl pl-14 pr-14 py-3 text-lg font-mono font-black text-slate-900 dark:text-white placeholder:text-stone-600 transition-all outline-none"
                   />
                   {cashoutTenderedInput && (
                     <button
                       type="button"
                       onClick={() => setCashoutTenderedInput('')}
-                      className="absolute right-3 text-stone-400 hover:text-white px-2 py-1 rounded-lg hover:bg-white/10 transition-all cursor-pointer text-xs font-bold"
+                      className="absolute right-3 text-slate-500 dark:text-stone-400 hover:text-white px-2 py-1 rounded-lg hover:bg-white/10 transition-all cursor-pointer text-xs font-bold"
                     >
                       Clear
                     </button>
@@ -2594,7 +2594,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                   <button
                     type="button"
                     onClick={handleSetExact}
-                    className="px-2.5 py-1 bg-stone-800 hover:bg-stone-700 text-stone-200 border border-white/10 rounded-lg text-xs font-semibold cursor-pointer transition-all hover:scale-105"
+                    className="px-2.5 py-1 bg-slate-50 dark:bg-stone-800 hover:bg-stone-700 text-stone-200 border border-slate-300 dark:border-white/10 rounded-lg text-xs font-semibold cursor-pointer transition-all hover:scale-105"
                   >
                     Exact
                   </button>
@@ -2603,7 +2603,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                       key={denom}
                       type="button"
                       onClick={() => handleSetDirect(denom)}
-                      className="px-2.5 py-1 bg-stone-800 hover:bg-stone-700 text-stone-300 border border-white/10 rounded-lg text-xs font-mono font-semibold cursor-pointer transition-all hover:scale-105"
+                      className="px-2.5 py-1 bg-slate-50 dark:bg-stone-800 hover:bg-stone-700 text-slate-700 dark:text-stone-300 border border-slate-300 dark:border-white/10 rounded-lg text-xs font-mono font-semibold cursor-pointer transition-all hover:scale-105"
                     >
                       {denom.toLocaleString()}
                     </button>
@@ -2635,9 +2635,9 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
               {/* Difference Status Box: Short vs Exact vs Excess */}
               <div className="mb-5">
                 {!hasInput || tenderedVal === 0 ? (
-                  <div className="bg-stone-950/60 border border-white/10 rounded-xl p-3 flex items-center justify-between text-stone-400">
+                  <div className="bg-slate-100 dark:bg-stone-950/60 border border-slate-300 dark:border-white/10 rounded-xl p-3 flex items-center justify-between text-slate-500 dark:text-stone-400">
                     <span className="text-xs font-medium">Please enter amount in tally to verify settlement</span>
-                    <span className="text-[11px] font-mono text-stone-500">Due: PKR {orderTotal.toLocaleString()}</span>
+                    <span className="text-[11px] font-mono text-slate-400 dark:text-stone-500">Due: PKR {orderTotal.toLocaleString()}</span>
                   </div>
                 ) : isShort ? (
                   <div className="bg-red-950/40 border-2 border-red-500/50 rounded-xl p-3.5 text-red-300 shadow-[0_0_15px_rgba(239,68,68,0.2)]">
@@ -2709,7 +2709,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                   className={`w-full py-3.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all duration-150 flex items-center justify-center gap-2 border shadow-lg ${
                     canCashout && !isCashoutSubmitting
                       ? 'bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-500 text-white cursor-pointer active:scale-98 shadow-[0_0_20px_rgba(16,185,129,0.35)] border-emerald-400/30'
-                      : 'bg-stone-900 text-stone-500 border-white/5 cursor-not-allowed opacity-60'
+                      : 'bg-white dark:bg-stone-900 text-slate-400 dark:text-stone-500 border-slate-200 dark:border-white/5 cursor-not-allowed opacity-60'
                   }`}
                 >
                   {isCashoutSubmitting ? (
@@ -2736,7 +2736,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                 <button
                   type="button"
                   onClick={() => setIsCashoutModalOpen(false)}
-                  className="w-full py-2.5 rounded-xl font-bold text-xs text-stone-400 hover:text-white bg-stone-950/60 hover:bg-stone-800 border border-white/10 transition-all cursor-pointer"
+                  className="w-full py-2.5 rounded-xl font-bold text-xs text-slate-500 dark:text-stone-400 hover:text-slate-900 dark:text-white bg-slate-100 dark:bg-stone-950/60 hover:bg-slate-100 dark:hover:bg-stone-800 border border-slate-300 dark:border-white/10 transition-all cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -2749,15 +2749,15 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
       {/* FLAVOR & VARIANT PICKER MODAL                                             */}
       {/* ========================================================================= */}
       {activeFlavorModalItem && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-gradient-to-b from-stone-900 to-[#121212] border border-white/10 ring-1 ring-white/10 rounded-2xl max-w-sm w-full p-5 space-y-4 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between border-b border-white/10 pb-3">
-              <h3 className="font-bold text-stone-100 text-sm">
+        <div className="fixed inset-0 z-50 bg-slate-900/40 dark:bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-gradient-to-b from-stone-900 to-[#121212] border border-slate-300 dark:border-white/10 ring-1 ring-white/10 rounded-2xl max-w-sm w-full p-5 space-y-4 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-slate-300 dark:border-white/10 pb-3">
+              <h3 className="font-bold text-slate-900 dark:text-stone-100 text-sm">
                 Select Flavor: {activeFlavorModalItem.name}
               </h3>
               <button
                 onClick={() => setActiveFlavorModalItem(null)}
-                className="text-stone-400 hover:text-white p-1 rounded-lg hover:bg-white/5 transition-all cursor-pointer"
+                className="text-slate-500 dark:text-stone-400 hover:text-white p-1 rounded-lg hover:bg-white/5 transition-all cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -2771,7 +2771,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                   className={`w-full p-2.5 text-xs font-semibold rounded-xl border text-left cursor-pointer transition-all duration-150 ${
                     selectedFlavor === flavor
                       ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white border-emerald-400/40 shadow-sm'
-                      : 'bg-stone-950/60 text-stone-300 border-white/5 hover:bg-stone-800/80 hover:text-white'
+                      : 'bg-slate-100 dark:bg-stone-950/60 text-slate-700 dark:text-stone-300 border-slate-200 dark:border-white/5 hover:bg-slate-100 dark:hover:bg-stone-800/80 hover:text-slate-900 dark:text-white'
                   }`}
                 >
                   {flavor}
@@ -2779,10 +2779,10 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
               ))}
             </div>
 
-            <div className="flex justify-end gap-2 pt-2 border-t border-white/10">
+            <div className="flex justify-end gap-2 pt-2 border-t border-slate-300 dark:border-white/10">
               <button
                 onClick={() => setActiveFlavorModalItem(null)}
-                className="px-4 py-2 rounded-xl border border-white/10 text-xs font-semibold text-stone-400 hover:text-white hover:bg-white/5 cursor-pointer transition-all"
+                className="px-4 py-2 rounded-xl border border-slate-300 dark:border-white/10 text-xs font-semibold text-slate-500 dark:text-stone-400 hover:text-white hover:bg-white/5 cursor-pointer transition-all"
               >
                 Cancel
               </button>
@@ -2801,9 +2801,9 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
       {/* DISCOUNT MODAL PROMPT                                                     */}
       {/* ========================================================================= */}
       {showDiscountPrompt && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-gradient-to-b from-stone-900 to-[#121212] border border-white/10 ring-1 ring-white/10 rounded-2xl max-w-xs w-full p-5 space-y-4 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
-            <h3 className="font-bold text-stone-100 text-sm">Apply Order Discount (%)</h3>
+        <div className="fixed inset-0 z-50 bg-slate-900/40 dark:bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-gradient-to-b from-stone-900 to-[#121212] border border-slate-300 dark:border-white/10 ring-1 ring-white/10 rounded-2xl max-w-xs w-full p-5 space-y-4 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+            <h3 className="font-bold text-slate-900 dark:text-stone-100 text-sm">Apply Order Discount (%)</h3>
             <div className="flex items-center gap-2">
               <input
                 type="number"
@@ -2811,26 +2811,26 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                 max="100"
                 value={discountInput}
                 onChange={(e) => setDiscountInput(e.target.value)}
-                className="flex-1 bg-stone-950 border border-white/10 rounded-xl p-2.5 text-sm font-mono font-bold text-white focus:outline-none focus:border-emerald-500/50"
+                className="flex-1 bg-slate-100 dark:bg-stone-950 border border-slate-300 dark:border-white/10 rounded-xl p-2.5 text-sm font-mono font-bold text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500/50"
                 placeholder="Discount % (e.g. 10)"
               />
-              <span className="font-bold text-stone-400 text-sm">%</span>
+              <span className="font-bold text-slate-500 dark:text-stone-400 text-sm">%</span>
             </div>
             <div className="grid grid-cols-4 gap-1.5">
               {[5, 10, 15, 20].map((d) => (
                 <button
                   key={d}
                   onClick={() => setDiscountInput(d.toString())}
-                  className="py-1.5 bg-stone-800 hover:bg-stone-700 border border-white/10 rounded-lg text-xs font-bold text-stone-200 transition-all cursor-pointer hover:scale-105"
+                  className="py-1.5 bg-slate-50 dark:bg-stone-800 hover:bg-stone-700 border border-slate-300 dark:border-white/10 rounded-lg text-xs font-bold text-stone-200 transition-all cursor-pointer hover:scale-105"
                 >
                   {d}%
                 </button>
               ))}
             </div>
-            <div className="flex justify-end gap-2 pt-2 border-t border-white/10">
+            <div className="flex justify-end gap-2 pt-2 border-t border-slate-300 dark:border-white/10">
               <button
                 onClick={() => setShowDiscountPrompt(false)}
-                className="px-3.5 py-2 rounded-xl border border-white/10 text-xs font-semibold text-stone-400 hover:text-white hover:bg-white/5 cursor-pointer transition-all"
+                className="px-3.5 py-2 rounded-xl border border-slate-300 dark:border-white/10 text-xs font-semibold text-slate-500 dark:text-stone-400 hover:text-white hover:bg-white/5 cursor-pointer transition-all"
               >
                 Cancel
               </button>
@@ -2849,24 +2849,24 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
       {/* EXTRA CHARGES MODAL PROMPT                                                */}
       {/* ========================================================================= */}
       {showChargesPrompt && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-gradient-to-b from-stone-900 to-[#121212] border border-white/10 ring-1 ring-white/10 rounded-2xl max-w-xs w-full p-5 space-y-4 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
-            <h3 className="font-bold text-stone-100 text-sm">Add Extra Service Charges (PKR)</h3>
+        <div className="fixed inset-0 z-50 bg-slate-900/40 dark:bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-gradient-to-b from-stone-900 to-[#121212] border border-slate-300 dark:border-white/10 ring-1 ring-white/10 rounded-2xl max-w-xs w-full p-5 space-y-4 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+            <h3 className="font-bold text-slate-900 dark:text-stone-100 text-sm">Add Extra Service Charges (PKR)</h3>
             <div className="flex items-center gap-2">
-              <span className="font-bold text-stone-400 text-xs">PKR</span>
+              <span className="font-bold text-slate-500 dark:text-stone-400 text-xs">PKR</span>
               <input
                 type="number"
                 min="0"
                 value={chargesInput}
                 onChange={(e) => setChargesInput(e.target.value)}
-                className="flex-1 bg-stone-950 border border-white/10 rounded-xl p-2.5 text-sm font-mono font-bold text-white focus:outline-none focus:border-emerald-500/50"
+                className="flex-1 bg-slate-100 dark:bg-stone-950 border border-slate-300 dark:border-white/10 rounded-xl p-2.5 text-sm font-mono font-bold text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500/50"
                 placeholder="Charges amount"
               />
             </div>
-            <div className="flex justify-end gap-2 pt-2 border-t border-white/10">
+            <div className="flex justify-end gap-2 pt-2 border-t border-slate-300 dark:border-white/10">
               <button
                 onClick={() => setShowChargesPrompt(false)}
-                className="px-3.5 py-2 rounded-xl border border-white/10 text-xs font-semibold text-stone-400 hover:text-white hover:bg-white/5 cursor-pointer transition-all"
+                className="px-3.5 py-2 rounded-xl border border-slate-300 dark:border-white/10 text-xs font-semibold text-slate-500 dark:text-stone-400 hover:text-white hover:bg-white/5 cursor-pointer transition-all"
               >
                 Cancel
               </button>

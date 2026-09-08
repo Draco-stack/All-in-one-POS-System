@@ -92,7 +92,7 @@ export const AdminDashboard: React.FC = () => {
         theme === 'dark' ? 'bg-[#0c0c0e]' : 'bg-slate-100'
       }`}>
         <div className={`max-w-md w-full border rounded-3xl p-8 shadow-2xl text-center space-y-6 animate-in fade-in zoom-in-95 ${
-          theme === 'dark' ? 'bg-[#14161f] border-white/10' : 'bg-white border-slate-200'
+          theme === 'dark' ? 'bg-[#14161f] border-slate-300 dark:border-white/10' : 'bg-white border-slate-200'
         }`}>
           <div className="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-500 mx-auto flex items-center justify-center shadow-lg shadow-rose-500/10">
             <Lock className="w-8 h-8" />
@@ -102,7 +102,7 @@ export const AdminDashboard: React.FC = () => {
             <h2 className={`text-xl font-black tracking-tight ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
               Administrative Control Locked
             </h2>
-            <p className={`text-xs leading-relaxed ${theme === 'dark' ? 'text-stone-400' : 'text-slate-600'}`}>
+            <p className={`text-xs leading-relaxed ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-600'}`}>
               This terminal contains restricted financial records, staff access control, and master catalog settings. Enter an authorized <span className="text-amber-500 font-semibold">Manager</span> or <span className="text-amber-500 font-semibold">Owner PIN</span> to unlock.
             </p>
           </div>
@@ -119,7 +119,7 @@ export const AdminDashboard: React.FC = () => {
                   setPinError('');
                 }}
                 className={`w-full max-w-xs mx-auto px-4 py-3 border rounded-2xl text-base text-center tracking-widest font-mono focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 transition shadow-inner ${
-                  theme === 'dark' ? 'bg-[#0d0e14] border-white/10 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
+                  theme === 'dark' ? 'bg-[#0d0e14] border-slate-300 dark:border-white/10 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
                 }`}
               />
               {pinError && (
@@ -139,8 +139,8 @@ export const AdminDashboard: React.FC = () => {
             </button>
           </form>
 
-          <div className={`pt-4 border-t text-[11px] ${theme === 'dark' ? 'border-white/5 text-stone-500' : 'border-slate-200 text-slate-500'}`}>
-            Current Session: <span className={`font-medium ${theme === 'dark' ? 'text-stone-300' : 'text-slate-800'}`}>{currentUser.name}</span> ({currentUser.role.toUpperCase()})
+          <div className={`pt-4 border-t text-[11px] ${theme === 'dark' ? 'border-slate-200 dark:border-white/5 text-slate-400 dark:text-stone-500' : 'border-slate-200 text-slate-500'}`}>
+            Current Session: <span className={`font-medium ${theme === 'dark' ? 'text-slate-700 dark:text-stone-300' : 'text-slate-800'}`}>{currentUser.name}</span> ({currentUser.role.toUpperCase()})
           </div>
         </div>
       </div>
@@ -149,11 +149,11 @@ export const AdminDashboard: React.FC = () => {
 
   return (
     <div className={`flex-1 flex flex-col h-full overflow-y-auto p-4 md:p-6 space-y-6 antialiased transition-colors duration-200 ${
-      theme === 'dark' ? 'bg-[#090a0f] text-stone-100' : 'bg-slate-100 text-slate-900'
+      theme === 'dark' ? 'bg-[#090a0f] text-slate-900 dark:text-stone-100' : 'bg-slate-100 text-slate-900'
     }`}>
       {/* Top Administrative Bar */}
       <header className={`border rounded-2xl p-4 md:p-5 shadow-2xl flex flex-col md:flex-row md:items-center justify-between gap-4 transition-colors shrink-0 ${
-        theme === 'dark' ? 'bg-gradient-to-b from-[#12141d] to-[#0d0e15] border-white/10 shadow-black/60' : 'bg-white border-slate-200 shadow-sm'
+        theme === 'dark' ? 'bg-gradient-to-b from-[#12141d] to-[#0d0e15] border-slate-300 dark:border-white/10 shadow-black/60' : 'bg-white border-slate-200 shadow-sm'
       }`}>
         <div className="flex items-center gap-3.5">
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white border border-blue-400/30 flex items-center justify-center shrink-0 shadow-lg shadow-blue-500/20">
@@ -175,9 +175,9 @@ export const AdminDashboard: React.FC = () => {
               </span>
             </div>
             <p className={`text-xs mt-0.5 flex items-center gap-2 font-medium ${
-              theme === 'dark' ? 'text-stone-400' : 'text-slate-500'
+              theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'
             }`}>
-              <Store className="w-3.5 h-3.5 text-stone-400" />
+              <Store className="w-3.5 h-3.5 text-slate-500 dark:text-stone-400" />
               <span>{currentUser.outlet || 'Master POS Main'}</span>
               <span className={theme === 'dark' ? 'text-stone-600' : 'text-slate-300'}>•</span>
               <span className="font-mono">
@@ -191,7 +191,7 @@ export const AdminDashboard: React.FC = () => {
         <div className="flex items-center gap-3">
           <div className="text-right hidden sm:block">
             <div className={`text-xs font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>{currentUser.name}</div>
-            <div className={`text-[10px] font-mono uppercase tracking-wider ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`}>{currentUser.role} • {currentUser.outlet || 'Main Branch'}</div>
+            <div className={`text-[10px] font-mono uppercase tracking-wider ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`}>{currentUser.role} • {currentUser.outlet || 'Main Branch'}</div>
           </div>
 
           <button
@@ -201,7 +201,7 @@ export const AdminDashboard: React.FC = () => {
             }}
             className={`px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer border active:scale-95 shadow-sm ${
               theme === 'dark' 
-                ? 'bg-stone-800/90 hover:bg-stone-700 text-stone-300 hover:text-white border-white/10' 
+                ? 'bg-slate-50 dark:bg-stone-800/90 hover:bg-stone-700 text-slate-700 dark:text-stone-300 hover:text-white border-slate-300 dark:border-white/10' 
                 : 'bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 border-slate-300'
             }`}
             title="Lock terminal screen when stepping away"
@@ -214,7 +214,7 @@ export const AdminDashboard: React.FC = () => {
 
       {/* Navigation Sub-Tabs */}
       <nav className={`sticky top-0 z-20 p-1.5 flex items-center gap-2 overflow-x-auto no-scrollbar rounded-2xl border backdrop-blur-md transition-all shrink-0 ${
-        theme === 'dark' ? 'bg-[#0c0c0e]/95 border-white/10 shadow-lg' : 'bg-slate-100/95 border-slate-200 shadow-sm'
+        theme === 'dark' ? 'bg-[#0c0c0e]/95 border-slate-300 dark:border-white/10 shadow-lg' : 'bg-slate-100/95 border-slate-200 shadow-sm'
       }`}>
         {allowedTabs.map((tab) => {
           const Icon = tab.icon;
@@ -229,7 +229,7 @@ export const AdminDashboard: React.FC = () => {
                     ? 'bg-white text-stone-950 border-white shadow-lg font-black'
                     : 'bg-blue-600 text-white border-blue-600 shadow-md font-black'
                   : theme === 'dark'
-                  ? 'bg-[#14161f] text-stone-400 hover:text-white hover:bg-[#181a24] border-white/5 hover:border-white/15'
+                  ? 'bg-[#14161f] text-slate-500 dark:text-stone-400 hover:text-white hover:bg-[#181a24] border-slate-200 dark:border-white/5 hover:border-white/15'
                   : 'bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-50 border-slate-200 shadow-xs'
               }`}
             >

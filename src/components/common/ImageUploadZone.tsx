@@ -127,13 +127,13 @@ export const ImageUploadZone: React.FC<ImageUploadZoneProps> = ({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <label className="text-xs font-semibold text-stone-300 flex items-center gap-1.5">
+        <label className="text-xs font-semibold text-slate-700 dark:text-stone-300 flex items-center gap-1.5">
           <ImageIcon className="w-3.5 h-3.5 text-emerald-400" />
           {label}
         </label>
 
         {/* Switch between local computer upload & web URL */}
-        <div className="flex items-center gap-1 bg-stone-950/80 p-0.5 rounded-lg border border-white/10">
+        <div className="flex items-center gap-1 bg-stone-950/80 p-0.5 rounded-lg border border-slate-300 dark:border-white/10">
           <button
             type="button"
             id="btn-switch-upload-mode"
@@ -141,7 +141,7 @@ export const ImageUploadZone: React.FC<ImageUploadZoneProps> = ({
             className={`px-2 py-0.5 rounded text-[11px] font-medium flex items-center gap-1 transition-all cursor-pointer ${
               activeMode === 'upload'
                 ? 'bg-emerald-600 text-white shadow-sm'
-                : 'text-stone-400 hover:text-stone-200'
+                : 'text-slate-500 dark:text-stone-400 hover:text-stone-200'
             }`}
           >
             <HardDrive className="w-3 h-3" />
@@ -154,7 +154,7 @@ export const ImageUploadZone: React.FC<ImageUploadZoneProps> = ({
             className={`px-2 py-0.5 rounded text-[11px] font-medium flex items-center gap-1 transition-all cursor-pointer ${
               activeMode === 'url'
                 ? 'bg-emerald-600 text-white shadow-sm'
-                : 'text-stone-400 hover:text-stone-200'
+                : 'text-slate-500 dark:text-stone-400 hover:text-stone-200'
             }`}
           >
             <Link className="w-3 h-3" />
@@ -185,7 +185,7 @@ export const ImageUploadZone: React.FC<ImageUploadZoneProps> = ({
               className={`relative border-2 border-dashed rounded-2xl p-6 text-center transition-all duration-200 cursor-pointer group ${
                 isDragging
                   ? 'border-emerald-400 bg-emerald-500/10 scale-[1.01]'
-                  : 'border-white/15 bg-stone-950/50 hover:border-emerald-500/50 hover:bg-stone-900/60'
+                  : 'border-slate-300 dark:border-white/15 bg-stone-950/50 hover:border-emerald-500/50 hover:bg-slate-50 dark:hover:bg-stone-900/60'
               }`}
             >
               <div className="flex flex-col items-center justify-center gap-2.5">
@@ -193,7 +193,7 @@ export const ImageUploadZone: React.FC<ImageUploadZoneProps> = ({
                   className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${
                     isDragging
                       ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30'
-                      : 'bg-stone-800 text-stone-300 group-hover:bg-emerald-500/20 group-hover:text-emerald-400 border border-white/5'
+                      : 'bg-slate-50 dark:bg-stone-800 text-slate-700 dark:text-stone-300 group-hover:bg-emerald-500/20 group-hover:text-emerald-400 border border-slate-200 dark:border-white/5'
                   }`}
                 >
                   {isProcessing ? (
@@ -213,7 +213,7 @@ export const ImageUploadZone: React.FC<ImageUploadZoneProps> = ({
                       </>
                     )}
                   </p>
-                  <p className="text-[11px] text-stone-400">
+                  <p className="text-[11px] text-slate-500 dark:text-stone-400">
                     Supports PNG, JPG, WebP, GIF, or SVG (Auto-optimized for POS performance)
                   </p>
                 </div>
@@ -223,21 +223,21 @@ export const ImageUploadZone: React.FC<ImageUploadZoneProps> = ({
             /* Active Image Preview Box with Controls */
             <div
               id="menu-item-image-preview-card"
-              className="bg-stone-950/80 border border-white/10 rounded-2xl p-3 flex flex-col sm:flex-row items-center gap-3.5 shadow-inner"
+              className="bg-stone-950/80 border border-slate-300 dark:border-white/10 rounded-2xl p-3 flex flex-col sm:flex-row items-center gap-3.5 shadow-inner"
             >
               {/* Thumbnail */}
-              <div className="relative w-28 h-24 sm:w-32 sm:h-24 rounded-xl overflow-hidden bg-stone-900 border border-white/10 shrink-0 group">
+              <div className="relative w-28 h-24 sm:w-32 sm:h-24 rounded-xl overflow-hidden bg-white dark:bg-stone-900 border border-slate-300 dark:border-white/10 shrink-0 group">
                 <img
                   src={value}
                   alt="Menu Item Preview"
                   className="w-full h-full object-cover"
                   referrerPolicy="no-referrer"
                 />
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <div className="absolute inset-0 bg-slate-900/20 dark:bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="p-1.5 rounded-lg bg-white/20 hover:bg-white/30 text-white backdrop-blur-sm cursor-pointer"
+                    className="p-1.5 rounded-lg bg-white/20 hover:bg-white/30 text-slate-900 dark:text-white backdrop-blur-sm cursor-pointer"
                     title="Change image"
                   >
                     <RefreshCw className="w-3.5 h-3.5" />
@@ -257,7 +257,7 @@ export const ImageUploadZone: React.FC<ImageUploadZoneProps> = ({
                     type="button"
                     id="btn-remove-image"
                     onClick={handleRemoveImage}
-                    className="p-1 text-stone-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition cursor-pointer"
+                    className="p-1 text-slate-500 dark:text-stone-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition cursor-pointer"
                     title="Remove image"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -265,16 +265,16 @@ export const ImageUploadZone: React.FC<ImageUploadZoneProps> = ({
                 </div>
 
                 {uploadMetadata && (
-                  <div className="text-[11px] text-stone-400 space-y-0.5">
-                    <div className="truncate font-mono text-stone-300">{uploadMetadata.fileName}</div>
-                    <div className="flex items-center gap-2 text-stone-400">
+                  <div className="text-[11px] text-slate-500 dark:text-stone-400 space-y-0.5">
+                    <div className="truncate font-mono text-slate-700 dark:text-stone-300">{uploadMetadata.fileName}</div>
+                    <div className="flex items-center gap-2 text-slate-500 dark:text-stone-400">
                       <span>{uploadMetadata.dimensions}</span>
                       <span>•</span>
                       <span className="text-emerald-400 font-mono">
                         {formatFileSize(uploadMetadata.optimizedSize)}
                       </span>
                       {uploadMetadata.originalSize > uploadMetadata.optimizedSize && (
-                        <span className="text-stone-500 text-[10px]">
+                        <span className="text-slate-400 dark:text-stone-500 text-[10px]">
                           ({Math.round((1 - uploadMetadata.optimizedSize / uploadMetadata.originalSize) * 100)}% compressed)
                         </span>
                       )}
@@ -287,7 +287,7 @@ export const ImageUploadZone: React.FC<ImageUploadZoneProps> = ({
                     type="button"
                     id="btn-change-image-file"
                     onClick={() => fileInputRef.current?.click()}
-                    className="px-2.5 py-1 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-medium flex items-center gap-1.5 transition cursor-pointer border border-white/5 active:scale-95"
+                    className="px-2.5 py-1 rounded-lg bg-slate-50 dark:bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-medium flex items-center gap-1.5 transition cursor-pointer border border-slate-200 dark:border-white/5 active:scale-95"
                   >
                     <RefreshCw className="w-3 h-3 text-emerald-400" />
                     Choose Different File
@@ -311,13 +311,13 @@ export const ImageUploadZone: React.FC<ImageUploadZoneProps> = ({
                 setUploadMetadata(null);
                 setErrorMessage(null);
               }}
-              className="flex-1 px-3 py-2 bg-stone-950/80 border border-white/10 rounded-xl text-xs text-white placeholder-stone-500 focus:outline-none focus:border-emerald-500 transition shadow-inner font-mono"
+              className="flex-1 px-3 py-2 bg-stone-950/80 border border-slate-300 dark:border-white/10 rounded-xl text-xs text-white placeholder-stone-500 focus:outline-none focus:border-emerald-500 transition shadow-inner font-mono"
             />
             {hasImage && (
               <button
                 type="button"
                 onClick={handleRemoveImage}
-                className="px-3 py-2 bg-stone-800 hover:bg-rose-950/50 hover:text-rose-400 text-stone-400 border border-white/5 rounded-xl text-xs transition cursor-pointer"
+                className="px-3 py-2 bg-slate-50 dark:bg-stone-800 hover:bg-rose-950/50 hover:text-rose-400 text-slate-500 dark:text-stone-400 border border-slate-200 dark:border-white/5 rounded-xl text-xs transition cursor-pointer"
                 title="Clear image URL"
               >
                 <X className="w-4 h-4" />
@@ -326,17 +326,17 @@ export const ImageUploadZone: React.FC<ImageUploadZoneProps> = ({
           </div>
 
           {hasImage && (
-            <div className="flex items-center gap-3 p-2 bg-stone-950/50 border border-white/5 rounded-xl">
+            <div className="flex items-center gap-3 p-2 bg-stone-950/50 border border-slate-200 dark:border-white/5 rounded-xl">
               <img
                 src={value}
                 alt="URL Preview"
-                className="w-12 h-12 rounded-lg object-cover bg-stone-900 border border-white/10"
+                className="w-12 h-12 rounded-lg object-cover bg-white dark:bg-stone-900 border border-slate-300 dark:border-white/10"
                 referrerPolicy="no-referrer"
                 onError={() => setErrorMessage('Unable to load image from the provided URL.')}
               />
-              <div className="text-[11px] text-stone-400 truncate">
+              <div className="text-[11px] text-slate-500 dark:text-stone-400 truncate">
                 <span className="text-emerald-400 font-medium">Preview available</span>
-                <div className="truncate text-stone-500 font-mono text-[10px]">{value}</div>
+                <div className="truncate text-slate-400 dark:text-stone-500 font-mono text-[10px]">{value}</div>
               </div>
             </div>
           )}
@@ -352,7 +352,7 @@ export const ImageUploadZone: React.FC<ImageUploadZoneProps> = ({
       )}
 
       {helperText && !errorMessage && (
-        <p className="text-[11px] text-stone-500 leading-normal">{helperText}</p>
+        <p className="text-[11px] text-slate-400 dark:text-stone-500 leading-normal">{helperText}</p>
       )}
     </div>
   );

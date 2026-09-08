@@ -60,7 +60,7 @@ export const BlockCustomerModal: React.FC<BlockCustomerModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-center justify-center p-4">
-      <div className="bg-gradient-to-b from-stone-900 to-[#121212] border border-red-500/30 ring-1 ring-red-500/20 rounded-2xl w-full max-w-md overflow-hidden text-stone-100 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+      <div className="bg-gradient-to-b from-stone-900 to-[#121212] border border-red-500/30 ring-1 ring-red-500/20 rounded-2xl w-full max-w-md overflow-hidden text-slate-900 dark:text-stone-100 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
         {/* Header */}
         <div className="p-4 bg-red-950/40 border-b border-red-500/20 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -75,7 +75,7 @@ export const BlockCustomerModal: React.FC<BlockCustomerModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-xl hover:bg-white/5 text-stone-400 hover:text-white transition-colors cursor-pointer"
+            className="p-1.5 rounded-xl hover:bg-white/5 text-slate-500 dark:text-stone-400 hover:text-white transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -83,14 +83,14 @@ export const BlockCustomerModal: React.FC<BlockCustomerModalProps> = ({
 
         {/* Customer Identifier Card */}
         <div className="px-5 pt-4 pb-2">
-          <div className="bg-stone-950/80 border border-white/5 rounded-xl p-3 flex items-center justify-between">
+          <div className="bg-stone-950/80 border border-slate-200 dark:border-white/5 rounded-xl p-3 flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-stone-800 text-stone-300 flex items-center justify-center font-bold text-xs">
+              <div className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-stone-800 text-slate-700 dark:text-stone-300 flex items-center justify-center font-bold text-xs">
                 <User className="w-4 h-4" />
               </div>
               <div>
                 <span className="text-xs font-bold text-white block">{customerName || 'Customer Profile'}</span>
-                <span className="text-[11px] font-mono text-stone-400 flex items-center gap-1">
+                <span className="text-[11px] font-mono text-slate-500 dark:text-stone-400 flex items-center gap-1">
                   <Phone className="w-3 h-3 text-red-400" />
                   {phone || 'No phone'}
                 </span>
@@ -105,7 +105,7 @@ export const BlockCustomerModal: React.FC<BlockCustomerModalProps> = ({
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="p-5 pt-2 space-y-4">
           <div>
-            <label className="block text-[11px] uppercase font-bold tracking-wider text-stone-300 mb-1.5 flex items-center justify-between">
+            <label className="block text-[11px] uppercase font-bold tracking-wider text-slate-700 dark:text-stone-300 mb-1.5 flex items-center justify-between">
               <span>Required Reason for Blocking *</span>
               <span className="text-red-400 text-[10px] lowercase font-normal">(mandatory)</span>
             </label>
@@ -123,7 +123,7 @@ export const BlockCustomerModal: React.FC<BlockCustomerModalProps> = ({
                   className={`text-[10.5px] px-2.5 py-1 rounded-lg border font-medium transition cursor-pointer text-left ${
                     reason === preset
                       ? 'bg-red-600 text-white border-red-400'
-                      : 'bg-stone-950/60 text-stone-300 border-white/10 hover:bg-stone-800 hover:text-white'
+                      : 'bg-white/60 dark:bg-stone-950/60 text-slate-700 dark:text-stone-300 border-slate-300 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-stone-800 hover:text-white'
                   }`}
                 >
                   {preset}
@@ -140,7 +140,7 @@ export const BlockCustomerModal: React.FC<BlockCustomerModalProps> = ({
                 setReason(e.target.value);
                 if (e.target.value.trim()) setError('');
               }}
-              className="w-full bg-stone-950/90 border border-white/10 rounded-xl p-3 text-xs text-white placeholder:text-stone-600 focus:outline-none focus:border-red-500/60 focus:ring-1 focus:ring-red-500/40 shadow-inner"
+              className="w-full bg-stone-950/90 border border-slate-300 dark:border-white/10 rounded-xl p-3 text-xs text-white placeholder:text-stone-600 focus:outline-none focus:border-red-500/60 focus:ring-1 focus:ring-red-500/40 shadow-inner"
             />
             {error && (
               <p className="text-[11px] text-red-400 font-semibold mt-1.5 flex items-center gap-1">
@@ -155,18 +155,18 @@ export const BlockCustomerModal: React.FC<BlockCustomerModalProps> = ({
               <AlertTriangle className="w-3.5 h-3.5 shrink-0 text-red-400" />
               Effect of Blocking:
             </p>
-            <p className="text-stone-400 leading-snug">
+            <p className="text-slate-500 dark:text-stone-400 leading-snug">
               When this phone number is searched in POS or added to a ticket, a blocking alert popup will appear and the POS will strictly block order creation.
             </p>
           </div>
 
           {/* Action Buttons */}
-          <div className="pt-2 border-t border-white/10 flex justify-end gap-2.5">
+          <div className="pt-2 border-t border-slate-300 dark:border-white/10 flex justify-end gap-2.5">
             <button
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="px-4 py-2 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-300 text-xs font-semibold transition cursor-pointer"
+              className="px-4 py-2 rounded-xl bg-slate-50 dark:bg-stone-800 hover:bg-stone-700 text-slate-700 dark:text-stone-300 text-xs font-semibold transition cursor-pointer"
             >
               Cancel
             </button>

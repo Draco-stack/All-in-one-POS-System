@@ -111,9 +111,9 @@ export const ShiftSummaryView: React.FC = () => {
   };
 
   return (
-    <div className="h-[calc(100vh-4rem)] flex flex-col bg-stone-950 text-stone-100 overflow-y-auto select-none p-4 md:p-6 space-y-6">
+    <div className="h-[calc(100vh-4rem)] flex flex-col bg-white dark:bg-stone-950 text-slate-900 dark:text-stone-100 overflow-y-auto select-none p-4 md:p-6 space-y-6">
       {/* Shift Header Bar */}
-      <div className="bg-stone-900 border border-stone-800 rounded-3xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl">
+      <div className="bg-white dark:bg-stone-900 border border-slate-200 dark:border-stone-800 rounded-3xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl">
         <div className="flex items-center gap-3.5">
           <div className="w-12 h-12 rounded-2xl bg-[#00897b]/10 border border-[#00897b]/30 flex items-center justify-center text-[#00897b]">
             <Wallet className="w-6 h-6" />
@@ -136,7 +136,7 @@ export const ShiftSummaryView: React.FC = () => {
                 </span>
               )}
             </div>
-            <p className="text-xs text-stone-400 mt-0.5">
+            <p className="text-xs text-slate-500 dark:text-stone-400 mt-0.5">
               Terminal: <span className="text-stone-200 font-mono font-bold">{currentShift?.terminalId || 'POS-01'}</span> • Cashier: <span className="text-stone-200 font-bold">{currentShift?.cashierName || currentUser.name}</span> • Shift Opened:{' '}
               <span className="text-stone-200 font-mono">{currentShift?.openedAt ? new Date(currentShift.openedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Today'}</span>
               {currentShift?.closedAt && (
@@ -158,7 +158,7 @@ export const ShiftSummaryView: React.FC = () => {
           ) : (
             <button
               onClick={() => setIsOpenNewShiftModal(true)}
-              className="px-3 py-2 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-300 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer border border-stone-700"
+              className="px-3 py-2 rounded-xl bg-slate-50 dark:bg-stone-800 hover:bg-stone-700 text-slate-700 dark:text-stone-300 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer border border-slate-300 dark:border-stone-700"
               title="Re-open or Start Next Shift"
             >
               <RotateCcw className="w-3.5 h-3.5" />
@@ -168,7 +168,7 @@ export const ShiftSummaryView: React.FC = () => {
 
           <button
             onClick={() => setShowZReportModal(true)}
-            className="px-4 py-2.5 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-bold flex items-center gap-2 transition cursor-pointer border border-stone-700"
+            className="px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-bold flex items-center gap-2 transition cursor-pointer border border-slate-300 dark:border-stone-700"
           >
             <Printer className="w-4 h-4" />
             <span>Print Z-Report</span>
@@ -179,59 +179,59 @@ export const ShiftSummaryView: React.FC = () => {
       {/* 4 Financial Key Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Gross Sales */}
-        <div className="bg-stone-900 border border-stone-800 rounded-2xl p-4 space-y-1 shadow-md">
-          <div className="flex items-center justify-between text-xs text-stone-400">
+        <div className="bg-white dark:bg-stone-900 border border-slate-200 dark:border-stone-800 rounded-2xl p-4 space-y-1 shadow-md">
+          <div className="flex items-center justify-between text-xs text-slate-500 dark:text-stone-400">
             <span>Total Gross Sales</span>
             <TrendingUp className="w-4 h-4 text-emerald-400" />
           </div>
           <div className="text-2xl font-black text-white font-mono">
             Rs. {totalGrossSales.toFixed(0)}
           </div>
-          <p className="text-[11px] text-stone-500">{currentShift?.transactionsCount || orders.length} total orders recorded</p>
+          <p className="text-[11px] text-slate-400 dark:text-stone-500">{currentShift?.transactionsCount || orders.length} total orders recorded</p>
         </div>
 
         {/* Cash Sales */}
-        <div className="bg-stone-900 border border-stone-800 rounded-2xl p-4 space-y-1 shadow-md">
-          <div className="flex items-center justify-between text-xs text-stone-400">
+        <div className="bg-white dark:bg-stone-900 border border-slate-200 dark:border-stone-800 rounded-2xl p-4 space-y-1 shadow-md">
+          <div className="flex items-center justify-between text-xs text-slate-500 dark:text-stone-400">
             <span>Cash Sales</span>
             <Banknote className="w-4 h-4 text-amber-400" />
           </div>
           <div className="text-2xl font-black text-amber-400 font-mono">
             Rs. {cashSales.toFixed(0)}
           </div>
-          <p className="text-[11px] text-stone-500">Opening float: Rs. {openingFloat.toFixed(0)}</p>
+          <p className="text-[11px] text-slate-400 dark:text-stone-500">Opening float: Rs. {openingFloat.toFixed(0)}</p>
         </div>
 
         {/* Card Sales */}
-        <div className="bg-stone-900 border border-stone-800 rounded-2xl p-4 space-y-1 shadow-md">
-          <div className="flex items-center justify-between text-xs text-stone-400">
+        <div className="bg-white dark:bg-stone-900 border border-slate-200 dark:border-stone-800 rounded-2xl p-4 space-y-1 shadow-md">
+          <div className="flex items-center justify-between text-xs text-slate-500 dark:text-stone-400">
             <span>Card Volume</span>
             <CreditCard className="w-4 h-4 text-sky-400" />
           </div>
           <div className="text-2xl font-black text-sky-400 font-mono">
             Rs. {cardSales.toFixed(0)}
           </div>
-          <p className="text-[11px] text-stone-500">Card & Digital POS settlements</p>
+          <p className="text-[11px] text-slate-400 dark:text-stone-500">Card & Digital POS settlements</p>
         </div>
 
         {/* Expected Cash in Drawer */}
-        <div className="bg-stone-900 border border-stone-800 rounded-2xl p-4 space-y-1 shadow-md">
-          <div className="flex items-center justify-between text-xs text-stone-400">
+        <div className="bg-white dark:bg-stone-900 border border-slate-200 dark:border-stone-800 rounded-2xl p-4 space-y-1 shadow-md">
+          <div className="flex items-center justify-between text-xs text-slate-500 dark:text-stone-400">
             <span>Expected in Drawer</span>
             <Wallet className="w-4 h-4 text-emerald-400" />
           </div>
           <div className="text-2xl font-black text-emerald-400 font-mono">
             Rs. {expectedCashInDrawer.toFixed(0)}
           </div>
-          <p className="text-[11px] text-stone-500">Opening float + Cash sales</p>
+          <p className="text-[11px] text-slate-400 dark:text-stone-500">Opening float + Cash sales</p>
         </div>
       </div>
 
       {/* Cash Drawer Counting Section & Shift Close Form */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left: Denomination Counter Pad */}
-        <div className="bg-stone-900 border border-stone-800 rounded-3xl p-5 space-y-4 shadow-xl">
-          <div className="flex items-center justify-between border-b border-stone-800 pb-3">
+        <div className="bg-white dark:bg-stone-900 border border-slate-200 dark:border-stone-800 rounded-3xl p-5 space-y-4 shadow-xl">
+          <div className="flex items-center justify-between border-b border-slate-200 dark:border-stone-800 pb-3">
             <div className="flex items-center gap-2">
               <Calculator className="w-4 h-4 text-amber-400" />
               <h3 className="text-sm font-bold text-white">PKR Cash Denomination Counter</h3>
@@ -252,36 +252,36 @@ export const ShiftSummaryView: React.FC = () => {
               { id: '10', label: 'Rs. 10' },
               { id: 'coins', label: 'Coins Sum' },
             ].map((d) => (
-              <div key={d.id} className="bg-stone-950 p-2.5 rounded-xl border border-stone-800 space-y-1">
-                <label className="text-[10px] font-bold text-stone-400 uppercase tracking-wider block">{d.label}</label>
+              <div key={d.id} className="bg-white dark:bg-stone-950 p-2.5 rounded-xl border border-slate-200 dark:border-stone-800 space-y-1">
+                <label className="text-[10px] font-bold text-slate-500 dark:text-stone-400 uppercase tracking-wider block">{d.label}</label>
                 <input
                   type="number"
                   min="0"
                   value={counts[d.id] || ''}
                   placeholder="0"
                   onChange={(e) => handleCountChange(d.id, parseFloat(e.target.value) || 0)}
-                  className="w-full bg-stone-900 border border-stone-700 rounded-lg px-2 py-1 text-white font-mono font-bold text-sm focus:outline-none focus:border-amber-500"
+                  className="w-full bg-white dark:bg-stone-900 border border-slate-300 dark:border-stone-700 rounded-lg px-2 py-1 text-slate-900 dark:text-white font-mono font-bold text-sm focus:outline-none focus:border-amber-500"
                 />
               </div>
             ))}
           </div>
 
-          <p className="text-[11px] text-stone-400 italic">
+          <p className="text-[11px] text-slate-500 dark:text-stone-400 italic">
             Tip: Enter the quantity of physical banknotes counted in the register. The total automatically updates the Actual Cash field.
           </p>
         </div>
 
         {/* Right: Close Shift & Reconciliation Box */}
-        <div className="bg-stone-900 border border-stone-800 rounded-3xl p-5 space-y-4 shadow-xl flex flex-col justify-between">
+        <div className="bg-white dark:bg-stone-900 border border-slate-200 dark:border-stone-800 rounded-3xl p-5 space-y-4 shadow-xl flex flex-col justify-between">
           <div>
-            <div className="flex items-center gap-2 border-b border-stone-800 pb-3 mb-4">
+            <div className="flex items-center gap-2 border-b border-slate-200 dark:border-stone-800 pb-3 mb-4">
               <Lock className="w-4 h-4 text-rose-400" />
               <h3 className="text-sm font-bold text-white">Shift Cash Out & Finalize Z-Report</h3>
             </div>
 
             <form onSubmit={handleCloseShiftSubmit} className="space-y-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase text-stone-300">
+                <label className="text-xs font-bold uppercase text-slate-700 dark:text-stone-300">
                   Actual Physical Cash in Drawer (Rs.)
                 </label>
                 <input
@@ -292,7 +292,7 @@ export const ShiftSummaryView: React.FC = () => {
                   placeholder="Enter counted cash in Rs."
                   value={actualCashCounted}
                   onChange={(e) => setActualCashCounted(e.target.value)}
-                  className="w-full bg-stone-950 border-2 border-stone-700 rounded-xl px-4 py-3 text-xl font-black text-white font-mono focus:outline-none focus:border-emerald-500"
+                  className="w-full bg-white dark:bg-stone-950 border-2 border-slate-300 dark:border-stone-700 rounded-xl px-4 py-3 text-xl font-black text-slate-900 dark:text-white font-mono focus:outline-none focus:border-emerald-500"
                 />
               </div>
 
@@ -359,20 +359,20 @@ export const ShiftSummaryView: React.FC = () => {
       {/* Start New Shift Modal */}
       {isOpenNewShiftModal && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-stone-900 border border-stone-800 rounded-3xl max-w-md w-full p-6 space-y-5 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-stone-800 pb-3">
+          <div className="bg-white dark:bg-stone-900 border border-slate-200 dark:border-stone-800 rounded-3xl max-w-md w-full p-6 space-y-5 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-stone-800 pb-3">
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
                   <Play className="w-4 h-4 fill-emerald-400" />
                 </div>
                 <div>
                   <h3 className="text-base font-bold text-white">Start New Register Shift</h3>
-                  <p className="text-xs text-stone-400">Initialize drawer float for cashier</p>
+                  <p className="text-xs text-slate-500 dark:text-stone-400">Initialize drawer float for cashier</p>
                 </div>
               </div>
               <button
                 onClick={() => setIsOpenNewShiftModal(false)}
-                className="w-8 h-8 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 flex items-center justify-center cursor-pointer transition"
+                className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-stone-800 hover:bg-stone-700 text-slate-700 dark:text-stone-300 flex items-center justify-center cursor-pointer transition"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -380,23 +380,23 @@ export const ShiftSummaryView: React.FC = () => {
 
             <form onSubmit={handleStartNewShift} className="space-y-4">
               <div>
-                <label className="text-xs font-bold uppercase text-stone-400 block mb-1">
+                <label className="text-xs font-bold uppercase text-slate-500 dark:text-stone-400 block mb-1">
                   Cashier Name
                 </label>
                 <input
                   type="text"
                   disabled
                   value={`${currentUser.name} (${currentUser.role.toUpperCase()})`}
-                  className="w-full bg-stone-950 border border-stone-800 rounded-xl px-3 py-2 text-stone-300 text-xs font-bold"
+                  className="w-full bg-white dark:bg-stone-950 border border-slate-200 dark:border-stone-800 rounded-xl px-3 py-2 text-slate-700 dark:text-stone-300 text-xs font-bold"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-bold uppercase text-stone-300 block mb-1">
+                <label className="text-xs font-bold uppercase text-slate-700 dark:text-stone-300 block mb-1">
                   Opening Cash Float (Rs.)
                 </label>
                 <div className="relative">
-                  <span className="absolute left-3.5 top-2.5 text-stone-400 font-mono font-bold text-sm">Rs.</span>
+                  <span className="absolute left-3.5 top-2.5 text-slate-500 dark:text-stone-400 font-mono font-bold text-sm">Rs.</span>
                   <input
                     type="number"
                     min="0"
@@ -404,7 +404,7 @@ export const ShiftSummaryView: React.FC = () => {
                     required
                     value={newShiftFloat}
                     onChange={(e) => setNewShiftFloat(e.target.value)}
-                    className="w-full bg-stone-950 border-2 border-stone-700 rounded-xl pl-12 pr-3 py-2.5 text-lg font-black text-white font-mono focus:outline-none focus:border-emerald-500"
+                    className="w-full bg-white dark:bg-stone-950 border-2 border-slate-300 dark:border-stone-700 rounded-xl pl-12 pr-3 py-2.5 text-lg font-black text-slate-900 dark:text-white font-mono focus:outline-none focus:border-emerald-500"
                   />
                 </div>
               </div>
@@ -416,7 +416,7 @@ export const ShiftSummaryView: React.FC = () => {
                     key={f}
                     type="button"
                     onClick={() => setNewShiftFloat(f)}
-                    className="flex-1 py-1.5 bg-stone-800 hover:bg-stone-700 border border-stone-700 rounded-lg text-xs font-mono font-bold text-stone-200 transition cursor-pointer"
+                    className="flex-1 py-1.5 bg-slate-50 dark:bg-stone-800 hover:bg-stone-700 border border-slate-300 dark:border-stone-700 rounded-lg text-xs font-mono font-bold text-stone-200 transition cursor-pointer"
                   >
                     Rs. {Number(f).toLocaleString()}
                   </button>
@@ -427,7 +427,7 @@ export const ShiftSummaryView: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setIsOpenNewShiftModal(false)}
-                  className="flex-1 py-2.5 bg-stone-800 hover:bg-stone-700 text-stone-300 text-xs font-bold rounded-xl transition cursor-pointer"
+                  className="flex-1 py-2.5 bg-slate-50 dark:bg-stone-800 hover:bg-stone-700 text-slate-700 dark:text-stone-300 text-xs font-bold rounded-xl transition cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -453,9 +453,9 @@ export const ShiftSummaryView: React.FC = () => {
             <div className="text-center border-b border-dashed border-stone-400 pb-3 space-y-1">
               <h3 className="font-black text-sm uppercase tracking-wider">WHITE'S CASTLE POS</h3>
               <p className="text-[11px] text-stone-600">OFFICIAL END-OF-SHIFT Z-REPORT</p>
-              <p className="text-[10px] text-stone-500">Terminal: {currentShift?.terminalId || 'POS-01'}</p>
-              <p className="text-[10px] text-stone-500">Cashier: {currentShift?.cashierName || currentUser.name}</p>
-              <p className="text-[10px] text-stone-500">
+              <p className="text-[10px] text-slate-400 dark:text-stone-500">Terminal: {currentShift?.terminalId || 'POS-01'}</p>
+              <p className="text-[10px] text-slate-400 dark:text-stone-500">Cashier: {currentShift?.cashierName || currentUser.name}</p>
+              <p className="text-[10px] text-slate-400 dark:text-stone-500">
                 Printed: {new Date().toLocaleString()}
               </p>
             </div>
@@ -496,7 +496,7 @@ export const ShiftSummaryView: React.FC = () => {
               </div>
             </div>
 
-            <div className="text-center text-[10px] text-stone-500 pt-1">
+            <div className="text-center text-[10px] text-slate-400 dark:text-stone-500 pt-1">
               *** END OF Z-REPORT AUDIT ***
             </div>
 
@@ -511,7 +511,7 @@ export const ShiftSummaryView: React.FC = () => {
               <button
                 type="button"
                 onClick={() => window.print()}
-                className="flex-1 py-2 bg-stone-900 hover:bg-stone-800 text-white text-xs font-bold rounded-lg transition cursor-pointer flex items-center justify-center gap-1"
+                className="flex-1 py-2 bg-white dark:bg-stone-900 hover:bg-slate-100 dark:hover:bg-stone-800 text-slate-900 dark:text-white text-xs font-bold rounded-lg transition cursor-pointer flex items-center justify-center gap-1"
               >
                 <Printer className="w-3.5 h-3.5" />
                 <span>Print Slip</span>

@@ -127,10 +127,10 @@ export const OrderEditCancelModal: React.FC<OrderEditCancelModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-150">
-      <div className="bg-gradient-to-b from-stone-900 to-[#121212] border border-white/10 ring-1 ring-white/10 rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-50 bg-slate-900/40 dark:bg-black/60 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-150">
+      <div className="bg-gradient-to-b from-stone-900 to-[#121212] border border-slate-300 dark:border-white/10 ring-1 ring-white/10 rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
         {/* Header */}
-        <div className="p-4 border-b border-white/5 bg-stone-950/60 flex items-center justify-between">
+        <div className="p-4 border-b border-slate-200 dark:border-white/5 bg-white/60 dark:bg-stone-950/60 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center">
               <Edit3 className="w-4 h-4" />
@@ -142,14 +142,14 @@ export const OrderEditCancelModal: React.FC<OrderEditCancelModalProps> = ({
                   {order.status}
                 </span>
               </h3>
-              <p className="text-xs text-stone-400">
+              <p className="text-xs text-slate-500 dark:text-stone-400">
                 Customer: {order.customer?.name || 'Walk-in'} • Created by: {order.cashierName || 'Cashier'}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-xl hover:bg-white/5 text-stone-400 hover:text-white transition-all cursor-pointer"
+            className="p-1.5 rounded-xl hover:bg-white/5 text-slate-500 dark:text-stone-400 hover:text-white transition-all cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -169,13 +169,13 @@ export const OrderEditCancelModal: React.FC<OrderEditCancelModalProps> = ({
         <div className="p-5 overflow-y-auto space-y-4 flex-1 no-scrollbar">
           <div className="space-y-2">
             <div className="flex items-center justify-between mb-2">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-stone-300">Order Line Items:</label>
+              <label className="text-[10px] font-bold uppercase tracking-wider text-slate-700 dark:text-stone-300">Order Line Items:</label>
               {(currentUser.role === 'manager' || currentUser.role === 'owner') && (
                 <div className="flex items-center gap-2">
                   <select
                     value={selectedMenuItemToAdd}
                     onChange={(e) => handleAddItem(e.target.value)}
-                    className="bg-stone-900 border border-white/10 text-stone-200 text-xs px-3 py-1 rounded-xl focus:outline-none focus:border-amber-500/50 font-medium transition cursor-pointer"
+                    className="bg-white dark:bg-stone-900 border border-slate-300 dark:border-white/10 text-stone-200 text-xs px-3 py-1 rounded-xl focus:outline-none focus:border-amber-500/50 font-medium transition cursor-pointer"
                   >
                     <option value="">+ Add Item from Menu...</option>
                     {menuItems.map((m) => (
@@ -190,20 +190,20 @@ export const OrderEditCancelModal: React.FC<OrderEditCancelModalProps> = ({
             {editedItems.map((item, idx) => (
               <div
                 key={idx}
-                className="bg-stone-950/80 border border-white/5 rounded-xl p-3 flex items-center justify-between gap-3 text-xs"
+                className="bg-stone-950/80 border border-slate-200 dark:border-white/5 rounded-xl p-3 flex items-center justify-between gap-3 text-xs"
               >
                 <div className="flex-1 min-w-0">
                   <span className="font-bold text-white block truncate">{item.name}</span>
-                  <span className="text-[10px] text-stone-400 font-mono">
+                  <span className="text-[10px] text-slate-500 dark:text-stone-400 font-mono">
                     PKR {item.price.toLocaleString()} each
                   </span>
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <div className="flex items-center bg-stone-900 border border-white/10 rounded-xl p-0.5">
+                  <div className="flex items-center bg-white dark:bg-stone-900 border border-slate-300 dark:border-white/10 rounded-xl p-0.5">
                     <button
                       onClick={() => handleUpdateQty(idx, -1)}
-                      className="w-6 h-6 rounded-lg flex items-center justify-center hover:bg-stone-800 text-stone-300 cursor-pointer transition-all"
+                      className="w-6 h-6 rounded-lg flex items-center justify-center hover:bg-slate-100 dark:hover:bg-stone-800 text-slate-700 dark:text-stone-300 cursor-pointer transition-all"
                     >
                       <Minus className="w-3 h-3" />
                     </button>
@@ -212,7 +212,7 @@ export const OrderEditCancelModal: React.FC<OrderEditCancelModalProps> = ({
                     </span>
                     <button
                       onClick={() => handleUpdateQty(idx, 1)}
-                      className="w-6 h-6 rounded-lg flex items-center justify-center hover:bg-stone-800 text-stone-300 cursor-pointer transition-all"
+                      className="w-6 h-6 rounded-lg flex items-center justify-center hover:bg-slate-100 dark:hover:bg-stone-800 text-slate-700 dark:text-stone-300 cursor-pointer transition-all"
                     >
                       <Plus className="w-3 h-3" />
                     </button>
@@ -228,19 +228,19 @@ export const OrderEditCancelModal: React.FC<OrderEditCancelModalProps> = ({
 
           {/* Special Notes */}
           <div>
-            <label className="text-[10px] uppercase font-bold text-stone-300 block mb-1">
+            <label className="text-[10px] uppercase font-bold text-slate-700 dark:text-stone-300 block mb-1">
               Order Instructions & Delivery Notes:
             </label>
             <input
               type="text"
               value={editNotes}
               onChange={(e) => setEditNotes(e.target.value)}
-              className="w-full bg-stone-900 border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-amber-500/50"
+              className="w-full bg-white dark:bg-stone-900 border border-slate-300 dark:border-white/10 rounded-xl px-3.5 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-amber-500/50"
             />
           </div>
 
           {/* Financial Summary */}
-          <div className="bg-stone-950/80 p-4 rounded-xl border border-white/5 space-y-1 font-mono text-xs text-stone-400">
+          <div className="bg-stone-950/80 p-4 rounded-xl border border-slate-200 dark:border-white/5 space-y-1 font-mono text-xs text-slate-500 dark:text-stone-400">
             <div className="flex justify-between">
               <span>Subtotal:</span>
               <span className="text-white font-mono">PKR {updatedSubtotal.toLocaleString()}</span>
@@ -249,7 +249,7 @@ export const OrderEditCancelModal: React.FC<OrderEditCancelModalProps> = ({
               <span>Tax (16%):</span>
               <span className="text-white font-mono">PKR {updatedTax.toLocaleString()}</span>
             </div>
-            <div className="flex justify-between font-black text-sm text-emerald-400 pt-1.5 border-t border-white/5">
+            <div className="flex justify-between font-black text-sm text-emerald-400 pt-1.5 border-t border-slate-200 dark:border-white/5">
               <span>Updated Total:</span>
               <span className="font-mono">PKR {updatedTotal.toLocaleString()}</span>
             </div>
@@ -257,7 +257,7 @@ export const OrderEditCancelModal: React.FC<OrderEditCancelModalProps> = ({
         </div>
 
         {/* Footer Actions */}
-        <div className="p-4 border-t border-white/5 bg-stone-950/60 flex items-center justify-between">
+        <div className="p-4 border-t border-slate-200 dark:border-white/5 bg-white/60 dark:bg-stone-950/60 flex items-center justify-between">
           <button
             onClick={() => handleTriggerAction('cancel')}
             className="px-4 py-2 bg-rose-950/40 hover:bg-rose-900/60 border border-rose-500/30 text-rose-300 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
@@ -269,7 +269,7 @@ export const OrderEditCancelModal: React.FC<OrderEditCancelModalProps> = ({
           <div className="flex items-center gap-2.5">
             <button
               onClick={onClose}
-              className="px-4 py-2 rounded-xl text-xs font-bold text-stone-400 hover:text-white transition-all cursor-pointer"
+              className="px-4 py-2 rounded-xl text-xs font-bold text-slate-500 dark:text-stone-400 hover:text-white transition-all cursor-pointer"
             >
               Close
             </button>

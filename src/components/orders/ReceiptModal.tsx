@@ -39,7 +39,7 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
     <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-center justify-center p-4">
       <div className="bg-white rounded-xl shadow-2xl border border-stone-300 max-w-md w-full overflow-hidden flex flex-col max-h-[90vh]">
         {/* Modal Top Header */}
-        <div className="p-3 bg-stone-900 text-white flex items-center justify-between shrink-0">
+        <div className="p-3 bg-white dark:bg-stone-900 text-slate-900 dark:text-white flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2">
             {printMode === 'receipt' ? (
               <Receipt className="w-4 h-4 text-emerald-400" />
@@ -52,7 +52,7 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded hover:bg-stone-800 text-stone-400 hover:text-white transition cursor-pointer"
+            className="p-1 rounded hover:bg-slate-100 dark:hover:bg-stone-800 text-slate-500 dark:text-stone-400 hover:text-white transition cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -116,7 +116,7 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
           {printMode === 'kot' ? (
             /* Kitchen KOT Slip */
             <div className="space-y-3">
-              <div className="text-center space-y-1 border-b-2 border-dashed border-stone-800 pb-2">
+              <div className="text-center space-y-1 border-b-2 border-dashed border-slate-200 dark:border-stone-800 pb-2">
                 <h2 className="font-black text-xl tracking-wider uppercase text-black">*** K.O.T. ***</h2>
                 <div className="text-sm font-black uppercase bg-black text-white px-2 py-1 inline-block rounded">
                   {rawType.replace('_', ' ').toUpperCase()} {order.tableNumber ? `• TABLE ${order.tableNumber}` : ''}
@@ -150,7 +150,7 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
               </div>
 
               {/* Items */}
-              <div className="py-2 border-b-2 border-dashed border-stone-800 space-y-2">
+              <div className="py-2 border-b-2 border-dashed border-slate-200 dark:border-stone-800 space-y-2">
                 <div className="flex justify-between text-xs font-black uppercase border-b border-stone-300 pb-1">
                   <span>Item & Modifiers</span>
                   <span className="text-right">Qty</span>
@@ -192,7 +192,7 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
                 </div>
               )}
 
-              <div className="text-center pt-2 text-[10px] text-stone-500 font-bold border-t border-dashed border-stone-300">
+              <div className="text-center pt-2 text-[10px] text-slate-400 dark:text-stone-500 font-bold border-t border-dashed border-stone-300">
                 [END OF KITCHEN TICKET]
               </div>
             </div>
@@ -209,7 +209,7 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
                     *** {isDelivery ? 'DELIVERY BILL' : 'TAKEAWAY BILL'} ***
                   </div>
                 )}
-                <p className="text-[10px] text-stone-500 pt-1">UAN: (051) 111-227-853 | NTN: #7391024-1</p>
+                <p className="text-[10px] text-slate-400 dark:text-stone-500 pt-1">UAN: (051) 111-227-853 | NTN: #7391024-1</p>
               </div>
 
               <div className="space-y-1 text-[11px] border-b border-dashed border-stone-300 pb-2">
@@ -246,26 +246,26 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
                 <div className="border border-stone-400 p-2 bg-stone-100 rounded text-[11px] space-y-1">
                   {(isDelivery || order.deliveryDriver) && (
                     <div className="border-b border-dashed border-stone-300 pb-1">
-                      <span className="font-bold uppercase block text-[9px] text-stone-500">Rider / Delivery Driver:</span>
+                      <span className="font-bold uppercase block text-[9px] text-slate-400 dark:text-stone-500">Rider / Delivery Driver:</span>
                       <span className="font-black text-xs uppercase block text-stone-900">{riderName}</span>
                     </div>
                   )}
 
                   <div>
-                    <span className="font-bold uppercase block text-[9px] text-stone-500">Customer Name:</span>
+                    <span className="font-bold uppercase block text-[9px] text-slate-400 dark:text-stone-500">Customer Name:</span>
                     <span className="font-bold text-xs block text-stone-900">{order.customer?.name || 'Walk-in Customer'}</span>
                   </div>
 
                   {order.customer?.phone && (
                     <div>
-                      <span className="font-bold uppercase block text-[9px] text-stone-500">Customer Phone:</span>
+                      <span className="font-bold uppercase block text-[9px] text-slate-400 dark:text-stone-500">Customer Phone:</span>
                       <span className="font-bold text-xs block text-stone-900">{order.customer.phone}</span>
                     </div>
                   )}
 
                   {(isDelivery || order.customer?.address) && (
                     <div>
-                      <span className="font-bold uppercase block text-[9px] text-stone-500">Delivery Address:</span>
+                      <span className="font-bold uppercase block text-[9px] text-slate-400 dark:text-stone-500">Delivery Address:</span>
                       <p className="font-semibold text-xs leading-tight bg-white p-1 border border-stone-300 rounded text-stone-900">
                         {order.customer?.address || 'No Address Provided'}
                       </p>
@@ -274,7 +274,7 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
 
                   {(order.customer?.deliveryNotes || order.notes) && (
                     <div>
-                      <span className="font-bold uppercase block text-[9px] text-stone-500">Order Notes:</span>
+                      <span className="font-bold uppercase block text-[9px] text-slate-400 dark:text-stone-500">Order Notes:</span>
                       <p className="italic text-[10px] text-stone-700">{order.customer?.deliveryNotes || order.notes}</p>
                     </div>
                   )}
@@ -345,7 +345,7 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
                 </div>
               </div>
 
-              <div className="text-center pt-3 border-t border-dashed border-stone-300 text-[10px] text-stone-500">
+              <div className="text-center pt-3 border-t border-dashed border-stone-300 text-[10px] text-slate-400 dark:text-stone-500">
                 <p>*** THANK YOU FOR ORDERING WITH MASTER POS ***</p>
                 <p className="text-[9px]">Branch: {branchName}</p>
               </div>

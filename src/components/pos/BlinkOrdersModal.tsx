@@ -53,10 +53,10 @@ export const BlinkOrdersModal: React.FC<BlinkOrdersModalProps> = ({ isOpen, onCl
   });
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
-      <div className="bg-gradient-to-b from-stone-900 to-[#121212] border border-white/10 ring-1 ring-white/10 rounded-2xl w-full max-w-5xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden text-stone-100 animate-in fade-in duration-150">
+    <div className="fixed inset-0 z-50 bg-slate-900/40 dark:bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
+      <div className="bg-gradient-to-b from-stone-900 to-[#121212] border border-slate-300 dark:border-white/10 ring-1 ring-white/10 rounded-2xl w-full max-w-5xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden text-slate-900 dark:text-stone-100 animate-in fade-in duration-150">
         {/* Modal Header */}
-        <div className="p-4 bg-stone-950/60 backdrop-blur-xs border-b border-white/5 flex items-center justify-between">
+        <div className="p-4 bg-white/60 dark:bg-stone-950/60 backdrop-blur-xs border-b border-slate-200 dark:border-white/5 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-600 to-emerald-700 flex items-center justify-center text-white font-black text-sm shadow-md border border-emerald-400/20">
               B
@@ -68,27 +68,27 @@ export const BlinkOrdersModal: React.FC<BlinkOrdersModalProps> = ({ isOpen, onCl
                   {filteredOrders.length} records
                 </span>
               </h3>
-              <p className="text-[10px] uppercase font-bold tracking-wider text-stone-400">Live order queue, dispatch drivers, edit, cancel and print receipts</p>
+              <p className="text-[10px] uppercase font-bold tracking-wider text-slate-500 dark:text-stone-400">Live order queue, dispatch drivers, edit, cancel and print receipts</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-xl hover:bg-white/5 text-stone-400 hover:text-white transition-all cursor-pointer"
+            className="p-1.5 rounded-xl hover:bg-white/5 text-slate-500 dark:text-stone-400 hover:text-white transition-all cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Filters Bar */}
-        <div className="p-3.5 bg-stone-950/80 border-b border-white/5 flex flex-wrap items-center justify-between gap-3">
+        <div className="p-3.5 bg-stone-950/80 border-b border-slate-200 dark:border-white/5 flex flex-wrap items-center justify-between gap-3">
           <div className="relative flex-1 max-w-sm">
-            <Search className="w-4 h-4 absolute left-3.5 top-2.5 text-stone-400" />
+            <Search className="w-4 h-4 absolute left-3.5 top-2.5 text-slate-500 dark:text-stone-400" />
             <input
               type="text"
               placeholder="Search order #, customer, phone, driver..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-stone-900 border border-white/10 rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder-stone-500 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 transition-all"
+              className="w-full bg-white dark:bg-stone-900 border border-slate-300 dark:border-white/10 rounded-xl pl-9 pr-3 py-2 text-xs text-slate-900 dark:text-white placeholder-stone-500 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 transition-all"
             />
           </div>
 
@@ -100,7 +100,7 @@ export const BlinkOrdersModal: React.FC<BlinkOrdersModalProps> = ({ isOpen, onCl
                 className={`px-3 py-1.5 rounded-xl font-bold uppercase transition-all cursor-pointer text-[10px] tracking-wider ${
                   statusFilter === st
                     ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-md border border-emerald-400/20'
-                    : 'bg-stone-900 border border-white/5 text-stone-400 hover:bg-stone-800 hover:text-stone-200'
+                    : 'bg-white dark:bg-stone-900 border border-slate-200 dark:border-white/5 text-slate-500 dark:text-stone-400 hover:bg-slate-100 dark:hover:bg-stone-800 hover:text-stone-200'
                 }`}
               >
                 {st.replace('_', ' ')}
@@ -110,9 +110,9 @@ export const BlinkOrdersModal: React.FC<BlinkOrdersModalProps> = ({ isOpen, onCl
         </div>
 
         {/* Orders Table */}
-        <div className="flex-1 overflow-y-auto p-4 bg-stone-950/40">
-          <table className="w-full text-left text-xs bg-stone-900/80 rounded-2xl border border-white/5 shadow-inner overflow-hidden">
-            <thead className="bg-stone-950/90 border-b border-white/5 text-[10px] font-bold text-stone-400 uppercase tracking-wider">
+        <div className="flex-1 overflow-y-auto p-4 bg-white/40 dark:bg-stone-950/40">
+          <table className="w-full text-left text-xs bg-white dark:bg-stone-900/80 rounded-2xl border border-slate-200 dark:border-white/5 shadow-inner overflow-hidden">
+            <thead className="bg-stone-950/90 border-b border-slate-200 dark:border-white/5 text-[10px] font-bold text-slate-500 dark:text-stone-400 uppercase tracking-wider">
               <tr>
                 <th className="p-3.5">Order #</th>
                 <th className="p-3.5">Time</th>
@@ -127,7 +127,7 @@ export const BlinkOrdersModal: React.FC<BlinkOrdersModalProps> = ({ isOpen, onCl
             <tbody className="divide-y divide-white/5">
               {filteredOrders.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="p-8 text-center text-stone-500 font-medium">
+                  <td colSpan={8} className="p-8 text-center text-slate-400 dark:text-stone-500 font-medium">
                     No orders found matching criteria
                   </td>
                 </tr>
@@ -148,20 +148,20 @@ export const BlinkOrdersModal: React.FC<BlinkOrdersModalProps> = ({ isOpen, onCl
                       }`}
                     >
                       <td className="p-3.5 font-black font-mono text-emerald-400">{order.orderNumber}</td>
-                      <td className="p-3.5 text-stone-400 font-mono text-[11px]">{dateFormatted}</td>
+                      <td className="p-3.5 text-slate-500 dark:text-stone-400 font-mono text-[11px]">{dateFormatted}</td>
                       <td className="p-3.5">
                         <div className="font-bold text-stone-200">{order.customer?.name}</div>
                         {order.customer?.phone && (
-                          <div className="text-[10px] text-stone-400 font-mono">{order.customer?.phone}</div>
+                          <div className="text-[10px] text-slate-500 dark:text-stone-400 font-mono">{order.customer?.phone}</div>
                         )}
                         {order.customer.address && (
-                          <div className="text-[10px] text-stone-500 truncate max-w-[160px]" title={order.customer.address}>
+                          <div className="text-[10px] text-slate-400 dark:text-stone-500 truncate max-w-[160px]" title={order.customer.address}>
                             📍 {order.customer.address}
                           </div>
                         )}
                       </td>
                       <td className="p-3.5">
-                        <span className="font-bold uppercase text-stone-300 block text-[10px] tracking-wider">
+                        <span className="font-bold uppercase text-slate-700 dark:text-stone-300 block text-[10px] tracking-wider">
                           {order.type.replace('_', ' ')}
                         </span>
                         {order.type === 'delivery' && (
@@ -169,7 +169,7 @@ export const BlinkOrdersModal: React.FC<BlinkOrdersModalProps> = ({ isOpen, onCl
                             <select
                               value={order.deliveryDriver || ''}
                               onChange={(e) => assignDeliveryDriver(order.id, e.target.value)}
-                              className="bg-stone-950 text-emerald-300 text-[10px] font-bold px-2 py-1 rounded-lg border border-white/10 focus:outline-none focus:border-emerald-500/50 max-w-[180px] truncate cursor-pointer"
+                              className="bg-white dark:bg-stone-950 text-emerald-300 text-[10px] font-bold px-2 py-1 rounded-lg border border-slate-300 dark:border-white/10 focus:outline-none focus:border-emerald-500/50 max-w-[180px] truncate cursor-pointer"
                             >
                               <option value="">-- Assign Rider --</option>
                               {deliveryDrivers.map((driver) => {
@@ -184,7 +184,7 @@ export const BlinkOrdersModal: React.FC<BlinkOrdersModalProps> = ({ isOpen, onCl
                           </div>
                         )}
                       </td>
-                      <td className="p-3.5 text-stone-300 text-xs max-w-xs truncate font-medium">
+                      <td className="p-3.5 text-slate-700 dark:text-stone-300 text-xs max-w-xs truncate font-medium">
                         {order.items.map((i) => `${i.quantity}x ${i.name}`).join(', ')}
                       </td>
                       <td className="p-3.5">
@@ -215,7 +215,7 @@ export const BlinkOrdersModal: React.FC<BlinkOrdersModalProps> = ({ isOpen, onCl
                           {!isCancelled && (
                             <button
                               onClick={() => setEditingOrder(order)}
-                              className="px-2.5 py-1 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 text-[10px] font-bold flex items-center gap-1 cursor-pointer transition border border-white/5"
+                              className="px-2.5 py-1 rounded-lg bg-slate-50 dark:bg-stone-800 hover:bg-stone-700 text-slate-700 dark:text-stone-300 text-[10px] font-bold flex items-center gap-1 cursor-pointer transition border border-slate-200 dark:border-white/5"
                               title="Edit Order"
                             >
                               <Edit className="w-3 h-3 text-sky-400" />
@@ -236,10 +236,10 @@ export const BlinkOrdersModal: React.FC<BlinkOrdersModalProps> = ({ isOpen, onCl
 
                           <button
                             onClick={() => setActiveReceiptOrder(order)}
-                            className="px-2.5 py-1 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 text-[10px] font-bold flex items-center gap-1 cursor-pointer transition border border-white/5"
+                            className="px-2.5 py-1 rounded-lg bg-slate-50 dark:bg-stone-800 hover:bg-stone-700 text-slate-700 dark:text-stone-300 text-[10px] font-bold flex items-center gap-1 cursor-pointer transition border border-slate-200 dark:border-white/5"
                             title="Receipt"
                           >
-                            <Receipt className="w-3 h-3 text-stone-400" />
+                            <Receipt className="w-3 h-3 text-slate-500 dark:text-stone-400" />
                             <span>Receipt</span>
                           </button>
 

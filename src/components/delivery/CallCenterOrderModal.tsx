@@ -243,10 +243,10 @@ export const CallCenterOrderModal: React.FC<CallCenterOrderModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200 print:hidden">
-      <div className="bg-[#1b1c2e] border border-stone-700/80 rounded-2xl w-full max-w-4xl max-h-[92vh] flex flex-col shadow-2xl text-stone-100 overflow-hidden">
+      <div className="bg-[#1b1c2e] border border-slate-300 dark:border-stone-700/80 rounded-2xl w-full max-w-4xl max-h-[92vh] flex flex-col shadow-2xl text-slate-900 dark:text-stone-100 overflow-hidden">
         
         {/* Header */}
-        <div className="px-6 py-4 bg-[#141524] border-b border-stone-800 flex items-center justify-between">
+        <div className="px-6 py-4 bg-[#141524] border-b border-slate-200 dark:border-stone-800 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-emerald-600/30 border border-emerald-500/40 flex items-center justify-center text-emerald-400">
               <Phone className="w-5 h-5" />
@@ -258,7 +258,7 @@ export const CallCenterOrderModal: React.FC<CallCenterOrderModalProps> = ({
                   LIVE DISPATCH
                 </span>
               </h2>
-              <p className="text-xs text-stone-400">
+              <p className="text-xs text-slate-500 dark:text-stone-400">
                 Logged in as <span className="text-white font-bold">{currentUser.name}</span> • Quick Order Creation
               </p>
             </div>
@@ -266,7 +266,7 @@ export const CallCenterOrderModal: React.FC<CallCenterOrderModalProps> = ({
 
           <button
             onClick={onClose}
-            className="p-1.5 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-400 hover:text-white transition cursor-pointer"
+            className="p-1.5 rounded-xl bg-slate-50 dark:bg-stone-800 hover:bg-stone-700 text-slate-500 dark:text-stone-400 hover:text-white transition cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -277,7 +277,7 @@ export const CallCenterOrderModal: React.FC<CallCenterOrderModalProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             
             {/* Customer Details Column */}
-            <div className="bg-[#222438] p-5 rounded-xl border border-stone-800 space-y-3.5">
+            <div className="bg-[#222438] p-5 rounded-xl border border-slate-200 dark:border-stone-800 space-y-3.5">
               <h3 className="text-xs font-black uppercase tracking-wider text-blue-400 flex items-center gap-2">
                 <User className="w-4 h-4" />
                 1. Customer & Delivery Address
@@ -285,21 +285,21 @@ export const CallCenterOrderModal: React.FC<CallCenterOrderModalProps> = ({
 
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <label className="block text-xs font-bold text-stone-300">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-stone-300">
                     Customer Contact Phone *
                   </label>
                   <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded ${
                     cleanPhone.length === 11 
                       ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
                       : cleanPhone.length > 0 
-                      ? 'bg-stone-800 text-stone-400' 
-                      : 'text-stone-500'
+                      ? 'bg-slate-50 dark:bg-stone-800 text-slate-500 dark:text-stone-400' 
+                      : 'text-slate-400 dark:text-stone-500'
                   }`}>
                     {cleanPhone.length === 11 ? '11/11 ✓' : `${cleanPhone.length}/11`}
                   </span>
                 </div>
                 <div className="relative">
-                  <Phone className="w-4 h-4 text-stone-400 absolute left-3 top-2.5" />
+                  <Phone className="w-4 h-4 text-slate-500 dark:text-stone-400 absolute left-3 top-2.5" />
                   <input
                     type="tel"
                     maxLength={11}
@@ -307,7 +307,7 @@ export const CallCenterOrderModal: React.FC<CallCenterOrderModalProps> = ({
                     placeholder="e.g. 03150679738 (11 digits)"
                     value={customerPhone}
                     onChange={(e) => setCustomerPhone(e.target.value)}
-                    className="w-full bg-[#161726] border border-stone-700 rounded-lg pl-9 pr-8 py-2 text-xs text-white font-mono placeholder:text-stone-500 focus:outline-none focus:border-blue-500"
+                    className="w-full bg-[#161726] border border-slate-300 dark:border-stone-700 rounded-lg pl-9 pr-8 py-2 text-xs text-white font-mono placeholder:text-slate-400 dark:text-stone-500 focus:outline-none focus:border-blue-500"
                   />
                   {isSearchingCustomer && (
                     <div className="absolute right-2.5 top-2.5">
@@ -324,7 +324,7 @@ export const CallCenterOrderModal: React.FC<CallCenterOrderModalProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-stone-300 mb-1">
+                <label className="block text-xs font-bold text-slate-700 dark:text-stone-300 mb-1">
                   Customer Full Name *
                 </label>
                 <input
@@ -333,18 +333,18 @@ export const CallCenterOrderModal: React.FC<CallCenterOrderModalProps> = ({
                   placeholder="e.g. Dr Shoaib / Mr Ashir"
                   value={customerName}
                   onChange={(e) => setCustomerName(e.target.value)}
-                  className="w-full bg-[#161726] border border-stone-700 rounded-lg px-3 py-2 text-xs text-white placeholder:text-stone-500 focus:outline-none focus:border-blue-500"
+                  className="w-full bg-[#161726] border border-slate-300 dark:border-stone-700 rounded-lg px-3 py-2 text-xs text-white placeholder:text-slate-400 dark:text-stone-500 focus:outline-none focus:border-blue-500"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-stone-300 mb-1">
+                <label className="block text-xs font-bold text-slate-700 dark:text-stone-300 mb-1">
                   Target Branch *
                 </label>
                 <select
                   value={selectedBranch}
                   onChange={(e) => setSelectedBranch(e.target.value)}
-                  className="w-full bg-[#161726] border border-stone-700 rounded-lg px-3 py-2 text-xs text-white font-bold focus:outline-none focus:border-blue-500"
+                  className="w-full bg-[#161726] border border-slate-300 dark:border-stone-700 rounded-lg px-3 py-2 text-xs text-white font-bold focus:outline-none focus:border-blue-500"
                 >
                   {branches.map((b) => (
                     <option key={b} value={b}>
@@ -355,7 +355,7 @@ export const CallCenterOrderModal: React.FC<CallCenterOrderModalProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-stone-300 mb-1">
+                <label className="block text-xs font-bold text-slate-700 dark:text-stone-300 mb-1">
                   Complete Delivery Address *
                 </label>
                 <div className="relative">
@@ -366,7 +366,7 @@ export const CallCenterOrderModal: React.FC<CallCenterOrderModalProps> = ({
                     placeholder="e.g. House 44, Street 9, Satellite Town"
                     value={customerAddress}
                     onChange={(e) => setCustomerAddress(e.target.value)}
-                    className="w-full bg-[#161726] border border-stone-700 rounded-lg pl-9 pr-3 py-2 text-xs text-white placeholder:text-stone-500 focus:outline-none focus:border-blue-500"
+                    className="w-full bg-[#161726] border border-slate-300 dark:border-stone-700 rounded-lg pl-9 pr-3 py-2 text-xs text-white placeholder:text-slate-400 dark:text-stone-500 focus:outline-none focus:border-blue-500"
                   />
                 </div>
               </div>
@@ -389,7 +389,7 @@ export const CallCenterOrderModal: React.FC<CallCenterOrderModalProps> = ({
                   className={`w-full bg-[#161726] border rounded-lg px-3 py-2 text-xs font-bold focus:outline-none transition ${
                     !selectedRider
                       ? 'border-amber-500/70 text-amber-300 ring-1 ring-amber-500/30'
-                      : 'border-stone-700 text-white focus:border-blue-500'
+                      : 'border-slate-300 dark:border-stone-700 text-white focus:border-blue-500'
                   }`}
                 >
                   <option value="">-- Select Rider (Required for Delivery)* --</option>
@@ -402,7 +402,7 @@ export const CallCenterOrderModal: React.FC<CallCenterOrderModalProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-stone-300 mb-1">
+                <label className="block text-xs font-bold text-slate-700 dark:text-stone-300 mb-1">
                   Landmark / Rider Notes (Optional)
                 </label>
                 <input
@@ -410,12 +410,12 @@ export const CallCenterOrderModal: React.FC<CallCenterOrderModalProps> = ({
                   placeholder="e.g. Ring bell twice, deliver to 2nd floor"
                   value={deliveryNotes}
                   onChange={(e) => setDeliveryNotes(e.target.value)}
-                  className="w-full bg-[#161726] border border-stone-700 rounded-lg px-3 py-2 text-xs text-stone-300 placeholder:text-stone-500 focus:outline-none focus:border-blue-500"
+                  className="w-full bg-[#161726] border border-slate-300 dark:border-stone-700 rounded-lg px-3 py-2 text-xs text-slate-700 dark:text-stone-300 placeholder:text-slate-400 dark:text-stone-500 focus:outline-none focus:border-blue-500"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-stone-300 mb-1">
+                <label className="block text-xs font-bold text-slate-700 dark:text-stone-300 mb-1">
                   Payment Method
                 </label>
                 <div className="flex gap-2">
@@ -425,7 +425,7 @@ export const CallCenterOrderModal: React.FC<CallCenterOrderModalProps> = ({
                     className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
                       paymentMethod === 'cash'
                         ? 'bg-emerald-600 text-white'
-                        : 'bg-[#161726] text-stone-400 border border-stone-700'
+                        : 'bg-[#161726] text-slate-500 dark:text-stone-400 border border-slate-300 dark:border-stone-700'
                     }`}
                   >
                     💵 Cash on Delivery (COD)
@@ -436,7 +436,7 @@ export const CallCenterOrderModal: React.FC<CallCenterOrderModalProps> = ({
                     className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
                       paymentMethod === 'online'
                         ? 'bg-blue-600 text-white'
-                        : 'bg-[#161726] text-stone-400 border border-stone-700'
+                        : 'bg-[#161726] text-slate-500 dark:text-stone-400 border border-slate-300 dark:border-stone-700'
                     }`}
                   >
                     💳 Paid Online
@@ -446,23 +446,23 @@ export const CallCenterOrderModal: React.FC<CallCenterOrderModalProps> = ({
             </div>
 
             {/* Menu Items & Cart Column */}
-            <div className="bg-[#222438] p-5 rounded-xl border border-stone-800 flex flex-col justify-between space-y-4">
+            <div className="bg-[#222438] p-5 rounded-xl border border-slate-200 dark:border-stone-800 flex flex-col justify-between space-y-4">
               <div>
                 <h3 className="text-xs font-black uppercase tracking-wider text-amber-400 flex items-center justify-between mb-3">
                   <span>2. Add Menu Items</span>
-                  <span className="text-[11px] text-stone-400 font-normal">
+                  <span className="text-[11px] text-slate-500 dark:text-stone-400 font-normal">
                     {cart.length} item(s) selected
                   </span>
                 </h3>
 
                 <div className="relative mb-3">
-                  <Search className="w-4 h-4 text-stone-400 absolute left-3 top-2.5" />
+                  <Search className="w-4 h-4 text-slate-500 dark:text-stone-400 absolute left-3 top-2.5" />
                   <input
                     type="text"
                     placeholder="Search menu items or categories..."
                     value={itemSearch}
                     onChange={(e) => setItemSearch(e.target.value)}
-                    className="w-full bg-[#161726] border border-stone-700 rounded-lg pl-9 pr-3 py-1.5 text-xs text-white placeholder:text-stone-500 focus:outline-none focus:border-amber-500"
+                    className="w-full bg-[#161726] border border-slate-300 dark:border-stone-700 rounded-lg pl-9 pr-3 py-1.5 text-xs text-white placeholder:text-slate-400 dark:text-stone-500 focus:outline-none focus:border-amber-500"
                   />
                 </div>
 
@@ -472,17 +472,17 @@ export const CallCenterOrderModal: React.FC<CallCenterOrderModalProps> = ({
                     <div
                       key={item.id}
                       onClick={() => addItemToCart(item)}
-                      className="p-2 rounded-lg bg-[#161726] hover:bg-[#202238] border border-stone-800 flex items-center justify-between cursor-pointer transition"
+                      className="p-2 rounded-lg bg-[#161726] hover:bg-[#202238] border border-slate-200 dark:border-stone-800 flex items-center justify-between cursor-pointer transition"
                     >
                       <div className="flex-1 min-w-0 pr-2">
                         <p className="text-xs font-bold text-white truncate">{item.name}</p>
-                        <p className="text-[10px] text-stone-400 capitalize">{item.category}</p>
+                        <p className="text-[10px] text-slate-500 dark:text-stone-400 capitalize">{item.category}</p>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         <span className="text-xs font-mono font-bold text-emerald-400">
                           PKR {item.price}
                         </span>
-                        <span className="p-1 rounded bg-stone-800 text-stone-300 hover:text-white">
+                        <span className="p-1 rounded bg-slate-50 dark:bg-stone-800 text-slate-700 dark:text-stone-300 hover:text-white">
                           <Plus className="w-3 h-3" />
                         </span>
                       </div>
@@ -491,12 +491,12 @@ export const CallCenterOrderModal: React.FC<CallCenterOrderModalProps> = ({
                 </div>
 
                 {/* Active Cart */}
-                <div className="border-t border-stone-800 pt-3">
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-stone-400 mb-2">
+                <div className="border-t border-slate-200 dark:border-stone-800 pt-3">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-stone-400 mb-2">
                     Active Order Items:
                   </p>
                   {cart.length === 0 ? (
-                    <p className="text-xs text-stone-500 italic text-center py-3 bg-[#161726] rounded-lg">
+                    <p className="text-xs text-slate-400 dark:text-stone-500 italic text-center py-3 bg-[#161726] rounded-lg">
                       No items added yet. Click items above to add.
                     </p>
                   ) : (
@@ -504,11 +504,11 @@ export const CallCenterOrderModal: React.FC<CallCenterOrderModalProps> = ({
                       {cart.map((p) => (
                         <div
                           key={p.item.id}
-                          className="p-2 bg-[#161726] rounded-lg border border-stone-800 flex items-center justify-between text-xs"
+                          className="p-2 bg-[#161726] rounded-lg border border-slate-200 dark:border-stone-800 flex items-center justify-between text-xs"
                         >
                           <div className="flex-1 min-w-0 pr-2">
                             <p className="font-bold text-white truncate">{p.item.name}</p>
-                            <span className="text-[10px] text-stone-400 font-mono">
+                            <span className="text-[10px] text-slate-500 dark:text-stone-400 font-mono">
                               PKR {p.item.price} each
                             </span>
                           </div>
@@ -516,7 +516,7 @@ export const CallCenterOrderModal: React.FC<CallCenterOrderModalProps> = ({
                             <button
                               type="button"
                               onClick={() => updateQty(p.item.id, -1)}
-                              className="p-1 rounded bg-stone-800 hover:bg-stone-700 text-stone-300"
+                              className="p-1 rounded bg-slate-50 dark:bg-stone-800 hover:bg-stone-700 text-slate-700 dark:text-stone-300"
                             >
                               <Minus className="w-3 h-3" />
                             </button>
@@ -526,7 +526,7 @@ export const CallCenterOrderModal: React.FC<CallCenterOrderModalProps> = ({
                             <button
                               type="button"
                               onClick={() => updateQty(p.item.id, 1)}
-                              className="p-1 rounded bg-stone-800 hover:bg-stone-700 text-stone-300"
+                              className="p-1 rounded bg-slate-50 dark:bg-stone-800 hover:bg-stone-700 text-slate-700 dark:text-stone-300"
                             >
                               <Plus className="w-3 h-3" />
                             </button>
@@ -542,16 +542,16 @@ export const CallCenterOrderModal: React.FC<CallCenterOrderModalProps> = ({
               </div>
 
               {/* Totals */}
-              <div className="bg-[#161726] p-3 rounded-xl border border-stone-800 space-y-1 text-xs">
-                <div className="flex justify-between text-stone-400">
+              <div className="bg-[#161726] p-3 rounded-xl border border-slate-200 dark:border-stone-800 space-y-1 text-xs">
+                <div className="flex justify-between text-slate-500 dark:text-stone-400">
                   <span>Subtotal:</span>
                   <span className="font-mono font-bold text-stone-200">PKR {subtotal}</span>
                 </div>
-                <div className="flex justify-between text-stone-400">
+                <div className="flex justify-between text-slate-500 dark:text-stone-400">
                   <span>Delivery Dispatch:</span>
                   <span className="font-mono font-bold text-stone-200">PKR {deliveryFee}</span>
                 </div>
-                <div className="flex justify-between font-black text-white text-sm border-t border-stone-800 pt-1.5 mt-1">
+                <div className="flex justify-between font-black text-white text-sm border-t border-slate-200 dark:border-stone-800 pt-1.5 mt-1">
                   <span>Total (PKR):</span>
                   <span className="font-mono text-emerald-400 text-base">PKR {total}</span>
                 </div>
@@ -560,11 +560,11 @@ export const CallCenterOrderModal: React.FC<CallCenterOrderModalProps> = ({
           </div>
 
           {/* Action Bar */}
-          <div className="flex items-center justify-end gap-3 border-t border-stone-800 pt-4">
+          <div className="flex items-center justify-end gap-3 border-t border-slate-200 dark:border-stone-800 pt-4">
             <button
               type="button"
               onClick={onClose}
-              className="px-5 py-2.5 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-300 text-xs font-bold transition cursor-pointer"
+              className="px-5 py-2.5 rounded-xl bg-slate-50 dark:bg-stone-800 hover:bg-stone-700 text-slate-700 dark:text-stone-300 text-xs font-bold transition cursor-pointer"
             >
               Cancel
             </button>

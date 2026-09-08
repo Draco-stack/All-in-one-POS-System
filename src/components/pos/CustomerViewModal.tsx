@@ -29,10 +29,10 @@ export const CustomerViewModal: React.FC<CustomerViewModalProps> = ({
   const badgeClass = vipColors[customer.vipTier] || vipColors.Regular;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
-      <div className="bg-gradient-to-b from-stone-900 to-[#121212] border border-white/10 ring-1 ring-white/10 rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+    <div className="fixed inset-0 z-50 bg-slate-900/40 dark:bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
+      <div className="bg-gradient-to-b from-stone-900 to-[#121212] border border-slate-300 dark:border-white/10 ring-1 ring-white/10 rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
         {/* Header */}
-        <div className="p-5 border-b border-white/5 flex items-center justify-between bg-stone-950/60 backdrop-blur-xs">
+        <div className="p-5 border-b border-slate-200 dark:border-white/5 flex items-center justify-between bg-white/60 dark:bg-stone-950/60 backdrop-blur-xs">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-600 to-emerald-700 flex items-center justify-center text-white font-bold text-lg shadow-md border border-emerald-400/20">
               <User className="w-6 h-6" />
@@ -44,7 +44,7 @@ export const CustomerViewModal: React.FC<CustomerViewModalProps> = ({
                   ⭐ {customer.vipTier} Member
                 </span>
               </div>
-              <p className="text-xs text-stone-400 font-mono flex items-center gap-2 mt-0.5">
+              <p className="text-xs text-slate-500 dark:text-stone-400 font-mono flex items-center gap-2 mt-0.5">
                 <Phone className="w-3.5 h-3.5 text-emerald-400" />
                 {customer.phone}
                 {customer.email && <span>• {customer.email}</span>}
@@ -53,7 +53,7 @@ export const CustomerViewModal: React.FC<CustomerViewModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-xl hover:bg-white/5 text-stone-400 hover:text-white transition-all cursor-pointer"
+            className="p-2 rounded-xl hover:bg-white/5 text-slate-500 dark:text-stone-400 hover:text-white transition-all cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -63,27 +63,27 @@ export const CustomerViewModal: React.FC<CustomerViewModalProps> = ({
         <div className="p-5 overflow-y-auto space-y-5 flex-1 text-stone-200">
           {/* Key Metrics Grid */}
           <div className="grid grid-cols-3 gap-3">
-            <div className="bg-stone-950/90 p-4 rounded-2xl border border-white/5 shadow-inner">
-              <span className="text-[10px] uppercase font-bold tracking-wider text-stone-400 flex items-center gap-1">
+            <div className="bg-stone-950/90 p-4 rounded-2xl border border-slate-200 dark:border-white/5 shadow-inner">
+              <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500 dark:text-stone-400 flex items-center gap-1">
                 <Award className="w-3.5 h-3.5 text-amber-400" /> Loyalty Points
               </span>
               <p className="text-xl font-black text-amber-300 font-mono mt-1">
-                {customer.loyaltyPoints} <span className="text-[10px] font-normal text-stone-400">pts</span>
+                {customer.loyaltyPoints} <span className="text-[10px] font-normal text-slate-500 dark:text-stone-400">pts</span>
               </p>
             </div>
 
-            <div className="bg-stone-950/90 p-4 rounded-2xl border border-white/5 shadow-inner">
-              <span className="text-[10px] uppercase font-bold tracking-wider text-stone-400 flex items-center gap-1">
+            <div className="bg-stone-950/90 p-4 rounded-2xl border border-slate-200 dark:border-white/5 shadow-inner">
+              <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500 dark:text-stone-400 flex items-center gap-1">
                 <ShoppingBag className="w-3.5 h-3.5 text-emerald-400" /> Total Visits
               </span>
               <p className="text-xl font-black text-emerald-300 font-mono mt-1">
                 {customer.totalOrdersCount}{' '}
-                <span className="text-[10px] font-normal text-stone-400">orders</span>
+                <span className="text-[10px] font-normal text-slate-500 dark:text-stone-400">orders</span>
               </p>
             </div>
 
-            <div className="bg-stone-950/90 p-4 rounded-2xl border border-white/5 shadow-inner">
-              <span className="text-[10px] uppercase font-bold tracking-wider text-stone-400 flex items-center gap-1">
+            <div className="bg-stone-950/90 p-4 rounded-2xl border border-slate-200 dark:border-white/5 shadow-inner">
+              <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500 dark:text-stone-400 flex items-center gap-1">
                 💳 Lifetime Spend
               </span>
               <p className="text-xl font-black text-white font-mono mt-1">
@@ -93,11 +93,11 @@ export const CustomerViewModal: React.FC<CustomerViewModalProps> = ({
           </div>
 
           {/* Delivery Address & Notes */}
-          <div className="bg-stone-950/60 p-4 rounded-2xl border border-white/5 space-y-2.5 shadow-inner">
+          <div className="bg-white/60 dark:bg-stone-950/60 p-4 rounded-2xl border border-slate-200 dark:border-white/5 space-y-2.5 shadow-inner">
             <div className="flex items-start gap-2.5 text-xs">
               <MapPin className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
               <div>
-                <span className="text-[10px] uppercase font-bold tracking-wider text-stone-400 block mb-0.5">Saved Address:</span>
+                <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500 dark:text-stone-400 block mb-0.5">Saved Address:</span>
                 <span className="text-stone-200 font-medium">{customer.address || 'Walk-in / Counter'}</span>
               </div>
             </div>
@@ -110,13 +110,13 @@ export const CustomerViewModal: React.FC<CustomerViewModalProps> = ({
 
           {/* Past Orders & 1-Click Reorder */}
           <div>
-            <h4 className="text-xs font-bold text-stone-300 uppercase tracking-wider mb-3 flex items-center gap-2">
+            <h4 className="text-xs font-bold text-slate-700 dark:text-stone-300 uppercase tracking-wider mb-3 flex items-center gap-2">
               <Clock className="w-4 h-4 text-emerald-400" />
               Order History & Favorite Items ({pastOrders.length})
             </h4>
 
             {pastOrders.length === 0 ? (
-              <div className="text-center py-8 bg-stone-950/40 rounded-2xl border border-dashed border-white/10 text-stone-500 text-xs">
+              <div className="text-center py-8 bg-white/40 dark:bg-stone-950/40 rounded-2xl border border-dashed border-slate-300 dark:border-white/10 text-slate-400 dark:text-stone-500 text-xs">
                 No past transactions recorded yet for this customer.
               </div>
             ) : (
@@ -124,11 +124,11 @@ export const CustomerViewModal: React.FC<CustomerViewModalProps> = ({
                 {pastOrders.map((order) => (
                   <div
                     key={order.id}
-                    className="p-3.5 bg-stone-950/80 rounded-2xl border border-white/5 flex flex-col gap-2.5 shadow-sm"
+                    className="p-3.5 bg-stone-950/80 rounded-2xl border border-slate-200 dark:border-white/5 flex flex-col gap-2.5 shadow-sm"
                   >
                     <div className="flex items-center justify-between text-xs font-mono">
                       <span className="font-bold text-white">{order.orderNumber}</span>
-                      <span className="text-stone-400 font-semibold">
+                      <span className="text-slate-500 dark:text-stone-400 font-semibold">
                         {new Date(order.createdAt).toLocaleDateString()} • PKR {order.total.toLocaleString()}
                       </span>
                     </div>
@@ -137,7 +137,7 @@ export const CustomerViewModal: React.FC<CustomerViewModalProps> = ({
                       {order.items.map((item, idx) => (
                         <div
                           key={idx}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-stone-900 border border-white/5 text-xs text-stone-300"
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-stone-900 border border-slate-200 dark:border-white/5 text-xs text-slate-700 dark:text-stone-300"
                         >
                           <span>
                             {item.quantity}x {item.name}
@@ -162,10 +162,10 @@ export const CustomerViewModal: React.FC<CustomerViewModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-white/5 bg-stone-950/60 flex justify-end">
+        <div className="p-4 border-t border-slate-200 dark:border-white/5 bg-white/60 dark:bg-stone-950/60 flex justify-end">
           <button
             onClick={onClose}
-            className="px-6 py-2.5 bg-stone-900 hover:bg-stone-800 text-stone-200 border border-white/5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all cursor-pointer"
+            className="px-6 py-2.5 bg-white dark:bg-stone-900 hover:bg-slate-100 dark:hover:bg-stone-800 text-stone-200 border border-slate-200 dark:border-white/5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all cursor-pointer"
           >
             Close
           </button>

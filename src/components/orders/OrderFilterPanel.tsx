@@ -119,14 +119,14 @@ export const OrderFilterPanel: React.FC<OrderFilterPanelProps> = ({
         isOpen ? 'w-80 sm:w-88' : 'w-0 overflow-hidden border-none'
       } ${
         isDark
-          ? 'bg-[#12141c] border-stone-800 text-stone-200'
+          ? 'bg-[#12141c] border-slate-200 dark:border-stone-800 text-stone-200'
           : 'bg-slate-50 border-slate-200 text-slate-800'
       }`}
     >
       {/* PANEL HEADER */}
       <div
         className={`px-4 py-3 border-b flex items-center justify-between shrink-0 ${
-          isDark ? 'bg-[#161924] border-stone-800' : 'bg-slate-100 border-slate-200'
+          isDark ? 'bg-[#161924] border-slate-200 dark:border-stone-800' : 'bg-slate-100 border-slate-200'
         }`}
       >
         <div className="flex items-center gap-2">
@@ -142,7 +142,7 @@ export const OrderFilterPanel: React.FC<OrderFilterPanelProps> = ({
                 </span>
               )}
             </h2>
-            <p className="text-[10px] text-stone-400 font-mono">
+            <p className="text-[10px] text-slate-500 dark:text-stone-400 font-mono">
               {totalFiltered} of {totalAll} matches
             </p>
           </div>
@@ -154,7 +154,7 @@ export const OrderFilterPanel: React.FC<OrderFilterPanelProps> = ({
             disabled={isRefreshing}
             className={`p-1.5 rounded-lg border transition cursor-pointer disabled:opacity-50 ${
               isDark
-                ? 'bg-stone-800/80 hover:bg-stone-700 text-stone-300 border-stone-700'
+                ? 'bg-slate-50 dark:bg-stone-800/80 hover:bg-stone-700 text-slate-700 dark:text-stone-300 border-slate-300 dark:border-stone-700'
                 : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-300'
             }`}
             title="Refresh Order Data"
@@ -176,7 +176,7 @@ export const OrderFilterPanel: React.FC<OrderFilterPanelProps> = ({
             onClick={onToggle}
             className={`p-1.5 rounded-lg border transition cursor-pointer lg:hidden ${
               isDark
-                ? 'bg-stone-800 hover:bg-stone-700 text-stone-400 border-stone-700'
+                ? 'bg-slate-50 dark:bg-stone-800 hover:bg-stone-700 text-slate-500 dark:text-stone-400 border-slate-300 dark:border-stone-700'
                 : 'bg-white hover:bg-slate-100 text-slate-500 border-slate-300'
             }`}
             title="Close Panel"
@@ -190,7 +190,7 @@ export const OrderFilterPanel: React.FC<OrderFilterPanelProps> = ({
       <div className="flex-1 overflow-y-auto p-4 space-y-4 text-xs no-scrollbar">
         {/* 1. KEYWORD & CUSTOMER SEARCH BOX */}
         <div className="space-y-1.5">
-          <label className="text-[11px] font-bold text-stone-300 uppercase tracking-wider flex items-center justify-between">
+          <label className="text-[11px] font-bold text-slate-700 dark:text-stone-300 uppercase tracking-wider flex items-center justify-between">
             <span className="flex items-center gap-1.5">
               <Search className="w-3.5 h-3.5 text-emerald-400" />
               Direct Search
@@ -212,17 +212,17 @@ export const OrderFilterPanel: React.FC<OrderFilterPanelProps> = ({
               onChange={(e) => setSearchQuery(e.target.value)}
               className={`w-full rounded-xl pl-8 pr-3 py-2 text-xs font-medium focus:outline-none transition border ${
                 isDark
-                  ? 'bg-[#090a0f] border-stone-800 text-stone-100 placeholder-stone-500 focus:border-emerald-500'
+                  ? 'bg-[#090a0f] border-slate-200 dark:border-stone-800 text-slate-900 dark:text-stone-100 placeholder-stone-500 focus:border-emerald-500'
                   : 'bg-white border-slate-300 text-slate-900 placeholder-slate-400 focus:border-emerald-600'
               }`}
             />
-            <Search className="w-3.5 h-3.5 absolute left-2.5 top-3 text-stone-500 pointer-events-none" />
+            <Search className="w-3.5 h-3.5 absolute left-2.5 top-3 text-slate-400 dark:text-stone-500 pointer-events-none" />
           </div>
         </div>
 
         {/* 2. ORDER TYPE PILLS (Dine-In / Delivery / Takeaway) */}
         <div className="space-y-1.5">
-          <label className="text-[11px] font-bold text-stone-300 uppercase tracking-wider flex items-center gap-1.5">
+          <label className="text-[11px] font-bold text-slate-700 dark:text-stone-300 uppercase tracking-wider flex items-center gap-1.5">
             <Layers className="w-3.5 h-3.5 text-blue-400" />
             Order Channel / Type
           </label>
@@ -242,7 +242,7 @@ export const OrderFilterPanel: React.FC<OrderFilterPanelProps> = ({
                     isSelected
                       ? 'bg-emerald-600 text-white shadow-xs'
                       : isDark
-                      ? 'bg-[#090a0f] text-stone-400 hover:text-stone-200 border border-stone-800'
+                      ? 'bg-[#090a0f] text-slate-500 dark:text-stone-400 hover:text-stone-200 border border-slate-200 dark:border-stone-800'
                       : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
                   }`}
                 >
@@ -255,7 +255,7 @@ export const OrderFilterPanel: React.FC<OrderFilterPanelProps> = ({
 
         {/* 3. STATUS SELECTOR */}
         <div className="space-y-1.5">
-          <label className="text-[11px] font-bold text-stone-300 uppercase tracking-wider flex items-center gap-1.5">
+          <label className="text-[11px] font-bold text-slate-700 dark:text-stone-300 uppercase tracking-wider flex items-center gap-1.5">
             <Sparkles className="w-3.5 h-3.5 text-amber-400" />
             Order Lifecycle Status
           </label>
@@ -264,7 +264,7 @@ export const OrderFilterPanel: React.FC<OrderFilterPanelProps> = ({
             onChange={(e) => setSelectedStatus(e.target.value)}
             className={`w-full rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none cursor-pointer border transition ${
               isDark
-                ? 'bg-[#090a0f] border-stone-800 text-stone-200 focus:border-emerald-500'
+                ? 'bg-[#090a0f] border-slate-200 dark:border-stone-800 text-stone-200 focus:border-emerald-500'
                 : 'bg-white border-slate-300 text-slate-800 focus:border-emerald-600'
             }`}
           >
@@ -281,7 +281,7 @@ export const OrderFilterPanel: React.FC<OrderFilterPanelProps> = ({
         {/* 4. DATE RANGE & PRESETS */}
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <label className="text-[11px] font-bold text-stone-300 uppercase tracking-wider flex items-center gap-1.5">
+            <label className="text-[11px] font-bold text-slate-700 dark:text-stone-300 uppercase tracking-wider flex items-center gap-1.5">
               <Calendar className="w-3.5 h-3.5 text-emerald-400" />
               Timeline & Date
             </label>
@@ -303,7 +303,7 @@ export const OrderFilterPanel: React.FC<OrderFilterPanelProps> = ({
                 new Date(selectedDate).toDateString() === new Date().toDateString()
                   ? 'bg-emerald-600 text-white border-emerald-500'
                   : isDark
-                  ? 'bg-stone-900 text-stone-400 hover:text-white border-stone-800'
+                  ? 'bg-white dark:bg-stone-900 text-slate-500 dark:text-stone-400 hover:text-white border-slate-200 dark:border-stone-800'
                   : 'bg-white text-slate-600 border-slate-200'
               }`}
             >
@@ -313,7 +313,7 @@ export const OrderFilterPanel: React.FC<OrderFilterPanelProps> = ({
               onClick={() => setDatePreset('yesterday')}
               className={`flex-1 py-1 rounded-md text-[10px] font-bold border transition cursor-pointer ${
                 isDark
-                  ? 'bg-stone-900 text-stone-400 hover:text-white border-stone-800'
+                  ? 'bg-white dark:bg-stone-900 text-slate-500 dark:text-stone-400 hover:text-white border-slate-200 dark:border-stone-800'
                   : 'bg-white text-slate-600 border-slate-200'
               }`}
             >
@@ -325,7 +325,7 @@ export const OrderFilterPanel: React.FC<OrderFilterPanelProps> = ({
                 !selectedDate
                   ? 'bg-emerald-600 text-white border-emerald-500'
                   : isDark
-                  ? 'bg-stone-900 text-stone-400 hover:text-white border-stone-800'
+                  ? 'bg-white dark:bg-stone-900 text-slate-500 dark:text-stone-400 hover:text-white border-slate-200 dark:border-stone-800'
                   : 'bg-white text-slate-600 border-slate-200'
               }`}
             >
@@ -339,7 +339,7 @@ export const OrderFilterPanel: React.FC<OrderFilterPanelProps> = ({
             onChange={(e) => setSelectedDate(e.target.value)}
             className={`w-full rounded-xl px-3 py-1.5 text-xs font-mono focus:outline-none cursor-pointer border transition ${
               isDark
-                ? 'bg-[#090a0f] border-stone-800 text-stone-200 focus:border-emerald-500'
+                ? 'bg-[#090a0f] border-slate-200 dark:border-stone-800 text-stone-200 focus:border-emerald-500'
                 : 'bg-white border-slate-300 text-slate-800 focus:border-emerald-600'
             }`}
           />
@@ -347,7 +347,7 @@ export const OrderFilterPanel: React.FC<OrderFilterPanelProps> = ({
 
         {/* 5. OUTLET / BRANCH SELECTOR */}
         <div className="space-y-1.5">
-          <label className="text-[11px] font-bold text-stone-300 uppercase tracking-wider flex items-center gap-1.5">
+          <label className="text-[11px] font-bold text-slate-700 dark:text-stone-300 uppercase tracking-wider flex items-center gap-1.5">
             <Building2 className="w-3.5 h-3.5 text-emerald-400" />
             Branch / Outlet
           </label>
@@ -356,7 +356,7 @@ export const OrderFilterPanel: React.FC<OrderFilterPanelProps> = ({
             onChange={(e) => setSelectedOutlet(e.target.value)}
             className={`w-full rounded-xl px-3 py-2 text-xs font-medium focus:outline-none cursor-pointer border transition ${
               isDark
-                ? 'bg-[#090a0f] border-stone-800 text-stone-200 focus:border-emerald-500'
+                ? 'bg-[#090a0f] border-slate-200 dark:border-stone-800 text-stone-200 focus:border-emerald-500'
                 : 'bg-white border-slate-300 text-slate-800 focus:border-emerald-600'
             }`}
           >
@@ -371,7 +371,7 @@ export const OrderFilterPanel: React.FC<OrderFilterPanelProps> = ({
 
         {/* 6. ORDER SOURCE CHANNEL */}
         <div className="space-y-1.5">
-          <label className="text-[11px] font-bold text-stone-300 uppercase tracking-wider flex items-center gap-1.5">
+          <label className="text-[11px] font-bold text-slate-700 dark:text-stone-300 uppercase tracking-wider flex items-center gap-1.5">
             <Store className="w-3.5 h-3.5 text-amber-400" />
             Lead / Source Channel
           </label>
@@ -380,7 +380,7 @@ export const OrderFilterPanel: React.FC<OrderFilterPanelProps> = ({
             onChange={(e) => setSelectedSource(e.target.value)}
             className={`w-full rounded-xl px-3 py-2 text-xs font-medium focus:outline-none cursor-pointer border transition ${
               isDark
-                ? 'bg-[#090a0f] border-stone-800 text-stone-200 focus:border-emerald-500'
+                ? 'bg-[#090a0f] border-slate-200 dark:border-stone-800 text-stone-200 focus:border-emerald-500'
                 : 'bg-white border-slate-300 text-slate-800 focus:border-emerald-600'
             }`}
           >
@@ -395,7 +395,7 @@ export const OrderFilterPanel: React.FC<OrderFilterPanelProps> = ({
 
         {/* 7. CASHIER / STAFF USER */}
         <div className="space-y-1.5">
-          <label className="text-[11px] font-bold text-stone-300 uppercase tracking-wider flex items-center gap-1.5">
+          <label className="text-[11px] font-bold text-slate-700 dark:text-stone-300 uppercase tracking-wider flex items-center gap-1.5">
             <User className="w-3.5 h-3.5 text-purple-400" />
             Punched By / Staff
           </label>
@@ -404,7 +404,7 @@ export const OrderFilterPanel: React.FC<OrderFilterPanelProps> = ({
             onChange={(e) => setSelectedUser(e.target.value)}
             className={`w-full rounded-xl px-3 py-2 text-xs font-medium focus:outline-none cursor-pointer border transition ${
               isDark
-                ? 'bg-[#090a0f] border-stone-800 text-stone-200 focus:border-emerald-500'
+                ? 'bg-[#090a0f] border-slate-200 dark:border-stone-800 text-stone-200 focus:border-emerald-500'
                 : 'bg-white border-slate-300 text-slate-800 focus:border-emerald-600'
             }`}
           >
@@ -418,11 +418,11 @@ export const OrderFilterPanel: React.FC<OrderFilterPanelProps> = ({
         </div>
 
         {/* ADVANCED FILTER SECTION: AMOUNT RANGE & SORTING */}
-        <div className="pt-2 border-t border-stone-800">
+        <div className="pt-2 border-t border-slate-200 dark:border-stone-800">
           <button
             type="button"
             onClick={() => setIsAdvancedExpanded(!isAdvancedExpanded)}
-            className="w-full flex items-center justify-between text-[11px] font-bold text-stone-400 hover:text-stone-200 py-1 transition cursor-pointer"
+            className="w-full flex items-center justify-between text-[11px] font-bold text-slate-500 dark:text-stone-400 hover:text-stone-200 py-1 transition cursor-pointer"
           >
             <span className="flex items-center gap-1.5">
               <DollarSign className="w-3.5 h-3.5 text-emerald-400" />
@@ -435,7 +435,7 @@ export const OrderFilterPanel: React.FC<OrderFilterPanelProps> = ({
             <div className="space-y-3 pt-2">
               {/* Min - Max Amount */}
               <div className="space-y-1">
-                <label className="text-[10px] text-stone-400 font-medium">Order Total Range (PKR):</label>
+                <label className="text-[10px] text-slate-500 dark:text-stone-400 font-medium">Order Total Range (PKR):</label>
                 <div className="flex items-center gap-2">
                   <input
                     type="number"
@@ -444,11 +444,11 @@ export const OrderFilterPanel: React.FC<OrderFilterPanelProps> = ({
                     onChange={(e) => setMinAmount(e.target.value)}
                     className={`w-1/2 rounded-lg px-2.5 py-1 text-xs font-mono focus:outline-none border ${
                       isDark
-                        ? 'bg-[#090a0f] border-stone-800 text-stone-200 focus:border-emerald-500'
+                        ? 'bg-[#090a0f] border-slate-200 dark:border-stone-800 text-stone-200 focus:border-emerald-500'
                         : 'bg-white border-slate-300 text-slate-800'
                     }`}
                   />
-                  <span className="text-stone-500 text-xs">-</span>
+                  <span className="text-slate-400 dark:text-stone-500 text-xs">-</span>
                   <input
                     type="number"
                     placeholder="Max"
@@ -456,7 +456,7 @@ export const OrderFilterPanel: React.FC<OrderFilterPanelProps> = ({
                     onChange={(e) => setMaxAmount(e.target.value)}
                     className={`w-1/2 rounded-lg px-2.5 py-1 text-xs font-mono focus:outline-none border ${
                       isDark
-                        ? 'bg-[#090a0f] border-stone-800 text-stone-200 focus:border-emerald-500'
+                        ? 'bg-[#090a0f] border-slate-200 dark:border-stone-800 text-stone-200 focus:border-emerald-500'
                         : 'bg-white border-slate-300 text-slate-800'
                     }`}
                   />
@@ -465,8 +465,8 @@ export const OrderFilterPanel: React.FC<OrderFilterPanelProps> = ({
 
               {/* Sort By Dropdown */}
               <div className="space-y-1">
-                <label className="text-[10px] text-stone-400 font-medium flex items-center gap-1">
-                  <ArrowUpDown className="w-3 h-3 text-stone-400" />
+                <label className="text-[10px] text-slate-500 dark:text-stone-400 font-medium flex items-center gap-1">
+                  <ArrowUpDown className="w-3 h-3 text-slate-500 dark:text-stone-400" />
                   Sort Sequence:
                 </label>
                 <select
@@ -474,7 +474,7 @@ export const OrderFilterPanel: React.FC<OrderFilterPanelProps> = ({
                   onChange={(e) => setSortBy(e.target.value)}
                   className={`w-full rounded-lg px-2.5 py-1.5 text-xs font-medium focus:outline-none cursor-pointer border ${
                     isDark
-                      ? 'bg-[#090a0f] border-stone-800 text-stone-200 focus:border-emerald-500'
+                      ? 'bg-[#090a0f] border-slate-200 dark:border-stone-800 text-stone-200 focus:border-emerald-500'
                       : 'bg-white border-slate-300 text-slate-800'
                   }`}
                 >
@@ -492,12 +492,12 @@ export const OrderFilterPanel: React.FC<OrderFilterPanelProps> = ({
       {/* FOOTER ACTION BUTTONS */}
       <div
         className={`p-3 border-t shrink-0 flex items-center gap-2 ${
-          isDark ? 'bg-[#161924] border-stone-800' : 'bg-slate-100 border-slate-200'
+          isDark ? 'bg-[#161924] border-slate-200 dark:border-stone-800' : 'bg-slate-100 border-slate-200'
         }`}
       >
         <button
           onClick={onResetFilters}
-          className="flex-1 py-2 px-3 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-300 text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer border border-stone-700 active:scale-95"
+          className="flex-1 py-2 px-3 rounded-xl bg-slate-50 dark:bg-stone-800 hover:bg-stone-700 text-slate-700 dark:text-stone-300 text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer border border-slate-300 dark:border-stone-700 active:scale-95"
         >
           <RotateCcw className="w-3.5 h-3.5" />
           <span>Reset All</span>

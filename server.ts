@@ -320,6 +320,54 @@ app.get('/api/categories', async (req, res) => {
   }
 });
 
+// Tables Management
+app.get('/api/tables', async (req, res) => {
+  try {
+    const tables = await prisma.table.findMany({
+      where: { active: true },
+      orderBy: { number: 'asc' },
+    });
+    return res.json(tables);
+  } catch (error) {
+    console.error('[Prisma] Get tables error:', error);
+    return res.json([]);
+  }
+});
+
+app.post('/api/tables', authenticateManager, async (req, res) => {
+  try {
+    const { number, capacity } = req.body;
+    const table = await prisma.table.create({
+      data: {
+        number: String(number),
+        capacity: Number(capacity) || 4,
+        status: 'AVAILABLE',
+        active: true,
+      },
+    });
+    io.emit('tablesUpdated');
+    return res.status(201).json(table);
+  } catch (error: any) {
+    console.error('[Prisma] Add table error:', error);
+    return res.status(500).json({ error: 'Failed to add table' });
+  }
+});
+
+app.delete('/api/tables/:id', authenticateManager, async (req, res) => {
+  try {
+    const { id } = req.params;
+    await prisma.table.update({
+      where: { id },
+      data: { active: false },
+    });
+    io.emit('tablesUpdated');
+    return res.json({ success: true });
+  } catch (error: any) {
+    console.error('[Prisma] Delete table error:', error);
+    return res.status(500).json({ error: 'Failed to delete table' });
+  }
+});
+
 app.post('/api/categories', authenticateManager, async (req, res) => {
   try {
     const { name, title } = req.body;
@@ -1363,79 +1411,7 @@ app.post('/api/shifts/close', async (req, res) => {
   }
 });
 
-// ==========================================
-// TABLE MANAGEMENT API
-// ==========================================
-app.get('/api/tables', async (req, res) => {
-  try {
-    const tables = await prisma.table.findMany({
-      orderBy: { number: 'asc' },
-    });
-    return res.json(tables);
-  } catch (err) {
-    console.error('Failed to get tables:', err);
-    return res.status(500).json({ error: 'Failed to retrieve tables' });
-  }
-});
 
-app.post('/api/tables', async (req, res) => {
-  try {
-    const { number, capacity } = req.body;
-    if (!number) {
-      return res.status(400).json({ error: 'Table number is required' });
-    }
-    const cleanNumber = String(number).trim();
-    const existing = await prisma.table.findFirst({
-      where: { number: cleanNumber }
-    });
-    if (existing) {
-      return res.status(400).json({ error: 'Table already exists' });
-    }
-    const table = await prisma.table.create({
-      data: {
-        number: cleanNumber,
-        capacity: Number(capacity) || 4,
-        status: 'AVAILABLE',
-        active: true,
-      }
-    });
-    return res.json(table);
-  } catch (err) {
-    console.error('Failed to create table:', err);
-    return res.status(500).json({ error: 'Failed to create table' });
-  }
-});
-
-app.delete('/api/tables/:id', async (req, res) => {
-  try {
-    await prisma.table.delete({
-      where: { id: req.params.id }
-    });
-    return res.json({ success: true });
-  } catch (err) {
-    console.error('Failed to delete table:', err);
-    return res.status(500).json({ error: 'Failed to delete table' });
-  }
-});
-
-app.patch('/api/tables/:id', async (req, res) => {
-  try {
-    const { number, capacity, status, active } = req.body;
-    const table = await prisma.table.update({
-      where: { id: req.params.id },
-      data: {
-        number: number !== undefined ? String(number).trim() : undefined,
-        capacity: capacity !== undefined ? Number(capacity) : undefined,
-        status: status !== undefined ? String(status) : undefined,
-        active: active !== undefined ? Boolean(active) : undefined,
-      }
-    });
-    return res.json(table);
-  } catch (err) {
-    console.error('Failed to update table:', err);
-    return res.status(500).json({ error: 'Failed to update table' });
-  }
-});
 
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error('Unhandled error:', err);

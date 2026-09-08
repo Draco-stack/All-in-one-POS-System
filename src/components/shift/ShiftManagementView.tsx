@@ -112,11 +112,11 @@ export const ShiftManagementView: React.FC = () => {
 
   return (
     <div className={`flex-1 p-4 md:p-6 overflow-y-auto font-sans space-y-6 transition-colors duration-200 ${
-      theme === 'dark' ? 'bg-[#0f1117] text-stone-100' : 'bg-slate-100 text-slate-900'
+      theme === 'dark' ? 'bg-[#0f1117] text-slate-900 dark:text-stone-100' : 'bg-slate-100 text-slate-900'
     }`}>
       {/* Header Banner */}
       <div className={`rounded-2xl p-5 border flex flex-col md:flex-row md:items-center justify-between gap-4 transition-colors ${
-        theme === 'dark' ? 'bg-[#151821] border-stone-800 shadow-lg' : 'bg-white border-slate-200 shadow-xs'
+        theme === 'dark' ? 'bg-[#151821] border-slate-200 dark:border-stone-800 shadow-lg' : 'bg-white border-slate-200 shadow-xs'
       }`}>
         <div>
           <h2 className={`text-lg md:text-xl font-black flex items-center gap-2 ${
@@ -126,7 +126,7 @@ export const ShiftManagementView: React.FC = () => {
             Register Shift & Cash Drawer Reconciliation
           </h2>
           <p className={`text-xs mt-0.5 ${
-            theme === 'dark' ? 'text-stone-400' : 'text-slate-500'
+            theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'
           }`}>
             Live register cash audit, timestamp transaction verification, and shift close discrepancy tracking.
           </p>
@@ -138,7 +138,7 @@ export const ShiftManagementView: React.FC = () => {
               onClick={handlePrintZReport}
               className={`px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2 border cursor-pointer active:scale-95 ${
                 theme === 'dark'
-                  ? 'bg-stone-800 hover:bg-stone-700 text-stone-200 border-stone-700'
+                  ? 'bg-slate-50 dark:bg-stone-800 hover:bg-stone-700 text-stone-200 border-slate-300 dark:border-stone-700'
                   : 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300'
               }`}
             >
@@ -179,14 +179,14 @@ export const ShiftManagementView: React.FC = () => {
           {/* Shift Financial Overview */}
           <div className="lg:col-span-2 space-y-4">
             <div className={`rounded-2xl p-5 border space-y-4 transition-colors ${
-              theme === 'dark' ? 'bg-[#161922] border-stone-800' : 'bg-white border-slate-200 shadow-sm'
+              theme === 'dark' ? 'bg-[#161922] border-slate-200 dark:border-stone-800' : 'bg-white border-slate-200 shadow-sm'
             }`}>
               <div className={`flex items-center justify-between border-b pb-3 ${
-                theme === 'dark' ? 'border-stone-800' : 'border-slate-100'
+                theme === 'dark' ? 'border-slate-200 dark:border-stone-800' : 'border-slate-100'
               }`}>
                 <div>
                   <span className={`text-xs uppercase font-mono tracking-wider ${
-                    theme === 'dark' ? 'text-stone-400' : 'text-slate-500'
+                    theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'
                   }`}>Active Shift Session</span>
                   <h3 className={`text-lg font-bold flex items-center gap-2 mt-0.5 ${
                     theme === 'dark' ? 'text-white' : 'text-slate-900'
@@ -197,7 +197,7 @@ export const ShiftManagementView: React.FC = () => {
                 </div>
                 <div className="text-right">
                   <span className={`text-xs font-mono block ${
-                    theme === 'dark' ? 'text-stone-400' : 'text-slate-500'
+                    theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'
                   }`}>
                     Opened: {currentShift.openedAt ? new Date(currentShift.openedAt).toLocaleTimeString() : 'Today'}
                   </span>
@@ -210,10 +210,10 @@ export const ShiftManagementView: React.FC = () => {
               {/* KPI Metrics */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <div className={`p-3.5 rounded-xl border transition-colors ${
-                  theme === 'dark' ? 'bg-[#0c0e14] border-stone-800' : 'bg-slate-50 border-slate-200'
+                  theme === 'dark' ? 'bg-[#0c0e14] border-slate-200 dark:border-stone-800' : 'bg-slate-50 border-slate-200'
                 }`}>
                   <span className={`text-[10px] uppercase font-bold ${
-                    theme === 'dark' ? 'text-stone-400' : 'text-slate-500'
+                    theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'
                   }`}>Opening Float</span>
                   <p className="text-base font-black text-amber-500 font-mono mt-1">
                     PKR {openingFloatVal.toLocaleString()}
@@ -221,10 +221,10 @@ export const ShiftManagementView: React.FC = () => {
                 </div>
 
                 <div className={`p-3.5 rounded-xl border transition-colors ${
-                  theme === 'dark' ? 'bg-[#0c0e14] border-stone-800' : 'bg-slate-50 border-slate-200'
+                  theme === 'dark' ? 'bg-[#0c0e14] border-slate-200 dark:border-stone-800' : 'bg-slate-50 border-slate-200'
                 }`}>
                   <span className={`text-[10px] uppercase font-bold ${
-                    theme === 'dark' ? 'text-stone-400' : 'text-slate-500'
+                    theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'
                   }`}>Cash Sales</span>
                   <p className="text-base font-black text-emerald-500 font-mono mt-1">
                     PKR {displayCashSales.toLocaleString()}
@@ -232,10 +232,10 @@ export const ShiftManagementView: React.FC = () => {
                 </div>
 
                 <div className={`p-3.5 rounded-xl border transition-colors ${
-                  theme === 'dark' ? 'bg-[#0c0e14] border-stone-800' : 'bg-slate-50 border-slate-200'
+                  theme === 'dark' ? 'bg-[#0c0e14] border-slate-200 dark:border-stone-800' : 'bg-slate-50 border-slate-200'
                 }`}>
                   <span className={`text-[10px] uppercase font-bold ${
-                    theme === 'dark' ? 'text-stone-400' : 'text-slate-500'
+                    theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'
                   }`}>Card & Digital</span>
                   <p className="text-base font-black text-blue-500 font-mono mt-1">
                     PKR {displayCardSales.toLocaleString()}
@@ -243,10 +243,10 @@ export const ShiftManagementView: React.FC = () => {
                 </div>
 
                 <div className={`p-3.5 rounded-xl border transition-colors ${
-                  theme === 'dark' ? 'bg-[#0c0e14] border-stone-800' : 'bg-slate-50 border-slate-200'
+                  theme === 'dark' ? 'bg-[#0c0e14] border-slate-200 dark:border-stone-800' : 'bg-slate-50 border-slate-200'
                 }`}>
                   <span className={`text-[10px] uppercase font-bold ${
-                    theme === 'dark' ? 'text-stone-400' : 'text-slate-500'
+                    theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'
                   }`}>Total Gross</span>
                   <p className="text-base font-black text-purple-500 font-mono mt-1">
                     PKR {displayTotalGross.toLocaleString()}
@@ -267,7 +267,7 @@ export const ShiftManagementView: React.FC = () => {
                     Expected Physical Cash in Register Drawer:
                   </span>
                   <p className={`text-xs mt-0.5 ${
-                    theme === 'dark' ? 'text-stone-400' : 'text-slate-600'
+                    theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-600'
                   }`}>
                     (Opening Float: PKR {openingFloatVal.toLocaleString()} + Shift Cash Sales: PKR {displayCashSales.toLocaleString()})
                   </p>
@@ -282,10 +282,10 @@ export const ShiftManagementView: React.FC = () => {
 
             {/* Shift Transactions Ledger */}
             <div className={`rounded-2xl p-5 border space-y-3 transition-colors ${
-              theme === 'dark' ? 'bg-[#161922] border-stone-800' : 'bg-white border-slate-200 shadow-sm'
+              theme === 'dark' ? 'bg-[#161922] border-slate-200 dark:border-stone-800' : 'bg-white border-slate-200 shadow-sm'
             }`}>
               <div className={`flex items-center justify-between border-b pb-2.5 ${
-                theme === 'dark' ? 'border-stone-800' : 'border-slate-100'
+                theme === 'dark' ? 'border-slate-200 dark:border-stone-800' : 'border-slate-100'
               }`}>
                 <div className="flex items-center gap-2">
                   <Receipt className="w-4 h-4 text-emerald-500" />
@@ -293,13 +293,13 @@ export const ShiftManagementView: React.FC = () => {
                     Shift Transactions Ledger
                   </h4>
                 </div>
-                <span className={`text-xs font-mono ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`}>
+                <span className={`text-xs font-mono ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`}>
                   {currentShiftTransactions.length} orders in this shift
                 </span>
               </div>
 
               {currentShiftTransactions.length === 0 ? (
-                <div className={`text-center py-6 text-xs ${theme === 'dark' ? 'text-stone-500' : 'text-slate-400'}`}>
+                <div className={`text-center py-6 text-xs ${theme === 'dark' ? 'text-slate-400 dark:text-stone-500' : 'text-slate-400'}`}>
                   No orders punched yet during this active shift session.
                 </div>
               ) : (
@@ -311,7 +311,7 @@ export const ShiftManagementView: React.FC = () => {
                         key={order.id}
                         className={`rounded-xl p-2.5 flex items-center justify-between text-xs border transition-colors ${
                           theme === 'dark'
-                            ? 'bg-[#0c0e14] border-stone-800/80 text-stone-300'
+                            ? 'bg-[#0c0e14] border-slate-200 dark:border-stone-800/80 text-slate-700 dark:text-stone-300'
                             : 'bg-slate-50 border-slate-200 text-slate-800'
                         }`}
                       >
@@ -326,12 +326,12 @@ export const ShiftManagementView: React.FC = () => {
                           >
                             {order.paymentMethod || 'cash'}
                           </span>
-                          <span className={theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}>
+                          <span className={theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}>
                             {order.customer?.name || order.orderType || 'Order'}
                           </span>
                         </div>
                         <div className="flex items-center gap-3">
-                          <span className={`font-mono ${theme === 'dark' ? 'text-stone-500' : 'text-slate-400'}`}>
+                          <span className={`font-mono ${theme === 'dark' ? 'text-slate-400 dark:text-stone-500' : 'text-slate-400'}`}>
                             {order.createdAt ? new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
                           </span>
                           <span className={`font-mono font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
@@ -348,7 +348,7 @@ export const ShiftManagementView: React.FC = () => {
 
           {/* Close Shift Action Panel */}
           <div className={`rounded-2xl p-5 border space-y-4 transition-colors ${
-            theme === 'dark' ? 'bg-[#161922] border-stone-800' : 'bg-white border-slate-200 shadow-sm'
+            theme === 'dark' ? 'bg-[#161922] border-slate-200 dark:border-stone-800' : 'bg-white border-slate-200 shadow-sm'
           }`}>
             <h3 className={`font-bold text-base flex items-center gap-2 ${
               theme === 'dark' ? 'text-white' : 'text-slate-900'
@@ -356,17 +356,17 @@ export const ShiftManagementView: React.FC = () => {
               <Lock className="w-5 h-5 text-amber-500" />
               Reconcile & Close Register
             </h3>
-            <p className={`text-xs ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`}>
+            <p className={`text-xs ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`}>
               Count all physical cash in drawer, check variances against system calculation, and finalize shift audit.
             </p>
 
             <div className="space-y-3">
               <div>
                 <label className={`text-xs font-semibold block mb-1 flex items-center justify-between ${
-                  theme === 'dark' ? 'text-stone-300' : 'text-slate-700'
+                  theme === 'dark' ? 'text-slate-700 dark:text-stone-300' : 'text-slate-700'
                 }`}>
                   <span>Actual Physical Cash Counted (PKR)</span>
-                  <span className={`text-[10px] ${theme === 'dark' ? 'text-stone-500' : 'text-slate-400'}`}>Optional or Open Modal</span>
+                  <span className={`text-[10px] ${theme === 'dark' ? 'text-slate-400 dark:text-stone-500' : 'text-slate-400'}`}>Optional or Open Modal</span>
                 </label>
                 <input
                   type="number"
@@ -376,7 +376,7 @@ export const ShiftManagementView: React.FC = () => {
                   onChange={(e) => setActualCashCounted(e.target.value)}
                   className={`w-full border rounded-xl p-3 text-sm font-mono focus:outline-none transition-colors ${
                     theme === 'dark'
-                      ? 'bg-[#0c0e14] border-stone-800 text-white focus:border-emerald-500'
+                      ? 'bg-[#0c0e14] border-slate-200 dark:border-stone-800 text-white focus:border-emerald-500'
                       : 'bg-slate-50 border-slate-300 text-slate-900 focus:border-emerald-600'
                   }`}
                 />
@@ -404,7 +404,7 @@ export const ShiftManagementView: React.FC = () => {
 
               <div>
                 <label className={`text-xs font-semibold block mb-1 ${
-                  theme === 'dark' ? 'text-stone-300' : 'text-slate-700'
+                  theme === 'dark' ? 'text-slate-700 dark:text-stone-300' : 'text-slate-700'
                 }`}>
                   Handover Notes / Variance Remarks
                 </label>
@@ -415,7 +415,7 @@ export const ShiftManagementView: React.FC = () => {
                   onChange={(e) => setShiftNotes(e.target.value)}
                   className={`w-full border rounded-xl p-2.5 text-xs focus:outline-none transition-colors ${
                     theme === 'dark'
-                      ? 'bg-[#0c0e14] border-stone-800 text-white focus:border-emerald-500'
+                      ? 'bg-[#0c0e14] border-slate-200 dark:border-stone-800 text-white focus:border-emerald-500'
                       : 'bg-slate-50 border-slate-300 text-slate-900 focus:border-emerald-600'
                   }`}
                 />
@@ -443,7 +443,7 @@ export const ShiftManagementView: React.FC = () => {
       ) : (
         /* OPEN NEW SHIFT PANEL */
         <div className={`max-w-md mx-auto border rounded-2xl p-6 space-y-4 shadow-xl transition-colors ${
-          theme === 'dark' ? 'bg-[#161922] border-stone-800' : 'bg-white border-slate-200'
+          theme === 'dark' ? 'bg-[#161922] border-slate-200 dark:border-stone-800' : 'bg-white border-slate-200'
         }`}>
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-xl bg-emerald-500/20 border border-emerald-500/30 text-emerald-500 flex items-center justify-center">
@@ -453,7 +453,7 @@ export const ShiftManagementView: React.FC = () => {
               <h3 className={`font-bold text-base ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
                 Open Cashier Register Shift
               </h3>
-              <p className={`text-xs ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`}>
+              <p className={`text-xs ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`}>
                 Enter morning float / change fund to start billing
               </p>
             </div>
@@ -462,7 +462,7 @@ export const ShiftManagementView: React.FC = () => {
           <div className="space-y-3 pt-2">
             <div>
               <label className={`text-xs font-semibold block mb-1 ${
-                theme === 'dark' ? 'text-stone-300' : 'text-slate-700'
+                theme === 'dark' ? 'text-slate-700 dark:text-stone-300' : 'text-slate-700'
               }`}>
                 Opening Cash Float (PKR)
               </label>
@@ -473,7 +473,7 @@ export const ShiftManagementView: React.FC = () => {
                 onChange={(e) => setOpeningFloatInput(e.target.value)}
                 className={`w-full border rounded-xl p-3 text-sm font-mono focus:outline-none transition-colors ${
                   theme === 'dark'
-                    ? 'bg-[#0c0e14] border-stone-800 text-white focus:border-emerald-500'
+                    ? 'bg-[#0c0e14] border-slate-200 dark:border-stone-800 text-white focus:border-emerald-500'
                     : 'bg-slate-50 border-slate-300 text-slate-900 focus:border-emerald-600'
                 }`}
               />
@@ -488,7 +488,7 @@ export const ShiftManagementView: React.FC = () => {
                   onClick={() => setOpeningFloatInput(f)}
                   className={`flex-1 py-1.5 border rounded-lg text-xs font-mono font-bold transition cursor-pointer active:scale-95 ${
                     theme === 'dark'
-                      ? 'bg-[#0c0e14] hover:bg-stone-800 border-stone-800 text-stone-300'
+                      ? 'bg-[#0c0e14] hover:bg-slate-100 dark:hover:bg-stone-800 border-slate-200 dark:border-stone-800 text-slate-700 dark:text-stone-300'
                       : 'bg-slate-50 hover:bg-slate-200 border-slate-300 text-slate-700'
                   }`}
                 >
@@ -499,7 +499,7 @@ export const ShiftManagementView: React.FC = () => {
 
             <div>
               <label className={`text-xs font-semibold block mb-1 ${
-                theme === 'dark' ? 'text-stone-300' : 'text-slate-700'
+                theme === 'dark' ? 'text-slate-700 dark:text-stone-300' : 'text-slate-700'
               }`}>
                 Shift Opening Notes
               </label>
@@ -510,7 +510,7 @@ export const ShiftManagementView: React.FC = () => {
                 onChange={(e) => setShiftNotes(e.target.value)}
                 className={`w-full border rounded-xl p-2.5 text-xs focus:outline-none transition-colors ${
                   theme === 'dark'
-                    ? 'bg-[#0c0e14] border-stone-800 text-white focus:border-emerald-500'
+                    ? 'bg-[#0c0e14] border-slate-200 dark:border-stone-800 text-white focus:border-emerald-500'
                     : 'bg-slate-50 border-slate-300 text-slate-900 focus:border-emerald-600'
                 }`}
               />

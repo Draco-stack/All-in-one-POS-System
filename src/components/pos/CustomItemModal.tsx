@@ -29,21 +29,21 @@ export const CustomItemModal: React.FC<CustomItemModalProps> = ({ isOpen, onClos
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-150">
-      <div className="bg-gradient-to-b from-stone-900 to-[#121212] border border-white/10 ring-1 ring-white/10 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl">
-        <div className="p-4 bg-stone-950/60 backdrop-blur-xs border-b border-white/5 flex items-center justify-between">
+    <div className="fixed inset-0 z-50 bg-slate-900/40 dark:bg-black/60 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-150">
+      <div className="bg-gradient-to-b from-stone-900 to-[#121212] border border-slate-300 dark:border-white/10 ring-1 ring-white/10 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl">
+        <div className="p-4 bg-white/60 dark:bg-stone-950/60 backdrop-blur-xs border-b border-slate-200 dark:border-white/5 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shadow-sm">
               <DollarSign className="w-4 h-4" />
             </div>
             <div>
               <h3 className="text-base font-extrabold text-white">Add Custom / Open Item</h3>
-              <p className="text-[10px] uppercase font-bold tracking-wider text-stone-400">Add ad-hoc charges or specials</p>
+              <p className="text-[10px] uppercase font-bold tracking-wider text-slate-500 dark:text-stone-400">Add ad-hoc charges or specials</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-xl hover:bg-white/5 text-stone-400 hover:text-white transition-all cursor-pointer"
+            className="p-1.5 rounded-xl hover:bg-white/5 text-slate-500 dark:text-stone-400 hover:text-white transition-all cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -51,22 +51,22 @@ export const CustomItemModal: React.FC<CustomItemModalProps> = ({ isOpen, onClos
 
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
           <div className="space-y-1.5">
-            <label className="text-[10px] uppercase font-bold tracking-wider text-stone-400">Item Name *</label>
+            <label className="text-[10px] uppercase font-bold tracking-wider text-slate-500 dark:text-stone-400">Item Name *</label>
             <input
               type="text"
               placeholder="e.g. Corkage Fee, Custom Dessert, Daily Chef Special"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
-              className="w-full bg-stone-950/90 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-stone-100 placeholder-stone-600 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 transition-all shadow-inner"
+              className="w-full bg-stone-950/90 border border-slate-300 dark:border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-stone-100 placeholder-stone-600 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 transition-all shadow-inner"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <label className="text-[10px] uppercase font-bold tracking-wider text-stone-400">Price (PKR) *</label>
+              <label className="text-[10px] uppercase font-bold tracking-wider text-slate-500 dark:text-stone-400">Price (PKR) *</label>
               <div className="relative">
-                <span className="absolute left-3 top-2.5 text-stone-400 text-xs font-mono font-bold">PKR</span>
+                <span className="absolute left-3 top-2.5 text-slate-500 dark:text-stone-400 text-xs font-mono font-bold">PKR</span>
                 <input
                   type="number"
                   step="1"
@@ -75,40 +75,40 @@ export const CustomItemModal: React.FC<CustomItemModalProps> = ({ isOpen, onClos
                   value={price}
                   onChange={(e) => setPrice(e.target.value)}
                   required
-                  className="w-full bg-stone-950/90 border border-white/10 rounded-xl pl-12 pr-3 py-2.5 text-xs text-stone-100 font-mono font-bold focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 transition-all shadow-inner"
+                  className="w-full bg-stone-950/90 border border-slate-300 dark:border-white/10 rounded-xl pl-12 pr-3 py-2.5 text-xs text-slate-900 dark:text-stone-100 font-mono font-bold focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 transition-all shadow-inner"
                 />
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[10px] uppercase font-bold tracking-wider text-stone-400">Quantity</label>
+              <label className="text-[10px] uppercase font-bold tracking-wider text-slate-500 dark:text-stone-400">Quantity</label>
               <input
                 type="number"
                 min="1"
                 max="99"
                 value={quantity}
                 onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
-                className="w-full bg-stone-950/90 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-stone-100 font-mono font-bold text-center focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 transition-all shadow-inner"
+                className="w-full bg-stone-950/90 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2.5 text-xs text-slate-900 dark:text-stone-100 font-mono font-bold text-center focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 transition-all shadow-inner"
               />
             </div>
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-[10px] uppercase font-bold tracking-wider text-stone-400">Item Notes / Kitchen Prep</label>
+            <label className="text-[10px] uppercase font-bold tracking-wider text-slate-500 dark:text-stone-400">Item Notes / Kitchen Prep</label>
             <input
               type="text"
               placeholder="Optional notes or details for receipt/kitchen"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="w-full bg-stone-950/90 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-stone-100 placeholder-stone-600 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 transition-all shadow-inner"
+              className="w-full bg-stone-950/90 border border-slate-300 dark:border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-stone-100 placeholder-stone-600 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 transition-all shadow-inner"
             />
           </div>
 
-          <div className="pt-3 border-t border-white/5 flex items-center justify-end gap-2">
+          <div className="pt-3 border-t border-slate-200 dark:border-white/5 flex items-center justify-end gap-2">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-xl text-xs font-bold text-stone-400 hover:text-white transition-all cursor-pointer"
+              className="px-4 py-2 rounded-xl text-xs font-bold text-slate-500 dark:text-stone-400 hover:text-white transition-all cursor-pointer"
             >
               Cancel
             </button>

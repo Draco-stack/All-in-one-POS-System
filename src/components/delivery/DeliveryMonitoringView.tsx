@@ -388,8 +388,8 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
     
     if (isFinished) {
       return (
-        <div className="flex items-center gap-1.5 font-mono text-xs text-stone-400">
-          <Clock className="w-3.5 h-3.5 text-stone-500" />
+        <div className="flex items-center gap-1.5 font-mono text-xs text-slate-500 dark:text-stone-400">
+          <Clock className="w-3.5 h-3.5 text-slate-400 dark:text-stone-500" />
           <span>{elapsed}m</span>
         </div>
       );
@@ -533,7 +533,7 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
       
       {/* Refined Sidebar Navigation Rail */}
       <aside className={`border-r flex flex-col items-center py-5 gap-6 z-20 shadow-xl transition-colors duration-200 ${
-        theme === 'dark' ? 'bg-[#111216] border-white/10' : 'bg-white border-slate-200 shadow-sm'
+        theme === 'dark' ? 'bg-[#111216] border-slate-300 dark:border-white/10' : 'bg-white border-slate-200 shadow-sm'
       }`}>
         {/* Brand Emblem */}
         <div 
@@ -553,7 +553,7 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
           <button 
             onClick={onOpenPOS}
             className={`w-full h-14 rounded-xl flex flex-col items-center justify-center gap-1 transition-all cursor-pointer group ${
-              theme === 'dark' ? 'text-stone-400 hover:text-white hover:bg-white/5' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+              theme === 'dark' ? 'text-slate-500 dark:text-stone-400 hover:text-white hover:bg-white/5' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
             }`} 
             title="Floor POS Workstation"
           >
@@ -570,7 +570,7 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
             className={`w-full h-14 rounded-xl flex flex-col items-center justify-center gap-1 transition-all cursor-pointer group relative ${
               leftRailActive === 'phone' 
                 ? 'bg-blue-600/20 text-blue-500 border border-blue-500/40 shadow-[0_0_15px_rgba(59,130,246,0.2)]' 
-                : theme === 'dark' ? 'text-stone-400 hover:text-white hover:bg-white/5' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+                : theme === 'dark' ? 'text-slate-500 dark:text-stone-400 hover:text-white hover:bg-white/5' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
             }`}
             title="Call Center Order Punch (F2)"
           >
@@ -587,7 +587,7 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
             className={`w-full h-14 rounded-xl flex flex-col items-center justify-center gap-1 transition-all cursor-pointer group relative ${
               leftRailActive === 'delivery' 
                 ? 'bg-blue-600/20 text-blue-500 border border-blue-500/40 shadow-[0_0_15px_rgba(59,130,246,0.2)]' 
-                : theme === 'dark' ? 'text-stone-400 hover:text-white hover:bg-white/5' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+                : theme === 'dark' ? 'text-slate-500 dark:text-stone-400 hover:text-white hover:bg-white/5' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
             }`}
             title="Live Delivery Monitoring"
           >
@@ -604,7 +604,7 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
           <button 
             onClick={onOpenKitchen}
             className={`w-full h-14 rounded-xl flex flex-col items-center justify-center gap-1 transition-all cursor-pointer group relative ${
-              theme === 'dark' ? 'text-stone-400 hover:text-amber-300 hover:bg-white/5' : 'text-slate-500 hover:text-amber-600 hover:bg-slate-100'
+              theme === 'dark' ? 'text-slate-500 dark:text-stone-400 hover:text-amber-300 hover:bg-white/5' : 'text-slate-500 hover:text-amber-600 hover:bg-slate-100'
             }`} 
             title="Kitchen Display Screen (KDS)"
           >
@@ -627,7 +627,7 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
             className={`w-full h-14 rounded-xl flex flex-col items-center justify-center gap-1 transition-all cursor-pointer group relative ${
               leftRailActive === 'ban' 
                 ? 'bg-rose-600/20 text-rose-500 border border-rose-500/40 shadow-[0_0_15px_rgba(244,63,94,0.2)]' 
-                : theme === 'dark' ? 'text-stone-400 hover:text-rose-400 hover:bg-white/5' : 'text-slate-500 hover:text-rose-600 hover:bg-slate-100'
+                : theme === 'dark' ? 'text-slate-500 dark:text-stone-400 hover:text-rose-400 hover:bg-white/5' : 'text-slate-500 hover:text-rose-600 hover:bg-slate-100'
             }`}
             title="Voided & Cancelled Deliveries"
           >
@@ -652,7 +652,7 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
             className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all cursor-pointer border ${
               soundEnabled 
                 ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20 hover:bg-emerald-500/20' 
-                : theme === 'dark' ? 'bg-stone-800 text-stone-500 border-white/5 hover:text-stone-300' : 'bg-slate-100 text-slate-400 border-slate-200 hover:text-slate-700'
+                : theme === 'dark' ? 'bg-slate-50 dark:bg-stone-800 text-slate-400 dark:text-stone-500 border-slate-200 dark:border-white/5 hover:text-stone-300' : 'bg-slate-100 text-slate-400 border-slate-200 hover:text-slate-700'
             }`}
             title={soundEnabled ? 'Audio alerts active (Click to mute)' : 'Audio alerts muted (Click to enable)'}
           >
@@ -663,7 +663,7 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
           <button 
             onClick={onOpenAdmin}
             className={`w-full h-14 rounded-xl flex flex-col items-center justify-center gap-1 transition-all cursor-pointer group ${
-              theme === 'dark' ? 'text-stone-400 hover:text-amber-300 hover:bg-white/5' : 'text-slate-500 hover:text-amber-600 hover:bg-slate-100'
+              theme === 'dark' ? 'text-slate-500 dark:text-stone-400 hover:text-amber-300 hover:bg-white/5' : 'text-slate-500 hover:text-amber-600 hover:bg-slate-100'
             }`} 
             title="Executive Admin & Financial Reports"
           >
@@ -680,7 +680,7 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
         
         {/* Executive Header Bar */}
         <header className={`px-4 sm:px-6 lg:px-8 py-3.5 border-b flex justify-between items-center shrink-0 backdrop-blur-md z-30 transition-colors duration-200 ${
-          theme === 'dark' ? 'bg-[#121318]/90 border-white/10 text-white' : 'bg-white/95 border-slate-200 text-slate-900 shadow-xs'
+          theme === 'dark' ? 'bg-[#121318]/90 border-slate-300 dark:border-white/10 text-white' : 'bg-white/95 border-slate-200 text-slate-900 shadow-xs'
         }`}>
           <div className="flex items-center gap-3 sm:gap-4 min-w-0">
             <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-stone-950 shadow-sm border border-emerald-300/40 shrink-0">
@@ -699,8 +699,8 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
                   Synced
                 </span>
               </div>
-              <p className={`text-[11px] mt-0.5 flex items-center gap-2 font-medium ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`}>
-                <Store className={`w-3 h-3 ${theme === 'dark' ? 'text-stone-400' : 'text-slate-400'}`} />
+              <p className={`text-[11px] mt-0.5 flex items-center gap-2 font-medium ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`}>
+                <Store className={`w-3 h-3 ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-400'}`} />
                 {selectedBranch === 'All' ? 'All Operating Branches' : `${selectedBranch} Branch`}
                 <span className={theme === 'dark' ? 'text-stone-600' : 'text-slate-300'}>•</span>
                 <LiveClockBadge />
@@ -719,7 +719,7 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
               className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold transition cursor-pointer ${
                 isAutoRefresh
                   ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20 hover:bg-emerald-500/20'
-                  : theme === 'dark' ? 'bg-stone-800 text-stone-400 border-white/5 hover:text-stone-200' : 'bg-slate-100 text-slate-600 border-slate-200 hover:text-slate-900'
+                  : theme === 'dark' ? 'bg-slate-50 dark:bg-stone-800 text-slate-500 dark:text-stone-400 border-slate-200 dark:border-white/5 hover:text-stone-200' : 'bg-slate-100 text-slate-600 border-slate-200 hover:text-slate-900'
               }`}
               title="Toggle automatic 10-second polling"
             >
@@ -736,7 +736,7 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
               }}
               className={`p-2 rounded-xl border transition-all duration-300 cursor-pointer active:scale-90 flex items-center justify-center group shadow-sm relative overflow-hidden ${
                 theme === 'dark'
-                  ? 'bg-stone-800/90 hover:bg-stone-700 text-amber-400 border-white/10 hover:border-amber-400/50 hover:shadow-[0_0_16px_rgba(251,191,36,0.3)]'
+                  ? 'bg-slate-50 dark:bg-stone-800/90 hover:bg-stone-700 text-amber-400 border-slate-300 dark:border-white/10 hover:border-amber-400/50 hover:shadow-[0_0_16px_rgba(251,191,36,0.3)]'
                   : 'bg-amber-50 hover:bg-amber-100 text-amber-600 border-amber-300/80 hover:border-amber-400 hover:shadow-[0_0_16px_rgba(245,158,11,0.25)]'
               }`}
               title={theme === 'dark' ? 'Switch to Light Theme (Current: Dark)' : 'Switch to Dark Theme (Current: Light)'}
@@ -754,7 +754,7 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
               onClick={handleManualRefresh}
               className={`p-2 rounded-xl transition cursor-pointer active:scale-95 border ${
                 theme === 'dark' 
-                  ? 'bg-stone-800/80 hover:bg-stone-700 text-stone-300 hover:text-white border-white/10' 
+                  ? 'bg-slate-50 dark:bg-stone-800/80 hover:bg-stone-700 text-slate-700 dark:text-stone-300 hover:text-white border-slate-300 dark:border-white/10' 
                   : 'bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 border-slate-200 shadow-xs'
               }`}
               title="Sync latest live orders"
@@ -772,7 +772,7 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
               }}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border transition cursor-pointer group shadow-sm ${
                 theme === 'dark' 
-                  ? 'bg-stone-900/80 hover:bg-red-950/60 hover:border-red-500/40 border-white/10' 
+                  ? 'bg-white dark:bg-stone-900/80 hover:bg-red-950/60 hover:border-red-500/40 border-slate-300 dark:border-white/10' 
                   : 'bg-slate-100 hover:bg-red-50 hover:border-red-300 border-slate-200'
               }`}
               title={`Sign Out (${currentUser?.name || 'Operator'})`}
@@ -784,7 +784,7 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
                 <div className={`text-xs font-bold transition-colors leading-tight ${theme === 'dark' ? 'text-white group-hover:text-red-300' : 'text-slate-800 group-hover:text-red-600'}`}>
                   {currentUser?.name || 'Operator'}
                 </div>
-                <div className={`text-[10px] font-mono uppercase tracking-wider ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`}>
+                <div className={`text-[10px] font-mono uppercase tracking-wider ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`}>
                   {currentUser?.role || 'Dispatcher'}
                 </div>
               </div>
@@ -796,19 +796,19 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
         {/* Executive KPI Metric Strip (High Density & Ergonomic Hierarchy) */}
         <section className={`grid grid-cols-2 lg:grid-cols-4 border-b shrink-0 transition-colors duration-200 ${
           theme === 'dark' 
-            ? 'border-white/10 bg-[#14161d]/60 divide-x divide-white/10' 
+            ? 'border-slate-300 dark:border-white/10 bg-[#14161d]/60 divide-x divide-white/10' 
             : 'border-slate-200 bg-white divide-x divide-slate-200 shadow-xs'
         }`}>
           {/* Metric 1: SLA Delivery Time */}
           <div className="p-5 flex items-center justify-between">
             <div>
-              <div className={`font-mono text-[11px] uppercase tracking-wider font-bold flex items-center gap-1.5 ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`}>
+              <div className={`font-mono text-[11px] uppercase tracking-wider font-bold flex items-center gap-1.5 ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`}>
                 <Clock className="w-3.5 h-3.5 text-blue-500" />
                 Avg SLA Delivery
               </div>
               <div className={`text-2xl lg:text-3xl font-black mt-1 tracking-tight flex items-baseline gap-1 ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
                 {averageDeliveryTime > 0 ? `${averageDeliveryTime}m` : '--'}
-                <span className={`text-xs font-normal ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`}>avg/trip</span>
+                <span className={`text-xs font-normal ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`}>avg/trip</span>
               </div>
               <div className="text-[11px] text-emerald-500 font-semibold mt-1">
                 Target Benchmark: &lt; 30 mins
@@ -819,7 +819,7 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
           {/* Metric 2: SLA Breach Rate */}
           <div className="p-5 flex items-center justify-between">
             <div>
-              <div className={`font-mono text-[11px] uppercase tracking-wider font-bold flex items-center gap-1.5 ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`}>
+              <div className={`font-mono text-[11px] uppercase tracking-wider font-bold flex items-center gap-1.5 ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`}>
                 <AlertTriangle className="w-3.5 h-3.5 text-rose-500" />
                 SLA Breach (&gt;45m)
               </div>
@@ -828,7 +828,7 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
                   {slaBreachRate}%
                 </span>
               </div>
-              <div className={`text-[11px] mt-1 ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`}>
+              <div className={`text-[11px] mt-1 ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`}>
                 {breachedOrdersCount} orders currently at SLA risk
               </div>
             </div>
@@ -846,7 +846,7 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
             }`}
           >
             <div>
-              <div className={`font-mono text-[11px] uppercase tracking-wider font-bold flex items-center gap-1.5 ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`}>
+              <div className={`font-mono text-[11px] uppercase tracking-wider font-bold flex items-center gap-1.5 ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`}>
                 <Truck className="w-3.5 h-3.5 text-amber-500" />
                 Fleet (On Trip / Idle)
               </div>
@@ -854,7 +854,7 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
                 <span className="text-amber-500">{onTripRidersCount}</span>
                 <span className={theme === 'dark' ? 'text-stone-600' : 'text-slate-300'}>/</span>
                 <span className="text-emerald-500">{idleRidersCount}</span>
-                <span className={`text-xs font-normal ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`}>riders</span>
+                <span className={`text-xs font-normal ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`}>riders</span>
               </div>
               <div className="text-[11px] text-blue-500 group-hover:underline font-semibold mt-1 flex items-center gap-1">
                 Manage Fleet &amp; Riders →
@@ -874,7 +874,7 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
             }`}
           >
             <div>
-              <div className={`font-mono text-[11px] uppercase tracking-wider font-bold flex items-center gap-1.5 ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`}>
+              <div className={`font-mono text-[11px] uppercase tracking-wider font-bold flex items-center gap-1.5 ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`}>
                 <DollarSign className="w-3.5 h-3.5 text-emerald-500" />
                 COD Cash Outstanding
               </div>
@@ -891,7 +891,7 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
         {/* Filter Toolbar & Command Controls */}
         <div className={`px-4 sm:px-6 lg:px-8 py-3 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 backdrop-blur-md shrink-0 border-b z-20 transition-colors duration-200 ${
           theme === 'dark' 
-            ? 'bg-[#14161d]/80 border-white/10' 
+            ? 'bg-[#14161d]/80 border-slate-300 dark:border-white/10' 
             : 'bg-white/90 border-slate-200 shadow-xs'
         }`}>
           
@@ -917,14 +917,14 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
                   className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer border shrink-0 whitespace-nowrap active:scale-95 ${
                     isSelected
                       ? theme === 'dark' ? 'bg-white text-stone-950 border-white shadow-md' : 'bg-blue-600 text-white border-blue-600 shadow-md'
-                      : theme === 'dark' ? 'bg-[#181a22] text-stone-400 border-white/5 hover:text-white hover:border-white/20' : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200 hover:text-slate-900'
+                      : theme === 'dark' ? 'bg-[#181a22] text-slate-500 dark:text-stone-400 border-slate-200 dark:border-white/5 hover:text-white hover:border-white/20' : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200 hover:text-slate-900'
                   }`}
                 >
                   <span>{tab.label}</span>
                   <span className={`px-1.5 py-0.2 rounded-md text-[10px] font-mono font-black ${
                     isSelected 
-                      ? theme === 'dark' ? 'bg-stone-900 text-white' : 'bg-blue-800 text-white' 
-                      : theme === 'dark' ? 'bg-white/10 text-stone-300' : 'bg-slate-200 text-slate-700'
+                      ? theme === 'dark' ? 'bg-white dark:bg-stone-900 text-white' : 'bg-blue-800 text-white' 
+                      : theme === 'dark' ? 'bg-white/10 text-slate-700 dark:text-stone-300' : 'bg-slate-200 text-slate-700'
                   }`}>
                     {tab.count}
                   </span>
@@ -944,7 +944,7 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
                 className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer border shrink-0 whitespace-nowrap active:scale-95 ${
                   isClustered 
                     ? 'bg-blue-600 text-white border-blue-500 shadow-md shadow-blue-500/20' 
-                    : theme === 'dark' ? 'bg-[#181a22] text-stone-400 border-white/5 hover:text-stone-200' : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200 hover:text-slate-900'
+                    : theme === 'dark' ? 'bg-[#181a22] text-slate-500 dark:text-stone-400 border-slate-200 dark:border-white/5 hover:text-stone-200' : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200 hover:text-slate-900'
                 }`}
                 title="Group active deliveries by geographic neighborhood for batch dispatch"
               >
@@ -959,7 +959,7 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
                 value={selectedBranch}
                 onChange={(e) => setSelectedBranch(e.target.value)}
                 className={`border rounded-xl px-3 py-1.5 text-xs font-semibold focus:outline-none focus:border-blue-500 cursor-pointer appearance-none pr-7 shadow-xs ${
-                  theme === 'dark' ? 'bg-[#181a22] text-stone-300 border-white/10' : 'bg-slate-100 text-slate-700 border-slate-300'
+                  theme === 'dark' ? 'bg-[#181a22] text-slate-700 dark:text-stone-300 border-slate-300 dark:border-white/10' : 'bg-slate-100 text-slate-700 border-slate-300'
                 }`}
               >
                 <option value="All">All Outlets</option>
@@ -970,7 +970,7 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
                 <option value="Gojra">Gojra Branch</option>
                 <option value="Gulberg">Gulberg Branch</option>
               </select>
-              <Store className={`w-3.5 h-3.5 absolute right-2.5 top-2.5 pointer-events-none ${theme === 'dark' ? 'text-stone-500' : 'text-slate-400'}`} />
+              <Store className={`w-3.5 h-3.5 absolute right-2.5 top-2.5 pointer-events-none ${theme === 'dark' ? 'text-slate-400 dark:text-stone-500' : 'text-slate-400'}`} />
             </div>
           </div>
 
@@ -978,7 +978,7 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
           <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
             {/* Search Bar */}
             <div className="relative flex-1 sm:w-60 md:w-64">
-              <Search className={`w-4 h-4 absolute left-3 top-2.5 ${theme === 'dark' ? 'text-stone-400' : 'text-slate-400'}`} />
+              <Search className={`w-4 h-4 absolute left-3 top-2.5 ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-400'}`} />
               <input
                 ref={searchInputRef}
                 type="text"
@@ -987,14 +987,14 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className={`w-full border rounded-xl pl-9 pr-8 py-1.5 text-xs focus:outline-none focus:border-blue-500 transition font-medium ${
                   theme === 'dark' 
-                    ? 'bg-[#181a22] border-white/10 text-white placeholder:text-stone-500 shadow-inner' 
+                    ? 'bg-[#181a22] border-slate-300 dark:border-white/10 text-white placeholder:text-slate-400 dark:text-stone-500 shadow-inner' 
                     : 'bg-slate-100 border-slate-300 text-slate-900 placeholder:text-slate-400 shadow-xs'
                 }`}
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery('')}
-                  className={`absolute right-2.5 top-2 ${theme === 'dark' ? 'text-stone-400 hover:text-white' : 'text-slate-400 hover:text-slate-800'}`}
+                  className={`absolute right-2.5 top-2 ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400 hover:text-white' : 'text-slate-400 hover:text-slate-800'}`}
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -1008,7 +1008,7 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
             >
               <Plus className="w-4 h-4" />
               <span>New Delivery</span>
-              <kbd className="hidden lg:inline-block px-1.5 py-0.5 text-[9px] font-mono bg-blue-700/50 rounded border border-white/20">F2</kbd>
+              <kbd className="hidden lg:inline-block px-1.5 py-0.5 text-[9px] font-mono bg-blue-700/50 rounded border border-slate-300 dark:border-white/20">F2</kbd>
             </button>
           </div>
         </div>
@@ -1026,7 +1026,7 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
                       <Truck className="w-5 h-5 text-amber-400" />
                       Active Delivery Fleet &amp; COD Cash Reconciliations
                     </h2>
-                    <p className="text-xs text-stone-400 mt-0.5">
+                    <p className="text-xs text-slate-500 dark:text-stone-400 mt-0.5">
                       Monitor live rider assignments, in-flight trips, and audit collected cash on hand.
                     </p>
                   </div>
@@ -1054,7 +1054,7 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
                         key={driver}
                         className={`border rounded-2xl p-5 space-y-4 shadow-lg transition group ${
                           theme === 'dark' 
-                            ? 'bg-[#151720] border-white/10 hover:border-white/20' 
+                            ? 'bg-[#151720] border-slate-300 dark:border-white/10 hover:border-white/20' 
                             : 'bg-white border-slate-200 shadow-sm hover:border-slate-300'
                         }`}
                       >
@@ -1069,7 +1069,7 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
                               }`}>
                                 {driver}
                               </h4>
-                              <span className={`text-[11px] font-medium block ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`}>
+                              <span className={`text-[11px] font-medium block ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`}>
                                 Master POS Delivery Fleet
                               </span>
                             </div>
@@ -1088,27 +1088,27 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
 
                         {/* Trips stats */}
                         <div className={`grid grid-cols-3 gap-2 p-3 rounded-xl text-xs border ${
-                          theme === 'dark' ? 'bg-[#0d0e12] border-white/5' : 'bg-slate-50 border-slate-200'
+                          theme === 'dark' ? 'bg-[#0d0e12] border-slate-200 dark:border-white/5' : 'bg-slate-50 border-slate-200'
                         }`}>
                           <div>
-                            <span className={`text-[10px] font-medium block mb-0.5 ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`}>Active</span>
+                            <span className={`text-[10px] font-medium block mb-0.5 ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`}>Active</span>
                             <span className="font-mono font-bold text-sm text-amber-400">{activeTrips.length}</span>
                           </div>
                           <div>
-                            <span className={`text-[10px] font-medium block mb-0.5 ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`}>Delivered</span>
+                            <span className={`text-[10px] font-medium block mb-0.5 ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`}>Delivered</span>
                             <span className="font-mono font-bold text-sm text-emerald-400">{stats?.delivered || 0}</span>
                           </div>
                           <div>
-                            <span className={`text-[10px] font-medium block mb-0.5 ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`}>Cancelled</span>
+                            <span className={`text-[10px] font-medium block mb-0.5 ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`}>Cancelled</span>
                             <span className="font-mono font-bold text-sm text-red-400">{stats?.cancelled || 0}</span>
                           </div>
                         </div>
 
                         {/* Cash & Drop Button */}
-                        <div className={`flex items-center justify-between border-t pt-3.5 ${theme === 'dark' ? 'border-white/10' : 'border-slate-200'}`}>
+                        <div className={`flex items-center justify-between border-t pt-3.5 ${theme === 'dark' ? 'border-slate-300 dark:border-white/10' : 'border-slate-200'}`}>
                           <div>
                             <div className="flex items-center gap-1.5">
-                              <span className={`font-mono text-[10px] uppercase tracking-wider font-bold block ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`}>
+                              <span className={`font-mono text-[10px] uppercase tracking-wider font-bold block ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`}>
                                 COD Wallet Balance
                               </span>
                               {(stats?.cancelledRevenue || 0) > 0 && (
@@ -1141,16 +1141,16 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
 
               {/* Cash Drops Audit Log Table */}
               <div className={`border rounded-2xl p-6 space-y-4 shadow-xl ${
-                theme === 'dark' ? 'bg-[#151720] border-white/10' : 'bg-white border-slate-200 shadow-sm'
+                theme === 'dark' ? 'bg-[#151720] border-slate-300 dark:border-white/10' : 'bg-white border-slate-200 shadow-sm'
               }`}>
-                <div className={`flex items-center justify-between border-b pb-4 ${theme === 'dark' ? 'border-white/10' : 'border-slate-200'}`}>
+                <div className={`flex items-center justify-between border-b pb-4 ${theme === 'dark' ? 'border-slate-300 dark:border-white/10' : 'border-slate-200'}`}>
                   <div className="flex items-center gap-2">
                     <DollarSign className="w-5 h-5 text-emerald-500" />
                     <h3 className={`text-sm font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
                       Verified Rider Cash Drops Audit Ledger
                     </h3>
                   </div>
-                  <span className={`text-xs font-mono ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`}>
+                  <span className={`text-xs font-mono ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`}>
                     Showing latest processed drops
                   </span>
                 </div>
@@ -1159,7 +1159,7 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
                   <table className="w-full text-left border-collapse text-xs">
                     <thead>
                       <tr className={`border-b font-bold uppercase tracking-wider text-[10px] ${
-                        theme === 'dark' ? 'border-white/10 text-stone-400' : 'border-slate-200 text-slate-500'
+                        theme === 'dark' ? 'border-slate-300 dark:border-white/10 text-slate-500 dark:text-stone-400' : 'border-slate-200 text-slate-500'
                       }`}>
                         <th className="py-3 px-4">Time &amp; Date</th>
                         <th className="py-3 px-4">Fleet Rider</th>
@@ -1171,7 +1171,7 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
                     <tbody className={`divide-y font-medium ${theme === 'dark' ? 'divide-white/5' : 'divide-slate-200'}`}>
                       {(cashDrops || []).length === 0 ? (
                         <tr>
-                          <td colSpan={5} className={`py-12 text-center text-xs ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`}>
+                          <td colSpan={5} className={`py-12 text-center text-xs ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`}>
                             No cash drops recorded during current shift.
                           </td>
                         </tr>
@@ -1180,15 +1180,15 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
                           <tr key={drop.id} className={`transition ${
                             theme === 'dark' ? 'hover:bg-white/[0.02] text-stone-200' : 'hover:bg-slate-50 text-slate-800'
                           }`}>
-                            <td className={`py-3.5 px-4 font-mono ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`}>
+                            <td className={`py-3.5 px-4 font-mono ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`}>
                               {new Date(drop.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                             </td>
                             <td className={`py-3.5 px-4 font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>{drop.riderName}</td>
                             <td className="py-3.5 px-4 text-right font-bold text-emerald-500 font-mono">
                               PKR {drop.amount.toLocaleString()}
                             </td>
-                            <td className={`py-3.5 px-4 font-mono ${theme === 'dark' ? 'text-stone-300' : 'text-slate-700'}`}>{drop.receivedBy || 'Robert Vance'}</td>
-                            <td className={`py-3.5 px-4 ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`}>{drop.notes || 'End of shift reconciliation'}</td>
+                            <td className={`py-3.5 px-4 font-mono ${theme === 'dark' ? 'text-slate-700 dark:text-stone-300' : 'text-slate-700'}`}>{drop.receivedBy || 'Robert Vance'}</td>
+                            <td className={`py-3.5 px-4 ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`}>{drop.notes || 'End of shift reconciliation'}</td>
                           </tr>
                         ))
                       )}
@@ -1209,7 +1209,7 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
                   </div>
                   <div>
                     <h4 className={`font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>Geographical Sector Clustering Active</h4>
-                    <p className={theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}>
+                    <p className={theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}>
                       Deliveries are grouped by neighborhood for high-efficiency route batching and multi-order rider dispatch.
                     </p>
                   </div>
@@ -1217,7 +1217,7 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
                 <button
                   onClick={() => setIsClustered(false)}
                   className={`px-3 py-1.5 rounded-xl font-semibold text-xs border transition cursor-pointer ${
-                    theme === 'dark' ? 'bg-stone-800 hover:bg-stone-700 text-stone-300 border-white/10' : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200 shadow-xs'
+                    theme === 'dark' ? 'bg-slate-50 dark:bg-stone-800 hover:bg-stone-700 text-slate-700 dark:text-stone-300 border-slate-300 dark:border-white/10' : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200 shadow-xs'
                   }`}
                 >
                   Switch to Standard View
@@ -1235,11 +1235,11 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
                     <div
                       key={sectorName}
                       className={`border rounded-2xl p-5 flex flex-col justify-between space-y-4 shadow-lg transition ${
-                        theme === 'dark' ? 'bg-[#151720] border-white/10 hover:border-white/20' : 'bg-white border-slate-200 shadow-sm hover:border-slate-300'
+                        theme === 'dark' ? 'bg-[#151720] border-slate-300 dark:border-white/10 hover:border-white/20' : 'bg-white border-slate-200 shadow-sm hover:border-slate-300'
                       }`}
                     >
                       <div>
-                        <div className={`flex items-center justify-between border-b pb-3 ${theme === 'dark' ? 'border-white/10' : 'border-slate-200'}`}>
+                        <div className={`flex items-center justify-between border-b pb-3 ${theme === 'dark' ? 'border-slate-300 dark:border-white/10' : 'border-slate-200'}`}>
                           <div className="flex items-center gap-2">
                             <MapPin className="w-4 h-4 text-rose-500" />
                             <h3 className={`text-sm font-black ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>{sectorName}</h3>
@@ -1260,7 +1260,7 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
                                   #{order.orderNumber || order.id}
                                   {getOrderStatusBadge(order)}
                                 </div>
-                                <div className={`text-[11px] truncate max-w-[200px] mt-0.5 ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`}>
+                                <div className={`text-[11px] truncate max-w-[200px] mt-0.5 ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`}>
                                   {order.customer?.name} • {order.customer?.address}
                                 </div>
                               </div>
@@ -1275,9 +1275,9 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
                       {/* Batch Dispatch Control */}
                       {pendingInSector.length > 0 && (
                         <div className={`p-3 rounded-xl border space-y-2 ${
-                          theme === 'dark' ? 'bg-[#0e0f14] border-white/5' : 'bg-slate-50 border-slate-200'
+                          theme === 'dark' ? 'bg-[#0e0f14] border-slate-200 dark:border-white/5' : 'bg-slate-50 border-slate-200'
                         }`}>
-                          <label className={`text-[11px] font-bold uppercase tracking-wider block ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`}>
+                          <label className={`text-[11px] font-bold uppercase tracking-wider block ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`}>
                             Batch Assign Rider
                           </label>
                           <div className="flex gap-2">
@@ -1287,7 +1287,7 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
                                 setBatchRiderMap((prev) => ({ ...prev, [sectorName]: e.target.value }))
                               }
                               className={`flex-1 border rounded-xl px-2.5 py-1.5 text-xs font-semibold focus:outline-none focus:border-blue-500 cursor-pointer ${
-                                theme === 'dark' ? 'bg-[#181a22] text-white border-white/10' : 'bg-white text-slate-900 border-slate-300'
+                                theme === 'dark' ? 'bg-[#181a22] text-white border-slate-300 dark:border-white/10' : 'bg-white text-slate-900 border-slate-300'
                               }`}
                             >
                               <option value="">Select Rider...</option>
@@ -1316,12 +1316,12 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
           ) : (
             /* TAB 3: STANDARD PRODUCTION ORDERS TABLE */
             <div className={`overflow-hidden border rounded-2xl shadow-2xl transition-colors duration-200 ${
-              theme === 'dark' ? 'border-white/10 bg-[#14161f]' : 'border-slate-200 bg-white shadow-sm'
+              theme === 'dark' ? 'border-slate-300 dark:border-white/10 bg-[#14161f]' : 'border-slate-200 bg-white shadow-sm'
             }`}>
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className={`border-b font-bold uppercase tracking-wider text-[10px] sticky top-0 z-10 ${
-                    theme === 'dark' ? 'border-white/10 bg-[#111218] text-stone-400' : 'border-slate-200 bg-slate-50 text-slate-600'
+                    theme === 'dark' ? 'border-slate-300 dark:border-white/10 bg-[#111218] text-slate-500 dark:text-stone-400' : 'border-slate-200 bg-slate-50 text-slate-600'
                   }`}>
                     <th className="py-3.5 px-4">Order ID &amp; Source</th>
                     <th className="py-3.5 px-4">Status</th>
@@ -1338,10 +1338,10 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
                 <tbody className={`divide-y text-xs font-medium ${theme === 'dark' ? 'divide-white/5' : 'divide-slate-200'}`}>
                   {displayedOrders.length === 0 ? (
                     <tr>
-                      <td colSpan={10} className={`py-20 text-center ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`}>
+                      <td colSpan={10} className={`py-20 text-center ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`}>
                         <Truck className={`w-12 h-12 mx-auto mb-3 ${theme === 'dark' ? 'text-stone-600' : 'text-slate-300'}`} />
                         <h4 className={`text-base font-bold mb-1 ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>No Orders Match Current View</h4>
-                        <p className={`text-xs max-w-sm mx-auto ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`}>
+                        <p className={`text-xs max-w-sm mx-auto ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`}>
                           There are no active orders matching your filter criteria. Punch a new order or adjust branch/status filters.
                         </p>
                         <button
@@ -1380,7 +1380,7 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
                               <span className="text-[10px] font-mono text-blue-500 bg-blue-500/10 px-1.5 py-0.2 rounded border border-blue-500/20">
                                 {order.source || 'Call Center'}
                               </span>
-                              <span className={`text-[10px] ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`}>
+                              <span className={`text-[10px] ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`}>
                                 {order.branchName || order.outlet || 'Main'}
                               </span>
                             </div>
@@ -1409,14 +1409,14 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
                           </td>
 
                           {/* Timestamp */}
-                          <td className={`py-3.5 px-4 font-mono text-xs ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`}>
+                          <td className={`py-3.5 px-4 font-mono text-xs ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`}>
                             {formatOrderTime(order.createdAt)}
                           </td>
 
                           {/* Customer */}
                           <td className="py-3.5 px-4">
                             <div className={`font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>{order.customer?.name || 'Walk-in'}</div>
-                            <div className={`font-mono text-[11px] mt-0.5 ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`}>
+                            <div className={`font-mono text-[11px] mt-0.5 ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`}>
                               {order.customer?.phone || 'N/A'}
                             </div>
                           </td>
@@ -1428,7 +1428,7 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
                               <span className="truncate">{getAddressSector(order.deliveryAddress || order.customer?.address)}</span>
                             </div>
                             <div 
-                              className={`text-xs truncate ${theme === 'dark' ? 'text-stone-300' : 'text-slate-600'}`}
+                              className={`text-xs truncate ${theme === 'dark' ? 'text-slate-700 dark:text-stone-300' : 'text-slate-600'}`}
                               title={order.customer?.address || order.deliveryAddress || '-'}
                             >
                               {order.customer?.address || order.deliveryAddress || '-'}
@@ -1494,7 +1494,7 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
                               ) : (
                                 <span 
                                   title="No customer phone number available"
-                                  className={`text-[11px] font-mono italic opacity-60 ${theme === 'dark' ? 'text-stone-500' : 'text-slate-400'}`}
+                                  className={`text-[11px] font-mono italic opacity-60 ${theme === 'dark' ? 'text-slate-400 dark:text-stone-500' : 'text-slate-400'}`}
                                 >
                                   No Phone
                                 </span>
@@ -1539,7 +1539,7 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
         {/* Operational Pagination Footer */}
         <footer className={`px-8 py-3 border-t flex flex-col sm:flex-row justify-between items-center gap-3 shrink-0 text-xs transition-colors duration-200 ${
           theme === 'dark' 
-            ? 'border-white/10 bg-[#111216] text-stone-400' 
+            ? 'border-slate-300 dark:border-white/10 bg-[#111216] text-slate-500 dark:text-stone-400' 
             : 'border-slate-200 bg-white text-slate-600 shadow-xs'
         }`}>
           <div className="flex items-center gap-3">
@@ -1570,7 +1570,7 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
               <button
                 onClick={() => setVisibleCount(10)}
                 className={`px-3 py-1.5 border rounded-xl text-xs font-semibold transition cursor-pointer ${
-                  theme === 'dark' ? 'bg-stone-800 text-stone-300 border-white/10 hover:bg-stone-700' : 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200'
+                  theme === 'dark' ? 'bg-slate-50 dark:bg-stone-800 text-slate-700 dark:text-stone-300 border-slate-300 dark:border-white/10 hover:bg-stone-700' : 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200'
                 }`}
               >
                 Reset to 10
@@ -1617,21 +1617,21 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
       {/* Rider Cash Drop Modal */}
       {activeDropRider && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm print:hidden">
-          <div className="bg-[#171924] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+          <div className="bg-[#171924] border border-slate-300 dark:border-white/10 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             {/* Header */}
-            <div className="px-6 py-4 bg-[#12131d] border-b border-white/10 flex items-center justify-between">
+            <div className="px-6 py-4 bg-[#12131d] border-b border-slate-300 dark:border-white/10 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center border border-emerald-500/30">
                   <DollarSign className="w-5 h-5" />
                 </div>
                 <div>
                   <h3 className="text-sm font-black text-white">Record Rider Cash Drop</h3>
-                  <p className="text-xs text-stone-400 font-medium">Reconcile COD Cash on Hand</p>
+                  <p className="text-xs text-slate-500 dark:text-stone-400 font-medium">Reconcile COD Cash on Hand</p>
                 </div>
               </div>
               <button
                 onClick={() => setActiveDropRider(null)}
-                className="p-1 rounded-lg text-stone-400 hover:text-white hover:bg-white/10 transition cursor-pointer"
+                className="p-1 rounded-lg text-slate-500 dark:text-stone-400 hover:text-white hover:bg-white/10 transition cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1654,8 +1654,8 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
               }}
               className="p-6 space-y-4 text-xs"
             >
-              <div className="bg-[#0e0f15] p-3.5 rounded-xl border border-white/5 space-y-1">
-                <span className="text-stone-400 text-[11px] block">Selected Delivery Fleet Rider:</span>
+              <div className="bg-[#0e0f15] p-3.5 rounded-xl border border-slate-200 dark:border-white/5 space-y-1">
+                <span className="text-slate-500 dark:text-stone-400 text-[11px] block">Selected Delivery Fleet Rider:</span>
                 <span className="text-sm font-black text-white block">{activeDropRider}</span>
                 <span className="text-emerald-400 text-xs font-mono font-bold block">
                   Current Wallet Cash: PKR {getRiderCashOnHand(activeDropRider).toLocaleString()}
@@ -1663,7 +1663,7 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
               </div>
 
               <div>
-                <label className="block font-bold text-stone-300 mb-1">
+                <label className="block font-bold text-slate-700 dark:text-stone-300 mb-1">
                   Amount to Receive (PKR) *
                 </label>
                 <input
@@ -1673,7 +1673,7 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
                   placeholder="e.g. 5000"
                   value={dropAmount}
                   onChange={(e) => setDropAmount(e.target.value)}
-                  className="w-full bg-[#0e0f15] border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white font-mono focus:outline-none focus:border-emerald-500 transition"
+                  className="w-full bg-[#0e0f15] border border-slate-300 dark:border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white font-mono focus:outline-none focus:border-emerald-500 transition"
                 />
                 <div className="flex gap-2 mt-2">
                   {[1000, 2000, 5000, getRiderCashOnHand(activeDropRider)].map((quickAmt, idx) => (
@@ -1681,7 +1681,7 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
                       key={idx}
                       type="button"
                       onClick={() => setDropAmount(quickAmt.toString())}
-                      className="px-2.5 py-1 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 text-[10px] font-mono font-bold cursor-pointer"
+                      className="px-2.5 py-1 rounded-lg bg-slate-50 dark:bg-stone-800 hover:bg-stone-700 text-slate-700 dark:text-stone-300 text-[10px] font-mono font-bold cursor-pointer"
                     >
                       {idx === 3 ? 'Max All' : `${quickAmt}`}
                     </button>
@@ -1690,7 +1690,7 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
               </div>
 
               <div>
-                <label className="block font-bold text-stone-300 mb-1">
+                <label className="block font-bold text-slate-700 dark:text-stone-300 mb-1">
                   Manager Reconciliation Memo / Notes
                 </label>
                 <input
@@ -1698,7 +1698,7 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
                   placeholder="e.g. End of dinner shift handoff"
                   value={dropNotes}
                   onChange={(e) => setDropNotes(e.target.value)}
-                  className="w-full bg-[#0e0f15] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder:text-stone-500 focus:outline-none focus:border-emerald-500 transition"
+                  className="w-full bg-[#0e0f15] border border-slate-300 dark:border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder:text-slate-400 dark:text-stone-500 focus:outline-none focus:border-emerald-500 transition"
                 />
               </div>
 
@@ -1706,7 +1706,7 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setActiveDropRider(null)}
-                  className="px-4 py-2 rounded-xl text-stone-400 hover:text-white font-semibold cursor-pointer"
+                  className="px-4 py-2 rounded-xl text-slate-500 dark:text-stone-400 hover:text-white font-semibold cursor-pointer"
                 >
                   Cancel
                 </button>
