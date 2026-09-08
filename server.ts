@@ -107,11 +107,20 @@ app.post('/api/auth/login', async (req, res) => {
   // Try fallback mapping for default client-side PINs if direct match isn't found
   if (!user) {
     if (String(pin) === '1111') {
-      user = await prisma.user.findFirst({ where: { role: { in: ['OWNER', 'owner'] }, active: true } });
+      const defaultUser = await prisma.user.findFirst({ where: { role: { in: ['OWNER', 'owner'] }, active: true } });
+      if (defaultUser && (defaultUser.pin === '1111' || defaultUser.pin === '1234')) {
+        user = defaultUser;
+      }
     } else if (String(pin) === '2222') {
-      user = await prisma.user.findFirst({ where: { role: { in: ['MANAGER', 'manager'] }, active: true } });
+      const defaultUser = await prisma.user.findFirst({ where: { role: { in: ['MANAGER', 'manager'] }, active: true } });
+      if (defaultUser && defaultUser.pin === '2222') {
+        user = defaultUser;
+      }
     } else if (String(pin) === '3333') {
-      user = await prisma.user.findFirst({ where: { role: { in: ['CASHIER', 'cashier'] }, active: true } });
+      const defaultUser = await prisma.user.findFirst({ where: { role: { in: ['CASHIER', 'cashier'] }, active: true } });
+      if (defaultUser && defaultUser.pin === '3333') {
+        user = defaultUser;
+      }
     }
   }
 

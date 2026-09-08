@@ -1293,23 +1293,17 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
 
         {/* Visual Menu Grid */}
         <div className="flex-1 overflow-y-auto p-3 bg-transparent no-scrollbar">
-          <motion.div layout className="pos-menu-grid mx-auto w-full">
-            <AnimatePresence mode="popLayout">
-            {filteredMenuItems.map((item, idx) => {
+          <div className="pos-menu-grid mx-auto w-full">
+            {filteredMenuItems.map((item) => {
               const ItemCategoryIcon = getCategoryIcon(item.category || item.name);
               return (
-                <motion.div
-                  layout
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ duration: 0.2, delay: Math.min(idx * 0.015, 0.12) }}
+                <div
                   key={item.id}
                   onClick={() => handleItemTap(item)}
-                  className={`pos-menu-card border rounded-2xl flex flex-col overflow-hidden relative cursor-pointer hover:-translate-y-1 hover:shadow-xl active:scale-[0.98] transition-all duration-200 group select-none ${
+                  className={`pos-menu-card border rounded-2xl flex flex-col overflow-hidden relative cursor-pointer active:scale-[0.98] select-none ${
                     theme === 'dark'
                       ? 'border-white/5 bg-gradient-to-b from-stone-900 to-stone-950 hover:border-emerald-500/40'
-                      : 'border-slate-200 bg-white hover:border-emerald-500/50 shadow-xs hover:shadow-md'
+                      : 'border-slate-200 bg-white hover:border-emerald-500/50 shadow-xs'
                   }`}
                 >
                   {/* Title */}
@@ -1327,10 +1321,10 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                   <div className="flex-1 relative w-full h-full flex items-end justify-end overflow-hidden">
                     {item.image ? (
                        <img 
-                         src={item.image} 
-                         alt={item.name} 
-                         className="absolute inset-0 w-full h-full object-cover opacity-85 group-hover:opacity-100 group-hover:scale-105 transition-all duration-300" 
-                         referrerPolicy="no-referrer"
+                          src={item.image} 
+                          alt={item.name} 
+                          className="absolute inset-0 w-full h-full object-cover opacity-85 group-hover:opacity-100" 
+                          referrerPolicy="no-referrer"
                        />
                     ) : (
                       <div className={`absolute inset-0 flex items-center justify-center ${
@@ -1338,7 +1332,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                           ? 'bg-gradient-to-br from-stone-900 via-stone-950 to-black text-stone-700' 
                           : 'bg-gradient-to-br from-slate-100 via-slate-200 to-slate-100 text-slate-400'
                       }`}>
-                        <div className="p-3 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-center shadow-inner group-hover:scale-110 group-hover:text-emerald-400 transition-all duration-300">
+                        <div className="p-3 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-center shadow-inner group-hover:text-emerald-400">
                           <ItemCategoryIcon className="w-8 h-8 stroke-[1.7]" />
                         </div>
                       </div>
@@ -1356,11 +1350,10 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                       PKR {item.price.toLocaleString()}
                     </div>
                   </div>
-                </motion.div>
+                </div>
               );
             })}
-            </AnimatePresence>
-          </motion.div>
+          </div>
         </div>
       </div>
 
@@ -1760,15 +1753,10 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                      </div>
                   </div>
                ) : (
-                  <AnimatePresence initial={false}>
+                  <div className="space-y-1.5">
                   {posCart.items.map((cartItem) => (
-                    <motion.div 
+                    <div 
                       key={cartItem.id} 
-                      layout
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.15 } }}
-                      transition={{ duration: 0.2 }}
                       className={`border rounded-xl p-2 flex items-center justify-between text-xs transition-all duration-200 shadow-xs ${
                       theme === 'dark' 
                         ? 'bg-gradient-to-r from-stone-900/90 to-stone-950/90 border-white/5 hover:border-emerald-500/30' 
@@ -1794,9 +1782,9 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                         <span className="font-mono font-black text-emerald-500 text-xs block truncate">{Number(cartItem.price * cartItem.quantity).toLocaleString()}</span>
                         <button onClick={() => removeFromPosCart(cartItem.id)} className="text-stone-400 hover:text-red-500 text-[10px] transition cursor-pointer font-bold mt-0.5">X</button>
                       </div>
-                    </motion.div>
+                    </div>
                   ))}
-                  </AnimatePresence>
+                  </div>
                )}
             </div>
 
@@ -2296,15 +2284,11 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                   <p className="text-xs font-semibold">No matching orders found</p>
                 </div>
               ) : (
-                <AnimatePresence>
-                {filteredAllOrders.map((ord, idx) => {
+                <div className="space-y-1.5">
+                {filteredAllOrders.map((ord) => {
                   const isSelected = selectedOrderId === ord.id;
                   return (
-                    <motion.div
-                      layout
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.2, delay: Math.min(idx * 0.02, 0.15) }}
+                    <div
                       key={ord.id}
                       onClick={() => {
                         setSelectedOrderId(ord.id);
@@ -2394,10 +2378,10 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                           </button>
                         )}
                       </div>
-                    </motion.div>
+                    </div>
                   );
                 })}
-                </AnimatePresence>
+                </div>
               )}
             </div>
 

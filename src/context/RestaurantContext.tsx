@@ -347,13 +347,13 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         const uUsername = (u.username || '').toLowerCase();
         const uRole = (u.role || '').toLowerCase();
         if (uUsername === 'owner' || uRole === 'owner') {
-          return { ...u, username: 'owner', email: u.email || 'owner@whitescastle.com', pin: '1111', password: '1111' };
+          return { ...u, username: 'owner', email: u.email || 'owner@whitescastle.com', pin: u.pin || '1111', password: u.password || '1111' };
         }
         if (uUsername === 'manager' || uRole === 'manager') {
-          return { ...u, username: 'manager', email: u.email || 'manager@whitescastle.com', pin: '2222', password: '2222' };
+          return { ...u, username: 'manager', email: u.email || 'manager@whitescastle.com', pin: u.pin || '2222', password: u.password || '2222' };
         }
         if (uUsername === 'cashier' || uRole === 'cashier') {
-          return { ...u, username: 'cashier', email: u.email || 'cashier@whitescastle.com', pin: '3333', password: '3333' };
+          return { ...u, username: 'cashier', email: u.email || 'cashier@whitescastle.com', pin: u.pin || '3333', password: u.password || '3333' };
         }
         return u;
       });
@@ -366,7 +366,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     return users[0];
   });
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
-    return loadFromStorage<boolean>('pos_is_logged_in', true);
+    return loadFromStorage<boolean>('pos_is_logged_in', false);
   });
   const [loginTheme, setLoginThemeState] = useState<'dark' | 'wood' | 'pink' | 'midnight' | 'light' | 'blue'>(() => {
     return loadFromStorage('pos_login_theme', 'dark');
@@ -430,12 +430,8 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       // Credential verification against user's set PIN or password
       const isPinMatch = matched.pin === cleanPass;
       const isPassMatch = matched.password ? matched.password === cleanPass : false;
-      const isDefaultRolePin =
-        (matched.role === 'owner' && (cleanPass === '1111' || cleanPass === '1234')) ||
-        (matched.role === 'manager' && (cleanPass === '2222' || cleanPass === '1234')) ||
-        (matched.role === 'cashier' && (cleanPass === '3333' || cleanPass === '4444' || cleanPass === '1234'));
 
-      if (isPinMatch || isPassMatch || isDefaultRolePin) {
+      if (isPinMatch || isPassMatch) {
         setCurrentUser(matched);
         setIsLoggedIn(true);
         saveToStorage('pos_is_logged_in', true);
