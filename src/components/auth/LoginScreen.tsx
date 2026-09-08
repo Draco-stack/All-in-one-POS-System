@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useRestaurant } from '../../context/RestaurantContext';
 import { MasterPOSLogo } from '../common/MasterPOSLogo';
-import { Mail, Lock, Eye, EyeOff, Shield, Crown, User, Sparkles } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { PWAInstallButton } from '../pwa/PWAInstallButton';
 import { OfflineIndicator } from '../pwa/OfflineIndicator';
 
@@ -9,17 +9,16 @@ export type LoginTheme = 'dark' | 'wood' | 'pink' | 'midnight' | 'light' | 'blue
 
 export const LoginScreen: React.FC = () => {
   const { loginUser, loginTheme, setLoginTheme, showToast } = useRestaurant();
-  const [email, setEmail] = useState<string>('admin');
-  const [password, setPassword] = useState<string>('1111');
+  const [email, setEmail] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [useEmailFormat, setUseEmailFormat] = useState<boolean>(false);
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim()) {
-      setErrorMsg('Please enter your email address or username.');
+      setErrorMsg('Please enter your email.');
       return;
     }
 
@@ -30,23 +29,9 @@ export const LoginScreen: React.FC = () => {
     if (result.success && result.user) {
       showToast(`✓ Welcome back, ${result.user.name} (${result.user.role.toUpperCase()})`);
     } else {
-      setErrorMsg(result.error || 'Invalid Email Address / Username or Password. Please try again.');
+      setErrorMsg(result.error || 'Invalid Email or Password. Please try again.');
     }
     setIsSubmitting(false);
-  };
-
-  const handleQuickDemo = (roleKey: 'admin' | 'manager' | 'cashier', demoPin: string) => {
-    let chosenUser = '';
-    if (roleKey === 'admin') {
-      chosenUser = useEmailFormat ? 'admin@masterpos.com' : 'admin';
-    } else if (roleKey === 'manager') {
-      chosenUser = useEmailFormat ? 'storemanager@masterpos.com' : 'storemanager';
-    } else if (roleKey === 'cashier') {
-      chosenUser = useEmailFormat ? 'cashier@masterpos.com' : 'cashier';
-    }
-    setEmail(chosenUser);
-    setPassword(demoPin);
-    setErrorMsg(null);
   };
 
   // Background Theme Gradient Classes
@@ -162,86 +147,12 @@ export const LoginScreen: React.FC = () => {
           <p className="text-xs text-stone-300/80 mt-1 font-medium">Commercial Restaurant Operating System</p>
         </div>
 
-        {/* Quick Demo Switcher */}
-        <div className="mb-5 p-3 rounded-2xl bg-black/40 border border-white/10 space-y-2">
-          <div className="flex items-center justify-between text-[11px] font-mono font-bold text-stone-300 px-0.5">
-            <span className="flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
-              Quick Demo Accounts:
-            </span>
-            <button
-              type="button"
-              onClick={() => {
-                const nextFormat = !useEmailFormat;
-                setUseEmailFormat(nextFormat);
-                if (email.includes('admin') || email.includes('owner')) {
-                  setEmail(nextFormat ? 'admin@masterpos.com' : 'admin');
-                } else if (email.includes('manager')) {
-                  setEmail(nextFormat ? 'storemanager@masterpos.com' : 'storemanager');
-                } else if (email.includes('cashier')) {
-                  setEmail(nextFormat ? 'cashier@masterpos.com' : 'cashier');
-                }
-              }}
-              className="text-[10px] text-emerald-400 hover:text-emerald-300 font-mono underline cursor-pointer"
-            >
-              {useEmailFormat ? 'Switch to Simple Names' : 'Switch to @masterpos.com'}
-            </button>
-          </div>
-          <div className="grid grid-cols-3 gap-1.5">
-            <button
-              type="button"
-              onClick={() => handleQuickDemo('admin', '1111')}
-              className={`px-2 py-2 rounded-xl text-[11px] font-bold transition flex flex-col items-center justify-center gap-0.5 cursor-pointer border ${
-                email === 'admin' || email === 'owner' || email === 'admin@masterpos.com' || email === 'owner@masterpos.com'
-                  ? 'bg-amber-500 text-stone-950 border-amber-400 font-black shadow-md ring-1 ring-amber-300'
-                  : 'bg-white/5 hover:bg-white/10 text-stone-200 border-white/10'
-              }`}
-            >
-              <div className="flex items-center gap-1">
-                <Crown className="w-3 h-3" />
-                <span>Admin</span>
-              </div>
-              <span className="text-[9px] opacity-75 font-mono">PIN: 1111</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleQuickDemo('manager', '2222')}
-              className={`px-2 py-2 rounded-xl text-[11px] font-bold transition flex flex-col items-center justify-center gap-0.5 cursor-pointer border ${
-                email === 'manager' || email === 'storemanager' || email === 'storemanager@masterpos.com' || email === 'manager@masterpos.com'
-                  ? 'bg-blue-500 text-white border-blue-400 font-black shadow-md ring-1 ring-blue-300'
-                  : 'bg-white/5 hover:bg-white/10 text-stone-200 border-white/10'
-              }`}
-            >
-              <div className="flex items-center gap-1">
-                <Shield className="w-3 h-3" />
-                <span>Manager</span>
-              </div>
-              <span className="text-[9px] opacity-75 font-mono">PIN: 2222</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleQuickDemo('cashier', '3333')}
-              className={`px-2 py-2 rounded-xl text-[11px] font-bold transition flex flex-col items-center justify-center gap-0.5 cursor-pointer border ${
-                email === 'cashier' || email === 'cashier@masterpos.com'
-                  ? 'bg-emerald-500 text-stone-950 border-emerald-400 font-black shadow-md ring-1 ring-emerald-300'
-                  : 'bg-white/5 hover:bg-white/10 text-stone-200 border-white/10'
-              }`}
-            >
-              <div className="flex items-center gap-1">
-                <User className="w-3 h-3" />
-                <span>Cashier</span>
-              </div>
-              <span className="text-[9px] opacity-75 font-mono">PIN: 3333</span>
-            </button>
-          </div>
-        </div>
-
         <form onSubmit={handleLoginSubmit} className="space-y-4">
           <div>
             <div className="flex items-center justify-between mb-1">
               <label className="block text-xs font-semibold text-stone-200 flex items-center gap-1.5">
                 <Mail className="w-3.5 h-3.5 text-stone-400" />
-                Email or Username
+                Email
               </label>
             </div>
             <input
@@ -252,20 +163,17 @@ export const LoginScreen: React.FC = () => {
                 setEmail(e.target.value);
                 setErrorMsg(null);
               }}
-              placeholder="e.g. admin or admin@masterpos.com, storemanager or storemanager@masterpos.com"
+              placeholder="email"
               className={`w-full px-3.5 py-2.5 rounded-xl text-sm text-white font-medium placeholder-stone-400/60 focus:outline-none focus:ring-1 transition ${getInputStyle(
                 loginTheme
               )}`}
             />
-            <p className="text-[10px] text-stone-300/70 mt-1 pl-1">
-              Accepts simple name (<span className="text-emerald-300">admin</span>, <span className="text-emerald-300">store manager</span>, <span className="text-emerald-300">cashier</span>) or full email (<span className="text-emerald-300">admin@masterpos.com</span>, <span className="text-emerald-300">storemanager@masterpos.com</span>)
-            </p>
           </div>
 
           <div>
             <label className="block text-xs font-semibold text-stone-200 mb-1.5 flex items-center gap-1.5">
               <Lock className="w-3.5 h-3.5 text-stone-400" />
-              Password / PIN
+              Password
             </label>
             <div className="relative">
               <input
@@ -275,7 +183,7 @@ export const LoginScreen: React.FC = () => {
                   setPassword(e.target.value);
                   setErrorMsg(null);
                 }}
-                placeholder="4-digit PIN or password"
+                placeholder="password"
                 className={`w-full pl-3.5 pr-10 py-2.5 rounded-xl text-sm text-white font-mono tracking-wider font-medium placeholder-stone-400/60 focus:outline-none focus:ring-1 transition ${getInputStyle(
                   loginTheme
                 )}`}

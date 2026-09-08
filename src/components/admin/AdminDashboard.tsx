@@ -146,48 +146,7 @@ export const AdminDashboard: React.FC = () => {
             </button>
           </form>
 
-          {/* Quick Unlock for Demo Testing */}
-          <div className="space-y-2 pt-2">
-            <span className={`text-[10px] uppercase font-bold tracking-wider ${theme === 'dark' ? 'text-stone-500' : 'text-slate-400'}`}>
-              Quick Demo Access
-            </span>
-            <div className="flex items-center justify-center gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setEnteredPin('1234');
-                  const match = users.find(u => u.role === 'owner' && u.pin === '1234');
-                  if (match) {
-                    setCurrentUser(match);
-                    setIsLockedByPIN(false);
-                    showToast(`Admin Console unlocked as Owner (${match.name})`);
-                  }
-                }}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer border transition ${
-                  theme === 'dark' ? 'bg-[#08090d] border-white/10 text-stone-300 hover:text-white hover:border-blue-500/40' : 'bg-slate-50 border-slate-200 text-slate-700 hover:border-blue-500/40'
-                }`}
-              >
-                Owner PIN (1234)
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setEnteredPin('4321');
-                  const match = users.find(u => u.role === 'manager' && u.pin === '4321');
-                  if (match) {
-                    setCurrentUser(match);
-                    setIsLockedByPIN(false);
-                    showToast(`Admin Console unlocked as Manager (${match.name})`);
-                  }
-                }}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer border transition ${
-                  theme === 'dark' ? 'bg-[#08090d] border-white/10 text-stone-300 hover:text-white hover:border-blue-500/40' : 'bg-slate-50 border-slate-200 text-slate-700 hover:border-blue-500/40'
-                }`}
-              >
-                Manager PIN (4321)
-              </button>
-            </div>
-          </div>
+
 
           <div className={`pt-4 border-t text-[11px] ${theme === 'dark' ? 'border-white/5 text-stone-400' : 'border-slate-200 text-slate-500'}`}>
             Current Session: <span className={`font-medium ${theme === 'dark' ? 'text-stone-200' : 'text-slate-800'}`}>{currentUser.name}</span> ({currentUser.role.toUpperCase()})

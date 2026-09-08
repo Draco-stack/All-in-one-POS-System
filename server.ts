@@ -100,31 +100,11 @@ app.use('/api', apiLimiter);
 // Login route for JWT generation (mounted AFTER express.json() & authLimiter)
 app.post('/api/auth/login', async (req, res) => {
   const { pin } = req.body;
-  if (!pin) return res.status(400).json({ error: 'PIN required' });
+  if (!pin) return res.status(400).json({ error: 'PIN or Password required' });
   
-  let user = await prisma.user.findFirst({ where: { pin: String(pin), active: true } });
-  
-  // Try fallback mapping for default client-side PINs if direct match isn't found
-  if (!user) {
-    if (String(pin) === '1111') {
-      const defaultUser = await prisma.user.findFirst({ where: { role: { in: ['OWNER', 'owner'] }, active: true } });
-      if (defaultUser && (defaultUser.pin === '1111' || defaultUser.pin === '1234')) {
-        user = defaultUser;
-      }
-    } else if (String(pin) === '2222') {
-      const defaultUser = await prisma.user.findFirst({ where: { role: { in: ['MANAGER', 'manager'] }, active: true } });
-      if (defaultUser && defaultUser.pin === '2222') {
-        user = defaultUser;
-      }
-    } else if (String(pin) === '3333') {
-      const defaultUser = await prisma.user.findFirst({ where: { role: { in: ['CASHIER', 'cashier'] }, active: true } });
-      if (defaultUser && defaultUser.pin === '3333') {
-        user = defaultUser;
-      }
-    }
-  }
+  const user = await prisma.user.findFirst({ where: { pin: String(pin).trim(), active: true } });
 
-  if (!user) return res.status(401).json({ error: 'Invalid PIN' });
+  if (!user) return res.status(401).json({ error: 'Invalid Password or PIN' });
   
   const token = jwt.sign(
     { id: user.id, role: user.role, name: user.name },

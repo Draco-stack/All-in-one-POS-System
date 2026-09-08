@@ -172,35 +172,7 @@ export const StaffManagementView: React.FC = () => {
         })}
       </div>
 
-      {/* Quick Credentials Cheatsheet */}
-      <div className="bg-white dark:bg-stone-900/60 border border-slate-200 dark:border-stone-800 rounded-2xl p-4">
-        <h4 className="text-xs font-bold text-slate-700 dark:text-stone-300 uppercase tracking-wider mb-2 flex items-center gap-2">
-          <Lock className="w-4 h-4 text-emerald-400" />
-          Default Staff Switch Access Reference
-        </h4>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs font-mono">
-          <div className="p-2 bg-white dark:bg-stone-950 rounded-lg border border-slate-200 dark:border-stone-800">
-            <span className="text-purple-400 font-bold block">Owner</span>
-            <span className="text-slate-700 dark:text-stone-300">PIN: </span>
-            <strong className="text-white">1111</strong>
-          </div>
-          <div className="p-2 bg-white dark:bg-stone-950 rounded-lg border border-slate-200 dark:border-stone-800">
-            <span className="text-blue-400 font-bold block">Manager</span>
-            <span className="text-slate-700 dark:text-stone-300">PIN: </span>
-            <strong className="text-white">2222</strong>
-          </div>
-          <div className="p-2 bg-white dark:bg-stone-950 rounded-lg border border-slate-200 dark:border-stone-800">
-            <span className="text-emerald-400 font-bold block">Cashier 1</span>
-            <span className="text-slate-700 dark:text-stone-300">PIN: </span>
-            <strong className="text-white">3333</strong>
-          </div>
-          <div className="p-2 bg-white dark:bg-stone-950 rounded-lg border border-slate-200 dark:border-stone-800">
-            <span className="text-emerald-400 font-bold block">Cashier 2</span>
-            <span className="text-slate-700 dark:text-stone-300">PIN: </span>
-            <strong className="text-white">4444</strong>
-          </div>
-        </div>
-      </div>
+
 
       {/* CHANGE PIN MODAL */}
       {selectedUserForPin && (

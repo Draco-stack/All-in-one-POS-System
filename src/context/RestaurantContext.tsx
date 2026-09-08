@@ -349,13 +349,14 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       return cached.map((u) => {
         const uUsername = (u.username || '').toLowerCase();
         const uRole = (u.role || '').toLowerCase();
+        const activePin = u.pin || (uRole === 'owner' ? '1111' : uRole === 'manager' ? '2222' : '3333');
         if (uUsername === 'owner' || uUsername === 'admin' || uRole === 'owner') {
           return { 
             ...u, 
             username: u.username || 'admin', 
             email: u.email && u.email.includes('@') ? u.email : 'admin@masterpos.com', 
-            pin: u.pin || '1111', 
-            password: u.password || '1111' 
+            pin: activePin, 
+            password: activePin 
           };
         }
         if (uUsername === 'manager' || uUsername === 'storemanager' || uRole === 'manager') {
@@ -363,8 +364,8 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             ...u, 
             username: u.username || 'storemanager', 
             email: u.email && u.email.includes('@') ? u.email : 'storemanager@masterpos.com', 
-            pin: u.pin || '2222', 
-            password: u.password || '2222' 
+            pin: activePin, 
+            password: activePin 
           };
         }
         if (uUsername === 'cashier' || uRole === 'cashier') {
@@ -372,11 +373,15 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             ...u, 
             username: u.username || 'cashier', 
             email: u.email && u.email.includes('@') ? u.email : 'cashier@masterpos.com', 
-            pin: u.pin || '3333', 
-            password: u.password || '3333' 
+            pin: activePin, 
+            password: activePin 
           };
         }
-        return u;
+        return {
+          ...u,
+          pin: activePin,
+          password: activePin,
+        };
       });
     }
     return defaultList;
@@ -518,15 +523,11 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         };
       }
 
-      // Credential verification against user's set PIN, password, or role default PINs
-      const isPinMatch = matched.pin === cleanPass;
-      const isPassMatch = matched.password ? matched.password === cleanPass : false;
-      const isRolePinFallback = 
-        (matched.role === 'owner' && (cleanPass === '1111' || cleanPass === '1234')) ||
-        (matched.role === 'manager' && (cleanPass === '2222' || cleanPass === '1234')) ||
-        (matched.role === 'cashier' && (cleanPass === '3333' || cleanPass === '4444' || cleanPass === '1234'));
+      // Credential verification strictly against user's current set PIN or password
+      const isPinMatch = Boolean(matched.pin && matched.pin === cleanPass);
+      const isPassMatch = Boolean(matched.password && matched.password === cleanPass);
 
-      if (isPinMatch || isPassMatch || isRolePinFallback) {
+      if (isPinMatch || isPassMatch) {
         setCurrentUser(matched);
         setIsLoggedIn(true);
         saveToStorage('pos_is_logged_in', true);
@@ -933,6 +934,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             name: u.name,
             username: u.username || u.name.toLowerCase().replace(/\s+/g, ''),
             pin: u.pin || '1234',
+            password: u.pin || '1234',
             role: (u.role || 'cashier').toLowerCase() as UserRole,
             outlet: u.outlet || 'Main Branch',
             phone: u.phone || '',
@@ -1450,19 +1452,27 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         const body = await res.json();
         const updated = body.data;
         setUsers((prev) =>
-          prev.map((u) =>
-            u.id === userId
-              ? {
-                  ...u,
-                  name: updated.name,
-                  role: updated.role.toLowerCase() as UserRole,
-                  phone: updated.phone || '',
-                  pin: updated.pin || u.pin,
-                  active: updated.active,
-                  restrictions: updated.restrictions || '[]',
-                }
-              : u
-          )
+          prev.map((u) => {
+            if (u.id === userId) {
+              const newPinValue = updated.pin || updates.pin || u.pin;
+              const updatedUser: UserAccount = {
+                ...u,
+                name: updated.name || u.name,
+                role: (updated.role ? updated.role.toLowerCase() : u.role) as UserRole,
+                phone: updated.phone || u.phone || '',
+                pin: newPinValue,
+                password: newPinValue, // Erases and completely overwrites old password
+                active: updated.active !== undefined ? updated.active : u.active,
+                restrictions: updated.restrictions || u.restrictions || '[]',
+              };
+              if (currentUser && currentUser.id === userId) {
+                setCurrentUser(updatedUser);
+                saveToStorage('pos_current_user', updatedUser);
+              }
+              return updatedUser;
+            }
+            return u;
+          })
         );
         showToast(`✓ Staff member "${updated.name}" updated successfully!`);
         return true;
@@ -1479,10 +1489,21 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   };
 
   const updateUserPin = async (userId: string, newPin: string) => {
+    const cleanPin = newPin.trim();
     setUsers((prev) =>
-      prev.map((u) => (u.id === userId ? { ...u, pin: newPin } : u))
+      prev.map((u) => {
+        if (u.id === userId) {
+          const updatedUser = { ...u, pin: cleanPin, password: cleanPin };
+          if (currentUser && currentUser.id === userId) {
+            setCurrentUser(updatedUser);
+            saveToStorage('pos_current_user', updatedUser);
+          }
+          return updatedUser;
+        }
+        return u;
+      })
     );
-    await updateUser(userId, { pin: newPin });
+    await updateUser(userId, { pin: cleanPin });
   };
 
   const toggleUserActive = async (userId: string) => {
