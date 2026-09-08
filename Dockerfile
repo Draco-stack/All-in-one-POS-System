@@ -21,6 +21,8 @@ RUN npm run build
 # Stage 2: Production Runner
 FROM node:20-alpine AS runner
 
+RUN apk add --no-cache openssl
+
 WORKDIR /app
 ENV NODE_ENV="production"
 ENV PORT=3000

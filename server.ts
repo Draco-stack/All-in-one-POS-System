@@ -1446,9 +1446,40 @@ async function startServer() {
 
   if (missingSecrets.length > 0) {
     if (isProd) {
-      const errorMsg = `FATAL CONFIGURATION ERROR: Missing required environment secrets: ${missingSecrets.join(', ')}. Please configure them in your settings/environment.`;
-      console.error('❌ ' + errorMsg);
-      throw new Error(errorMsg);
+      const errorMsg = `CONFIGURATION WARNING: Missing required environment secrets: ${missingSecrets.join(', ')}. Please configure them in your settings/environment.`;
+      console.error('⚠️ ' + errorMsg);
+      
+      // Inject fallback middleware to avoid container crashes and provide clear guidance to users
+      app.use((req, res, next) => {
+        if (req.path === '/health' || req.path === '/api/health') {
+          return res.status(200).json({ status: 'unconfigured', missing: missingSecrets });
+        }
+        res.status(503).send(`
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>Configuration Required | POS Restaurant</title>
+            <style>
+              body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f9fafb; color: #1f2937; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+              .card { background: white; padding: 2.5rem; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); max-width: 500px; text-align: center; border: 1px solid #e5e7eb; }
+              h1 { color: #dc2626; font-size: 1.5rem; margin-top: 0; }
+              p { line-height: 1.6; color: #4b5563; }
+              .badge { background: #fee2e2; color: #991b1b; padding: 0.35rem 0.65rem; border-radius: 6px; font-family: monospace; font-size: 0.875rem; margin: 0.25rem; display: inline-block; font-weight: bold; }
+            </style>
+          </head>
+          <body>
+            <div class="card">
+              <h1>⚠️ Configuration Required</h1>
+              <p>The POS Restaurant Server started successfully, but is missing required configuration secrets:</p>
+              <div style="margin: 1.5rem 0;">
+                ${missingSecrets.map(s => `<span class="badge">${s}</span>`).join('')}
+              </div>
+              <p style="margin-top: 1.5rem; font-size: 0.875rem;">Please configure these environment variables in your control panel/settings to complete the setup.</p>
+            </div>
+          </body>
+          </html>
+        `);
+      });
     } else {
       console.log(`[Status] POS starting with dynamic auto-start credentials for: ${missingSecrets.join(', ')}.`);
     }
@@ -1456,25 +1487,28 @@ async function startServer() {
     console.log('✓ All environment secrets verified.');
   }
 
-  // Add retry loop for Prisma connection to handle DB container startup delay
-  let retries = 5;
-  while (retries > 0) {
-    try {
-      await prisma.$connect();
-      console.log('Successfully connected to the database.');
-      break;
-    } catch (err) {
-      console.error(`Database connection failed. Retries left: ${retries - 1}`, err);
-      retries -= 1;
-      if (retries === 0) {
-        console.error('Could not connect to database after multiple attempts. Exiting.');
-        process.exit(1);
+  // Connect to database and seed ONLY if fully configured or not in production
+  if (missingSecrets.length === 0 || !isProd) {
+    // Add retry loop for Prisma connection to handle DB container startup delay
+    let retries = 5;
+    while (retries > 0) {
+      try {
+        await prisma.$connect();
+        console.log('Successfully connected to the database.');
+        break;
+      } catch (err) {
+        console.error(`Database connection failed. Retries left: ${retries - 1}`, err);
+        retries -= 1;
+        if (retries === 0) {
+          console.error('Could not connect to database after multiple attempts. Exiting.');
+          process.exit(1);
+        }
+        await new Promise(resolve => setTimeout(resolve, 3000));
       }
-      await new Promise(resolve => setTimeout(resolve, 3000));
     }
-  }
 
-  await seedDatabaseIfNeeded();
+    await seedDatabaseIfNeeded();
+  }
 
   if (process.env.NODE_ENV === 'production') {
     app.use(express.static(path.join(appDir, 'dist')));
