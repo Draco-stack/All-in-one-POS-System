@@ -144,9 +144,19 @@ export const OrderQueueView: React.FC = () => {
     },
   };
 
+  const delayed15MinOrdersCount = useMemo(() => {
+    return orders.filter((o) => {
+      const currentSt = (o.status || 'pending').toLowerCase();
+      const isActive = ['pending', 'open', 'punched', 'modified', 'in_kitchen', 'ready'].includes(currentSt);
+      const elapsed = Math.floor((Date.now() - new Date(o.createdAt).getTime()) / 60000);
+      return isActive && elapsed >= 15;
+    }).length;
+  }, [orders]);
+
   const filteredOrders = orders.filter((o) => {
     const matchesType = filterType === 'all' || (o.type || o.orderType) === filterType;
     const currentSt = (o.status || 'pending').toLowerCase();
+    const elapsedMins = Math.floor((Date.now() - new Date(o.createdAt).getTime()) / 60000);
     const matchesStatus =
       filterStatus === 'all'
         ? true
@@ -158,6 +168,8 @@ export const OrderQueueView: React.FC = () => {
           currentSt === 'in_kitchen' ||
           currentSt === 'ready' ||
           currentSt === 'dispatched'
+        : filterStatus === 'delayed_15m'
+        ? ['pending', 'open', 'punched', 'modified', 'in_kitchen', 'ready'].includes(currentSt) && elapsedMins >= 15
         : currentSt === filterStatus.toLowerCase();
 
     const query = search.toLowerCase();
@@ -222,6 +234,21 @@ export const OrderQueueView: React.FC = () => {
 
         {/* Filters */}
         <div className="flex flex-wrap items-center gap-2 text-xs">
+          {delayed15MinOrdersCount > 0 && (
+            <button
+              onClick={() => setFilterStatus(filterStatus === 'delayed_15m' ? 'active' : 'delayed_15m')}
+              className={`px-3 py-2 rounded-xl text-xs font-black flex items-center gap-1.5 cursor-pointer transition-all ${
+                filterStatus === 'delayed_15m'
+                  ? 'bg-rose-600 text-white shadow-lg shadow-rose-900/50 border border-rose-400 ring-2 ring-rose-400/40'
+                  : 'bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/60 text-rose-300 animate-pulse-glow shadow-sm'
+              }`}
+              title="Click to filter priority orders waiting longer than 15 minutes"
+            >
+              <AlertCircle className="w-3.5 h-3.5 text-rose-400 animate-pulse" />
+              <span>{delayed15MinOrdersCount} Overdue (&gt;15m)</span>
+            </button>
+          )}
+
           <div className="relative">
             <Search className={`w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 ${
               theme === 'dark' ? 'text-stone-400' : 'text-slate-400'
@@ -249,6 +276,9 @@ export const OrderQueueView: React.FC = () => {
             }`}
           >
             <option value="active">Active Tickets ({orders.filter((o) => ['pending', 'PUNCHED', 'MODIFIED', 'in_kitchen', 'ready'].includes(o.status)).length})</option>
+            {delayed15MinOrdersCount > 0 && (
+              <option value="delayed_15m">🔥 Priority Overdue &gt;15m ({delayed15MinOrdersCount})</option>
+            )}
             <option value="all">All Historical Tickets</option>
             <option value="PUNCHED">Punched</option>
             <option value="in_kitchen">In Kitchen</option>
@@ -305,20 +335,25 @@ export const OrderQueueView: React.FC = () => {
             {displayedOrders.map((order, idx) => {
               const conf = statusConfig[order.status] || statusConfig[order.status?.toLowerCase() as OrderStatus] || statusConfig.pending;
               const elapsedMins = Math.floor((Date.now() - new Date(order.createdAt).getTime()) / 60000);
-              const isUrgent = elapsedMins >= 20;
-              const isWarming = elapsedMins >= 10 && elapsedMins < 20;
               const currentSt = (order.status || 'pending').toLowerCase();
+              const isFinished = currentSt === 'completed' || currentSt === 'delivered' || currentSt === 'refunded' || currentSt === 'cancelled';
+              const isDelayed15M = elapsedMins >= 15 && !isFinished;
+              const isUrgent = elapsedMins >= 20 && !isFinished;
+              const isWarming = elapsedMins >= 8 && elapsedMins < 15 && !isFinished;
               const isCancelled = currentSt === 'cancelled' || currentSt === 'refunded' || currentSt === 'void';
               const isDelivered = currentSt === 'delivered' || currentSt === 'completed' || currentSt === 'ready';
               const isOnTheWay = currentSt === 'dispatched' || currentSt === 'on_the_way' || currentSt === 'in_transit' || currentSt === 'out_for_delivery';
               const isKitchen = currentSt === 'in_kitchen';
               const isPunched = currentSt === 'punched' || currentSt === 'open' || currentSt === 'pending' || currentSt === 'modified';
 
-              // Visual styling adhering strictly to light reflection rules:
+              // Visual styling adhering strictly to light reflection rules & 15m priority indicator:
               // 1. Cancelled -> Reflects Red Light
               // 2. Delivered / Ready -> Reflects Green Light
               // 3. On The Way / Dispatched -> Reflects Yellow-Orange Light
-              const darkCardStyle = isCancelled
+              // 4. Waiting > 15 mins -> Subtle Pulsing Border Glow with Priority Alert
+              const darkCardStyle = isDelayed15M
+                ? 'animate-pulse-glow bg-gradient-to-b from-[#2b0e16] via-[#1a0e14] to-[#0f070b] border-rose-500/95 shadow-[0_0_32px_rgba(244,63,94,0.48)] ring-2 ring-rose-500/60'
+                : isCancelled
                 ? 'bg-gradient-to-b from-[#281016] via-[#170e12] to-[#0d070a] border-rose-500/95 shadow-[0_0_28px_rgba(244,63,94,0.38)] ring-1 ring-rose-500/50'
                 : isDelivered
                 ? 'bg-gradient-to-b from-[#0c2217] via-[#0f1914] to-[#080f0c] border-emerald-400/95 shadow-[0_0_28px_rgba(52,211,153,0.38)] ring-1 ring-emerald-400/50'
@@ -334,7 +369,9 @@ export const OrderQueueView: React.FC = () => {
                 ? 'bg-gradient-to-b from-[#0c181f] via-[#10141b] to-[#0a0c12] border-cyan-400/80 shadow-[0_0_20px_rgba(6,182,212,0.22)] ring-1 ring-cyan-400/30'
                 : 'bg-[#12141c] border-white/10 shadow-md hover:border-stone-700';
 
-              const lightCardStyle = isCancelled
+              const lightCardStyle = isDelayed15M
+                ? 'animate-pulse-glow bg-red-50/90 border-2 border-rose-500 shadow-xl shadow-rose-200/60 ring-2 ring-rose-400/50'
+                : isCancelled
                 ? 'bg-red-50/80 border-2 border-red-500 shadow-lg shadow-red-200/50'
                 : isDelivered
                 ? 'bg-emerald-50/80 border-2 border-emerald-500 shadow-md shadow-emerald-200/40'
@@ -364,7 +401,9 @@ export const OrderQueueView: React.FC = () => {
                 {theme === 'dark' && (
                   <div
                     className={`absolute top-0 left-0 right-0 h-1 ${
-                      isCancelled
+                      isDelayed15M
+                        ? 'bg-gradient-to-r from-red-600 via-rose-300 to-red-600 shadow-[0_0_16px_rgba(244,63,94,1)] animate-pulse'
+                        : isCancelled
                         ? 'bg-gradient-to-r from-red-600 via-rose-300 to-red-600 shadow-[0_0_14px_rgba(244,63,94,0.95)]'
                         : isDelivered
                         ? 'bg-gradient-to-r from-emerald-500 via-green-300 to-emerald-500 shadow-[0_0_14px_rgba(52,211,153,0.95)]'
@@ -381,6 +420,19 @@ export const OrderQueueView: React.FC = () => {
                         : 'bg-white/10'
                     }`}
                   />
+                )}
+
+                {/* Priority Service Warning Banner when waiting > 15 minutes */}
+                {isDelayed15M && (
+                  <div className="flex items-center justify-between px-3 py-1.5 rounded-xl bg-rose-500/20 border border-rose-500/60 text-rose-200 text-xs font-black shadow-[0_0_12px_rgba(244,63,94,0.3)]">
+                    <span className="flex items-center gap-1.5 text-rose-300">
+                      <AlertCircle className="w-3.5 h-3.5 text-rose-400 animate-pulse" />
+                      <span>PRIORITY SERVICE • OVERDUE</span>
+                    </span>
+                    <span className="font-mono text-[10px] font-black px-2 py-0.5 rounded-md bg-rose-600/40 text-rose-100 border border-rose-400/60">
+                      WAITING {elapsedMins}M (&gt;15m)
+                    </span>
+                  </div>
                 )}
 
                 {/* Header */}
@@ -415,13 +467,13 @@ export const OrderQueueView: React.FC = () => {
 
                   <div className="text-right flex flex-col items-end">
                     <span className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider border shadow-xs ${conf.bg} ${conf.text} ${
-                      theme === 'dark' && isUrgent ? 'shadow-[0_0_10px_rgba(244,63,94,0.35)]' : ''
+                      theme === 'dark' && (isUrgent || isDelayed15M) ? 'shadow-[0_0_10px_rgba(244,63,94,0.35)]' : ''
                     }`}>
                       {conf.label}
                     </span>
                     <span className={`text-[11px] font-mono flex items-center justify-end gap-1 mt-1.5 font-bold px-2 py-0.5 rounded-full ${
-                      isUrgent
-                        ? 'text-rose-300 bg-rose-500/20 border border-rose-500/50 animate-pulse shadow-[0_0_8px_rgba(244,63,94,0.3)]'
+                      isDelayed15M
+                        ? 'text-rose-200 bg-rose-500/30 border border-rose-500/60 animate-pulse shadow-[0_0_10px_rgba(244,63,94,0.4)]'
                         : isWarming
                         ? 'text-amber-300 bg-amber-500/20 border border-amber-500/40'
                         : theme === 'dark'
@@ -429,7 +481,7 @@ export const OrderQueueView: React.FC = () => {
                         : 'text-slate-600 bg-slate-100 border border-slate-200'
                     }`}>
                       <Timer className="w-3 h-3" />
-                      {elapsedMins}m ago
+                      {elapsedMins}m ago {isDelayed15M && '• PRIORITY'}
                     </span>
                   </div>
                 </div>

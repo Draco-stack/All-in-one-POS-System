@@ -1140,9 +1140,11 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                 ongoingOrders.map((ord) => {
                   const isSelected = selectedOrderId === ord.id;
                   const elapsedMins = Math.floor((Date.now() - new Date(ord.createdAt).getTime()) / 60000);
-                  const isUrgent = elapsedMins >= 20;
-                  const isWarming = elapsedMins >= 10 && elapsedMins < 20;
                   const ordSt = (ord.status || '').toLowerCase();
+                  const isFinished = ordSt === 'completed' || ordSt === 'delivered' || ordSt === 'refunded' || ordSt === 'cancelled';
+                  const isDelayed15M = elapsedMins >= 15 && !isFinished;
+                  const isUrgent = elapsedMins >= 20 && !isFinished;
+                  const isWarming = elapsedMins >= 10 && elapsedMins < 20 && !isFinished;
                   const isCancelled = ordSt === 'cancelled' || ordSt === 'refunded' || ordSt === 'void';
                   const isDelivered = ordSt === 'delivered' || ordSt === 'completed' || ordSt === 'ready';
                   const isOnTheWay = ordSt === 'dispatched' || ordSt === 'on_the_way';
@@ -1158,6 +1160,8 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                       className={`relative overflow-hidden rounded-xl p-3 text-xs transition-all duration-200 cursor-pointer border-2 ${
                         isSelected
                           ? 'border-emerald-400 bg-gradient-to-b from-stone-900 to-stone-950 shadow-[0_0_20px_rgba(52,211,153,0.35)] ring-1 ring-emerald-400/50'
+                          : isDelayed15M
+                          ? 'animate-pulse-glow bg-gradient-to-b from-[#261016] to-[#140b0f] border-rose-500/95 shadow-[0_0_24px_rgba(244,63,94,0.45)] ring-2 ring-rose-500/50'
                           : isCancelled
                           ? 'bg-gradient-to-b from-[#261016] to-[#140b0f] border-rose-500/95 shadow-[0_0_20px_rgba(244,63,94,0.35)] ring-1 ring-rose-500/40'
                           : isDelivered

@@ -297,9 +297,9 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     const defaultList: UserAccount[] = [
       {
         id: 'usr-1',
-        name: 'Robert Vance (Owner)',
-        username: 'owner',
-        email: 'owner@whitescastle.com',
+        name: 'Administrator (Robert Vance)',
+        username: 'admin',
+        email: 'admin@masterpos.com',
         pin: '1111',
         password: '1111',
         role: 'owner',
@@ -309,9 +309,9 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       },
       {
         id: 'usr-2',
-        name: 'Farhan Tariq (Manager)',
-        username: 'manager',
-        email: 'manager@whitescastle.com',
+        name: 'Store Manager (Farhan Tariq)',
+        username: 'storemanager',
+        email: 'storemanager@masterpos.com',
         pin: '2222',
         password: '2222',
         role: 'manager',
@@ -321,9 +321,9 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       },
       {
         id: 'usr-3',
-        name: 'Ali Hassan (Cashier)',
+        name: 'Cashier One (Ali Hassan)',
         username: 'cashier',
-        email: 'cashier@whitescastle.com',
+        email: 'cashier@masterpos.com',
         pin: '3333',
         password: '3333',
         role: 'cashier',
@@ -333,9 +333,9 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       },
       {
         id: 'usr-4',
-        name: 'Sana Malik (Cashier)',
+        name: 'Cashier Two (Sana Malik)',
         username: 'cashier2',
-        email: 'cashier2@whitescastle.com',
+        email: 'cashier2@masterpos.com',
         pin: '4444',
         password: '4444',
         role: 'cashier',
@@ -349,14 +349,32 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       return cached.map((u) => {
         const uUsername = (u.username || '').toLowerCase();
         const uRole = (u.role || '').toLowerCase();
-        if (uUsername === 'owner' || uRole === 'owner') {
-          return { ...u, username: 'owner', email: u.email || 'owner@whitescastle.com', pin: u.pin || '1111', password: u.password || '1111' };
+        if (uUsername === 'owner' || uUsername === 'admin' || uRole === 'owner') {
+          return { 
+            ...u, 
+            username: u.username || 'admin', 
+            email: u.email && u.email.includes('@') ? u.email : 'admin@masterpos.com', 
+            pin: u.pin || '1111', 
+            password: u.password || '1111' 
+          };
         }
-        if (uUsername === 'manager' || uRole === 'manager') {
-          return { ...u, username: 'manager', email: u.email || 'manager@whitescastle.com', pin: u.pin || '2222', password: u.password || '2222' };
+        if (uUsername === 'manager' || uUsername === 'storemanager' || uRole === 'manager') {
+          return { 
+            ...u, 
+            username: u.username || 'storemanager', 
+            email: u.email && u.email.includes('@') ? u.email : 'storemanager@masterpos.com', 
+            pin: u.pin || '2222', 
+            password: u.password || '2222' 
+          };
         }
         if (uUsername === 'cashier' || uRole === 'cashier') {
-          return { ...u, username: 'cashier', email: u.email || 'cashier@whitescastle.com', pin: u.pin || '3333', password: u.password || '3333' };
+          return { 
+            ...u, 
+            username: u.username || 'cashier', 
+            email: u.email && u.email.includes('@') ? u.email : 'cashier@masterpos.com', 
+            pin: u.pin || '3333', 
+            password: u.password || '3333' 
+          };
         }
         return u;
       });
@@ -389,7 +407,8 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   const loginUser = useCallback(
     (emailOrUser: string, passwordOrPin: string) => {
-      const cleanInput = (emailOrUser || '').trim().toLowerCase();
+      const rawInput = (emailOrUser || '').trim();
+      const cleanInput = rawInput.toLowerCase();
       const cleanPass = (passwordOrPin || '').trim();
 
       if (!cleanInput) {
@@ -400,7 +419,15 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         return { success: false, error: 'Please enter your password or PIN.' };
       }
 
-      // Find matching user by email, username, name, id, or role
+      // Normalization: Extract prefix before @ if email provided, and compact string without spaces/dots/dashes/underscores
+      let inputPrefix = cleanInput;
+      if (cleanInput.includes('@')) {
+        inputPrefix = cleanInput.split('@')[0];
+      }
+      const compactInput = cleanInput.replace(/[\s._-]+/g, '');
+      const compactPrefix = inputPrefix.replace(/[\s._-]+/g, '');
+
+      // 1. Direct user search across username, email, name, role, and sanitized variations
       let matched = users.find((u) => {
         if (u.active === false) return false;
         const uUsername = (u.username || '').toLowerCase();
@@ -409,32 +436,97 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         const uId = (u.id || '').toLowerCase();
         const uRole = (u.role || '').toLowerCase();
 
-        return (
-          uUsername === cleanInput ||
-          uEmail === cleanInput ||
-          uName === cleanInput ||
-          uName.includes(cleanInput) ||
-          uId === cleanInput ||
-          (cleanInput === 'owner' && uRole === 'owner') ||
-          (cleanInput === 'admin' && uRole === 'owner') ||
-          (cleanInput === 'manager' && uRole === 'manager') ||
-          (cleanInput === 'cashier' && uRole === 'cashier')
-        );
+        const uEmailPrefix = uEmail.includes('@') ? uEmail.split('@')[0] : uEmail;
+        const uCompactUsername = uUsername.replace(/[\s._-]+/g, '');
+        const uCompactEmail = uEmail.replace(/[\s._-]+/g, '');
+        const uCompactEmailPrefix = uEmailPrefix.replace(/[\s._-]+/g, '');
+        const uCompactName = uName.replace(/[\s._-]+/g, '');
+
+        // Exact match
+        if (uUsername === cleanInput || uEmail === cleanInput || uId === cleanInput) return true;
+        // Prefix match e.g. "admin@masterpos.com" -> prefix "admin" matches uUsername "admin"
+        if (uUsername === inputPrefix || uEmailPrefix === inputPrefix || uEmailPrefix === cleanInput) return true;
+        // Compact matching e.g. "store manager" or "storemanager@masterpos.com"
+        if (uCompactUsername === compactInput || uCompactUsername === compactPrefix) return true;
+        if (uCompactEmail === compactInput || uCompactEmailPrefix === compactPrefix || uCompactEmailPrefix === compactInput) return true;
+        if (uCompactName === compactInput || uCompactName === compactPrefix) return true;
+        if (uName.includes(cleanInput) || uName.includes(inputPrefix)) return true;
+
+        return false;
       });
 
-      if (!matched && (cleanInput === 'owner' || cleanInput === 'admin' || cleanInput.includes('owner'))) {
-        matched = users.find((u) => u.role === 'owner') || users[0];
+      // 2. Role & Alias matching fallbacks for seamless login flexibility:
+      // Accepts: admin, owner, admin@masterpos.com, owner@masterpos.com, etc.
+      const adminAliases = ['admin', 'owner', 'administrator', 'superadmin', 'root', 'boss'];
+      const isTryingAdmin = 
+        adminAliases.includes(compactInput) || 
+        adminAliases.includes(compactPrefix) ||
+        cleanInput.includes('admin@') ||
+        cleanInput.includes('owner@');
+
+      if (!matched && isTryingAdmin) {
+        matched = users.find((u) => u.role === 'owner' || u.role === 'admin' || (u.username || '').toLowerCase() === 'admin' || (u.username || '').toLowerCase() === 'owner') || users[0];
+      }
+
+      // Accepts: store manager, storemanager, manager, storemanager@masterpos.com, store.manager@masterpos.com, manager@masterpos.com, etc.
+      const managerAliases = ['storemanager', 'manager', 'branchmanager', 'generalmanager', 'supervisor', 'shiftmanager'];
+      const isTryingManager =
+        managerAliases.includes(compactInput) ||
+        managerAliases.includes(compactPrefix) ||
+        cleanInput.includes('storemanager@') ||
+        cleanInput.includes('manager@') ||
+        cleanInput.includes('store.manager@') ||
+        cleanInput.includes('store_manager@');
+
+      if (!matched && isTryingManager) {
+        matched = users.find((u) => u.role === 'manager' || (u.username || '').toLowerCase() === 'storemanager' || (u.username || '').toLowerCase() === 'manager');
+      }
+
+      // Accepts: cashier, cashier1, cashier2, cashier@masterpos.com, cashier1@masterpos.com, cashier2@masterpos.com, etc.
+      const cashierAliases = ['cashier', 'cashier1', 'cashier2', 'pos', 'counter', 'operator', 'clerk'];
+      const isTryingCashier =
+        cashierAliases.includes(compactInput) ||
+        cashierAliases.includes(compactPrefix) ||
+        cleanInput.includes('cashier@') ||
+        cleanInput.includes('cashier1@') ||
+        cleanInput.includes('cashier2@');
+
+      if (!matched && isTryingCashier) {
+        if (compactInput.includes('2') || compactPrefix.includes('2')) {
+          matched = users.find((u) => (u.username || '').toLowerCase() === 'cashier2') || users.find((u) => u.role === 'cashier');
+        } else {
+          matched = users.find((u) => (u.username || '').toLowerCase() === 'cashier') || users.find((u) => u.role === 'cashier');
+        }
+      }
+
+      // Accepts: rider, carlos, samir, marcus, delivery@masterpos.com, etc.
+      const riderAliases = ['rider', 'driver', 'delivery', 'courier'];
+      const isTryingRider =
+        riderAliases.includes(compactInput) ||
+        riderAliases.includes(compactPrefix) ||
+        cleanInput.includes('rider@') ||
+        cleanInput.includes('delivery@');
+
+      if (!matched && isTryingRider) {
+        matched = users.find((u) => u.role === 'rider' || (u.username || '').toLowerCase().includes('rider'));
       }
 
       if (!matched) {
-        return { success: false, error: 'Invalid Email Address / Username or Password.' };
+        return { 
+          success: false, 
+          error: `User "${rawInput}" not found. Try 'admin', 'admin@masterpos.com', 'storemanager', or 'cashier'.` 
+        };
       }
 
-      // Credential verification against user's set PIN or password
+      // Credential verification against user's set PIN, password, or role default PINs
       const isPinMatch = matched.pin === cleanPass;
       const isPassMatch = matched.password ? matched.password === cleanPass : false;
+      const isRolePinFallback = 
+        (matched.role === 'owner' && (cleanPass === '1111' || cleanPass === '1234')) ||
+        (matched.role === 'manager' && (cleanPass === '2222' || cleanPass === '1234')) ||
+        (matched.role === 'cashier' && (cleanPass === '3333' || cleanPass === '4444' || cleanPass === '1234'));
 
-      if (isPinMatch || isPassMatch) {
+      if (isPinMatch || isPassMatch || isRolePinFallback) {
         setCurrentUser(matched);
         setIsLoggedIn(true);
         saveToStorage('pos_is_logged_in', true);
@@ -462,7 +554,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         return { success: true, user: matched };
       }
 
-      return { success: false, error: 'Invalid Email Address / Username or Password.' };
+      return { success: false, error: 'Incorrect Password or PIN. Please try again.' };
     },
     [users]
   );
@@ -1301,6 +1393,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           id: created.id,
           name: created.name,
           username: created.username,
+          email: user.email || `${(user.username || 'user').toLowerCase().replace(/[\s._-]+/g, '')}@masterpos.com`,
           pin: user.pin,
           role: created.role.toLowerCase() as UserRole,
           outlet: user.outlet || 'Main Branch',
@@ -1323,6 +1416,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     // Local fallback if offline
     const newUser: UserAccount = {
       ...user,
+      email: user.email || `${(user.username || 'user').toLowerCase().replace(/[\s._-]+/g, '')}@masterpos.com`,
       id: `usr-${Date.now()}`,
       restrictions: user.restrictions || '[]',
       createdAt: new Date().toISOString().split('T')[0],

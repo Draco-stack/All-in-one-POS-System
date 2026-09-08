@@ -68,6 +68,22 @@ html.dark {
   animation: fadeInSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+/* Subtle Priority Pulsing Border Glow for orders waiting > 15 minutes */
+@keyframes pulseBorderGlow {
+  0%, 100% {
+    box-shadow: 0 0 16px rgba(244, 63, 94, 0.4), inset 0 0 8px rgba(244, 63, 94, 0.12);
+    border-color: rgba(244, 63, 94, 0.85);
+  }
+  50% {
+    box-shadow: 0 0 28px rgba(244, 63, 94, 0.75), inset 0 0 14px rgba(244, 63, 94, 0.25);
+    border-color: rgba(251, 113, 133, 1);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulseBorderGlow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
 /* Light Theme Universal Elevation & Text Contrast Overrides */
 html:not(.dark),
 html.light {

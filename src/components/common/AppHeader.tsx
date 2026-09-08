@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { useRestaurant } from '../../context/RestaurantContext';
 import { MasterPOSLogo } from './MasterPOSLogo';
+import { PWAInstallButton } from '../pwa/PWAInstallButton';
 
 export interface AppHeaderProps {
   activeView: 'delivery' | 'pos' | 'orders' | 'all-orders' | 'shifts' | 'admin';
@@ -378,6 +379,9 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             </button>
           );
         })()}
+
+        {/* In-App PWA Install Prompt */}
+        <PWAInstallButton />
 
         {/* Fullscreen Toggle */}
         <button

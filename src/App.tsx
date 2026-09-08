@@ -14,6 +14,7 @@ import { ThermalReceipt } from './components/pos/ThermalReceipt';
 import { DeliveryDriverSlipModal } from './components/pos/DeliveryDriverSlipModal';
 import { ReceiptModal } from './components/orders/ReceiptModal';
 import { AppHeader } from './components/common/AppHeader';
+import { OfflineIndicator } from './components/pwa/OfflineIndicator';
 
 const AppContent: React.FC = () => {
   const [activeView, setActiveView] = useState<'delivery' | 'pos' | 'orders' | 'all-orders' | 'shifts' | 'admin'>('pos');
@@ -214,6 +215,7 @@ const AppContent: React.FC = () => {
       />
 
       <ThermalReceipt order={printQueueOrder} />
+      <OfflineIndicator />
     </div>
   );
 };

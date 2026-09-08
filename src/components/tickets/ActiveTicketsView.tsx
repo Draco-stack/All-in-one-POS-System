@@ -105,7 +105,7 @@ export const ActiveTicketsView: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {displayedOrders.map((order) => {
               const elapsed = getElapsedTimeMinutes(order.createdAt);
-              const isUrgent = elapsed > 15;
+              const isOver15Min = elapsed > 15;
               const isWarming = elapsed >= 8 && elapsed <= 15;
               const ordSt = (order.status || '').toLowerCase();
               const isCancelled = ordSt === 'cancelled' || ordSt === 'refunded' || ordSt === 'void';
@@ -123,8 +123,8 @@ export const ActiveTicketsView: React.FC = () => {
                       ? 'bg-gradient-to-b from-[#0e1d15] via-[#111617] to-[#0b0e12] border-emerald-400/95 shadow-[0_0_24px_rgba(52,211,153,0.32)] ring-1 ring-emerald-400/40'
                       : isOnTheWay
                       ? 'bg-gradient-to-b from-[#24170a] via-[#17120d] to-[#0d0a06] border-amber-400/95 shadow-[0_0_24px_rgba(245,158,11,0.32)] ring-1 ring-orange-400/40'
-                      : isUrgent
-                      ? 'bg-gradient-to-b from-[#211116] via-[#161017] to-[#0f0c12] border-rose-500/90 shadow-[0_0_26px_rgba(244,63,94,0.32)] ring-1 ring-rose-500/40'
+                      : isOver15Min
+                      ? 'animate-pulse-glow bg-gradient-to-b from-[#280e16] via-[#180e14] to-[#0e070b] border-rose-500/95 shadow-[0_0_28px_rgba(244,63,94,0.45)] ring-2 ring-rose-500/60'
                       : isWarming
                       ? 'bg-gradient-to-b from-[#20180d] via-[#171410] to-[#0e0e12] border-amber-400/90 shadow-[0_0_20px_rgba(245,158,11,0.25)] ring-1 ring-amber-400/30'
                       : 'bg-white dark:bg-stone-900/95 border-slate-200 dark:border-white/15 dark:shadow-[0_0_15px_rgba(255,255,255,0.03)]'
@@ -139,13 +139,26 @@ export const ActiveTicketsView: React.FC = () => {
                         ? 'bg-gradient-to-r from-emerald-500 via-green-300 to-emerald-500 shadow-[0_0_12px_rgba(52,211,153,0.95)]'
                         : isOnTheWay
                         ? 'bg-gradient-to-r from-amber-400 via-orange-400 to-yellow-300 shadow-[0_0_12px_rgba(245,158,11,0.95)]'
-                        : isUrgent
-                        ? 'bg-gradient-to-r from-rose-500 via-rose-300 to-rose-500 shadow-[0_0_12px_rgba(244,63,94,0.9)]'
+                        : isOver15Min
+                        ? 'bg-gradient-to-r from-rose-500 via-rose-300 to-rose-500 shadow-[0_0_14px_rgba(244,63,94,0.95)] animate-pulse'
                         : isWarming
                         ? 'bg-gradient-to-r from-amber-500 via-amber-200 to-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.7)]'
                         : 'bg-gradient-to-r from-teal-500 via-emerald-300 to-teal-500 opacity-60'
                     }`}
                   />
+
+                  {/* Priority indicator banner when waiting > 15 minutes */}
+                  {isOver15Min && (
+                    <div className="mb-2 px-2.5 py-1 rounded-lg bg-rose-500/25 border border-rose-500/60 text-rose-200 text-[11px] font-black flex items-center justify-between shadow-[0_0_10px_rgba(244,63,94,0.3)]">
+                      <span className="flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-rose-400 animate-ping shrink-0" />
+                        <span>PRIORITY • WAITING &gt;15M</span>
+                      </span>
+                      <span className="font-mono text-[10px] font-bold text-rose-300">
+                        {elapsed}m elapsed
+                      </span>
+                    </div>
+                  )}
 
                   {/* Card Header */}
                   <div className="space-y-2 border-b border-slate-200 dark:border-white/10 pb-3 pt-0.5">
@@ -155,7 +168,7 @@ export const ActiveTicketsView: React.FC = () => {
                       </span>
                       <span
                         className={`px-2.5 py-0.5 rounded-lg text-xs font-mono font-black flex items-center gap-1.5 border shadow-xs ${
-                          isUrgent
+                          isOver15Min
                             ? 'bg-rose-500/20 text-rose-300 border-rose-500/50 animate-pulse shadow-[0_0_8px_rgba(244,63,94,0.3)]'
                             : isWarming
                             ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
