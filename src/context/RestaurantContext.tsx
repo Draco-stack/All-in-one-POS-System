@@ -165,6 +165,9 @@ interface RestaurantContextType {
   addDriver: (name: string) => void;
   addDeliveryDriver: (driver: string) => void;
   getRiderStats: (riderIdentifier: string) => RiderStats;
+  riderResets: { [riderIdOrName: string]: string };
+  resetRiderStats: (riderName: string) => void;
+  resetAllRidersStats: () => void;
 
   // Toast
   toast: string | null;
@@ -524,6 +527,9 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [cashDrops, setCashDrops] = useState<any[]>(() =>
     loadFromStorage('pos_cash_drops_cache', [])
   );
+  const [riderResets, setRiderResets] = useState<{ [riderIdOrName: string]: string }>(() =>
+    loadFromStorage('pos_rider_resets_cache', {})
+  );
 
   // Synchronize state changes to localStorage
   useEffect(() => { saveToStorage('pos_users_cache', users); }, [users]);
@@ -539,6 +545,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   useEffect(() => { saveToStorage('pos_stock_cache', stockItems); }, [stockItems]);
   useEffect(() => { saveToStorage('pos_tables_cache', tables); }, [tables]);
   useEffect(() => { saveToStorage('pos_cash_drops_cache', cashDrops); }, [cashDrops]);
+  useEffect(() => { saveToStorage('pos_rider_resets_cache', riderResets); }, [riderResets]);
 
   // Dynamically compute list of active delivery drivers from users with role 'rider'
   const deliveryDrivers = useMemo(() => {
@@ -565,6 +572,9 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         };
       }
       const cleanTarget = riderIdentifier.trim().toLowerCase();
+      const riderResetTimeStr = riderResets[cleanTarget] || riderResets['all'];
+      const resetTime = riderResetTimeStr ? new Date(riderResetTimeStr).getTime() : 0;
+
       const matchedUser = users.find(
         (u) =>
           u.id.toLowerCase() === cleanTarget ||
@@ -579,6 +589,9 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       const targetUsername = (matchedUser?.username || '').trim().toLowerCase();
 
       const assigned = orders.filter((o) => {
+        const orderTime = o.createdAt ? new Date(o.createdAt).getTime() : 0;
+        if (orderTime < resetTime) return false;
+
         const orderDriver = (o.deliveryDriver || o.riderName || '').trim().toLowerCase();
         const orderRiderId = (o as any).assignedRiderId
           ? String((o as any).assignedRiderId).trim().toLowerCase()
@@ -638,6 +651,9 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       // Total cash dropped by rider in cash drops audit ledger
       const totalDropped = (cashDrops || [])
         .filter((d) => {
+          const dropTime = d.timestamp ? new Date(d.timestamp).getTime() : 0;
+          if (dropTime < resetTime) return false;
+
           const dRider = (d.riderName || '').trim().toLowerCase();
           return (
             dRider === targetName ||
@@ -664,8 +680,27 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         codCashOnHand,
       };
     },
-    [orders, users, cashDrops]
+    [orders, users, cashDrops, riderResets]
   );
+
+  const resetRiderStats = useCallback((riderName: string) => {
+    const clean = riderName.trim().toLowerCase();
+    const nowStr = new Date().toISOString();
+    setRiderResets((prev) => ({
+      ...prev,
+      [clean]: nowStr,
+    }));
+    showToast(`✓ Fleet statistics for Rider "${riderName}" have been reset.`);
+  }, [showToast]);
+
+  const resetAllRidersStats = useCallback(() => {
+    const nowStr = new Date().toISOString();
+    setRiderResets((prev) => ({
+      ...prev,
+      all: nowStr,
+    }));
+    showToast('✓ Statistics for all riders in the fleet have been reset.');
+  }, [showToast]);
 
   const addSalesAdjustment = useCallback((adj: Omit<SalesAdjustmentRecord, 'id' | 'timestamp'>) => {
     const newAdj: SalesAdjustmentRecord = {
@@ -2817,6 +2852,20 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     };
     setHistoricalShifts((prev) => [newHist, ...prev]);
 
+    // Check if today is the very last date of the month to trigger automatic monthly rider fleet reset after closing shift
+    const today = new Date();
+    const tomorrow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+    if (tomorrow.getDate() === 1) {
+      const nowStr = new Date().toISOString();
+      setRiderResets((prev) => ({
+        ...prev,
+        all: nowStr,
+      }));
+      setTimeout(() => {
+        showToast('📅 Last day of month shift close: Rider fleet statistics have been reset for the new month!');
+      }, 1500);
+    }
+
     showToast(`✓ Shift closed. Difference: PKR ${diff.toLocaleString()}`);
   };
 
@@ -2942,6 +2991,9 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         addDriver,
         addDeliveryDriver,
         getRiderStats,
+        riderResets,
+        resetRiderStats,
+        resetAllRidersStats,
         toast,
         showToast,
         syncFromServer,

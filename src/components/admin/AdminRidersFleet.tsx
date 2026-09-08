@@ -17,7 +17,17 @@ import {
 import { UserRole } from '../../types';
 
 export const AdminRidersFleet: React.FC = () => {
-  const { users, orders, addNewUser, outlets, showToast, getRiderStats } = useRestaurant();
+  const { 
+    users, 
+    orders, 
+    addNewUser, 
+    outlets, 
+    showToast, 
+    getRiderStats, 
+    riderResets, 
+    resetRiderStats, 
+    resetAllRidersStats 
+  } = useRestaurant();
   const [searchFilter, setSearchFilter] = useState('');
   const [isAddRiderOpen, setIsAddRiderOpen] = useState(false);
   const [newRiderName, setNewRiderName] = useState('');
@@ -34,7 +44,14 @@ export const AdminRidersFleet: React.FC = () => {
       const riderId = rider.id.trim().toLowerCase();
       const riderUsername = (rider.username || '').trim().toLowerCase();
 
+      // Find the reset timestamp for this rider
+      const riderResetTimeStr = riderResets[riderName] || riderResets['all'];
+      const resetTime = riderResetTimeStr ? new Date(riderResetTimeStr).getTime() : 0;
+
       const assignedOrders = orders.filter((o) => {
+        const orderTime = o.createdAt ? new Date(o.createdAt).getTime() : 0;
+        if (orderTime < resetTime) return false;
+
         const d = (o.deliveryDriver || o.riderName || '').trim().toLowerCase();
         const oRiderId = (o as any).assignedRiderId ? String((o as any).assignedRiderId).trim().toLowerCase() : '';
         return (
@@ -71,7 +88,7 @@ export const AdminRidersFleet: React.FC = () => {
         },
       };
     });
-  }, [riders, orders, getRiderStats]);
+  }, [riders, orders, getRiderStats, riderResets]);
 
   // Fleet Overview Summary Metrics
   const fleetTotals = useMemo(() => {
@@ -155,6 +172,17 @@ export const AdminRidersFleet: React.FC = () => {
               className="pl-8 pr-3 py-2 bg-stone-900/80 border border-white/10 rounded-xl text-xs text-white placeholder-stone-500 focus:outline-none focus:border-emerald-500 transition shadow-inner"
             />
           </div>
+
+          <button
+            onClick={() => {
+              if (window.confirm('⚠️ Are you sure you want to reset all riders fleet statistics to zero? This action cannot be undone.')) {
+                resetAllRidersStats();
+              }
+            }}
+            className="px-3.5 py-2 bg-gradient-to-r from-red-950 to-red-900 hover:from-red-900 hover:to-red-800 text-red-200 hover:text-white text-xs font-bold rounded-xl flex items-center gap-1.5 border border-red-800/40 cursor-pointer transition-all duration-200"
+          >
+            Reset All Fleet
+          </button>
 
           <button
             onClick={() => setIsAddRiderOpen(true)}
@@ -402,6 +430,20 @@ export const AdminRidersFleet: React.FC = () => {
                   ))
                 )}
               </div>
+            </div>
+
+            {/* Manual Reset Stats Action */}
+            <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-end">
+              <button
+                onClick={() => {
+                  if (window.confirm(`⚠️ Are you sure you want to reset the fleet statistics for rider "${rider.name}" to zero?`)) {
+                    resetRiderStats(rider.name);
+                  }
+                }}
+                className="px-2.5 py-1 text-[10px] font-bold text-red-400 hover:text-white bg-red-950/20 hover:bg-red-600 border border-red-900/30 hover:border-red-600 rounded-lg transition duration-200 cursor-pointer"
+              >
+                Reset Stats
+              </button>
             </div>
           </div>
         ))}

@@ -44,7 +44,7 @@ export const AVAILABLE_CAPABILITIES = [
 ];
 
 export const AdminStaffManager: React.FC = () => {
-  const { users, currentUser, addNewUser, updateUser, updateUserPin, toggleUserActive, deleteUser, showToast, outlets, getRiderStats } = useRestaurant();
+  const { users, currentUser, addNewUser, updateUser, updateUserPin, toggleUserActive, deleteUser, showToast, outlets, getRiderStats, theme } = useRestaurant();
 
   // Role filter tab
   const [roleFilter, setRoleFilter] = useState<'all' | 'operators' | 'riders'>('all');
@@ -233,13 +233,17 @@ export const AdminStaffManager: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Top Header & Quick Add */}
-      <div className="bg-gradient-to-b from-stone-900/90 to-[#141414]/90 backdrop-blur-md border border-white/10 rounded-2xl p-5 shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className={`backdrop-blur-md rounded-2xl p-5 shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-4 border ${
+        theme === 'dark' 
+          ? 'bg-gradient-to-b from-stone-900/90 to-[#141414]/90 border-white/10' 
+          : 'bg-white border-slate-200 shadow-sm'
+      }`}>
         <div>
-          <h3 className="text-lg font-bold text-white flex items-center gap-2">
+          <h3 className={`text-lg font-bold flex items-center gap-2 ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>
             <Users className="w-5 h-5 text-emerald-400" />
             Staff Accounts & Role-Based Access Control (RBAC)
           </h3>
-          <p className="text-xs text-stone-400 mt-0.5">
+          <p className={`text-xs mt-0.5 ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`}>
             Manage terminal credentials, enforce strict role boundaries, and instantly revoke staff access
           </p>
         </div>
@@ -254,16 +258,24 @@ export const AdminStaffManager: React.FC = () => {
       </div>
 
       {/* Staff Accounts Table */}
-      <div className="bg-gradient-to-b from-stone-900/90 to-[#141414]/90 backdrop-blur-md border border-white/10 rounded-2xl p-5 shadow-lg">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 mb-4 border-b border-white/5 gap-3">
+      <div className={`backdrop-blur-md rounded-2xl p-5 shadow-lg border ${
+        theme === 'dark' 
+          ? 'bg-gradient-to-b from-stone-900/90 to-[#141414]/90 border-white/10' 
+          : 'bg-white border-slate-200 shadow-sm'
+      }`}>
+        <div className={`flex flex-col sm:flex-row sm:items-center justify-between pb-3 mb-4 border-b gap-3 ${
+          theme === 'dark' ? 'border-white/5' : 'border-slate-200'
+        }`}>
           {/* Role Filter Tabs */}
-          <div className="flex items-center gap-1.5 p-1 bg-stone-950/80 rounded-xl border border-white/10">
+          <div className={`flex items-center gap-1.5 p-1 rounded-xl border ${
+            theme === 'dark' ? 'bg-stone-950/80 border-white/10' : 'bg-slate-100 border-slate-200'
+          }`}>
             <button
               onClick={() => setRoleFilter('all')}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 cursor-pointer ${
                 roleFilter === 'all'
-                  ? 'bg-stone-800 text-white shadow-sm border border-white/10'
-                  : 'text-stone-400 hover:text-stone-200'
+                  ? (theme === 'dark' ? 'bg-stone-800 text-white border-white/10' : 'bg-white text-slate-800 shadow-xs border-slate-300 border')
+                  : (theme === 'dark' ? 'text-stone-400 hover:text-stone-200' : 'text-slate-500 hover:text-slate-800')
               }`}
             >
               All Accounts ({users.length})
@@ -272,8 +284,8 @@ export const AdminStaffManager: React.FC = () => {
               onClick={() => setRoleFilter('operators')}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 cursor-pointer ${
                 roleFilter === 'operators'
-                  ? 'bg-stone-800 text-white shadow-sm border border-white/10'
-                  : 'text-stone-400 hover:text-stone-200'
+                  ? (theme === 'dark' ? 'bg-stone-800 text-white border-white/10' : 'bg-white text-slate-800 shadow-xs border-slate-300 border')
+                  : (theme === 'dark' ? 'text-stone-400 hover:text-stone-200' : 'text-slate-500 hover:text-slate-800')
               }`}
             >
               Register & POS Staff ({users.filter(u => u.role !== 'rider').length})
@@ -283,7 +295,7 @@ export const AdminStaffManager: React.FC = () => {
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 cursor-pointer flex items-center gap-1.5 ${
                 roleFilter === 'riders'
                   ? 'bg-gradient-to-r from-emerald-600/30 to-emerald-700/30 text-emerald-300 border border-emerald-500/40 shadow-sm'
-                  : 'text-stone-400 hover:text-stone-200'
+                  : (theme === 'dark' ? 'text-stone-400 hover:text-stone-200' : 'text-slate-500 hover:text-slate-800')
               }`}
             >
               <Truck className="w-3.5 h-3.5" />
@@ -291,16 +303,18 @@ export const AdminStaffManager: React.FC = () => {
             </button>
           </div>
 
-          <div className="text-xs text-stone-400 flex items-center gap-2">
+          <div className={`text-xs flex items-center gap-2 ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`}>
             <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]" />
             <span>Active Terminal / Fleet Sessions</span>
           </div>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-stone-300 border-collapse">
+          <table className={`w-full text-left text-xs border-collapse ${theme === 'dark' ? 'text-stone-300' : 'text-slate-700'}`}>
             <thead>
-              <tr className="border-b border-white/10 text-stone-400 font-bold uppercase tracking-wider text-[10px]">
+              <tr className={`border-b font-bold uppercase tracking-wider text-[10px] ${
+                theme === 'dark' ? 'border-white/10 text-stone-400' : 'border-slate-200 text-slate-500'
+              }`}>
                 <th className="py-2.5 px-3">Staff Member</th>
                 <th className="py-2.5 px-3">Username</th>
                 <th className="py-2.5 px-3">Assigned Role</th>
@@ -309,7 +323,7 @@ export const AdminStaffManager: React.FC = () => {
                 <th className="py-2.5 px-3 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5 font-sans">
+            <tbody className={`divide-y font-sans ${theme === 'dark' ? 'divide-white/5' : 'divide-slate-200'}`}>
               {filteredUsers.map((u) => {
                 const isActive = u.active !== false;
                 const isCurrent = u.id === currentUser.id;
@@ -319,7 +333,11 @@ export const AdminStaffManager: React.FC = () => {
                 return (
                   <tr
                     key={u.id}
-                    className={`hover:bg-white/[0.02] transition ${!isActive ? 'opacity-55 bg-stone-950/40' : ''}`}
+                    className={`transition ${
+                      !isActive 
+                        ? (theme === 'dark' ? 'opacity-55 bg-stone-950/40' : 'opacity-65 bg-slate-50') 
+                        : (theme === 'dark' ? 'hover:bg-white/[0.02]' : 'hover:bg-slate-50')
+                    }`}
                   >
                     {/* Name & Badge */}
                     <td className="py-3 px-3">
@@ -340,7 +358,7 @@ export const AdminStaffManager: React.FC = () => {
                           {isRider ? <Truck className="w-4 h-4 text-cyan-400" /> : u.name.substring(0, 2)}
                         </div>
                         <div>
-                          <div className="font-bold text-white flex items-center gap-1.5">
+                          <div className={`font-bold flex items-center gap-1.5 ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>
                             {u.name}
                             {isCurrent && (
                               <span className="px-1.5 py-0.2 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded text-[9px] font-bold">
@@ -348,7 +366,9 @@ export const AdminStaffManager: React.FC = () => {
                               </span>
                             )}
                             {isRider && (
-                              <span className="px-1.5 py-0.2 bg-cyan-950 text-cyan-400 border border-cyan-800/50 rounded text-[9px] font-bold">
+                              <span className={`px-1.5 py-0.2 rounded text-[9px] font-bold border ${
+                                theme === 'dark' ? 'bg-cyan-950 text-cyan-400 border-cyan-800/50' : 'bg-cyan-50 text-cyan-600 border-cyan-200'
+                              }`}>
                                 Fleet (No Login)
                               </span>
                             )}
@@ -370,21 +390,21 @@ export const AdminStaffManager: React.FC = () => {
                     </td>
 
                     {/* Username */}
-                    <td className="py-3 px-3 font-mono text-stone-300 font-medium">@{u.username}</td>
+                    <td className={`py-3 px-3 font-mono font-medium ${theme === 'dark' ? 'text-stone-300' : 'text-slate-700'}`}>@{u.username}</td>
 
                     {/* Role */}
                     <td className="py-3 px-3">
                       <span
                         className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase font-mono border ${
                           u.role === 'owner'
-                            ? 'bg-amber-950/60 text-amber-300 border-amber-500/30'
+                            ? (theme === 'dark' ? 'bg-amber-950/60 text-amber-300 border-amber-500/30' : 'bg-amber-50 text-amber-600 border-amber-200')
                             : u.role === 'manager'
-                            ? 'bg-purple-950/60 text-purple-300 border-purple-500/30'
+                            ? (theme === 'dark' ? 'bg-purple-950/60 text-purple-300 border-purple-500/30' : 'bg-purple-50 text-purple-600 border-purple-200')
                             : u.role === 'rider'
-                            ? 'bg-cyan-950/60 text-cyan-300 border-cyan-500/30'
+                            ? (theme === 'dark' ? 'bg-cyan-950/60 text-cyan-300 border-cyan-500/30' : 'bg-cyan-50 text-cyan-600 border-cyan-200')
                             : u.role === 'server'
-                            ? 'bg-indigo-950/60 text-indigo-300 border-indigo-500/30'
-                            : 'bg-emerald-950/60 text-emerald-300 border-emerald-500/30'
+                            ? (theme === 'dark' ? 'bg-indigo-950/60 text-indigo-300 border-indigo-500/30' : 'bg-indigo-50 text-indigo-600 border-indigo-200')
+                            : (theme === 'dark' ? 'bg-emerald-950/60 text-emerald-300 border-emerald-500/30' : 'bg-emerald-50 text-emerald-600 border-emerald-200')
                         }`}
                       >
                         {u.role === 'rider' ? 'RIDER / FLEET' : u.role}
@@ -395,9 +415,11 @@ export const AdminStaffManager: React.FC = () => {
                     <td className="py-3 px-3">
                       {isRider && riderStats ? (
                         <div className="space-y-1">
-                          <div className="text-stone-300 font-medium text-[11px]">{u.outlet || 'Main Branch'}</div>
+                          <div className={`font-medium text-[11px] ${theme === 'dark' ? 'text-stone-300' : 'text-slate-700'}`}>{u.outlet || 'Main Branch'}</div>
                           <div className="flex items-center gap-1.5 text-[10px]">
-                            <span className="bg-stone-950/80 border border-white/5 px-1.5 py-0.5 rounded text-stone-300 font-mono">
+                            <span className={`border px-1.5 py-0.5 rounded font-mono ${
+                              theme === 'dark' ? 'bg-stone-950/80 border-white/5 text-stone-300' : 'bg-slate-100 border-slate-200 text-slate-700'
+                            }`}>
                               Total: {riderStats.totalAssigned}
                             </span>
                             <span className="bg-emerald-950/60 border border-emerald-800/40 px-1.5 py-0.5 rounded text-emerald-400 font-mono">
@@ -414,7 +436,7 @@ export const AdminStaffManager: React.FC = () => {
                           </div>
                         </div>
                       ) : (
-                        <span className="text-stone-300 font-medium">{u.outlet || 'Main Branch'}</span>
+                        <span className={`font-medium ${theme === 'dark' ? 'text-stone-300' : 'text-slate-700'}`}>{u.outlet || 'Main Branch'}</span>
                       )}
                     </td>
 
@@ -426,7 +448,7 @@ export const AdminStaffManager: React.FC = () => {
                         className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase transition cursor-pointer border ${
                           isActive
                             ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20'
-                            : 'bg-stone-800 text-stone-500 border-stone-700 hover:bg-stone-700'
+                            : (theme === 'dark' ? 'bg-stone-800 text-stone-500 border-stone-700 hover:bg-stone-700' : 'bg-slate-100 text-slate-400 border-slate-300 hover:bg-slate-200 hover:text-slate-600')
                         }`}
                         title="Click to toggle terminal access immediately"
                       >
@@ -447,7 +469,11 @@ export const AdminStaffManager: React.FC = () => {
                       <div className="flex items-center justify-end gap-1.5">
                         <button
                           onClick={() => handleOpenEdit(u)}
-                          className="px-2 py-1 bg-stone-800/80 hover:bg-stone-700 text-stone-300 hover:text-white rounded-lg text-xs font-semibold flex items-center gap-1 transition cursor-pointer border border-white/10"
+                          className={`px-2 py-1 text-xs font-semibold flex items-center gap-1 transition cursor-pointer border rounded-lg ${
+                            theme === 'dark' 
+                              ? 'bg-stone-800/80 hover:bg-stone-700 text-stone-300 hover:text-white border-white/10' 
+                              : 'bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-950 border-slate-200'
+                          }`}
                           title="Edit Staff Information"
                         >
                           <Pencil className="w-3 h-3 text-indigo-400" />
@@ -455,7 +481,11 @@ export const AdminStaffManager: React.FC = () => {
                         </button>
                         <button
                           onClick={() => handleOpenPinReset(u)}
-                          className="px-2 py-1 bg-stone-800/80 hover:bg-stone-700 text-stone-300 hover:text-white rounded-lg text-xs font-semibold flex items-center gap-1 transition cursor-pointer border border-white/10"
+                          className={`px-2 py-1 text-xs font-semibold flex items-center gap-1 transition cursor-pointer border rounded-lg ${
+                            theme === 'dark' 
+                              ? 'bg-stone-800/80 hover:bg-stone-700 text-stone-300 hover:text-white border-white/10' 
+                              : 'bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-950 border-slate-200'
+                          }`}
                           title="Change User Password"
                         >
                           <KeyRound className="w-3 h-3 text-amber-400" />
@@ -468,7 +498,11 @@ export const AdminStaffManager: React.FC = () => {
                             isCurrent ||
                             (u.role === 'owner' && users.filter((x) => x.role === 'owner').length <= 1)
                           }
-                          className="p-1.5 text-stone-400 hover:text-red-400 bg-stone-800/80 hover:bg-red-950/40 rounded-lg transition cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed border border-white/5"
+                          className={`p-1.5 transition cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed border rounded-lg ${
+                            theme === 'dark' 
+                              ? 'text-stone-400 hover:text-red-400 bg-stone-800/80 hover:bg-red-950/40 border-white/5' 
+                              : 'text-slate-500 hover:text-red-600 bg-slate-100 hover:bg-red-50 border-slate-200'
+                          }`}
                           title="Delete Account"
                         >
                           {deletingUserId === u.id ? (
@@ -488,36 +522,44 @@ export const AdminStaffManager: React.FC = () => {
       </div>
 
       {/* Permission Matrix Breakdown Card */}
-      <div className="bg-gradient-to-b from-stone-900/90 to-[#141414]/90 backdrop-blur-md border border-white/10 rounded-2xl p-5 shadow-lg space-y-3">
-        <div className="pb-3 border-b border-white/5 flex items-center justify-between">
+      <div className={`backdrop-blur-md rounded-2xl p-5 shadow-lg space-y-3 border ${
+        theme === 'dark' 
+          ? 'bg-gradient-to-b from-stone-900/90 to-[#141414]/90 border-white/10' 
+          : 'bg-white border-slate-200 shadow-sm'
+      }`}>
+        <div className={`pb-3 border-b flex items-center justify-between ${theme === 'dark' ? 'border-white/5' : 'border-slate-200'}`}>
           <div>
-            <h4 className="text-sm font-bold text-white flex items-center gap-2">
+            <h4 className={`text-sm font-bold flex items-center gap-2 ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>
               <ShieldCheck className="w-4 h-4 text-emerald-400" />
               Role Privilege Matrix & POS Guardrails
             </h4>
-            <p className="text-xs text-stone-400 mt-0.5">
+            <p className={`text-xs mt-0.5 ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`}>
               Enforced backend & workstation route permission limits by role tier
             </p>
           </div>
-          <span className="text-[11px] px-2.5 py-1 rounded-lg bg-stone-950/80 border border-white/10 text-stone-400 font-mono">
+          <span className={`text-[11px] px-2.5 py-1 rounded-lg border font-mono ${
+            theme === 'dark' ? 'bg-stone-950/80 border-white/10 text-stone-400' : 'bg-slate-50 border-slate-200 text-slate-500'
+          }`}>
             PIN-Gated Operations Active
           </span>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-stone-300 border-collapse">
+          <table className={`w-full text-left text-xs border-collapse ${theme === 'dark' ? 'text-stone-300' : 'text-slate-700'}`}>
             <thead>
-              <tr className="border-b border-white/10 text-stone-400 font-bold uppercase tracking-wider text-[10px]">
+              <tr className={`border-b font-bold uppercase tracking-wider text-[10px] ${
+                theme === 'dark' ? 'border-white/10 text-stone-400' : 'border-slate-200 text-slate-500'
+              }`}>
                 <th className="py-2.5 px-3">System Operation / Action</th>
                 <th className="py-2.5 px-3 text-center">Cashier</th>
                 <th className="py-2.5 px-3 text-center">Manager</th>
                 <th className="py-2.5 px-3 text-center">Owner</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5 font-sans">
+            <tbody className={`divide-y font-sans ${theme === 'dark' ? 'divide-white/5' : 'divide-slate-200'}`}>
               {permissionMatrix.map((row, i) => (
-                <tr key={i} className="hover:bg-white/[0.02] transition">
-                  <td className="py-2 px-3 font-medium text-stone-200">{row.permission}</td>
+                <tr key={i} className={`transition ${theme === 'dark' ? 'hover:bg-white/[0.02]' : 'hover:bg-slate-50'}`}>
+                  <td className={`py-2 px-3 font-medium ${theme === 'dark' ? 'text-stone-200' : 'text-slate-700'}`}>{row.permission}</td>
                   <td className="py-2 px-3 text-center">
                     {row.cashier ? (
                       <span className="inline-flex items-center gap-1 text-emerald-400 font-bold text-[11px]">

@@ -40,6 +40,7 @@ export const AdminMenuManager: React.FC = () => {
     deleteCategory,
     reorderCategories,
     showToast,
+    theme,
   } = useRestaurant();
 
   const [selectedCatFilter, setSelectedCatFilter] = useState<string>('all');
@@ -212,14 +213,18 @@ export const AdminMenuManager: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Action Header & Category Toolbar */}
-      <div className="bg-gradient-to-b from-stone-900/90 to-[#141414]/90 backdrop-blur-md border border-white/10 rounded-2xl p-5 shadow-lg flex flex-col gap-4">
+      <div className={`backdrop-blur-md rounded-2xl p-5 shadow-lg flex flex-col gap-4 border ${
+        theme === 'dark' 
+          ? 'bg-gradient-to-b from-stone-900/90 to-[#141414]/90 border-white/10' 
+          : 'bg-white border-slate-200 shadow-sm'
+      }`}>
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h3 className="text-lg font-bold text-white flex items-center gap-2">
+            <h3 className={`text-lg font-bold flex items-center gap-2 ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>
               <UtensilsCrossed className="w-5 h-5 text-emerald-400" />
               Menu & Catalog Management
             </h3>
-            <p className="text-xs text-stone-400 mt-0.5">
+            <p className={`text-xs mt-0.5 ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`}>
               Live floor pricing, catalog taxonomy, category reordering, and item visibility controls
             </p>
           </div>
@@ -227,7 +232,11 @@ export const AdminMenuManager: React.FC = () => {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setIsCatModalOpen(true)}
-              className="px-3.5 py-2 rounded-xl bg-stone-800/80 hover:bg-stone-700 text-stone-200 text-xs font-semibold flex items-center gap-1.5 transition-all duration-200 cursor-pointer border border-white/10 hover:border-white/20 active:scale-95 shadow-sm"
+              className={`px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all duration-200 cursor-pointer border active:scale-95 shadow-sm ${
+                theme === 'dark' 
+                  ? 'bg-stone-800/80 hover:bg-stone-700 text-stone-200 border-white/10 hover:border-white/20' 
+                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300'
+              }`}
             >
               <Layers className="w-4 h-4 text-emerald-400" />
               Manage Categories ({categories.length})
@@ -243,7 +252,7 @@ export const AdminMenuManager: React.FC = () => {
         </div>
 
         {/* Filter and Search Bar */}
-        <div className="flex flex-col sm:flex-row items-center gap-3 pt-3 border-t border-white/5">
+        <div className={`flex flex-col sm:flex-row items-center gap-3 pt-3 border-t ${theme === 'dark' ? 'border-white/5' : 'border-slate-200'}`}>
           <div className="relative w-full sm:w-72">
             <Search className="w-4 h-4 text-stone-500 absolute left-3 top-2.5" />
             <input
@@ -251,7 +260,11 @@ export const AdminMenuManager: React.FC = () => {
               placeholder="Search items, titles, categories..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-3 py-1.5 bg-stone-950/80 border border-white/10 rounded-xl text-xs text-white placeholder-stone-500 focus:outline-none focus:border-emerald-500 transition shadow-inner"
+              className={`w-full pl-9 pr-3 py-1.5 rounded-xl text-xs transition shadow-inner border focus:outline-none focus:border-emerald-500 ${
+                theme === 'dark' 
+                  ? 'bg-stone-950/80 border-white/10 text-white placeholder-stone-500' 
+                  : 'bg-slate-50 border-slate-300 text-slate-800 placeholder-slate-400'
+              }`}
             />
           </div>
 
@@ -259,10 +272,12 @@ export const AdminMenuManager: React.FC = () => {
           <div className="flex items-center gap-1.5 overflow-x-auto w-full pb-1 sm:pb-0 scrollbar-thin">
             <button
               onClick={() => setSelectedCatFilter('all')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer flex items-center gap-1.5 border ${
                 selectedCatFilter === 'all'
-                  ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-[0_0_10px_rgba(16,185,129,0.25)] border border-emerald-500/30'
-                  : 'bg-stone-950/80 text-stone-400 hover:text-white border border-white/5 hover:border-white/10'
+                  ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-[0_0_10px_rgba(16,185,129,0.25)] border-emerald-500/30'
+                  : theme === 'dark'
+                  ? 'bg-stone-950/80 text-stone-400 hover:text-white border-white/5 hover:border-white/10'
+                  : 'bg-slate-50 text-slate-600 hover:text-slate-900 border-slate-200 hover:border-slate-300'
               }`}
             >
               <Layers className="w-3.5 h-3.5" />
@@ -274,10 +289,12 @@ export const AdminMenuManager: React.FC = () => {
                 <button
                   key={c.id}
                   onClick={() => setSelectedCatFilter(c.id)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer flex items-center gap-1.5 ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer flex items-center gap-1.5 border ${
                     selectedCatFilter.toLowerCase() === c.id.toLowerCase()
-                      ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-[0_0_10px_rgba(16,185,129,0.25)] border border-emerald-500/30'
-                      : 'bg-stone-950/80 text-stone-400 hover:text-white border border-white/5 hover:border-white/10'
+                      ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-[0_0_10px_rgba(16,185,129,0.25)] border-emerald-500/30'
+                      : theme === 'dark'
+                      ? 'bg-stone-950/80 text-stone-400 hover:text-white border-white/5 hover:border-white/10'
+                      : 'bg-slate-50 text-slate-600 hover:text-slate-900 border-slate-200 hover:border-slate-300'
                   }`}
                 >
                   <CategoryIcon categoryIdOrName={c.id || c.name} className="w-3.5 h-3.5" />
@@ -290,12 +307,16 @@ export const AdminMenuManager: React.FC = () => {
       </div>
 
       {/* Menu Items Grid Table */}
-      <div className="bg-gradient-to-b from-stone-900/90 to-[#141414]/90 backdrop-blur-md border border-white/10 rounded-2xl p-5 shadow-lg">
-        <div className="flex items-center justify-between pb-3 mb-2 border-b border-white/5">
-          <div className="text-xs text-stone-400">
-            Displaying <span className="text-white font-bold">{filteredItems.length}</span> items in catalog
+      <div className={`backdrop-blur-md rounded-2xl p-5 shadow-lg border ${
+        theme === 'dark' 
+          ? 'bg-gradient-to-b from-stone-900/90 to-[#141414]/90 border-white/10' 
+          : 'bg-white border-slate-200 shadow-sm'
+      }`}>
+        <div className={`flex items-center justify-between pb-3 mb-2 border-b ${theme === 'dark' ? 'border-white/5' : 'border-slate-200'}`}>
+          <div className={`text-xs ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`}>
+            Displaying <span className={`font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>{filteredItems.length}</span> items in catalog
           </div>
-          <div className="flex items-center gap-3 text-[11px] text-stone-400">
+          <div className={`flex items-center gap-3 text-[11px] ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`}>
             <span className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]" /> Active on POS
             </span>
@@ -306,9 +327,9 @@ export const AdminMenuManager: React.FC = () => {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-stone-300 border-collapse">
+          <table className={`w-full text-left text-xs border-collapse ${theme === 'dark' ? 'text-stone-300' : 'text-slate-700'}`}>
             <thead>
-              <tr className="border-b border-white/10 text-stone-400 font-bold uppercase tracking-wider text-[10px]">
+              <tr className={`border-b font-bold uppercase tracking-wider text-[10px] ${theme === 'dark' ? 'border-white/10 text-stone-400' : 'border-slate-200 text-slate-500'}`}>
                 <th className="py-2.5 px-3">Item Details</th>
                 <th className="py-2.5 px-3">Category</th>
                 <th className="py-2.5 px-3 text-right">Floor Price (PKR)</th>
@@ -317,7 +338,7 @@ export const AdminMenuManager: React.FC = () => {
                 <th className="py-2.5 px-3 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5 font-sans">
+            <tbody className={`divide-y font-sans ${theme === 'dark' ? 'divide-white/5' : 'divide-slate-200'}`}>
               {filteredItems.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="py-10 text-center text-stone-500 italic">
@@ -330,7 +351,11 @@ export const AdminMenuManager: React.FC = () => {
                   return (
                     <tr
                       key={item.id}
-                      className={`hover:bg-white/[0.02] transition ${!isAvail ? 'opacity-55 bg-stone-950/40' : ''}`}
+                      className={`transition ${
+                        !isAvail 
+                          ? (theme === 'dark' ? 'opacity-55 bg-stone-950/40' : 'opacity-65 bg-slate-50') 
+                          : (theme === 'dark' ? 'hover:bg-white/[0.02]' : 'hover:bg-slate-50')
+                      }`}
                     >
                       {/* Item Details */}
                       <td className="py-3 px-3">
@@ -343,7 +368,7 @@ export const AdminMenuManager: React.FC = () => {
                             className="w-10 h-10 rounded-xl"
                           />
                           <div>
-                            <div className="font-bold text-white flex items-center gap-1.5">
+                            <div className={`font-bold flex items-center gap-1.5 ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>
                               {item.name}
                               {item.isPopular && (
                                 <span className="px-1.5 py-0.2 bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded text-[9px] font-bold uppercase shadow-xs">
@@ -351,7 +376,7 @@ export const AdminMenuManager: React.FC = () => {
                                 </span>
                               )}
                             </div>
-                            <div className="text-[11px] text-stone-400 max-w-sm truncate" title={item.description}>
+                            <div className={`text-[11px] max-w-sm truncate ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`} title={item.description}>
                               {item.description || 'No description provided'}
                             </div>
                           </div>
@@ -360,7 +385,11 @@ export const AdminMenuManager: React.FC = () => {
 
                       {/* Category */}
                       <td className="py-3 px-3">
-                        <span className="px-2 py-0.5 rounded-md bg-stone-800/80 text-stone-300 text-[11px] font-semibold capitalize font-mono border border-white/5">
+                        <span className={`px-2 py-0.5 rounded-md text-[11px] font-semibold capitalize font-mono border ${
+                          theme === 'dark' 
+                            ? 'bg-stone-800/80 text-stone-300 border-white/5' 
+                            : 'bg-slate-100 text-slate-600 border-slate-200'
+                        }`}>
                           {item.category}
                         </span>
                       </td>
@@ -368,12 +397,14 @@ export const AdminMenuManager: React.FC = () => {
                       {/* Floor Price with On-the-Fly Quick Editing */}
                       <td className="py-3 px-3 text-right">
                         {quickPriceEditId === item.id ? (
-                          <div className="inline-flex items-center gap-1">
+                           <div className="inline-flex items-center gap-1">
                             <input
                               type="number"
                               value={quickPriceVal}
                               onChange={(e) => setQuickPriceVal(e.target.value)}
-                              className="w-20 px-2 py-1 bg-stone-950 border border-emerald-500 rounded text-xs text-white font-mono text-right focus:outline-none"
+                              className={`w-20 px-2 py-1 border border-emerald-500 rounded text-xs font-mono text-right focus:outline-none ${
+                                theme === 'dark' ? 'bg-stone-950 text-white' : 'bg-slate-50 text-slate-800'
+                              }`}
                               autoFocus
                               onKeyDown={(e) => {
                                 if (e.key === 'Enter') handleSaveQuickPrice(item.id);
@@ -399,7 +430,9 @@ export const AdminMenuManager: React.FC = () => {
                               setQuickPriceEditId(item.id);
                               setQuickPriceVal(String(item.price));
                             }}
-                            className="inline-flex items-center gap-1 font-mono font-bold text-white hover:text-emerald-400 cursor-pointer group transition-colors"
+                            className={`inline-flex items-center gap-1 font-mono font-bold hover:text-emerald-400 cursor-pointer group transition-colors ${
+                              theme === 'dark' ? 'text-white' : 'text-slate-800'
+                            }`}
                             title="Click to edit price on the fly"
                           >
                             <span>PKR {item.price.toLocaleString()}</span>
@@ -415,7 +448,11 @@ export const AdminMenuManager: React.FC = () => {
                             item.flavors.map((f, i) => (
                               <span
                                 key={i}
-                                className="px-1.5 py-0.2 rounded bg-stone-950/80 text-stone-400 text-[10px] border border-white/5"
+                                className={`px-1.5 py-0.2 rounded text-[10px] border ${
+                                  theme === 'dark' 
+                                    ? 'bg-stone-950/80 text-stone-400 border-white/5' 
+                                    : 'bg-slate-100 text-slate-500 border-slate-200'
+                                }`}
                               >
                                 {f}
                               </span>
@@ -433,7 +470,9 @@ export const AdminMenuManager: React.FC = () => {
                           className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase transition-all duration-200 cursor-pointer border ${
                             isAvail
                               ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20 shadow-[0_0_8px_rgba(16,185,129,0.15)]'
-                              : 'bg-stone-800/80 text-stone-500 border-stone-700 hover:bg-stone-700'
+                              : theme === 'dark'
+                              ? 'bg-stone-800/80 text-stone-500 border-stone-700 hover:bg-stone-700'
+                              : 'bg-slate-100 text-slate-400 border-slate-300 hover:bg-slate-200 hover:text-slate-600'
                           }`}
                         >
                           {isAvail ? (
@@ -453,7 +492,11 @@ export const AdminMenuManager: React.FC = () => {
                         <div className="flex items-center justify-end gap-1.5">
                           <button
                             onClick={() => handleOpenEditModal(item)}
-                            className="p-1.5 text-stone-400 hover:text-white bg-stone-800/80 hover:bg-stone-700 rounded-lg transition-all duration-200 cursor-pointer border border-white/5 active:scale-95"
+                            className={`p-1.5 rounded-lg transition-all duration-200 cursor-pointer border active:scale-95 ${
+                              theme === 'dark'
+                                ? 'text-stone-400 hover:text-white bg-stone-800/80 hover:bg-stone-700 border-white/5'
+                                : 'text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 border-slate-200'
+                            }`}
                             title="Edit Item Details"
                           >
                             <Edit2 className="w-3.5 h-3.5" />
@@ -461,7 +504,11 @@ export const AdminMenuManager: React.FC = () => {
                           <button
                             onClick={() => handleDeleteItem(item)}
                             disabled={deletingItemId === item.id}
-                            className="p-1.5 text-stone-400 hover:text-red-400 bg-stone-800/80 hover:bg-red-950/40 rounded-lg transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border border-white/5 active:scale-95"
+                            className={`p-1.5 rounded-lg transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border active:scale-95 ${
+                              theme === 'dark'
+                                ? 'text-stone-400 hover:text-red-400 bg-stone-800/80 hover:bg-red-950/40 border-white/5'
+                                : 'text-slate-600 hover:text-red-600 bg-slate-100 hover:bg-red-50 border-slate-200'
+                            }`}
                             title="Delete Item"
                           >
                             {deletingItemId === item.id ? (
