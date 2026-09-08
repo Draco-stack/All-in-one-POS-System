@@ -1,7 +1,6 @@
 import express, { Request, Response, NextFunction } from 'express';
 import path from 'path';
 import crypto from 'crypto';
-import { createServer as createViteServer } from 'vite';
 import prisma from './src/server/prisma';
 import { seedDatabaseIfNeeded } from './src/server/seed';
 import helmet from 'helmet';
@@ -1483,6 +1482,7 @@ async function startServer() {
       res.sendFile(path.join(appDir, 'dist', 'index.html'));
     });
   } else {
+    const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
       server: { 
         middlewareMode: true,
