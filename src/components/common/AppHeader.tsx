@@ -150,35 +150,38 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
       }`}
     >
       {/* 1. BRAND EMBLEM & DYNAMIC VIEW TITLE */}
-      <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0 shrink-0">
+      <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 shrink-0">
         <div
-          className={`w-9 h-9 sm:w-9.5 sm:h-9.5 rounded-xl bg-gradient-to-br ${currentViewInfo.iconBg} flex items-center justify-center text-stone-950 shadow-md border border-slate-300 dark:border-white/20 shrink-0 hover-lift cursor-pointer`}
-          title="Master POS Operating System"
+          onClick={() => setActiveView('pos')}
+          className="flex items-center gap-2.5 cursor-pointer group select-none"
+          title="Master POS Operating System - Floor Terminal"
         >
-          <MasterPOSLogo className="w-5 h-5 text-stone-950" size={22} />
-        </div>
-
-        <div className="flex flex-col justify-center min-w-0">
-          <div className="flex items-center gap-2 leading-tight">
-            <h1
-              className={`font-extrabold text-xs sm:text-sm tracking-tight truncate ${
-                isDark ? 'text-white' : 'text-slate-900'
-              }`}
-            >
-              {currentViewInfo.title}
-            </h1>
-            <span className="relative flex h-2 w-2 shrink-0">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-            </span>
+          {/* Executive Brand Emblem */}
+          <div className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-b from-[#1c1e28] via-[#12131b] to-[#0a0b10] flex items-center justify-center shadow-lg shadow-black/40 border border-emerald-500/30 group-hover:border-emerald-400/60 group-hover:shadow-emerald-500/10 transition-all duration-200 shrink-0">
+            <div className="absolute inset-0 rounded-xl bg-radial from-emerald-500/25 to-transparent opacity-60 group-hover:opacity-100 transition-opacity" />
+            <div className="absolute top-0 inset-x-1.5 h-[1px] bg-gradient-to-r from-transparent via-emerald-300/60 to-transparent" />
+            <MasterPOSLogo className="w-5 h-5 text-emerald-400 relative z-10 group-hover:scale-105 transition-transform" size={22} useColor={true} accent="emerald" />
           </div>
-          <p
-            className={`text-[10.5px] hidden xl:block leading-tight font-medium mt-0.5 truncate ${
-              isDark ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'
-            }`}
-          >
-            {currentViewInfo.subtitle}
-          </p>
+
+          <div className="flex flex-col justify-center min-w-0">
+            <div className="flex items-center gap-1.5 leading-tight">
+              <span className={`font-black text-xs sm:text-sm tracking-tight font-sans ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                MASTER <span className="text-emerald-500 font-extrabold">POS</span>
+              </span>
+              <span className="hidden sm:inline-block px-1.5 py-0.5 rounded text-[8.5px] font-mono font-bold uppercase tracking-wider bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 leading-none">
+                PRO
+              </span>
+              <span className="relative flex h-1.5 w-1.5 shrink-0">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+              </span>
+            </div>
+            <div className="flex items-center gap-1 mt-0.5">
+              <p className={`text-[10px] font-medium truncate ${isDark ? 'text-stone-400' : 'text-slate-500'}`}>
+                {currentViewInfo.title}
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Order } from '../../types';
 import { X, Printer, CheckCircle } from 'lucide-react';
+import { MasterPOSLogo } from '../common/MasterPOSLogo';
 
 interface ReceiptModalProps {
   order: Order | null;
@@ -54,7 +55,9 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ order, onClose }) =>
           >
             {/* Store Header */}
             <div className="text-center space-y-1 pb-3 border-b-2 border-dashed border-stone-300">
-              <h2 className="text-lg font-black tracking-wider uppercase font-sans text-stone-950">Master POS</h2>
+              <div className="flex justify-center mb-1.5">
+                <MasterPOSLogo variant="receipt" size={32} />
+              </div>
               <p className="text-[11px] font-bold text-stone-700">Pizza, Fast Food & Grill</p>
               <p className="text-[10px] text-slate-400 dark:text-stone-500">Main Commercial Hub, Islamabad</p>
               <p className="text-[10px] text-slate-400 dark:text-stone-500">UAN: (051) 111-227-853 • NTN: #7391024-1</p>

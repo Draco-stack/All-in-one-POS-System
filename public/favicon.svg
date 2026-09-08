@@ -1,0 +1,37 @@
+<svg width="64" height="64" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="fav-bg" x1="0" y1="0" x2="44" y2="44" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stopColor="#1e2230" />
+      <stop offset="100%" stopColor="#08090d" />
+    </linearGradient>
+    <linearGradient id="fav-emerald" x1="6" y1="4" x2="38" y2="40" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stopColor="#34d399" />
+      <stop offset="50%" stopColor="#10b981" />
+      <stop offset="100%" stopColor="#047857" />
+    </linearGradient>
+  </defs>
+
+  <rect width="44" height="44" rx="10" fill="url(#fav-bg)" />
+  <rect width="44" height="44" rx="10" stroke="#34d399" stroke-opacity="0.3" stroke-width="1.5" />
+
+  <!-- Outer Hexagonal Shield -->
+  <path
+    d="M22 3.8L37.8 12.9C39.2 13.7 40 15.2 40 16.8V31.2C40 32.8 39.2 34.3 37.8 35.1L22 44.2C20.7 45 19.3 45 18 44.2L2.2 35.1C0.8 34.3 0 32.8 0 31.2V16.8C0 15.2 0.8 13.7 2.2 12.9L18 3.8C19.3 3 20.7 3 22 3.8Z"
+    transform="scale(0.8) translate(5.5, 4.5)"
+    stroke="url(#fav-emerald)"
+    stroke-width="2.5"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+
+  <!-- The Architectural 'M' Monogram -->
+  <path d="M12.5 28.5V16L16.5 13V28.5H12.5Z" fill="url(#fav-emerald)" />
+  <path d="M27.5 13L31.5 16V28.5H27.5V13Z" fill="url(#fav-emerald)" />
+  <path d="M16.5 16L22 24.5L27.5 16L25 14L22 19L19 14L16.5 16Z" fill="url(#fav-emerald)" />
+
+  <!-- Zenith Crown Apex -->
+  <polygon points="22,9 26,13 22,15 18,13" fill="url(#fav-emerald)" />
+
+  <!-- Center Jewel Node -->
+  <polygon points="22,20 24,22 22,24 20,22" fill="#ffffff" />
+</svg>

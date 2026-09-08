@@ -538,11 +538,13 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
         {/* Brand Emblem */}
         <div 
           onClick={onOpenPOS}
-          className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 flex flex-col items-center justify-center text-white cursor-pointer shadow-lg shadow-blue-500/20 hover:scale-105 transition-all border border-blue-400/30 group p-2"
+          className="relative w-11 h-11 rounded-2xl bg-gradient-to-b from-[#1c1e28] via-[#12131b] to-[#0a0b10] flex flex-col items-center justify-center text-white cursor-pointer shadow-xl shadow-black/50 hover:scale-105 transition-all border border-blue-500/40 group p-1"
           title="Floor POS Terminal"
         >
-          <MasterPOSLogo className="w-6 h-6 text-white" size={22} />
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse mt-0.5" />
+          <div className="absolute inset-0 rounded-2xl bg-radial from-blue-500/25 to-transparent opacity-60 group-hover:opacity-100 transition-opacity" />
+          <div className="absolute top-0 inset-x-2 h-[1px] bg-gradient-to-r from-transparent via-blue-300/60 to-transparent" />
+          <MasterPOSLogo className="w-6 h-6 text-blue-400 relative z-10" size={24} useColor={true} accent="cyan" />
+          <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 border border-[#12131b] animate-pulse" />
         </div>
 
         <div className={`w-8 h-[1px] ${theme === 'dark' ? 'bg-white/10' : 'bg-slate-200'}`} />
@@ -683,13 +685,15 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
           theme === 'dark' ? 'bg-[#121318]/90 border-slate-300 dark:border-white/10 text-white' : 'bg-white/95 border-slate-200 text-slate-900 shadow-xs'
         }`}>
           <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-stone-950 shadow-sm border border-emerald-300/40 shrink-0">
-              <MasterPOSLogo className="w-5 h-5 text-stone-950" size={20} />
+            <div className="relative w-9 h-9 rounded-xl bg-gradient-to-b from-[#1c1e28] via-[#12131b] to-[#0a0b10] flex items-center justify-center shadow-lg shadow-black/40 border border-emerald-500/30 shrink-0">
+              <div className="absolute inset-0 rounded-xl bg-radial from-emerald-500/25 to-transparent opacity-60" />
+              <div className="absolute top-0 inset-x-1 h-[1px] bg-gradient-to-r from-transparent via-emerald-300/50 to-transparent" />
+              <MasterPOSLogo className="w-5 h-5 text-emerald-400 relative z-10" size={20} useColor={true} accent="emerald" />
             </div>
             <div>
               <div className="flex items-center gap-2.5">
-                <span className={`font-extrabold text-base sm:text-lg tracking-tight uppercase ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
-                  Master POS
+                <span className={`font-black text-base sm:text-lg tracking-tight font-sans ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
+                  MASTER <span className="text-emerald-500">POS</span>
                 </span>
                 <span className="px-2 py-0.5 rounded-full bg-blue-500/15 border border-blue-500/30 text-blue-500 text-[10px] font-mono font-bold uppercase tracking-wider">
                   Live Dispatch Command

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Printer, ChefHat, Receipt } from 'lucide-react';
 import { Order } from '../../types';
+import { MasterPOSLogo } from '../common/MasterPOSLogo';
 
 interface ReceiptModalProps {
   isOpen?: boolean;
@@ -200,7 +201,9 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
             /* Customer Receipt */
             <>
               <div className="text-center space-y-1 border-b border-dashed border-stone-300 pb-3">
-                <h2 className="font-black text-base tracking-widest text-black uppercase">MASTER POS</h2>
+                <div className="flex justify-center mb-1">
+                  <MasterPOSLogo variant="receipt" size={32} />
+                </div>
                 <div className="font-bold text-xs uppercase bg-black text-white px-2 py-0.5 inline-block rounded">
                   {branchName}
                 </div>

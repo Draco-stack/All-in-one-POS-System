@@ -63,20 +63,22 @@ export const Navigation: React.FC<NavigationProps> = ({
   return (
     <header className="bg-white dark:bg-stone-900/95 backdrop-blur border-b border-slate-200 dark:border-stone-800 text-slate-900 dark:text-stone-100 px-3 sm:px-4 py-2 flex items-center justify-between gap-2.5 sm:gap-3.5 sticky top-0 z-40 select-none shadow-md min-h-[52px] h-[52px] sm:h-[56px]">
       {/* Brand & Outlet */}
-      <div className="flex items-center gap-2.5 shrink-0 max-w-[140px] sm:max-w-[190px] md:max-w-[220px] lg:max-w-none">
-        <div className="w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-[#00897b] to-emerald-700 flex items-center justify-center text-white shadow-inner border border-emerald-400/30 shrink-0">
-          <MasterPOSLogo className="w-5 h-5 text-white" size={20} />
+      <div className="flex items-center gap-2.5 shrink-0 max-w-[140px] sm:max-w-[190px] md:max-w-[220px] lg:max-w-none select-none">
+        <div className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-b from-[#1c1e28] via-[#12131b] to-[#0a0b10] flex items-center justify-center shadow-lg shadow-black/40 border border-emerald-500/30 shrink-0">
+          <div className="absolute inset-0 rounded-xl bg-radial from-emerald-500/25 to-transparent opacity-60" />
+          <div className="absolute top-0 inset-x-1 h-[1px] bg-gradient-to-r from-transparent via-emerald-300/60 to-transparent" />
+          <MasterPOSLogo className="w-5 h-5 text-emerald-400 relative z-10" size={22} useColor={true} accent="emerald" />
         </div>
         <div className="flex flex-col justify-center min-w-0">
           <div className="flex items-center gap-1.5 leading-tight">
             <h1 className="font-extrabold text-xs sm:text-base tracking-tight text-white flex items-center gap-1.5 truncate">
-              <span>Master POS</span>
-              <span className="hidden sm:inline text-[9.5px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shrink-0">
-                PRO POS
+              <span>MASTER <span className="text-emerald-400">POS</span></span>
+              <span className="hidden sm:inline text-[9px] uppercase font-mono font-bold tracking-wider px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shrink-0">
+                PRO
               </span>
             </h1>
           </div>
-          <p className="text-[10px] sm:text-[10.5px] text-slate-500 dark:text-stone-400 font-mono leading-tight mt-0.5 truncate hidden sm:block">
+          <p className="text-[10px] sm:text-[10.5px] text-slate-400 font-mono leading-tight mt-0.5 truncate hidden sm:block">
             {currentUser.outlet || 'Main Branch'} • Terminal 01
           </p>
         </div>

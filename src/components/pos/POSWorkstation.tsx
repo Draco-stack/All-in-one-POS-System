@@ -922,8 +922,14 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
         theme === 'dark' ? 'bg-black border-[#e4e4e7]/10' : 'bg-white border-slate-200'
       }`}>
         <div className="flex flex-col items-center gap-2.5">
-          <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-xl flex items-center justify-center text-stone-950 mb-2 shadow-md border border-emerald-300/40 p-1.5" title="Master POS">
-            <MasterPOSLogo className="w-6 h-6 text-stone-950" size={24} />
+          <div 
+            className="relative w-11 h-11 rounded-2xl bg-gradient-to-b from-[#1c1e28] via-[#12131b] to-[#0a0b10] flex items-center justify-center mb-2 shadow-xl shadow-black/50 border border-emerald-500/30 hover:border-emerald-400/60 transition-all duration-300 group cursor-pointer" 
+            title="Master POS Commercial Edition"
+          >
+            <div className="absolute inset-0 rounded-2xl bg-radial from-emerald-500/30 to-transparent opacity-60 group-hover:opacity-100 transition-opacity" />
+            <div className="absolute top-0 inset-x-2 h-[1px] bg-gradient-to-r from-transparent via-emerald-300/60 to-transparent" />
+            <MasterPOSLogo className="w-6 h-6 text-emerald-400 relative z-10 group-hover:scale-110 transition-transform duration-200" size={26} useColor={true} accent="emerald" />
+            <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-[#12131b] shadow-xs" />
           </div>
 
           {/* Fullscreen Toggle Button */}

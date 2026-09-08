@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, ShieldCheck, Lock, CheckCircle2, User } from 'lucide-react';
 import { useRestaurant } from '../../context/RestaurantContext';
 import { UserAccount } from '../../types';
+import { MasterPOSLogo } from '../common/MasterPOSLogo';
 
 interface UserSwitchModalProps {
   isOpen: boolean;
@@ -56,12 +57,15 @@ export const UserSwitchModal: React.FC<UserSwitchModalProps> = ({ isOpen, onClos
         {/* Header */}
         <div className="p-4 border-b border-slate-200 dark:border-stone-800 bg-white dark:bg-stone-950 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-[#00897b]/20 border border-[#00897b]/40 text-[#00897b] flex items-center justify-center">
-              <ShieldCheck className="w-5 h-5" />
+            <div className="relative w-9 h-9 rounded-xl bg-gradient-to-b from-[#1c1e28] via-[#12131b] to-[#0a0b10] flex items-center justify-center shadow-md border border-emerald-500/30 shrink-0">
+              <div className="absolute inset-0 rounded-xl bg-radial from-emerald-500/25 to-transparent opacity-60" />
+              <MasterPOSLogo className="w-5 h-5 text-emerald-400 relative z-10" size={20} useColor={true} accent="emerald" />
             </div>
             <div>
-              <h3 className="font-extrabold text-white text-base">Quick Staff User Switch</h3>
-              <p className="text-xs text-slate-500 dark:text-stone-400">Select employee and enter 4-digit security PIN</p>
+              <h3 className="font-black text-white text-sm sm:text-base tracking-tight font-sans">
+                MASTER <span className="text-emerald-500">POS</span> <span className="text-xs font-mono font-normal text-stone-400">Security Switch</span>
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-stone-400">Select employee profile and enter 4-digit terminal PIN</p>
             </div>
           </div>
           <button

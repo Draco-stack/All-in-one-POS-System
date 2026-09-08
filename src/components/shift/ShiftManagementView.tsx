@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { useRestaurant } from '../../context/RestaurantContext';
 import { ShiftCloseModal } from './ShiftCloseModal';
+import { MasterPOSLogo } from '../common/MasterPOSLogo';
 
 export const ShiftManagementView: React.FC = () => {
   const { currentShift, openShift, closeShift, orders, currentUser, showToast, theme } = useRestaurant();
@@ -578,7 +579,9 @@ export const ShiftManagementView: React.FC = () => {
               <div className="bg-white text-stone-950 p-5 rounded-xl font-mono text-xs max-w-sm mx-auto shadow-2xl space-y-3 border border-stone-300 print:shadow-none print:border-none print:p-0 print:max-w-none print:w-full">
                 
                 <div className="text-center border-b border-dashed border-stone-400 pb-2">
-                  <h5 className="font-black text-sm tracking-wider uppercase">MASTER POS PRO</h5>
+                  <div className="flex justify-center mb-1">
+                    <MasterPOSLogo variant="receipt" size={30} />
+                  </div>
                   <p className="text-[11px] font-bold text-stone-800">MID-SHIFT X-REPORT (INTERIM AUDIT)</p>
                   <p className="text-[10px] text-stone-500">Reading Time: {new Date().toLocaleString()}</p>
                 </div>

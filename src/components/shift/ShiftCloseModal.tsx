@@ -21,6 +21,7 @@ import {
 import { useRestaurant } from '../../context/RestaurantContext';
 import { DenominationCounts, ShiftAuditRecord } from '../../types';
 import { roundToCurrency } from '../../utils/financial';
+import { MasterPOSLogo } from '../common/MasterPOSLogo';
 
 interface ShiftCloseModalProps {
   isOpen: boolean;
@@ -372,7 +373,9 @@ export const ShiftCloseModal: React.FC<ShiftCloseModalProps> = ({
             {/* Thermal Print Slip Simulation */}
             <div className="bg-white text-stone-950 p-5 rounded-xl font-mono text-xs max-w-md mx-auto shadow-2xl space-y-3 border border-stone-300 print:shadow-none print:border-none print:p-0 print:max-w-none print:w-full">
               <div className="text-center border-b border-dashed border-stone-400 pb-2">
-                <h5 className="font-black text-sm tracking-wider uppercase">MASTER POS PRO POS</h5>
+                <div className="flex justify-center mb-1">
+                  <MasterPOSLogo variant="receipt" size={30} />
+                </div>
                 <p className="text-[10px] text-stone-600">END OF SHIFT Z-REPORT (AUDIT # {closedAuditData.id.slice(-6)})</p>
                 <p className="text-[10px] text-slate-400 dark:text-stone-500">Cashier: {closedAuditData.cashierName}</p>
               </div>
