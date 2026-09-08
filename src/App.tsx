@@ -74,21 +74,23 @@ const AppContent: React.FC = () => {
 
   return (
     <div
-      className={`w-screen h-screen overflow-hidden flex flex-col font-sans select-none no-scrollbar print:hidden transition-colors duration-200 ${
+      className={`w-screen h-screen overflow-hidden flex flex-col font-sans select-none no-scrollbar transition-colors duration-200 ${
         theme === 'dark' ? 'bg-[#0c0c0e] text-stone-100' : 'bg-slate-100 text-slate-900'
       }`}
     >
       {/* UNIFIED SINGLE HEADER ACCROSS THE ENTIRE APPLICATION */}
-      <AppHeader
-        activeView={activeView}
-        setActiveView={setActiveView}
-        orderSubTab={orderSubTab}
-        setOrderSubTab={setOrderSubTab}
-        onOpenUserSwitch={() => setIsUserSwitchOpen(true)}
-      />
+      <div className="print:hidden">
+        <AppHeader
+          activeView={activeView}
+          setActiveView={setActiveView}
+          orderSubTab={orderSubTab}
+          setOrderSubTab={setOrderSubTab}
+          onOpenUserSwitch={() => setIsUserSwitchOpen(true)}
+        />
+      </div>
 
       {/* MAIN VIEWPORT BODY */}
-      <main className="w-full flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden relative">
+      <main className="w-full flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden relative print:hidden">
         <ErrorBoundary fallbackTitle="POS Workstation Error">
           {activeView === 'delivery' && (
             <DeliveryMonitoringView

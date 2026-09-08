@@ -52,6 +52,9 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   LogOut,
+  Pencil,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { useRestaurant } from '../../context/RestaurantContext';
 import { MenuItem, Order, Customer, OrderStatus } from '../../types';
@@ -213,6 +216,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
   const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
   const [isCustomerManageModalOpen, setIsCustomerManageModalOpen] = useState(false);
   const [isSavingCustomer, setIsSavingCustomer] = useState(false);
+  const [isClientDetailsCollapsed, setIsClientDetailsCollapsed] = useState<boolean>(false);
 
   // Clean phone digits helper for 11-digit Pakistan / standard phone format
   const cleanPhoneDigits = useMemo(() => phoneSearchInput.replace(/\D/g, ''), [phoneSearchInput]);
@@ -479,6 +483,39 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
       return matchesCat && matchesSearch;
     });
   }, [menuItems, selectedCategory, searchQuery]);
+
+  // Memoize all unique menu categories (all categories from state + any on menu items, excluding duplicate 'all')
+  const displayCategories = useMemo(() => {
+    const list: { id: string; name: string }[] = [];
+    const seen = new Set<string>();
+
+    categories.forEach((cat) => {
+      if (!cat || !cat.id) return;
+      const norm = cat.id.toLowerCase().replace(/[-_ ]/g, '');
+      if (norm === 'all') return;
+      if (!seen.has(norm)) {
+        seen.add(norm);
+        list.push({ id: cat.id, name: cat.name || cat.id });
+      }
+    });
+
+    // Also include any categories defined on menuItems that might not be in categories list
+    menuItems.forEach((item) => {
+      if (!item.category) return;
+      const norm = item.category.toLowerCase().replace(/[-_ ]/g, '');
+      if (norm === 'all') return;
+      if (!seen.has(norm)) {
+        seen.add(norm);
+        const name = item.category
+          .split(/[-_]/)
+          .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+          .join(' ');
+        list.push({ id: item.category, name });
+      }
+    });
+
+    return list;
+  }, [categories, menuItems]);
 
   // Tap Item Handler
   const handleItemTap = (item: MenuItem) => {
@@ -1239,28 +1276,47 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
           </div>
         </div>
 
-        {/* Dynamic Category Strip */}
-        <div className={`border-b px-3 py-2 shrink-0 backdrop-blur-xs shadow-xs transition-colors duration-200 ${
-          theme === 'dark' ? 'bg-[#161616]/95 border-slate-200 dark:border-white/5' : 'bg-white/95 border-slate-200'
+        {/* Dynamic Category Strip - All Categories Visible (No Scrolling, Perfectly Aligned) */}
+        <div className={`border-b px-2.5 py-1.5 shrink-0 transition-colors duration-200 ${
+          theme === 'dark' ? 'bg-[#121216] border-slate-200 dark:border-white/5' : 'bg-slate-50/90 border-slate-200 shadow-2xs'
         }`}>
-          {/* Scrollable Category Chips */}
-          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 w-full">
+          {/* Category Chips - Perfectly Aligned Responsive Grid */}
+          <div 
+            id="pos-menu-categories-bar" 
+            className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-1.5 w-full"
+          >
             <button
               type="button"
               onClick={() => setSelectedCategory('all')}
-              className={`pos-category-chip uppercase font-bold tracking-wider rounded-xl whitespace-nowrap cursor-pointer transition-all duration-200 border shrink-0 flex items-center gap-1.5 ${
+              title={`All Items (${menuItems.length})`}
+              className={`pos-category-chip group rounded-lg cursor-pointer transition-all duration-150 border flex items-center justify-between gap-1.5 px-2.5 select-none ${
+                (displayCategories.length + 1) % 7 === 6 ? 'xl:col-span-2' : 'col-span-1'
+              } ${
                 selectedCategory === 'all'
-                  ? 'bg-gradient-to-r from-red-600 to-red-700 text-white border-red-400/40 shadow-sm'
+                  ? 'bg-gradient-to-r from-red-600 via-red-600 to-red-700 text-white border-red-500 shadow-xs ring-1 ring-red-400/40'
                   : theme === 'dark'
-                  ? 'bg-white dark:bg-stone-900/80 text-slate-500 dark:text-stone-400 border-slate-200 dark:border-white/5 hover:bg-slate-100 dark:hover:bg-stone-800 hover:text-stone-200'
-                  : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-200 hover:text-slate-900'
+                  ? 'bg-[#1c1c22] text-stone-300 border-white/6 hover:border-white/20 hover:bg-[#25252e] hover:text-white shadow-2xs'
+                  : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50 hover:border-slate-300 hover:text-slate-900 shadow-2xs'
               }`}
             >
-              <Layers className="w-3.5 h-3.5" />
-              <span>All Items ({menuItems.length})</span>
+              <div className="flex items-center gap-1.5 min-w-0 overflow-hidden">
+                <Layers className={`w-3.5 h-3.5 shrink-0 transition-transform duration-150 group-hover:scale-110 ${
+                  selectedCategory === 'all' ? 'text-white' : theme === 'dark' ? 'text-stone-400 group-hover:text-red-400' : 'text-slate-500 group-hover:text-red-600'
+                }`} />
+                <span className="font-semibold tracking-tight text-[11px] truncate">All Items</span>
+              </div>
+              <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded-sm shrink-0 transition-colors ${
+                selectedCategory === 'all'
+                  ? 'bg-white/25 text-white'
+                  : theme === 'dark'
+                  ? 'bg-white/5 text-stone-400 group-hover:bg-white/10 group-hover:text-stone-200'
+                  : 'bg-slate-100 text-slate-600 group-hover:bg-slate-200 group-hover:text-slate-900'
+              }`}>
+                {menuItems.length}
+              </span>
             </button>
 
-            {categories.map((cat) => {
+            {displayCategories.map((cat) => {
               const catCount = menuItems.filter(
                 (i) =>
                   i.category.toLowerCase().replace(/[-_ ]/g, '') === cat.id.toLowerCase().replace(/[-_ ]/g, '') ||
@@ -1275,16 +1331,32 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                   key={cat.id}
                   type="button"
                   onClick={() => setSelectedCategory(cat.id)}
-                  className={`pos-category-chip uppercase font-bold tracking-wider rounded-xl whitespace-nowrap cursor-pointer transition-all duration-200 border shrink-0 flex items-center gap-1.5 ${
+                  title={`${cat.name} (${catCount})`}
+                  className={`pos-category-chip group rounded-lg cursor-pointer transition-all duration-150 border flex items-center justify-between gap-1 px-2 select-none overflow-hidden ${
                     isSelected
-                      ? 'bg-gradient-to-r from-red-600 to-red-700 text-white border-red-400/40 shadow-sm'
+                      ? 'bg-gradient-to-r from-red-600 via-red-600 to-red-700 text-white border-red-500 shadow-xs ring-1 ring-red-400/40'
                       : theme === 'dark'
-                      ? 'bg-white dark:bg-stone-900/80 text-slate-500 dark:text-stone-400 border-slate-200 dark:border-white/5 hover:bg-slate-100 dark:hover:bg-stone-800 hover:text-stone-200'
-                      : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-200 hover:text-slate-900'
+                      ? 'bg-[#1c1c22] text-stone-300 border-white/6 hover:border-white/20 hover:bg-[#25252e] hover:text-white shadow-2xs'
+                      : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50 hover:border-slate-300 hover:text-slate-900 shadow-2xs'
                   }`}
                 >
-                  <CategoryIcon categoryIdOrName={cat.id || cat.name} className="w-3.5 h-3.5 shrink-0" />
-                  <span>{cat.name} {catCount > 0 && `(${catCount})`}</span>
+                  <div className="flex items-center gap-1.5 min-w-0 overflow-hidden">
+                    <CategoryIcon categoryIdOrName={cat.id || cat.name} className={`w-3.5 h-3.5 shrink-0 transition-transform duration-150 group-hover:scale-110 ${
+                      isSelected ? 'text-white' : theme === 'dark' ? 'text-stone-400 group-hover:text-red-400' : 'text-slate-500 group-hover:text-red-600'
+                    }`} />
+                    <span className="font-semibold tracking-tight text-[11px] truncate">{cat.name}</span>
+                  </div>
+                  {catCount > 0 && (
+                    <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded-sm shrink-0 transition-colors ${
+                      isSelected
+                        ? 'bg-white/25 text-white'
+                        : theme === 'dark'
+                        ? 'bg-white/5 text-stone-400 group-hover:bg-white/10 group-hover:text-stone-200'
+                        : 'bg-slate-100 text-slate-600 group-hover:bg-slate-200 group-hover:text-slate-900'
+                    }`}>
+                      {catCount}
+                    </span>
+                  )}
                 </button>
               );
             })}
@@ -1442,290 +1514,380 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
         {/* ========================================================================= */}
         {middleTab === 'active_ticket' && (
           <>
-            <div className={`flex flex-col px-4 py-3.5 gap-2.5 shrink-0 border-b ${
+            <div className={`flex flex-col px-3.5 py-2.5 gap-2 shrink-0 border-b ${
               theme === 'dark' ? 'border-[#e4e4e7]/10' : 'border-slate-200'
             }`}>
               <div className="flex items-center justify-between mb-0.5">
-                <h2 className={`font-mono text-[0.65rem] uppercase tracking-[0.15em] font-bold ${
-                  theme === 'dark' ? 'text-[#e4e4e7]/50' : 'text-slate-500'
-                }`}>Client Details</h2>
-                {customerLookupStatus === 'found' && (
-                  <button onClick={() => setIsCustomerHistoryOpen(true)} className="flex items-center gap-1.5 px-2.5 py-1 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 rounded-md transition-colors cursor-pointer text-[0.65rem] font-bold uppercase tracking-wider">
-                    <History className="w-3 h-3" />
-                    Full History
-                  </button>
-                )}
-              </div>
-              <div className="flex items-center gap-1.5">
-                <select 
-                  value={selectedOutlet} 
-                  onChange={(e) => setSelectedOutlet(e.target.value)} 
-                  className={`border rounded-xl px-3 py-2 text-xs font-semibold appearance-none focus:outline-none focus:border-emerald-500 w-full transition-all cursor-pointer ${
-                    theme === 'dark' ? 'bg-[#141417] border-[#e4e4e7]/10 text-[#e4e4e7]' : 'bg-white border-slate-300 text-slate-800 shadow-xs'
-                  }`}
-                >
-                  <option value="">Select Outlet</option>
-                  {outlets.map(o => <option key={o} value={o}>{o}</option>)}
-                </select>
-                <button onClick={() => showToast('WhatsApp Sync Status')} className="bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white p-2 rounded-xl shrink-0 cursor-pointer transition-all hover:scale-105 shadow-sm border border-emerald-400/20"><Check className="w-4 h-4 stroke-[3]" /></button>
-                <button onClick={handleResetTicket} className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white p-2 rounded-xl shrink-0 cursor-pointer transition-all hover:scale-105 shadow-sm border border-red-400/20"><X className="w-4 h-4 stroke-[3]" /></button>
-              </div>
-              
-              {/* Row 2: Order Type & Source */}
-              <div className="flex items-center gap-1.5">
-                <div className={`flex rounded-xl overflow-hidden shrink-0 border p-0.5 shadow-inner ${
-                  theme === 'dark' ? 'border-slate-300 dark:border-white/10 bg-slate-100 dark:bg-stone-950/80' : 'border-slate-300 bg-slate-200/80'
-                }`}>
-                  <button onClick={() => setPosOrderType('dine_in')} className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all duration-150 cursor-pointer ${posCart.orderType === 'dine_in' ? 'bg-gradient-to-r from-amber-600 to-amber-700 text-white shadow-sm border border-amber-400/30' : theme === 'dark' ? 'text-slate-500 dark:text-stone-400 hover:text-white' : 'text-slate-600 hover:text-slate-900'}`}>DineIn</button>
-                  <button onClick={() => setPosOrderType('takeaway')} className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all duration-150 cursor-pointer ${posCart.orderType === 'takeaway' ? 'bg-gradient-to-r from-stone-700 to-stone-800 text-white shadow-sm border border-slate-300 dark:border-white/10' : theme === 'dark' ? 'text-slate-500 dark:text-stone-400 hover:text-white' : 'text-slate-600 hover:text-slate-900'}`}>TakeAway</button>
-                  <button onClick={() => setPosOrderType('delivery')} className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all duration-150 cursor-pointer ${posCart.orderType === 'delivery' ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-sm border border-emerald-400/30' : theme === 'dark' ? 'text-slate-500 dark:text-stone-400 hover:text-white' : 'text-slate-600 hover:text-slate-900'}`}>Delivery</button>
-                </div>
-                <select 
-                  value={selectedSource} 
-                  onChange={(e) => setSelectedSource(e.target.value)} 
-                  className={`border rounded-xl px-2.5 py-1.5 text-xs font-semibold focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 flex-1 cursor-pointer transition-all ${
-                    theme === 'dark' ? 'bg-slate-100 dark:bg-stone-950/80 border-slate-300 dark:border-white/10 text-slate-900 dark:text-white' : 'bg-white border-slate-300 text-slate-800 shadow-xs'
-                  }`}
-                >
-                  <option value="Pos">Select Source</option>
-                  <option value="Call">Call</option>
-                  <option value="WhatsApp">WhatsApp</option>
-                  <option value="Walk In Customer">Walk In Customer</option>
-                </select>
-              </div>
-              
-              {/* Row 3: Customer Input */}
-              <div className="flex items-center gap-1.5">
-                <div className="relative flex-1 min-w-0">
-                  <input
-                    type="tel"
-                    maxLength={11}
-                    placeholder="Enter 11-digit Phone (03001234567)..."
-                    value={phoneSearchInput}
-                    onChange={(e) => setPhoneSearchInput(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === 'Enter') handlePhoneLookup(undefined, true); }}
-                    className={`w-full border rounded-xl pl-8 pr-16 py-2 text-xs font-mono transition-all shadow-inner focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 ${
-                      theme === 'dark' ? 'bg-slate-100 dark:bg-stone-950/80 border-slate-300 dark:border-white/10 text-slate-900 dark:text-white placeholder:text-slate-400 dark:text-stone-500' : 'bg-white border-slate-300 text-slate-900 placeholder:text-slate-400'
-                    }`}
-                  />
-                  <Phone className="w-3.5 h-3.5 text-emerald-500/70 absolute left-2.5 top-1/2 -translate-y-1/2" />
-                  
-                  {/* 11 Digits Counter Indicator Badge */}
-                  <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1 pointer-events-none">
-                    <span className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded transition-colors ${
-                      cleanPhoneDigits.length === 11 
-                        ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
-                        : cleanPhoneDigits.length > 0
-                        ? theme === 'dark' ? 'bg-slate-50 dark:bg-stone-800 text-slate-500 dark:text-stone-400' : 'bg-slate-200 text-slate-600'
-                        : theme === 'dark' ? 'text-stone-600' : 'text-slate-400'
-                    }`}>
-                      {cleanPhoneDigits.length === 11 ? '11/11 ✓' : `${cleanPhoneDigits.length}/11`}
+                <div className="flex items-center gap-2">
+                  <h2 className={`font-mono text-[0.65rem] uppercase tracking-[0.15em] font-bold ${
+                    theme === 'dark' ? 'text-[#e4e4e7]/50' : 'text-slate-500'
+                  }`}>Client Details</h2>
+                  {posCart.items.length > 0 && (
+                    <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                      {posCart.items.length} lines ({posCart.items.reduce((s, i) => s + i.quantity, 0)} units)
                     </span>
-                  </div>
-                </div>
-                <button
-                  onClick={() => handlePhoneLookup(undefined, true)}
-                  disabled={isSearchingCustomer}
-                  className="bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-black p-2 rounded-xl shrink-0 cursor-pointer transition-all hover:scale-105 border border-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.2)]"
-                  title="Search Customer (Requires 11 Digits)"
-                >
-                  {isSearchingCustomer ? (
-                    <Loader2 className="w-4 h-4 animate-spin text-black" />
-                  ) : (
-                    <Search className="w-4 h-4 stroke-[2.5]" />
                   )}
-                </button>
-                {cleanPhoneDigits.length >= 7 && (
+                </div>
+                <div className="flex items-center gap-1.5">
+                  {customerLookupStatus === 'found' && (
+                    <button onClick={() => setIsCustomerHistoryOpen(true)} className="flex items-center gap-1.5 px-2 py-0.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 rounded-md transition-colors cursor-pointer text-[0.65rem] font-bold uppercase tracking-wider">
+                      <History className="w-3 h-3" />
+                      History
+                    </button>
+                  )}
                   <button
                     type="button"
-                    onClick={() => {
-                      setBlockTargetPhone(cleanPhoneDigits);
-                      setBlockTargetName(posCart.customer?.name || foundCustomer?.name || 'Customer');
-                      setIsBlockModalOpen(true);
-                    }}
-                    className={`p-2 rounded-xl shrink-0 cursor-pointer transition-all hover:scale-105 border flex items-center justify-center ${
-                      posCart.customer?.isBlocked || foundCustomer?.isBlocked || isCustomerBlocked(cleanPhoneDigits).blocked
-                        ? 'bg-red-600/30 text-red-400 border-red-500/50 hover:bg-red-600 hover:text-white'
-                        : theme === 'dark'
-                        ? 'bg-white dark:bg-stone-900 hover:bg-red-950/60 text-slate-500 dark:text-stone-400 hover:text-red-400 border-slate-300 dark:border-white/10 hover:border-red-500/30'
-                        : 'bg-white hover:bg-red-50 text-slate-500 hover:text-red-600 border-slate-200 hover:border-red-300'
-                    }`}
-                    title="Block this phone number"
+                    onClick={() => setIsClientDetailsCollapsed(prev => !prev)}
+                    className="flex items-center gap-1 px-2 py-0.5 rounded-md border text-[0.65rem] font-bold uppercase tracking-wider text-slate-500 dark:text-stone-400 hover:text-slate-900 dark:hover:text-white border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors cursor-pointer"
+                    title={isClientDetailsCollapsed ? "Expand Client Details" : "Collapse to maximize huge order ticket view"}
                   >
-                    <ShieldAlert className="w-4 h-4" />
+                    {isClientDetailsCollapsed ? (
+                      <><span>Expand</span><ChevronDown className="w-3 h-3" /></>
+                    ) : (
+                      <><span>Compact</span><ChevronUp className="w-3 h-3" /></>
+                    )}
                   </button>
-                )}
+                </div>
               </div>
-              
-              {/* Blocked Customer Prominent Alert Banner in Ticket */}
-              {(posCart.customer?.isBlocked || foundCustomer?.isBlocked || (cleanPhoneDigits ? isCustomerBlocked(cleanPhoneDigits).blocked : false)) && (
-                <div className="bg-gradient-to-r from-red-950/90 via-red-900/80 to-red-950/90 border-2 border-red-500/60 rounded-xl p-3 shadow-lg shadow-red-950/40 animate-in fade-in duration-200">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-start gap-2">
-                      <div className="w-7 h-7 rounded-lg bg-red-600/30 border border-red-500/40 flex items-center justify-center text-red-400 shrink-0 mt-0.5">
-                        <ShieldAlert className="w-4 h-4" />
+
+              {isClientDetailsCollapsed ? (
+                /* Collapsed Slim Summary for Huge Orders */
+                <div className={`flex items-center justify-between gap-1.5 py-1 px-2 rounded-lg border text-xs ${
+                  theme === 'dark' ? 'bg-[#141417]/80 border-white/5' : 'bg-slate-50 border-slate-200'
+                }`}>
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <span className={`px-2 py-0.5 text-[9.5px] font-black rounded uppercase tracking-wider ${
+                      posCart.orderType === 'dine_in' ? 'bg-amber-500/15 text-amber-500 border border-amber-500/30' :
+                      posCart.orderType === 'delivery' ? 'bg-emerald-500/15 text-emerald-500 border border-emerald-500/30' :
+                      'bg-slate-500/15 text-slate-400 border border-slate-500/30'
+                    }`}>
+                      {posCart.orderType === 'dine_in' ? 'Dine In' : posCart.orderType === 'delivery' ? 'Delivery' : 'Takeaway'}
+                    </span>
+                    {posCart.customer?.name ? (
+                      <div className="flex items-center gap-1.5 truncate">
+                        <span className="font-bold truncate text-slate-900 dark:text-white">{posCart.customer.name}</span>
+                        <span className="text-[10.5px] font-mono font-semibold text-emerald-500 shrink-0">({posCart.customer.phone})</span>
+                        {posCart.customer.address && (
+                          <span className="text-[10px] text-slate-400 dark:text-stone-500 truncate hidden sm:inline">• {posCart.customer.address}</span>
+                        )}
                       </div>
-                      <div>
-                        <span className="text-[10px] font-black uppercase tracking-wider text-red-400 block">
-                          ⛔ BLOCKED CUSTOMER DETECTED
+                    ) : (
+                      <span className="text-[11px] text-slate-400 italic">No customer specified</span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-1 shrink-0">
+                    {posCart.customer?.name && (
+                      <button
+                        type="button"
+                        onClick={() => setIsCustomerManageModalOpen(true)}
+                        className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 border border-emerald-500/30 flex items-center gap-1 cursor-pointer transition-colors"
+                        title="Edit Customer Information"
+                      >
+                        <Pencil className="w-2.5 h-2.5" />
+                        <span>Edit</span>
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setIsClientDetailsCollapsed(false)}
+                      className="p-1 rounded text-slate-400 hover:text-white cursor-pointer"
+                      title="Expand details"
+                    >
+                      <ChevronDown className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center gap-1.5">
+                    <select 
+                      value={selectedOutlet} 
+                      onChange={(e) => setSelectedOutlet(e.target.value)} 
+                      className={`border rounded-xl px-3 py-1.5 text-xs font-semibold appearance-none focus:outline-none focus:border-emerald-500 w-full transition-all cursor-pointer ${
+                        theme === 'dark' ? 'bg-[#141417] border-[#e4e4e7]/10 text-[#e4e4e7]' : 'bg-white border-slate-300 text-slate-800 shadow-xs'
+                      }`}
+                    >
+                      <option value="">Select Outlet</option>
+                      {outlets.map(o => <option key={o} value={o}>{o}</option>)}
+                    </select>
+                    <button onClick={() => showToast('WhatsApp Sync Status')} title="WhatsApp Sync Status" className="bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white p-1.5 rounded-xl shrink-0 cursor-pointer transition-all hover:scale-105 shadow-sm border border-emerald-400/20"><MessageSquare className="w-4 h-4 stroke-[3]" /></button>
+                    <button onClick={handleResetTicket} className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white p-1.5 rounded-xl shrink-0 cursor-pointer transition-all hover:scale-105 shadow-sm border border-red-400/20"><X className="w-4 h-4 stroke-[3]" /></button>
+                  </div>
+                  
+                  {/* Row 2: Order Type & Source */}
+                  <div className="flex items-center gap-1.5">
+                    <div className={`flex rounded-xl overflow-hidden shrink-0 border p-0.5 shadow-inner ${
+                      theme === 'dark' ? 'border-slate-300 dark:border-white/10 bg-slate-100 dark:bg-stone-950/80' : 'border-slate-300 bg-slate-200/80'
+                    }`}>
+                      <button onClick={() => setPosOrderType('dine_in')} className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all duration-150 cursor-pointer ${posCart.orderType === 'dine_in' ? 'bg-gradient-to-r from-amber-600 to-amber-700 text-white shadow-sm border border-amber-400/30' : theme === 'dark' ? 'text-slate-500 dark:text-stone-400 hover:text-white' : 'text-slate-600 hover:text-slate-900'}`}>DineIn</button>
+                      <button onClick={() => setPosOrderType('takeaway')} className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all duration-150 cursor-pointer ${posCart.orderType === 'takeaway' ? 'bg-gradient-to-r from-stone-700 to-stone-800 text-white shadow-sm border border-slate-300 dark:border-white/10' : theme === 'dark' ? 'text-slate-500 dark:text-stone-400 hover:text-white' : 'text-slate-600 hover:text-slate-900'}`}>TakeAway</button>
+                      <button onClick={() => setPosOrderType('delivery')} className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all duration-150 cursor-pointer ${posCart.orderType === 'delivery' ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-sm border border-emerald-400/30' : theme === 'dark' ? 'text-slate-500 dark:text-stone-400 hover:text-white' : 'text-slate-600 hover:text-slate-900'}`}>Delivery</button>
+                    </div>
+                    <select 
+                      value={selectedSource} 
+                      onChange={(e) => setSelectedSource(e.target.value)} 
+                      className={`border rounded-xl px-2.5 py-1 text-xs font-semibold focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 flex-1 cursor-pointer transition-all ${
+                        theme === 'dark' ? 'bg-slate-100 dark:bg-stone-950/80 border-slate-300 dark:border-white/10 text-slate-900 dark:text-white' : 'bg-white border-slate-300 text-slate-800 shadow-xs'
+                      }`}
+                    >
+                      <option value="Pos">Select Source</option>
+                      <option value="Call">Call</option>
+                      <option value="WhatsApp">WhatsApp</option>
+                      <option value="Walk In Customer">Walk In Customer</option>
+                    </select>
+                  </div>
+                  
+                  {/* Row 3: Customer Input */}
+                  <div className="flex items-center gap-1.5">
+                    <div className="relative flex-1 min-w-0">
+                      <input
+                        type="tel"
+                        maxLength={11}
+                        placeholder="Enter 11-digit Phone (03001234567)..."
+                        value={phoneSearchInput}
+                        onChange={(e) => setPhoneSearchInput(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') handlePhoneLookup(undefined, true); }}
+                        className={`w-full border rounded-xl pl-8 pr-16 py-1.5 text-xs font-mono transition-all shadow-inner focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 ${
+                          theme === 'dark' ? 'bg-slate-100 dark:bg-stone-950/80 border-slate-300 dark:border-white/10 text-slate-900 dark:text-white placeholder:text-slate-400 dark:text-stone-500' : 'bg-white border-slate-300 text-slate-900 placeholder:text-slate-400'
+                        }`}
+                      />
+                      <Phone className="w-3.5 h-3.5 text-emerald-500/70 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                      
+                      {/* 11 Digits Counter Indicator Badge */}
+                      <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1 pointer-events-none">
+                        <span className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded transition-colors ${
+                          cleanPhoneDigits.length === 11 
+                            ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
+                            : cleanPhoneDigits.length > 0
+                            ? theme === 'dark' ? 'bg-slate-50 dark:bg-stone-800 text-slate-500 dark:text-stone-400' : 'bg-slate-200 text-slate-600'
+                            : theme === 'dark' ? 'text-stone-600' : 'text-slate-400'
+                        }`}>
+                          {cleanPhoneDigits.length === 11 ? '11/11 ✓' : `${cleanPhoneDigits.length}/11`}
                         </span>
-                        <h4 className="text-xs font-black text-white leading-tight">
-                          Blocked customer can&apos;t place an order
-                        </h4>
-                        <p className="text-[10.5px] text-red-200/90 mt-1 bg-slate-900/20 dark:bg-black/40 p-1.5 rounded-lg border border-red-500/20 leading-snug">
-                          <strong>Reason:</strong> {posCart.customer?.blockReason || foundCustomer?.blockReason || isCustomerBlocked(cleanPhoneDigits).reason || 'Store blacklist policy'}
-                        </p>
                       </div>
                     </div>
-                  </div>
-                  <div className="flex items-center justify-end gap-2 mt-2 pt-2 border-t border-red-500/30">
                     <button
-                      type="button"
-                      onClick={() => {
-                        const targetCust = posCart.customer?.isBlocked ? (foundCustomer || posCart.customer as any) : (isCustomerBlocked(cleanPhoneDigits).customer || foundCustomer);
-                        setBlockedAlertCustomer(targetCust);
-                        setBlockedAlertPhone(cleanPhoneDigits);
-                        setIsBlockedAlertOpen(true);
-                      }}
-                      className="px-2.5 py-1 bg-red-600 hover:bg-red-500 text-white rounded-lg text-[10.5px] font-bold transition flex items-center gap-1 cursor-pointer shadow-sm"
+                      onClick={() => handlePhoneLookup(undefined, true)}
+                      disabled={isSearchingCustomer}
+                      className="bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-black p-1.5 rounded-xl shrink-0 cursor-pointer transition-all hover:scale-105 border border-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.2)]"
+                      title="Search Customer (Requires 11 Digits)"
                     >
-                      <Eye className="w-3 h-3" />
-                      View Block Popup
+                      {isSearchingCustomer ? (
+                        <Loader2 className="w-4 h-4 animate-spin text-black" />
+                      ) : (
+                        <Search className="w-4 h-4 stroke-[2.5]" />
+                      )}
                     </button>
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        if (window.confirm(`Unblock customer ${cleanPhoneDigits}?`)) {
-                          const res = await unblockCustomer(cleanPhoneDigits);
-                          if (res.success) {
-                            setFoundCustomer((prev) =>
-                              prev
-                                ? {
-                                    ...prev,
-                                    isBlocked: false,
-                                    blockReason: undefined,
-                                    blockedAt: undefined,
-                                    blockedBy: undefined,
-                                  }
-                                : null
-                            );
-                            setBlockedAlertCustomer(null);
-                            setIsBlockedAlertOpen(false);
-                            setCustomerLookupStatus('idle');
-                          }
-                        }
-                      }}
-                      className="px-2.5 py-1 bg-slate-50 dark:bg-stone-800 hover:bg-stone-700 text-stone-200 rounded-lg text-[10.5px] font-semibold transition cursor-pointer border border-slate-300 dark:border-white/10"
-                    >
-                      Unblock
-                    </button>
-                  </div>
-                </div>
-              )}
-              
-              {/* Customer Details Display Area */}
-              {customerLookupStatus === 'new' ? (
-                <div className={`border rounded-xl p-3 mt-0.5 flex flex-col gap-2.5 shadow-xs animate-in fade-in duration-150 ${
-                  theme === 'dark' ? 'bg-[#141417] border-blue-500/20' : 'bg-blue-50/70 border-blue-200'
-                }`}>
-                   <div className="flex items-center justify-between">
-                     <div className="flex items-center gap-1.5">
-                       <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></div>
-                       <span className="text-[0.65rem] uppercase font-bold tracking-wider text-blue-500">New Customer Profile</span>
-                     </div>
-                     <span className={`text-[10px] font-mono font-bold ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-600'}`}>
-                       {cleanPhoneDigits}
-                     </span>
-                   </div>
-                   <div className="space-y-2">
-                     <div className="relative">
-                       <User className={`w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 ${theme === 'dark' ? 'text-slate-400 dark:text-stone-500' : 'text-slate-400'}`} />
-                       <input
-                         type="text"
-                         placeholder="Full Name (Required) *"
-                         value={posCart.customer?.name || ''}
-                         onChange={(e) => setPosCustomerField('name', e.target.value)}
-                         className={`w-full border rounded-lg pl-9 pr-3 py-2 text-xs focus:outline-none focus:border-blue-500/50 transition-colors ${
-                           theme === 'dark' ? 'bg-[#0c0c0e] border-slate-300 dark:border-white/10 text-white placeholder:text-slate-400 dark:text-stone-500' : 'bg-white border-slate-300 text-slate-900 placeholder:text-slate-400'
-                         }`}
-                       />
-                     </div>
-                     <div className="relative">
-                       <MapPin className={`w-4 h-4 absolute left-3 top-2.5 ${theme === 'dark' ? 'text-slate-400 dark:text-stone-500' : 'text-slate-400'}`} />
-                       <textarea
-                         rows={2}
-                         placeholder="Delivery Address (Optional)"
-                         value={posCart.customer?.address || ''}
-                         onChange={(e) => setPosCustomerField('address', e.target.value)}
-                         className={`w-full border rounded-lg pl-9 pr-3 py-2 text-xs focus:outline-none focus:border-blue-500/50 transition-colors resize-none ${
-                           theme === 'dark' ? 'bg-[#0c0c0e] border-slate-300 dark:border-white/10 text-white placeholder:text-slate-400 dark:text-stone-500' : 'bg-white border-slate-300 text-slate-900 placeholder:text-slate-400'
-                         }`}
-                       />
-                     </div>
-                   </div>
-
-                   {/* Save Customer Explicit Button */}
-                   <div className={`flex items-center justify-between pt-1 border-t ${theme === 'dark' ? 'border-slate-200 dark:border-white/5' : 'border-slate-200'}`}>
-                     <span className={`text-[10px] ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`}>
-                       Auto-saves with order or tap Save
-                     </span>
-                     <button
-                       type="button"
-                       onClick={handleSaveCustomerManually}
-                       disabled={isSavingCustomer || !posCart.customer?.name?.trim()}
-                       className="px-3 py-1.5 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 disabled:opacity-40 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-md transition-all border border-emerald-400/20"
-                     >
-                       {isSavingCustomer ? (
-                         <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                       ) : (
-                         <Save className="w-3.5 h-3.5" />
-                       )}
-                       <span>{isSavingCustomer ? 'Saving...' : 'Save Customer'}</span>
-                     </button>
-                   </div>
-                </div>
-              ) : customerLookupStatus === 'found' && posCart.customer ? (
-                <div className={`border rounded-xl p-3 mt-0.5 flex flex-col shadow-sm relative overflow-hidden group ${
-                  theme === 'dark' ? 'bg-[#141417] border-emerald-500/30' : 'bg-emerald-50/60 border-emerald-300'
-                }`}>
-                   <div className="absolute top-2 right-2 flex gap-1 opacity-100 transition-opacity">
-                      <button onClick={() => setIsCustomerModalOpen(true)} className={`rounded-md p-1.5 transition-colors cursor-pointer border ${
-                        theme === 'dark' ? 'text-[#e4e4e7] bg-[#27272a] hover:bg-emerald-600 border-slate-300 dark:border-white/10' : 'text-slate-700 bg-white hover:bg-emerald-100 border-slate-200'
-                      }`} title="View Full Profile">
-                        <Eye className="w-3.5 h-3.5" />
+                    {cleanPhoneDigits.length >= 7 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setBlockTargetPhone(cleanPhoneDigits);
+                          setBlockTargetName(posCart.customer?.name || foundCustomer?.name || 'Customer');
+                          setIsBlockModalOpen(true);
+                        }}
+                        className={`p-1.5 rounded-xl shrink-0 cursor-pointer transition-all hover:scale-105 border flex items-center justify-center ${
+                          posCart.customer?.isBlocked || foundCustomer?.isBlocked || isCustomerBlocked(cleanPhoneDigits).blocked
+                            ? 'bg-red-600/30 text-red-400 border-red-500/50 hover:bg-red-600 hover:text-white'
+                            : theme === 'dark'
+                            ? 'bg-white dark:bg-stone-900 hover:bg-red-950/60 text-slate-500 dark:text-stone-400 hover:text-red-400 border-slate-300 dark:border-white/10 hover:border-red-500/30'
+                            : 'bg-white hover:bg-red-50 text-slate-500 hover:text-red-600 border-slate-200 hover:border-red-300'
+                        }`}
+                        title="Block this phone number"
+                      >
+                        <ShieldAlert className="w-4 h-4" />
                       </button>
-                   </div>
-                   <div className="flex items-center gap-2.5 mb-1.5">
-                     <div className="w-9 h-9 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 shrink-0">
-                       <User className="w-4.5 h-4.5 text-emerald-500" />
-                     </div>
-                     <div className="flex flex-col min-w-0 pr-8">
-                       <span className={`font-bold text-[0.85rem] truncate leading-tight ${theme === 'dark' ? 'text-slate-900 dark:text-stone-100' : 'text-slate-900'}`}>{posCart.customer.name}</span>
-                       <span className="text-[0.75rem] text-emerald-600 font-mono font-bold leading-tight mt-0.5">{posCart.customer.phone}</span>
-                     </div>
-                   </div>
-                   {posCart.customer.address && (
-                     <div className={`flex items-start gap-1.5 mt-2.5 border-t pt-2.5 ${theme === 'dark' ? 'border-slate-300 dark:border-white/10' : 'border-slate-200'}`}>
-                       <MapPin className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-400'}`} />
-                       <span className={`text-[0.75rem] line-clamp-2 leading-snug ${theme === 'dark' ? 'text-slate-700 dark:text-stone-300' : 'text-slate-700'}`}>{posCart.customer.address}</span>
-                     </div>
-                   )}
-                   {foundCustomer && (
-                     <div className={`flex items-center justify-between gap-4 mt-2.5 pt-2.5 border-t -mx-3 -mb-3 px-3 py-2 rounded-b-xl ${
-                       theme === 'dark' ? 'border-slate-300 dark:border-white/10 bg-[#0c0c0e]/50' : 'border-slate-200 bg-slate-100/80'
-                     }`}>
-                       <div className="flex flex-col">
-                         <span className={`text-[0.6rem] uppercase font-bold tracking-wider ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`}>Visits</span>
-                         <span className={`text-[0.8rem] font-mono font-bold ${theme === 'dark' ? 'text-stone-200' : 'text-slate-800'}`}>{foundCustomer.totalVisits || 1}</span>
+                    )}
+                  </div>
+                  
+                  {/* Blocked Customer Prominent Alert Banner in Ticket */}
+                  {(posCart.customer?.isBlocked || foundCustomer?.isBlocked || (cleanPhoneDigits ? isCustomerBlocked(cleanPhoneDigits).blocked : false)) && (
+                    <div className="bg-gradient-to-r from-red-950/90 via-red-900/80 to-red-950/90 border-2 border-red-500/60 rounded-xl p-2.5 shadow-lg shadow-red-950/40 animate-in fade-in duration-200">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-start gap-2">
+                          <div className="w-6 h-6 rounded-lg bg-red-600/30 border border-red-500/40 flex items-center justify-center text-red-400 shrink-0 mt-0.5">
+                            <ShieldAlert className="w-3.5 h-3.5" />
+                          </div>
+                          <div>
+                            <span className="text-[10px] font-black uppercase tracking-wider text-red-400 block">
+                              ⛔ BLOCKED CUSTOMER DETECTED
+                            </span>
+                            <h4 className="text-xs font-black text-white leading-tight">
+                              Blocked customer can&apos;t place an order
+                            </h4>
+                            <p className="text-[10px] text-red-200/90 mt-0.5 bg-slate-900/20 dark:bg-black/40 p-1 rounded border border-red-500/20 leading-snug">
+                              <strong>Reason:</strong> {posCart.customer?.blockReason || foundCustomer?.blockReason || isCustomerBlocked(cleanPhoneDigits).reason || 'Store blacklist policy'}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-end gap-2 mt-1.5 pt-1.5 border-t border-red-500/30">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const targetCust = posCart.customer?.isBlocked ? (foundCustomer || posCart.customer as any) : (isCustomerBlocked(cleanPhoneDigits).customer || foundCustomer);
+                            setBlockedAlertCustomer(targetCust);
+                            setBlockedAlertPhone(cleanPhoneDigits);
+                            setIsBlockedAlertOpen(true);
+                          }}
+                          className="px-2.5 py-1 bg-red-600 hover:bg-red-500 text-white rounded-lg text-[10px] font-bold transition flex items-center gap-1 cursor-pointer shadow-sm"
+                        >
+                          <Eye className="w-3 h-3" />
+                          View Block Popup
+                        </button>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            if (window.confirm(`Unblock customer ${cleanPhoneDigits}?`)) {
+                              const res = await unblockCustomer(cleanPhoneDigits);
+                              if (res.success) {
+                                setFoundCustomer((prev) =>
+                                  prev
+                                    ? {
+                                        ...prev,
+                                        isBlocked: false,
+                                        blockReason: undefined,
+                                        blockedAt: undefined,
+                                        blockedBy: undefined,
+                                      }
+                                    : null
+                                );
+                                setBlockedAlertCustomer(null);
+                                setIsBlockedAlertOpen(false);
+                                setCustomerLookupStatus('idle');
+                              }
+                            }
+                          }}
+                          className="px-2.5 py-1 bg-slate-50 dark:bg-stone-800 hover:bg-stone-700 text-stone-200 rounded-lg text-[10px] font-semibold transition cursor-pointer border border-slate-300 dark:border-white/10"
+                        >
+                          Unblock
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Customer Details Display Area */}
+                  {customerLookupStatus === 'new' ? (
+                    <div className={`border rounded-xl p-2.5 mt-0.5 flex flex-col gap-2 shadow-xs animate-in fade-in duration-150 ${
+                      theme === 'dark' ? 'bg-[#141417] border-blue-500/20' : 'bg-blue-50/70 border-blue-200'
+                    }`}>
+                       <div className="flex items-center justify-between">
+                         <div className="flex items-center gap-1.5">
+                           <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></div>
+                           <span className="text-[0.65rem] uppercase font-bold tracking-wider text-blue-500">New Customer Profile</span>
+                         </div>
+                         <span className={`text-[10px] font-mono font-bold ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-600'}`}>
+                           {cleanPhoneDigits}
+                         </span>
                        </div>
-                       <div className="flex flex-col text-right">
-                         <span className={`text-[0.6rem] uppercase font-bold tracking-wider ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`}>Points</span>
-                         <span className="text-[0.8rem] font-mono font-bold text-amber-500">{foundCustomer.loyaltyPoints || 0}</span>
+                       <div className="space-y-1.5">
+                         <div className="relative">
+                           <User className={`w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 ${theme === 'dark' ? 'text-slate-400 dark:text-stone-500' : 'text-slate-400'}`} />
+                           <input
+                             type="text"
+                             placeholder="Full Name (Required) *"
+                             value={posCart.customer?.name || ''}
+                             onChange={(e) => setPosCustomerField('name', e.target.value)}
+                             className={`w-full border rounded-lg pl-8 pr-3 py-1.5 text-xs focus:outline-none focus:border-blue-500/50 transition-colors ${
+                               theme === 'dark' ? 'bg-[#0c0c0e] border-slate-300 dark:border-white/10 text-white placeholder:text-slate-400 dark:text-stone-500' : 'bg-white border-slate-300 text-slate-900 placeholder:text-slate-400'
+                             }`}
+                           />
+                         </div>
+                         <div className="relative">
+                           <MapPin className={`w-3.5 h-3.5 absolute left-2.5 top-2 ${theme === 'dark' ? 'text-slate-400 dark:text-stone-500' : 'text-slate-400'}`} />
+                           <textarea
+                             rows={1}
+                             placeholder="Delivery Address (Optional)"
+                             value={posCart.customer?.address || ''}
+                             onChange={(e) => setPosCustomerField('address', e.target.value)}
+                             className={`w-full border rounded-lg pl-8 pr-3 py-1 text-xs focus:outline-none focus:border-blue-500/50 transition-colors resize-none ${
+                               theme === 'dark' ? 'bg-[#0c0c0e] border-slate-300 dark:border-white/10 text-white placeholder:text-slate-400 dark:text-stone-500' : 'bg-white border-slate-300 text-slate-900 placeholder:text-slate-400'
+                             }`}
+                           />
+                         </div>
                        </div>
-                     </div>
-                   )}
-                </div>
-              ) : null}
+
+                       {/* Save Customer Explicit Button */}
+                       <div className={`flex items-center justify-between pt-1 border-t ${theme === 'dark' ? 'border-slate-200 dark:border-white/5' : 'border-slate-200'}`}>
+                         <span className={`text-[9.5px] ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`}>
+                           Auto-saves with order
+                         </span>
+                         <button
+                           type="button"
+                           onClick={handleSaveCustomerManually}
+                           disabled={isSavingCustomer || !posCart.customer?.name?.trim()}
+                           className="px-2.5 py-1 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 disabled:opacity-40 text-white rounded-lg text-[11px] font-bold flex items-center gap-1.5 cursor-pointer shadow-md transition-all border border-emerald-400/20"
+                         >
+                           {isSavingCustomer ? (
+                             <Loader2 className="w-3 h-3 animate-spin" />
+                           ) : (
+                             <Save className="w-3 h-3" />
+                           )}
+                           <span>{isSavingCustomer ? 'Saving...' : 'Save Details'}</span>
+                         </button>
+                       </div>
+                    </div>
+                  ) : customerLookupStatus === 'found' && posCart.customer ? (
+                    <div className={`border rounded-xl px-2.5 py-1.5 mt-0.5 flex items-center justify-between shadow-xs transition-all ${
+                      theme === 'dark' ? 'bg-[#141417]/90 border-emerald-500/30' : 'bg-emerald-50/70 border-emerald-300'
+                    }`}>
+                      <div className="flex items-center gap-2 min-w-0 flex-1 mr-2">
+                        <div className="w-7 h-7 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500 shrink-0">
+                          <User className="w-3.5 h-3.5" />
+                        </div>
+                        <div className="flex flex-col min-w-0">
+                          <div className="flex items-center gap-1.5 truncate">
+                            <span className={`font-bold text-xs truncate leading-tight ${theme === 'dark' ? 'text-slate-100' : 'text-slate-900'}`}>
+                              {posCart.customer.name}
+                            </span>
+                            <span className="text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400 shrink-0">
+                              {posCart.customer.phone}
+                            </span>
+                          </div>
+                          {posCart.customer.address ? (
+                            <div className="flex items-center gap-1 text-[10px] text-slate-500 dark:text-stone-400 truncate mt-0.5">
+                              <MapPin className="w-2.5 h-2.5 text-slate-400 shrink-0" />
+                              <span className="truncate">{posCart.customer.address}</span>
+                            </div>
+                          ) : (
+                            <span className="text-[9.5px] text-slate-400 dark:text-stone-500 italic truncate">Registered Customer</span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Quick Action Buttons: Edit and View Profile */}
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => setIsCustomerManageModalOpen(true)}
+                          className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1 cursor-pointer border shadow-xs ${
+                            theme === 'dark'
+                              ? 'bg-stone-800 hover:bg-emerald-600/30 hover:border-emerald-500/50 text-emerald-400 border-white/10'
+                              : 'bg-white hover:bg-emerald-100 hover:border-emerald-300 text-emerald-700 border-slate-200'
+                          }`}
+                          title="Edit Customer Information"
+                        >
+                          <Pencil className="w-3 h-3" />
+                          <span>Edit</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setIsCustomerModalOpen(true)}
+                          className={`p-1.5 rounded-lg transition-colors cursor-pointer border ${
+                            theme === 'dark'
+                              ? 'text-stone-300 bg-stone-800 hover:bg-stone-700 border-white/10'
+                              : 'text-slate-600 bg-white hover:bg-slate-100 border-slate-200'
+                          }`}
+                          title="View Customer Profile"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
+                </>
+              )}
             </div>
 
             {/* Active Ticket Cart Items */}
@@ -1753,37 +1915,64 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                      </div>
                   </div>
                ) : (
-                  <div className="space-y-1.5">
-                  {posCart.items.map((cartItem) => (
-                    <div 
-                      key={cartItem.id} 
-                      className={`border rounded-xl p-2 flex items-center justify-between text-xs transition-all duration-200 shadow-xs ${
-                      theme === 'dark' 
-                        ? 'bg-gradient-to-r from-stone-900/90 to-stone-950/90 border-slate-200 dark:border-white/5 hover:border-emerald-500/30' 
-                        : 'bg-white border-slate-200 hover:border-emerald-500/40 shadow-xs'
+                  <div className="space-y-1">
+                    {/* Huge Order Header Summary Bar */}
+                    <div className={`flex items-center justify-between px-2 py-1 rounded-lg text-[10px] font-mono font-bold border ${
+                      theme === 'dark' ? 'bg-stone-900/60 border-white/5 text-stone-400' : 'bg-slate-100/90 border-slate-200 text-slate-600'
                     }`}>
-                      <div className="flex-1 min-w-0 pr-2">
-                        <div className={`font-semibold truncate text-[11px] ${theme === 'dark' ? 'text-slate-900 dark:text-stone-100' : 'text-slate-900'}`}>{cartItem.name}</div>
-                        {cartItem.flavor && <div className="text-[10px] text-emerald-500 font-medium truncate">{cartItem.flavor}</div>}
-                        {cartItem.modifiers && cartItem.modifiers.length > 0 && <div className={`text-[9px] truncate ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`}>+{cartItem.modifiers.map(m=>m.name).join(', ')}</div>}
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-emerald-500">{posCart.items.length} Lines</span>
+                        <span>•</span>
+                        <span>{posCart.items.reduce((s, i) => s + i.quantity, 0)} Units</span>
+                        {posCart.items.length >= 6 && (
+                          <span className="bg-amber-500/15 text-amber-500 border border-amber-500/30 px-1.5 py-0.2 rounded text-[9px] font-sans font-black uppercase tracking-wider">
+                            Bulk Order
+                          </span>
+                        )}
                       </div>
-                      <div className={`flex items-center gap-1.5 shrink-0 border rounded-lg p-0.5 ${
-                        theme === 'dark' ? 'bg-slate-100 dark:bg-stone-950/90 border-slate-200 dark:border-white/5' : 'bg-slate-100 border-slate-200'
-                      }`}>
-                        <button onClick={() => updateCartItemQty(cartItem.id, cartItem.quantity - 1)} className={`w-5 h-5 rounded-md font-bold flex items-center justify-center cursor-pointer transition text-[10px] ${
-                          theme === 'dark' ? 'bg-slate-50 dark:bg-stone-800 hover:bg-stone-700 text-white' : 'bg-white hover:bg-slate-200 text-slate-800 shadow-xs'
-                        }`}><Minus className="w-2.5 h-2.5" /></button>
-                        <span className={`w-4 text-center font-mono font-bold text-[11px] ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>{cartItem.quantity}</span>
-                        <button onClick={() => updateCartItemQty(cartItem.id, cartItem.quantity + 1)} className={`w-5 h-5 rounded-md font-bold flex items-center justify-center cursor-pointer transition text-[10px] ${
-                          theme === 'dark' ? 'bg-slate-50 dark:bg-stone-800 hover:bg-stone-700 text-white' : 'bg-white hover:bg-slate-200 text-slate-800 shadow-xs'
-                        }`}><Plus className="w-2.5 h-2.5" /></button>
-                      </div>
-                      <div className="text-right shrink-0 pl-2 min-w-[55px]">
-                        <span className="font-mono font-black text-emerald-500 text-xs block truncate">{Number(cartItem.price * cartItem.quantity).toLocaleString()}</span>
-                        <button onClick={() => removeFromPosCart(cartItem.id)} className="text-slate-500 dark:text-stone-400 hover:text-red-500 text-[10px] transition cursor-pointer font-bold mt-0.5">X</button>
-                      </div>
+                      <button
+                        type="button"
+                        onClick={handleResetTicket}
+                        className="text-red-400 hover:text-red-500 hover:underline cursor-pointer font-sans text-[10px]"
+                        title="Clear all ticket items"
+                      >
+                        Clear All
+                      </button>
                     </div>
-                  ))}
+
+                    {posCart.items.map((cartItem, idx) => (
+                      <div 
+                        key={cartItem.id} 
+                        className={`border rounded-xl p-1.5 px-2 flex items-center justify-between text-xs transition-all duration-200 shadow-xs ${
+                        theme === 'dark' 
+                          ? 'bg-gradient-to-r from-stone-900/90 to-stone-950/90 border-slate-200 dark:border-white/5 hover:border-emerald-500/30' 
+                          : 'bg-white border-slate-200 hover:border-emerald-500/40 shadow-xs'
+                      }`}>
+                        <span className={`text-[10px] font-mono font-bold w-4 shrink-0 ${theme === 'dark' ? 'text-stone-500' : 'text-slate-400'}`}>
+                          {idx + 1}.
+                        </span>
+                        <div className="flex-1 min-w-0 pr-2">
+                          <div className={`font-semibold truncate text-[11px] ${theme === 'dark' ? 'text-slate-900 dark:text-stone-100' : 'text-slate-900'}`}>{cartItem.name}</div>
+                          {cartItem.flavor && <div className="text-[10px] text-emerald-500 font-medium truncate">{cartItem.flavor}</div>}
+                          {cartItem.modifiers && cartItem.modifiers.length > 0 && <div className={`text-[9px] truncate ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`}>+{cartItem.modifiers.map(m=>m.name).join(', ')}</div>}
+                        </div>
+                        <div className={`flex items-center gap-1.5 shrink-0 border rounded-lg p-0.5 ${
+                          theme === 'dark' ? 'bg-slate-100 dark:bg-stone-950/90 border-slate-200 dark:border-white/5' : 'bg-slate-100 border-slate-200'
+                        }`}>
+                          <button onClick={() => updateCartItemQty(cartItem.id, cartItem.quantity - 1)} className={`w-5 h-5 rounded-md font-bold flex items-center justify-center cursor-pointer transition text-[10px] ${
+                            theme === 'dark' ? 'bg-slate-50 dark:bg-stone-800 hover:bg-stone-700 text-white' : 'bg-white hover:bg-slate-200 text-slate-800 shadow-xs'
+                          }`}><Minus className="w-2.5 h-2.5" /></button>
+                          <span className={`w-4 text-center font-mono font-bold text-[11px] ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>{cartItem.quantity}</span>
+                          <button onClick={() => updateCartItemQty(cartItem.id, cartItem.quantity + 1)} className={`w-5 h-5 rounded-md font-bold flex items-center justify-center cursor-pointer transition text-[10px] ${
+                            theme === 'dark' ? 'bg-slate-50 dark:bg-stone-800 hover:bg-stone-700 text-white' : 'bg-white hover:bg-slate-200 text-slate-800 shadow-xs'
+                          }`}><Plus className="w-2.5 h-2.5" /></button>
+                        </div>
+                        <div className="text-right shrink-0 pl-2 min-w-[55px]">
+                          <span className="font-mono font-black text-emerald-500 text-xs block truncate">{Number(cartItem.price * cartItem.quantity).toLocaleString()}</span>
+                          <button onClick={() => removeFromPosCart(cartItem.id)} className="text-slate-500 dark:text-stone-400 hover:text-red-500 text-[10px] transition cursor-pointer font-bold mt-0.5">X</button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                )}
             </div>
@@ -2887,12 +3076,12 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
       <CustomerManageModal
         isOpen={isCustomerManageModalOpen}
         onClose={() => setIsCustomerManageModalOpen(false)}
-        title={posCart.customer?.name ? "Edit Customer Details" : "New Customer Details"}
+        title={posCart.customer?.name || foundCustomer?.name ? `Edit Customer Details` : "New Customer Details"}
         initialData={{
-          name: posCart.customer?.name || '',
-          phone: posCart.customer?.phone || phoneSearchInput || '',
-          address: posCart.customer?.address || '',
-          notes: posCart.customer?.notes || '',
+          name: posCart.customer?.name || foundCustomer?.name || '',
+          phone: posCart.customer?.phone || foundCustomer?.phone || phoneSearchInput || '',
+          address: posCart.customer?.address || foundCustomer?.address || '',
+          notes: posCart.customer?.notes || foundCustomer?.deliveryNotes || '',
         }}
         onSave={async (data) => {
           setPosCustomerField('phone', data.phone);
@@ -2901,15 +3090,24 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
           setPosCustomerField('notes', data.notes || '');
           setPhoneSearchInput(data.phone);
           try {
-            await upsertCustomer({
+            const saved = await upsertCustomer({
               name: data.name,
               phone: data.phone,
               address: data.address,
               notes: data.notes,
             });
-            showToast(`✓ Saved customer: ${data.name}`);
+            if (saved) {
+              setFoundCustomer(saved);
+              setCustomerLookupStatus('found');
+              setPosCustomerField('phone', saved.phone || data.phone);
+              setPosCustomerField('name', saved.name);
+              setPosCustomerField('address', saved.address || data.address);
+              setPosCustomerField('notes', saved.notes || saved.deliveryNotes || data.notes || '');
+            }
+            showToast(`✓ Updated customer details: ${data.name}`);
           } catch (e) {
             console.error(e);
+            showToast(`❌ Error saving customer details`);
           }
         }}
       />
@@ -2920,8 +3118,9 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
       <CustomerViewModal
         isOpen={isCustomerModalOpen}
         onClose={() => setIsCustomerModalOpen(false)}
-        customer={foundCustomer}
+        customer={foundCustomer || (posCart.customer?.name ? (posCart.customer as any) : null)}
         pastOrders={[]}
+        onEditCustomer={() => setIsCustomerManageModalOpen(true)}
       />
 
       <CancelOrderModal

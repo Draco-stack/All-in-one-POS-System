@@ -757,17 +757,10 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         (o) =>
           o.status !== 'cancelled' &&
           o.status !== 'refunded' &&
-          o.paymentStatus !== 'refunded' &&
+          o.paymentStatus === 'paid' &&
           (!shiftStartTime || (o.createdAt ? new Date(o.createdAt).getTime() : Date.now()) >= (shiftStartTime - 120000)) &&
           (!shiftEndTime || (o.createdAt ? new Date(o.createdAt).getTime() : Date.now()) <= (shiftEndTime + 120000))
       );
-
-      // Fallback if timestamp-filtered orders are empty but orders exist and shift is open
-      if (shiftOrders.length === 0 && orders.length > 0 && !shiftEndTime) {
-        shiftOrders = orders.filter(
-          (o) => o.status !== 'cancelled' && o.status !== 'refunded' && o.paymentStatus !== 'refunded'
-        );
-      }
 
       const cash = shiftOrders
         .filter((o) => {

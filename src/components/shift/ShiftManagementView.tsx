@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Calculator,
   DollarSign,
@@ -14,6 +15,7 @@ import {
   CreditCard,
   Banknote,
   Sparkles,
+  X,
 } from 'lucide-react';
 import { useRestaurant } from '../../context/RestaurantContext';
 import { ShiftCloseModal } from './ShiftCloseModal';
@@ -24,6 +26,8 @@ export const ShiftManagementView: React.FC = () => {
   const [shiftNotes, setShiftNotes] = useState<string>('');
   const [actualCashCounted, setActualCashCounted] = useState<string>('');
   const [isCloseModalOpen, setIsCloseModalOpen] = useState(false);
+  const [initialModalCash, setInitialModalCash] = useState<number | undefined>(undefined);
+  const [isXReportModalOpen, setIsXReportModalOpen] = useState(false);
 
   // Check if active shift was opened on a previous day (unclosed overnight shift)
   const isUnclosedPreviousShift = useMemo(() => {
@@ -44,18 +48,13 @@ export const ShiftManagementView: React.FC = () => {
     const shiftEndTime = currentShift.closedAt ? new Date(currentShift.closedAt).getTime() : null;
 
     let validOrders = orders.filter((o) => {
-      if (o.status === 'cancelled' || o.status === 'refunded' || o.paymentStatus === 'refunded') return false;
+      if (o.status === 'cancelled' || o.status === 'refunded' || o.paymentStatus !== 'paid') return false;
       const orderTime = o.createdAt ? new Date(o.createdAt).getTime() : Date.now();
       // Allow 2-minute clock skew buffer
       if (shiftStartTime > 0 && orderTime < (shiftStartTime - 120000)) return false;
       if (shiftEndTime && orderTime > (shiftEndTime + 120000)) return false;
       return true;
     });
-
-    // Fallback if timestamp window was tight and shift is open
-    if (validOrders.length === 0 && orders.length > 0 && !shiftEndTime) {
-      validOrders = orders.filter((o) => o.status !== 'cancelled' && o.status !== 'refunded' && o.paymentStatus !== 'refunded');
-    }
 
     return validOrders;
   }, [orders, currentShift]);
@@ -99,15 +98,13 @@ export const ShiftManagementView: React.FC = () => {
   };
 
   const handleDirectClose = () => {
-    const cashVal = !isNaN(enteredCashNum) ? enteredCashNum : expectedCashInDrawer;
-    closeShift(cashVal, shiftNotes);
-    setShiftNotes('');
-    setActualCashCounted('');
+    const cashVal = !isNaN(enteredCashNum) && enteredCashNum > 0 ? enteredCashNum : expectedCashInDrawer;
+    setInitialModalCash(cashVal);
+    setIsCloseModalOpen(true);
   };
 
-  const handlePrintZReport = () => {
-    window.print();
-    showToast('🖨️ Printing Mid-Shift X-Report to POS printer...');
+  const handlePrintXReport = () => {
+    setIsXReportModalOpen(true);
   };
 
   return (
@@ -135,7 +132,7 @@ export const ShiftManagementView: React.FC = () => {
         {currentShift && currentShift.status === 'open' && (
           <div className="flex items-center gap-2">
             <button
-              onClick={handlePrintZReport}
+              onClick={handlePrintXReport}
               className={`px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2 border cursor-pointer active:scale-95 ${
                 theme === 'dark'
                   ? 'bg-slate-50 dark:bg-stone-800 hover:bg-stone-700 text-stone-200 border-slate-300 dark:border-stone-700'
@@ -530,11 +527,149 @@ export const ShiftManagementView: React.FC = () => {
       {isCloseModalOpen && (
         <ShiftCloseModal
           isOpen={isCloseModalOpen}
-          onClose={() => setIsCloseModalOpen(false)}
+          initialCashCounted={initialModalCash}
+          initialNotes={shiftNotes}
+          onClose={() => {
+            setIsCloseModalOpen(false);
+            setInitialModalCash(undefined);
+          }}
           onShiftClosed={() => {
             setIsCloseModalOpen(false);
+            setInitialModalCash(undefined);
+            setShiftNotes('');
+            setActualCashCounted('');
           }}
         />
+      )}
+
+      {/* Mid-Shift X-Report Reading Modal & Thermal Slip */}
+      {isXReportModalOpen && currentShift && createPortal(
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto no-scrollbar print:bg-transparent print:p-0 print:block">
+          <div className="bg-white dark:bg-stone-900 border border-slate-200 dark:border-stone-800 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col my-auto max-h-[92vh] print:border-none print:shadow-none print:bg-white print:max-w-none print:max-h-none print:h-auto">
+            
+            {/* Modal Header */}
+            <div className="p-4 border-b border-slate-200 dark:border-stone-800 bg-white dark:bg-stone-950 flex items-center justify-between shrink-0 print:hidden">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-500 flex items-center justify-center">
+                  <Printer className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-slate-900 dark:text-white text-base flex items-center gap-2">
+                    Mid-Shift X-Report Reading
+                    <span className="text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded border bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
+                      LIVE AUDIT
+                    </span>
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-stone-400">
+                    Interim Cash Drawer & Till Audit Snapshot • Register Remains Active
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsXReportModalOpen(false)}
+                className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-stone-800 text-slate-500 dark:text-stone-400 hover:text-slate-900 dark:hover:text-white transition cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Thermal Slip Content */}
+            <div className="p-5 overflow-y-auto space-y-4 bg-slate-50 dark:bg-stone-950/80 print:bg-white print:p-0">
+              <div className="bg-white text-stone-950 p-5 rounded-xl font-mono text-xs max-w-sm mx-auto shadow-2xl space-y-3 border border-stone-300 print:shadow-none print:border-none print:p-0 print:max-w-none print:w-full">
+                
+                <div className="text-center border-b border-dashed border-stone-400 pb-2">
+                  <h5 className="font-black text-sm tracking-wider uppercase">MASTER POS PRO</h5>
+                  <p className="text-[11px] font-bold text-stone-800">MID-SHIFT X-REPORT (INTERIM AUDIT)</p>
+                  <p className="text-[10px] text-stone-500">Reading Time: {new Date().toLocaleString()}</p>
+                </div>
+
+                <div className="space-y-1 border-b border-dashed border-stone-400 pb-2 text-[11px]">
+                  <div className="flex justify-between">
+                    <span>Shift ID:</span>
+                    <span className="font-bold">{currentShift.shiftNumber || currentShift.id}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Cashier:</span>
+                    <span className="font-bold">{currentShift.cashierName || currentUser.name}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Outlet:</span>
+                    <span>{currentUser.outlet || 'Main Branch'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Shift Opened At:</span>
+                    <span>{new Date(currentShift.openedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                  </div>
+                </div>
+
+                {/* Sales Section */}
+                <div className="space-y-1 border-b border-dashed border-stone-400 pb-2 text-[11px]">
+                  <div className="flex justify-between">
+                    <span>Opening Cash Float:</span>
+                    <span>PKR {openingFloatVal.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Cash Sales:</span>
+                    <span className="font-bold">PKR {displayCashSales.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Card / Digital Sales:</span>
+                    <span>PKR {displayCardSales.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between font-black text-xs pt-1 border-t border-dashed border-stone-300">
+                    <span>Total Shift Revenue:</span>
+                    <span>PKR {displayTotalGross.toLocaleString()}</span>
+                  </div>
+                </div>
+
+                {/* Cash Drawer Expected */}
+                <div className="space-y-1 border-b border-dashed border-stone-400 pb-2 text-[11px]">
+                  <div className="flex justify-between font-black text-xs text-stone-900">
+                    <span>Expected Cash in Till:</span>
+                    <span>PKR {expectedCashInDrawer.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between text-[10px] text-stone-600">
+                    <span>(Float + Cash Sales)</span>
+                    <span>PKR {openingFloatVal.toLocaleString()} + PKR {displayCashSales.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between text-[10px] text-stone-600">
+                    <span>Completed Orders:</span>
+                    <span>{currentShiftTransactions.length} receipts</span>
+                  </div>
+                </div>
+
+                {/* Notice */}
+                <div className="text-center pt-1 text-[9px] text-stone-500 uppercase tracking-wider font-bold">
+                  *** INTERIM READING ONLY ***<br />
+                  REGISTER SHIFT REMAINS ACTIVE<br />
+                  TILL TOTALS HAVE NOT BEEN RESET
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center justify-center gap-2.5 pt-2 print:hidden">
+                <button
+                  onClick={() => {
+                    window.print();
+                    showToast('🖨️ Printing Mid-Shift X-Report to POS printer...');
+                  }}
+                  className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-lg cursor-pointer active:scale-95"
+                >
+                  <Printer className="w-4 h-4" />
+                  Print Physical X-Report
+                </button>
+                <button
+                  onClick={() => setIsXReportModalOpen(false)}
+                  className="px-4 py-2.5 bg-slate-200 dark:bg-stone-800 hover:bg-slate-300 dark:hover:bg-stone-700 text-slate-800 dark:text-stone-200 rounded-xl text-xs font-bold transition cursor-pointer"
+                >
+                  Close Preview
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>,
+        document.body
       )}
     </div>
   );

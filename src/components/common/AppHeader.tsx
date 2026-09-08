@@ -340,21 +340,39 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         )}
 
         {/* Shift Status Indicator */}
-        <div
-          className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-xl border text-[11px] font-mono font-bold ${
-            currentShift
-              ? 'bg-emerald-950/70 border-emerald-800/60 text-emerald-300'
-              : 'bg-amber-950/70 border-amber-800/60 text-amber-300'
-          }`}
-          title={currentShift ? `Shift #${currentShift.id} active` : 'No active register shift'}
-        >
-          <span
-            className={`w-1.5 h-1.5 rounded-full ${
-              currentShift ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'
-            }`}
-          />
-          <span>{currentShift ? `Till #${currentShift.id}` : 'Till Closed'}</span>
-        </div>
+        {(() => {
+          const isShiftActive = Boolean(currentShift && currentShift.status === 'open');
+          return (
+            <button
+              onClick={() => {
+                if (!isRestricted('shift')) {
+                  setActiveView('shifts');
+                }
+              }}
+              className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-xl border text-[11px] font-mono font-bold transition-all cursor-pointer hover:brightness-110 active:scale-95 ${
+                isShiftActive
+                  ? 'bg-emerald-950/70 border-emerald-800/60 text-emerald-300'
+                  : 'bg-amber-950/70 border-amber-800/60 text-amber-300'
+              }`}
+              title={
+                isShiftActive
+                  ? `${currentShift?.shiftNumber || 'Shift'} Active • Cashier: ${currentShift?.cashierName || currentUser.name} (Click to manage)`
+                  : 'No active register shift (Click to open shift)'
+              }
+            >
+              <span
+                className={`w-1.5 h-1.5 rounded-full ${
+                  isShiftActive ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'
+                }`}
+              />
+              <span>
+                {isShiftActive
+                  ? (currentShift?.shiftNumber || 'Shift Active')
+                  : 'Shift Closed'}
+              </span>
+            </button>
+          );
+        })()}
 
         {/* Fullscreen Toggle */}
         <button

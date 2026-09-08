@@ -179,8 +179,9 @@ html.light select option {
   padding: 0.2rem 0.45rem;
 }
 .pos-category-chip {
-  padding: 0.35rem 0.75rem;
-  font-size: 10.5px;
+  height: 32px;
+  padding: 0 0.55rem;
+  font-size: 11px;
 }
 .pos-search-container {
   width: 180px;
@@ -255,7 +256,8 @@ html.light select option {
     padding: 0.3rem 0.6rem;
   }
   .pos-category-chip {
-    padding: 0.4rem 0.85rem;
+    height: 32px;
+    padding: 0 0.6rem;
     font-size: 11px;
   }
   .pos-search-container {
@@ -287,8 +289,9 @@ html.light select option {
     padding: 0.35rem 0.65rem;
   }
   .pos-category-chip {
-    padding: 0.45rem 0.9rem;
-    font-size: 11.5px;
+    height: 32px;
+    padding: 0 0.65rem;
+    font-size: 11px;
   }
   .pos-search-container {
     width: 240px;
@@ -319,8 +322,9 @@ html.light select option {
     padding: 0.35rem 0.75rem;
   }
   .pos-category-chip {
-    padding: 0.5rem 1rem;
-    font-size: 12px;
+    height: 34px;
+    padding: 0 0.75rem;
+    font-size: 11.5px;
   }
   .pos-search-container {
     width: 260px;
@@ -351,8 +355,9 @@ html.light select option {
     padding: 0.4rem 0.85rem;
   }
   .pos-category-chip {
-    padding: 0.55rem 1.15rem;
-    font-size: 13px;
+    height: 36px;
+    padding: 0 0.85rem;
+    font-size: 12px;
   }
   .pos-search-container {
     width: 300px;

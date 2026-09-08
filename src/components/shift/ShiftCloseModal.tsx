@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Calculator,
   X,
@@ -25,12 +26,16 @@ interface ShiftCloseModalProps {
   isOpen: boolean;
   onClose: () => void;
   onShiftClosed?: () => void;
+  initialCashCounted?: number;
+  initialNotes?: string;
 }
 
 export const ShiftCloseModal: React.FC<ShiftCloseModalProps> = ({
   isOpen,
   onClose,
   onShiftClosed,
+  initialCashCounted,
+  initialNotes,
 }) => {
   const { currentShift, closeShift, openShift, currentUser, orders, showToast, logoutUser } = useRestaurant();
 
@@ -67,6 +72,41 @@ export const ShiftCloseModal: React.FC<ShiftCloseModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessZReport, setShowSuccessZReport] = useState(false);
   const [closedAuditData, setClosedAuditData] = useState<ShiftAuditRecord | null>(null);
+
+  // Helper to decompose amount into optimal PKR denominations
+  const getDenominationsForAmount = (amount: number): { counts: DenominationCounts; coins: number } => {
+    let remaining = Math.max(0, Math.round(amount));
+    const counts: DenominationCounts = {
+      5000: 0,
+      1000: 0,
+      500: 0,
+      100: 0,
+      50: 0,
+      20: 0,
+      10: 0,
+    };
+    const denoms: (keyof DenominationCounts)[] = [5000, 1000, 500, 100, 50, 20, 10];
+    for (const d of denoms) {
+      const count = Math.floor(remaining / d);
+      counts[d] = count;
+      remaining = remaining % d;
+    }
+    return { counts, coins: remaining };
+  };
+
+  // Prefill initial cash or notes if passed from outside
+  React.useEffect(() => {
+    if (isOpen) {
+      if (initialCashCounted !== undefined && initialCashCounted !== null && !isNaN(initialCashCounted) && initialCashCounted > 0) {
+        const { counts, coins } = getDenominationsForAmount(initialCashCounted);
+        setDenomCounts(counts);
+        setCoinsAmount(coins);
+      }
+      if (initialNotes) {
+        setShiftNotes(initialNotes);
+      }
+    }
+  }, [isOpen, initialCashCounted, initialNotes]);
 
   // Check if current shift was opened on a previous day (not closed yesterday)
   const isUnclosedPreviousShift = useMemo(() => {
@@ -113,7 +153,7 @@ export const ShiftCloseModal: React.FC<ShiftCloseModalProps> = ({
     
     return orders.filter((o) => {
       // 1. Exclude non-revenue or cancelled states
-      if (o.status === 'cancelled' || o.status === 'refunded' || o.paymentStatus === 'refunded') return false;
+      if (o.status === 'cancelled' || o.status === 'refunded' || o.paymentStatus !== 'paid') return false;
 
       // 2. Strict Outlet / Terminal Isolation
       const orderOutlet = o.outlet || (o as any).branchName || '';
@@ -214,6 +254,10 @@ export const ShiftCloseModal: React.FC<ShiftCloseModalProps> = ({
     openShift(floatAmount, openingNotesInput);
     setShowSuccessZReport(false);
     setClosedAuditData(null);
+    onClose();
+    if (onShiftClosed) {
+      onShiftClosed();
+    }
     showToast(`✓ Cashier shift opened with PKR ${floatAmount.toLocaleString()} starting float`);
   };
 
@@ -282,31 +326,31 @@ export const ShiftCloseModal: React.FC<ShiftCloseModalProps> = ({
 
   const isShiftOpen = currentShift && currentShift.status === 'open';
 
-  return (
-    <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto no-scrollbar">
-      <div className="bg-white dark:bg-stone-900 border border-slate-200 dark:border-stone-800 rounded-2xl w-full max-w-3xl shadow-2xl overflow-hidden flex flex-col my-auto max-h-[92vh]">
+  return createPortal(
+    <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto no-scrollbar print:bg-transparent print:p-0 print:block">
+      <div className="bg-white dark:bg-stone-900 border border-slate-200 dark:border-stone-800 rounded-2xl w-full max-w-3xl shadow-2xl overflow-hidden flex flex-col my-auto max-h-[92vh] print:border-none print:shadow-none print:bg-white print:max-w-none print:max-h-none print:h-auto">
         
         {/* Modal Header */}
-        <div className="p-4 border-b border-slate-200 dark:border-stone-800 bg-white dark:bg-stone-950 flex items-center justify-between shrink-0">
+        <div className="p-4 border-b border-slate-200 dark:border-stone-800 bg-white dark:bg-stone-950 flex items-center justify-between shrink-0 print:hidden">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-[#00897b]/20 border border-[#00897b]/40 text-[#00897b] flex items-center justify-center">
               <Calculator className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-extrabold text-white text-base flex items-center gap-2">
+              <h3 className="font-extrabold text-slate-900 dark:text-white text-base flex items-center gap-2">
                 {isShiftOpen ? 'Register Shift Close & Reconciliation' : 'Register Shift Management'}
-                <span className={`text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded border ${isShiftOpen ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-slate-50 dark:bg-stone-800 text-slate-500 dark:text-stone-400 border-slate-300 dark:border-stone-700'}`}>
+                <span className={`text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded border ${isShiftOpen ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-slate-100 dark:bg-stone-800 text-slate-600 dark:text-stone-400 border-slate-300 dark:border-stone-700'}`}>
                   {isShiftOpen ? (currentShift?.shiftNumber || 'ACTIVE SHIFT') : 'SHIFT CLOSED'}
                 </span>
               </h3>
               <p className="text-xs text-slate-500 dark:text-stone-400">
-                Cashier: <strong className="text-stone-200">{currentUser.name}</strong> • Outlet: {currentUser.outlet || 'Main Branch'}
+                Cashier: <strong className="text-slate-800 dark:text-stone-200">{currentUser.name}</strong> • Outlet: {currentUser.outlet || 'Main Branch'}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-stone-800 text-slate-500 dark:text-stone-400 hover:text-white transition cursor-pointer"
+            className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-stone-800 text-slate-500 dark:text-stone-400 hover:text-slate-900 dark:hover:text-white transition cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -314,19 +358,19 @@ export const ShiftCloseModal: React.FC<ShiftCloseModalProps> = ({
 
         {showSuccessZReport && closedAuditData ? (
           /* Z-Report Summary Print View */
-          <div className="p-6 overflow-y-auto space-y-5 bg-stone-950/80">
-            <div className="text-center space-y-1">
+          <div className="p-6 overflow-y-auto space-y-5 bg-slate-50 dark:bg-stone-950/80 print:bg-white print:p-0">
+            <div className="text-center space-y-1 print:hidden">
               <div className="w-12 h-12 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 flex items-center justify-center mx-auto mb-2">
                 <CheckCircle className="w-6 h-6" />
               </div>
-              <h4 className="text-lg font-black text-white">Shift Closed & Z-Report Generated</h4>
+              <h4 className="text-lg font-black text-slate-900 dark:text-white">Shift Closed & Z-Report Generated</h4>
               <p className="text-xs text-slate-500 dark:text-stone-400">
                 Session closed at {new Date(closedAuditData.endTime).toLocaleTimeString()} on {new Date().toLocaleDateString()}
               </p>
             </div>
 
             {/* Thermal Print Slip Simulation */}
-            <div className="bg-white text-stone-950 p-5 rounded-xl font-mono text-xs max-w-md mx-auto shadow-2xl space-y-3 border border-stone-300">
+            <div className="bg-white text-stone-950 p-5 rounded-xl font-mono text-xs max-w-md mx-auto shadow-2xl space-y-3 border border-stone-300 print:shadow-none print:border-none print:p-0 print:max-w-none print:w-full">
               <div className="text-center border-b border-dashed border-stone-400 pb-2">
                 <h5 className="font-black text-sm tracking-wider uppercase">MASTER POS PRO POS</h5>
                 <p className="text-[10px] text-stone-600">END OF SHIFT Z-REPORT (AUDIT # {closedAuditData.id.slice(-6)})</p>
@@ -378,6 +422,18 @@ export const ShiftCloseModal: React.FC<ShiftCloseModalProps> = ({
                     {closedAuditData.shortageOverage >= 0 ? '+' : ''}PKR {closedAuditData.shortageOverage.toLocaleString()}
                   </span>
                 </div>
+
+                {/* Cash Allocation Breakdown */}
+                <div className="space-y-1 pt-1 border-t border-dashed border-stone-400 text-[11px]">
+                  <div className="flex justify-between font-bold text-stone-800">
+                    <span>Safe / Locker Cash Drop:</span>
+                    <span>PKR {(closedAuditData.lockerDeposit ?? Math.max(0, closedAuditData.actualCash - (closedAuditData.floatRetained || 0))).toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between text-stone-700">
+                    <span>Cash Retained for Next Shift:</span>
+                    <span>PKR {(closedAuditData.floatRetained || 0).toLocaleString()}</span>
+                  </div>
+                </div>
               </div>
 
               {closedAuditData.notes && (
@@ -388,7 +444,7 @@ export const ShiftCloseModal: React.FC<ShiftCloseModalProps> = ({
             </div>
 
             {/* Action Buttons */}
-            <div className="flex flex-wrap items-center justify-center gap-2.5 pt-2">
+            <div className="flex flex-wrap items-center justify-center gap-2.5 pt-2 print:hidden">
               <button
                 onClick={handlePrintZReport}
                 className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-lg cursor-pointer"
@@ -398,6 +454,9 @@ export const ShiftCloseModal: React.FC<ShiftCloseModalProps> = ({
               </button>
               <button
                 onClick={() => {
+                  if (closedAuditData && closedAuditData.floatRetained > 0) {
+                    setOpeningFloatInput(closedAuditData.floatRetained.toString());
+                  }
                   setShowSuccessZReport(false);
                   setClosedAuditData(null);
                   handleResetCounts();
@@ -787,6 +846,7 @@ export const ShiftCloseModal: React.FC<ShiftCloseModalProps> = ({
           </form>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

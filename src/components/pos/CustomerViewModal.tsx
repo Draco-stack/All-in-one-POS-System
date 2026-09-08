@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, User, Phone, MapPin, Award, ShoppingBag, Clock, PlusCircle } from 'lucide-react';
+import { X, User, Phone, MapPin, Award, ShoppingBag, Clock, PlusCircle, Edit3 } from 'lucide-react';
 import { Customer, Order } from '../../types';
 
 interface CustomerViewModalProps {
@@ -8,6 +8,7 @@ interface CustomerViewModalProps {
   customer: Customer | null;
   pastOrders: Order[];
   onReorderItem?: (item: any) => void;
+  onEditCustomer?: () => void;
 }
 
 export const CustomerViewModal: React.FC<CustomerViewModalProps> = ({
@@ -16,6 +17,7 @@ export const CustomerViewModal: React.FC<CustomerViewModalProps> = ({
   customer,
   pastOrders,
   onReorderItem,
+  onEditCustomer,
 }) => {
   if (!isOpen || !customer) return null;
 
@@ -51,12 +53,27 @@ export const CustomerViewModal: React.FC<CustomerViewModalProps> = ({
               </p>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="p-2 rounded-xl hover:bg-white/5 text-slate-500 dark:text-stone-400 hover:text-white transition-all cursor-pointer"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            {onEditCustomer && (
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  onEditCustomer();
+                }}
+                className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 transition cursor-pointer shadow-sm"
+              >
+                <Edit3 className="w-3.5 h-3.5" />
+                <span>Edit Info</span>
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="p-2 rounded-xl hover:bg-white/5 text-slate-500 dark:text-stone-400 hover:text-white transition-all cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Content Body */}
@@ -65,10 +82,10 @@ export const CustomerViewModal: React.FC<CustomerViewModalProps> = ({
           <div className="grid grid-cols-3 gap-3">
             <div className="bg-stone-950/90 p-4 rounded-2xl border border-slate-200 dark:border-white/5 shadow-inner">
               <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500 dark:text-stone-400 flex items-center gap-1">
-                <Award className="w-3.5 h-3.5 text-amber-400" /> Loyalty Points
+                <Clock className="w-3.5 h-3.5 text-blue-400" /> Avg. Ticket
               </span>
-              <p className="text-xl font-black text-amber-300 font-mono mt-1">
-                {customer.loyaltyPoints} <span className="text-[10px] font-normal text-slate-500 dark:text-stone-400">pts</span>
+              <p className="text-xl font-black text-blue-300 font-mono mt-1">
+                PKR {customer.totalOrdersCount > 0 ? Math.round(customer.totalSpent / customer.totalOrdersCount).toLocaleString() : '0'}
               </p>
             </div>
 
