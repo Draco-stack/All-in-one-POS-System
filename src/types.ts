@@ -72,6 +72,7 @@ export interface PosCartItem {
   extraCheesePrice?: number;
   extraChickenPrice?: number;
   thinCrustPrice?: number;
+  options?: MenuItemOption[];
   selectedOptions?: any[];
 }
 
@@ -324,7 +325,9 @@ export interface SalesAdjustmentRecord {
 
 export interface RiderStats {
   totalAssigned: number;
+  assignedItemsCount: number;
   delivered: number;
+  deliveredItemsCount: number;
   cancelled: number;
   active: number;
   inTransit: number;

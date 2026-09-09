@@ -103,6 +103,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
     removeFromPosCart,
     updateCartItemQty,
     updateCartItemNote,
+    toggleCartItemModifier,
     clearPosCart,
     setPosOrderType,
     setPosDeliveryDriver,
@@ -149,6 +150,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
   const [allOrdersSearch, setAllOrdersSearch] = useState<string>('');
   const [receiptInitialMode, setReceiptInitialMode] = useState<'receipt' | 'kot'>('receipt');
   const [cancellingOrder, setCancellingOrder] = useState<Order | null>(null);
+  const [expandedCartItemId, setExpandedCartItemId] = useState<string | null>(null);
 
   // Block Customer Modals State
   const [isBlockModalOpen, setIsBlockModalOpen] = useState(false);
@@ -784,7 +786,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
   };
 
   // Helper for Status Badge Styling with status light reflections
-  const getStatusBadgeStyle = (status: OrderStatus) => {
+  const getStatusBadgeStyle = (status: OrderStatus, orderType?: string) => {
     switch (status) {
       case 'pending':
       case 'open':
@@ -793,7 +795,17 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
         return 'bg-cyan-500/20 text-cyan-300 border-cyan-400/50 shadow-[0_0_8px_rgba(6,182,212,0.25)]';
       case 'in_kitchen':
         return 'bg-indigo-500/20 text-indigo-300 border-indigo-400/50 shadow-[0_0_8px_rgba(99,102,241,0.25)]';
-      case 'ready':
+      case 'ready': {
+        const isDineIn = orderType === 'dine_in' || orderType === 'dine-in';
+        const isDelivery = orderType === 'delivery';
+        if (isDineIn) {
+          return 'bg-purple-500/25 text-purple-300 border-purple-400/60 shadow-[0_0_12px_rgba(168,85,247,0.4)] ring-1 ring-purple-400/30';
+        } else if (isDelivery) {
+          return 'bg-blue-500/25 text-blue-300 border-blue-400/60 shadow-[0_0_12px_rgba(59,130,246,0.4)] ring-1 ring-blue-400/30';
+        } else {
+          return 'bg-emerald-500/25 text-emerald-300 border-emerald-400/60 shadow-[0_0_12px_rgba(52,211,153,0.4)] ring-1 ring-emerald-400/30';
+        }
+      }
       case 'completed':
       case 'delivered':
         // Reflects Green Light
@@ -810,7 +822,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
     }
   };
 
-  const getStatusLabel = (status: OrderStatus) => {
+  const getStatusLabel = (status: OrderStatus, orderType?: string) => {
     switch (status) {
       case 'pending':
       case 'open':
@@ -820,10 +832,19 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
         return 'Modified';
       case 'in_kitchen':
         return 'In Kitchen';
-      case 'ready':
-        return 'Ready';
+      case 'ready': {
+        const isDineIn = orderType === 'dine_in' || orderType === 'dine-in';
+        const isDelivery = orderType === 'delivery';
+        if (isDineIn) {
+          return 'Ready for Serve';
+        } else if (isDelivery) {
+          return 'Ready for Delivery';
+        } else {
+          return 'Ready for Pickup';
+        }
+      }
       case 'dispatched':
-        return 'On the way';
+        return (orderType === 'takeaway' || orderType === 'takeaway') ? 'Ready for Pickup' : 'On the way';
       case 'completed':
       case 'delivered':
         return 'Delivered';
@@ -1141,12 +1162,21 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                   const isSelected = selectedOrderId === ord.id;
                   const elapsedMins = Math.floor((Date.now() - new Date(ord.createdAt).getTime()) / 60000);
                   const ordSt = (ord.status || '').toLowerCase();
+                  const isDineIn = (ord.type as string) === 'dine_in' || (ord.type as string) === 'dine-in' || (ord.orderType as string) === 'dine_in' || (ord.orderType as string) === 'dine-in';
+                  const isDelivery = ord.type === 'delivery' || ord.orderType === 'delivery';
+                  const isTakeaway = ord.type === 'takeaway' || ord.orderType === 'takeaway';
+
+                  const isReady = ordSt === 'ready';
+                  const isReadyTakeaway = isReady && (isTakeaway || (!isDineIn && !isDelivery));
+                  const isReadyDineIn = isReady && isDineIn;
+                  const isReadyDelivery = isReady && isDelivery;
+
                   const isFinished = ordSt === 'completed' || ordSt === 'delivered' || ordSt === 'refunded' || ordSt === 'cancelled';
-                  const isDelayed15M = elapsedMins >= 15 && !isFinished;
-                  const isUrgent = elapsedMins >= 20 && !isFinished;
-                  const isWarming = elapsedMins >= 10 && elapsedMins < 20 && !isFinished;
+                  const isDelayed15M = elapsedMins >= 15 && !isFinished && !isReady;
+                  const isUrgent = elapsedMins >= 20 && !isFinished && !isReady;
+                  const isWarming = elapsedMins >= 10 && elapsedMins < 20 && !isFinished && !isReady;
                   const isCancelled = ordSt === 'cancelled' || ordSt === 'refunded' || ordSt === 'void';
-                  const isDelivered = ordSt === 'delivered' || ordSt === 'completed' || ordSt === 'ready';
+                  const isDelivered = ordSt === 'delivered' || ordSt === 'completed';
                   const isOnTheWay = ordSt === 'dispatched' || ordSt === 'on_the_way';
                   const isKitchen = ordSt === 'in_kitchen';
 
@@ -1164,6 +1194,12 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                           ? 'animate-pulse-glow bg-gradient-to-b from-[#261016] to-[#140b0f] border-rose-500/95 shadow-[0_0_24px_rgba(244,63,94,0.45)] ring-2 ring-rose-500/50'
                           : isCancelled
                           ? 'bg-gradient-to-b from-[#261016] to-[#140b0f] border-rose-500/95 shadow-[0_0_20px_rgba(244,63,94,0.35)] ring-1 ring-rose-500/40'
+                          : isReadyDineIn
+                          ? 'bg-gradient-to-b from-[#1a0c2e] to-[#0d0617] border-purple-400/90 shadow-[0_0_18px_rgba(168,85,247,0.3)] ring-1 ring-purple-400/40 animate-pulse-glow'
+                          : isReadyDelivery
+                          ? 'bg-gradient-to-b from-[#0c1a2d] to-[#050912] border-blue-400/90 shadow-[0_0_18px_rgba(59,130,246,0.3)] ring-1 ring-blue-400/40 animate-pulse-glow'
+                          : isReadyTakeaway
+                          ? 'bg-gradient-to-b from-[#0e2216] to-[#050e0a] border-emerald-400/90 shadow-[0_0_18px_rgba(52,211,153,0.3)] ring-1 ring-emerald-400/40 animate-pulse-glow'
                           : isDelivered
                           ? 'bg-gradient-to-b from-[#0e2216] to-[#0a140f] border-emerald-400/90 shadow-[0_0_18px_rgba(52,211,153,0.3)] ring-1 ring-emerald-400/40'
                           : isOnTheWay
@@ -1173,7 +1209,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                           : isWarming
                           ? 'bg-gradient-to-b from-[#221a0f] to-[#14100c] border-amber-400/90 shadow-[0_0_16px_rgba(245,158,11,0.22)] ring-1 ring-amber-400/30'
                           : isKitchen
-                          ? 'bg-gradient-to-b from-[#1c1322] to-[#100d16] border-indigo-400/80 shadow-[0_0_16px_rgba(99,102,241,0.2)] ring-1 ring-indigo-400/30'
+                          ? 'bg-gradient-to-b from-[#1c1322] to-[#100d16] border-indigo-400/80 shadow-[0_0_16px_rgba(99,102,241,0.25)] ring-1 ring-indigo-400/30'
                           : 'bg-gradient-to-b from-stone-900/95 to-stone-950/95 border-white/15 dark:shadow-[0_0_12px_rgba(255,255,255,0.03)] hover:border-emerald-400/60 hover:shadow-md'
                       }`}
                     >
@@ -1184,6 +1220,12 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                             ? 'bg-gradient-to-r from-emerald-400 via-teal-300 to-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]'
                             : isCancelled
                             ? 'bg-gradient-to-r from-rose-500 via-rose-300 to-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.9)]'
+                            : isReadyDineIn
+                            ? 'bg-gradient-to-r from-purple-500 via-pink-400 to-purple-500 shadow-[0_0_10px_rgba(168,85,247,0.95)] shadow-[0_0_8px_rgba(168,85,247,0.8)]'
+                            : isReadyDelivery
+                            ? 'bg-gradient-to-r from-blue-500 via-cyan-400 to-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.95)] shadow-[0_0_8px_rgba(59,130,246,0.8)]'
+                            : isReadyTakeaway
+                            ? 'bg-gradient-to-r from-emerald-500 via-green-300 to-emerald-500 shadow-[0_0_10px_rgba(52,211,153,0.95)] shadow-[0_0_8px_rgba(52,211,153,0.8)]'
                             : isDelivered
                             ? 'bg-gradient-to-r from-emerald-500 via-green-300 to-emerald-500 shadow-[0_0_10px_rgba(52,211,153,0.9)]'
                             : isOnTheWay
@@ -1205,13 +1247,25 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                       <div className="flex items-center gap-1.5 text-[10px] text-stone-300 mb-2">
                         <span className="capitalize font-bold text-stone-200 bg-white/5 border border-white/10 px-1.5 py-0.5 rounded">{ord.type.replace('_', ' ')}</span>
                         <span>•</span>
-                        <span className={`px-2 py-0.5 rounded-md font-black text-[9px] uppercase tracking-wider border ${getStatusBadgeStyle(ord.status)}`}>
-                          {getStatusLabel(ord.status)}
+                        <span className={`px-2 py-0.5 rounded-md font-black text-[9px] uppercase tracking-wider border ${getStatusBadgeStyle(ord.status, ord.type)}`}>
+                          {getStatusLabel(ord.status, ord.type)}
                         </span>
                         <span className={`ml-auto font-mono text-[10px] font-bold ${isUrgent ? 'text-rose-400 animate-pulse' : isWarming ? 'text-amber-400' : 'text-stone-400'}`}>
                           {elapsedMins}m ago
                         </span>
                       </div>
+                      
+                      {isReady && (
+                        <div className={`p-1.5 rounded-lg text-[9.5px] font-black uppercase text-center tracking-wider border mb-2.5 ${
+                          isReadyDineIn
+                            ? 'bg-purple-500/10 border-purple-500/30 text-purple-300 shadow-[0_0_8px_rgba(168,85,247,0.2)] animate-pulse'
+                            : isReadyDelivery
+                            ? 'bg-blue-500/10 border-blue-500/30 text-blue-300 shadow-[0_0_8px_rgba(59,130,246,0.2)] animate-pulse'
+                            : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300 animate-pulse'
+                        }`}>
+                          {isReadyDineIn ? '🍽️ Ready to Serve' : isReadyDelivery ? '🛵 Ready for Delivery' : '🛍️ Ready for Pickup'}
+                        </div>
+                      )}
                       {(ord.customer?.name || ord.customer?.phone || ord.customer?.address) && (
                         <div className="flex flex-col gap-1 text-[10.5px] text-stone-200 mb-2 p-1.5 bg-black/40 rounded-lg border border-white/10">
                           <div className="flex items-center gap-1.5 truncate">
@@ -2003,39 +2057,172 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                       </button>
                     </div>
 
-                    {posCart.items.map((cartItem, idx) => (
-                      <div 
-                        key={cartItem.id} 
-                        className={`border rounded-xl p-1.5 px-2 flex items-center justify-between text-xs transition-all duration-200 shadow-xs ${
-                        theme === 'dark' 
-                          ? 'bg-gradient-to-r from-stone-900/90 to-stone-950/90 border-slate-200 dark:border-white/5 hover:border-emerald-500/30' 
-                          : 'bg-white border-slate-200 hover:border-emerald-500/40 shadow-xs'
-                      }`}>
-                        <span className={`text-[10px] font-mono font-bold w-4 shrink-0 ${theme === 'dark' ? 'text-stone-500' : 'text-slate-400'}`}>
-                          {idx + 1}.
-                        </span>
-                        <div className="flex-1 min-w-0 pr-2">
-                          <div className={`font-semibold truncate text-[11px] ${theme === 'dark' ? 'text-slate-900 dark:text-stone-100' : 'text-slate-900'}`}>{cartItem.name}</div>
-                          {cartItem.flavor && <div className="text-[10px] text-emerald-500 font-medium truncate">{cartItem.flavor}</div>}
-                          {cartItem.modifiers && cartItem.modifiers.length > 0 && <div className={`text-[9px] truncate ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`}>+{cartItem.modifiers.map(m=>m.name).join(', ')}</div>}
+                    {posCart.items.map((cartItem, idx) => {
+                      const isExpanded = expandedCartItemId === cartItem.id;
+                      const hasModifiers = (cartItem.extraCheesePrice && cartItem.extraCheesePrice > 0) || 
+                                           (cartItem.extraChickenPrice && cartItem.extraChickenPrice > 0) || 
+                                           (cartItem.thinCrustPrice && cartItem.thinCrustPrice > 0) ||
+                                           (cartItem.options && cartItem.options.length > 0);
+
+                      return (
+                        <div 
+                          key={cartItem.id} 
+                          className={`border rounded-xl p-2 flex flex-col text-xs transition-all duration-200 shadow-xs gap-1.5 ${
+                            theme === 'dark' 
+                              ? 'bg-gradient-to-r from-stone-900/90 to-stone-950/90 border-slate-200 dark:border-white/5 hover:border-emerald-500/30' 
+                              : 'bg-white border-slate-200 hover:border-emerald-500/40 shadow-xs'
+                          }`}
+                        >
+                          {/* Main Row: Info, Qty, Price */}
+                          <div className="flex items-center justify-between w-full">
+                            <span 
+                              className={`text-[10px] font-mono font-bold w-4 shrink-0 cursor-pointer ${theme === 'dark' ? 'text-stone-500' : 'text-slate-400'}`}
+                              onClick={() => setExpandedCartItemId(isExpanded ? null : cartItem.id)}
+                            >
+                              {idx + 1}.
+                            </span>
+                            
+                            {/* Clickable Area to Expand */}
+                            <div 
+                              className="flex-1 min-w-0 pr-2 cursor-pointer select-none"
+                              onClick={() => setExpandedCartItemId(isExpanded ? null : cartItem.id)}
+                            >
+                              <div className={`font-semibold truncate text-[11px] flex items-center gap-1.5 ${theme === 'dark' ? 'text-stone-100' : 'text-slate-900'}`}>
+                                <span>{cartItem.name}</span>
+                                {hasModifiers && (
+                                  <span className="text-[8px] px-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded font-medium">
+                                    Modifiers
+                                  </span>
+                                )}
+                              </div>
+                              {cartItem.flavor && <div className="text-[10px] text-emerald-500 font-medium truncate">{cartItem.flavor}</div>}
+                              {cartItem.modifiers && cartItem.modifiers.length > 0 && (
+                                <div className={`text-[9px] truncate ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`}>
+                                  +{cartItem.modifiers.map(m=> `${m.name} (PKR ${m.price})`).join(', ')}
+                                </div>
+                              )}
+                              {cartItem.itemNote && (
+                                <div className="text-[9px] italic text-amber-500 dark:text-amber-400 truncate mt-0.5">
+                                  Note: "{cartItem.itemNote}"
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Qty Controls */}
+                            <div className={`flex items-center gap-1.5 shrink-0 border rounded-lg p-0.5 ${
+                              theme === 'dark' ? 'bg-slate-100 dark:bg-stone-950/90 border-slate-200 dark:border-white/5' : 'bg-slate-100 border-slate-200'
+                            }`}>
+                              <button onClick={() => updateCartItemQty(cartItem.id, cartItem.quantity - 1)} className={`w-5 h-5 rounded-md font-bold flex items-center justify-center cursor-pointer transition text-[10px] ${
+                                theme === 'dark' ? 'bg-slate-50 dark:bg-stone-800 hover:bg-stone-700 text-white' : 'bg-white hover:bg-slate-200 text-slate-800 shadow-xs'
+                              }`}><Minus className="w-2.5 h-2.5" /></button>
+                              <span className={`w-4 text-center font-mono font-bold text-[11px] ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>{cartItem.quantity}</span>
+                              <button onClick={() => updateCartItemQty(cartItem.id, cartItem.quantity + 1)} className={`w-5 h-5 rounded-md font-bold flex items-center justify-center cursor-pointer transition text-[10px] ${
+                                theme === 'dark' ? 'bg-slate-50 dark:bg-stone-800 hover:bg-stone-700 text-white' : 'bg-white hover:bg-slate-200 text-slate-800 shadow-xs'
+                              }`}><Plus className="w-2.5 h-2.5" /></button>
+                            </div>
+
+                            {/* Price / Remove */}
+                            <div className="text-right shrink-0 pl-2 min-w-[55px]">
+                              <span className="font-mono font-black text-emerald-500 text-xs block truncate">{Number(cartItem.price * cartItem.quantity).toLocaleString()}</span>
+                              <button onClick={() => removeFromPosCart(cartItem.id)} className="text-slate-500 dark:text-stone-400 hover:text-red-500 text-[10px] transition cursor-pointer font-bold mt-0.5">X</button>
+                            </div>
+                          </div>
+
+                          {/* Expanded Inline Modifiers Option & Special Instructions */}
+                          {isExpanded && (
+                            <div className="mt-2 pt-2 border-t border-dashed border-slate-200 dark:border-white/5 animate-in slide-in-from-top-1 duration-150">
+                              {/* Option Checkboxes */}
+                              <div className="space-y-1.5">
+                                <div className="text-[10px] uppercase font-bold text-slate-500 dark:text-stone-400 mb-1">Premium Modifiers</div>
+                                {hasModifiers ? (
+                                  <div className="grid grid-cols-1 gap-1.5">
+                                    {cartItem.extraCheesePrice && cartItem.extraCheesePrice > 0 ? (
+                                      <button
+                                        type="button"
+                                        onClick={() => toggleCartItemModifier(cartItem.id, 'Extra Cheese', cartItem.extraCheesePrice!)}
+                                        className={`p-2 rounded-lg border text-left flex items-center justify-between transition-all cursor-pointer ${
+                                          cartItem.modifiers?.some(m => m.name === 'Extra Cheese')
+                                            ? 'bg-emerald-950/20 border-emerald-500 text-emerald-300'
+                                            : 'bg-slate-50 dark:bg-stone-900 border-slate-200 dark:border-white/5 text-slate-700 dark:text-stone-300 hover:bg-slate-100 dark:hover:bg-stone-800'
+                                        }`}
+                                      >
+                                        <span className="text-[10px] font-bold">Extra Cheese</span>
+                                        <span className="text-[9px] font-mono font-bold text-emerald-500">+PKR {cartItem.extraCheesePrice}</span>
+                                      </button>
+                                    ) : null}
+
+                                    {cartItem.extraChickenPrice && cartItem.extraChickenPrice > 0 ? (
+                                      <button
+                                        type="button"
+                                        onClick={() => toggleCartItemModifier(cartItem.id, 'Extra Chicken', cartItem.extraChickenPrice!)}
+                                        className={`p-2 rounded-lg border text-left flex items-center justify-between transition-all cursor-pointer ${
+                                          cartItem.modifiers?.some(m => m.name === 'Extra Chicken')
+                                            ? 'bg-emerald-950/20 border-emerald-500 text-emerald-300'
+                                            : 'bg-slate-50 dark:bg-stone-900 border-slate-200 dark:border-white/5 text-slate-700 dark:text-stone-300 hover:bg-slate-100 dark:hover:bg-stone-800'
+                                        }`}
+                                      >
+                                        <span className="text-[10px] font-bold">Extra Chicken</span>
+                                        <span className="text-[9px] font-mono font-bold text-emerald-500">+PKR {cartItem.extraChickenPrice}</span>
+                                      </button>
+                                    ) : null}
+
+                                    {cartItem.thinCrustPrice && cartItem.thinCrustPrice > 0 ? (
+                                      <button
+                                        type="button"
+                                        onClick={() => toggleCartItemModifier(cartItem.id, 'Thin Crust', cartItem.thinCrustPrice!)}
+                                        className={`p-2 rounded-lg border text-left flex items-center justify-between transition-all cursor-pointer ${
+                                          cartItem.modifiers?.some(m => m.name === 'Thin Crust')
+                                            ? 'bg-emerald-950/20 border-emerald-500 text-emerald-300'
+                                            : 'bg-slate-50 dark:bg-stone-900 border-slate-200 dark:border-white/5 text-slate-700 dark:text-stone-300 hover:bg-slate-100 dark:hover:bg-stone-800'
+                                        }`}
+                                      >
+                                        <span className="text-[10px] font-bold">Thin Crust</span>
+                                        <span className="text-[9px] font-mono font-bold text-emerald-500">+PKR {cartItem.thinCrustPrice}</span>
+                                      </button>
+                                    ) : null}
+
+                                    {/* Custom dynamic modifiers defined by admin */}
+                                    {cartItem.options && cartItem.options.map((opt, oIdx) => (
+                                      <button
+                                        key={oIdx}
+                                        type="button"
+                                        onClick={() => toggleCartItemModifier(cartItem.id, opt.name, opt.price)}
+                                        className={`p-2 rounded-lg border text-left flex items-center justify-between transition-all cursor-pointer ${
+                                          cartItem.modifiers?.some(m => m.name === opt.name)
+                                            ? 'bg-emerald-950/20 border-emerald-500 text-emerald-300'
+                                            : 'bg-slate-50 dark:bg-stone-900 border-slate-200 dark:border-white/5 text-slate-700 dark:text-stone-300 hover:bg-slate-100 dark:hover:bg-stone-800'
+                                        }`}
+                                      >
+                                        <span className="text-[10px] font-bold">{opt.name}</span>
+                                        <span className="text-[9px] font-mono font-bold text-emerald-500">+PKR {opt.price}</span>
+                                      </button>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <div className="text-[10px] text-slate-400 dark:text-stone-500 italic">No premium modifiers configured for this item.</div>
+                                )}
+                              </div>
+
+                              {/* Special Instructions Field */}
+                              <div className="mt-2.5 pt-2 border-t border-dashed border-slate-200 dark:border-white/5 space-y-1.5">
+                                <div className="text-[10px] uppercase font-bold text-slate-500 dark:text-stone-400">Special Instructions / Notes</div>
+                                <input
+                                  type="text"
+                                  placeholder="Add special instructions (e.g. extra spicy, no onion)..."
+                                  value={cartItem.itemNote || ''}
+                                  onChange={(e) => updateCartItemNote(cartItem.id, e.target.value)}
+                                  className={`w-full px-2.5 py-1.5 rounded-lg text-[11px] focus:outline-none focus:border-emerald-500 transition border ${
+                                    theme === 'dark'
+                                      ? 'bg-[#08090d] border-white/5 text-white placeholder-stone-600'
+                                      : 'bg-slate-50 border-slate-200 text-slate-900 placeholder-slate-400'
+                                  }`}
+                                />
+                              </div>
+                            </div>
+                          )}
                         </div>
-                        <div className={`flex items-center gap-1.5 shrink-0 border rounded-lg p-0.5 ${
-                          theme === 'dark' ? 'bg-slate-100 dark:bg-stone-950/90 border-slate-200 dark:border-white/5' : 'bg-slate-100 border-slate-200'
-                        }`}>
-                          <button onClick={() => updateCartItemQty(cartItem.id, cartItem.quantity - 1)} className={`w-5 h-5 rounded-md font-bold flex items-center justify-center cursor-pointer transition text-[10px] ${
-                            theme === 'dark' ? 'bg-slate-50 dark:bg-stone-800 hover:bg-stone-700 text-white' : 'bg-white hover:bg-slate-200 text-slate-800 shadow-xs'
-                          }`}><Minus className="w-2.5 h-2.5" /></button>
-                          <span className={`w-4 text-center font-mono font-bold text-[11px] ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>{cartItem.quantity}</span>
-                          <button onClick={() => updateCartItemQty(cartItem.id, cartItem.quantity + 1)} className={`w-5 h-5 rounded-md font-bold flex items-center justify-center cursor-pointer transition text-[10px] ${
-                            theme === 'dark' ? 'bg-slate-50 dark:bg-stone-800 hover:bg-stone-700 text-white' : 'bg-white hover:bg-slate-200 text-slate-800 shadow-xs'
-                          }`}><Plus className="w-2.5 h-2.5" /></button>
-                        </div>
-                        <div className="text-right shrink-0 pl-2 min-w-[55px]">
-                          <span className="font-mono font-black text-emerald-500 text-xs block truncate">{Number(cartItem.price * cartItem.quantity).toLocaleString()}</span>
-                          <button onClick={() => removeFromPosCart(cartItem.id)} className="text-slate-500 dark:text-stone-400 hover:text-red-500 text-[10px] transition cursor-pointer font-bold mt-0.5">X</button>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                )}
             </div>
@@ -2193,7 +2380,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                         #{selectedOrder.orderNumber.replace('ORD-', '')}
                       </span>
                       <span className={`px-2 py-0.5 rounded-md font-bold text-[9px] uppercase tracking-wider ${getStatusBadgeStyle(selectedOrder.status)}`}>
-                        {getStatusLabel(selectedOrder.status)}
+                        {getStatusLabel(selectedOrder.status, selectedOrder.type)}
                       </span>
                     </div>
                     <span className={`text-[11px] font-semibold capitalize px-2 py-0.5 rounded-md border ${
@@ -2589,7 +2776,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                             #{ord.orderNumber.replace('ORD-', '')}
                           </span>
                           <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase ${getStatusBadgeStyle(ord.status)}`}>
-                            {getStatusLabel(ord.status)}
+                            {getStatusLabel(ord.status, ord.type)}
                           </span>
                         </div>
                         <span className="font-mono font-black text-emerald-500">

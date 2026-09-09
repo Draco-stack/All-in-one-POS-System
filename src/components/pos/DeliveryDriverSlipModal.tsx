@@ -205,6 +205,16 @@ export const DeliveryDriverSlipModal: React.FC<DeliveryDriverSlipModalProps> = (
                 <div key={item.id} className="flex justify-between items-start text-stone-900 py-0.5">
                   <div className="space-y-0.5 max-w-[260px]">
                     <span className="font-bold">[ ] {item.name}</span>
+                    {item.flavor && <p className="text-[10px] text-stone-600 pl-4">Flavor: {item.flavor}</p>}
+                    {item.modifiers && item.modifiers.length > 0 && (
+                      <div className="text-[10px] text-stone-600 pl-4">
+                        {item.modifiers.map((mod, mIdx) => (
+                          <div key={mIdx}>
+                            + {mod.name}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                     {item.customization && <p className="text-[10px] text-stone-600 pl-4 italic">↳ {item.customization}</p>}
                     {item.selectedOptions && item.selectedOptions.length > 0 && (
                       <div className="text-[10px] text-stone-600 pl-4">
@@ -214,6 +224,11 @@ export const DeliveryDriverSlipModal: React.FC<DeliveryDriverSlipModalProps> = (
                           </span>
                         ))}
                       </div>
+                    )}
+                    {(item.itemNote || item.notes) && (
+                      <p className="text-[10px] text-red-700 font-extrabold italic pl-4">
+                        ⚠️ Note: "{item.itemNote || item.notes}"
+                      </p>
                     )}
                   </div>
                   <span className="font-black text-sm bg-stone-100 px-2 py-0.5 rounded border border-stone-300">

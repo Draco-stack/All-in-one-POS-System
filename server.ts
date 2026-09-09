@@ -107,12 +107,49 @@ app.post('/api/auth/login', async (req, res) => {
   if (!user) return res.status(401).json({ error: 'Invalid Password or PIN' });
   
   const token = jwt.sign(
-    { id: user.id, role: user.role, name: user.name },
+    { id: user.id, role: user.role, name: user.name, pin: user.pin },
     process.env.JWT_SECRET || 'secure_fallback',
     { expiresIn: '12h' }
   );
   
   return res.json({ token, user });
+});
+
+app.post('/api/auth/validate-session', async (req, res) => {
+  try {
+    const { userId, pin, token } = req.body;
+    if (!userId) {
+      return res.status(400).json({ valid: false, error: 'User ID is required' });
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user || !user.active) {
+      return res.json({ valid: false, reason: 'User not found or inactive' });
+    }
+
+    if (token && token !== 'null' && token !== 'undefined') {
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secure_fallback') as any;
+        if (decoded.id !== userId) {
+          return res.json({ valid: false, reason: 'Token user ID mismatch' });
+        }
+        if (decoded.pin !== user.pin) {
+          return res.json({ valid: false, reason: 'Password updated, session invalidated' });
+        }
+      } catch (err) {
+        return res.json({ valid: false, reason: 'Invalid or expired token' });
+      }
+    }
+
+    if (pin && String(pin).trim() !== user.pin) {
+      return res.json({ valid: false, reason: 'Password updated' });
+    }
+
+    return res.json({ valid: true });
+  } catch (error) {
+    console.error('[validate-session] Error:', error);
+    return res.status(500).json({ valid: false, error: 'Internal server error during session validation' });
+  }
 });
 
 const authenticateManager = async (req: Request, res: Response, next: NextFunction) => {
@@ -122,10 +159,13 @@ const authenticateManager = async (req: Request, res: Response, next: NextFuncti
   if (token && token !== 'null' && token !== 'undefined') {
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secure_fallback') as any;
-      const role = String(decoded.role || '').toUpperCase();
-      if (role === 'MANAGER' || role === 'OWNER' || role === 'ADMIN') {
-        (req as any).user = decoded;
-        return next();
+      const dbUser = await prisma.user.findUnique({ where: { id: decoded.id } });
+      if (dbUser && dbUser.active && dbUser.pin === decoded.pin) {
+        const role = String(decoded.role || '').toUpperCase();
+        if (role === 'MANAGER' || role === 'OWNER' || role === 'ADMIN') {
+          (req as any).user = decoded;
+          return next();
+        }
       }
     } catch (err) {
       // Continue to pin/header fallbacks

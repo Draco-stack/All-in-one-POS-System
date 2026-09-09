@@ -231,7 +231,11 @@ export const deduplicateOrders = (ordersList: Order[]): Order[] => {
 
 export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
-    return (localStorage.getItem('pos_theme') as 'light' | 'dark') || 'dark';
+    try {
+      return (localStorage.getItem('pos_theme') as 'light' | 'dark') || 'dark';
+    } catch {
+      return 'dark';
+    }
   });
 
   useEffect(() => {
@@ -389,7 +393,18 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [currentUser, setCurrentUser] = useState<UserAccount>(() => {
     const saved = loadFromStorage<UserAccount | null>('pos_current_user', null);
     if (saved && saved.id) return saved;
-    return users[0];
+    return users && users.length > 0 ? users[0] : {
+      id: 'usr-1',
+      name: 'Administrator (Robert Vance)',
+      username: 'admin',
+      email: 'admin@masterpos.com',
+      pin: '1111',
+      password: '1111',
+      role: 'owner',
+      outlet: 'All Outlets',
+      active: true,
+      createdAt: '2025-01-01',
+    };
   });
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
     return loadFromStorage<boolean>('pos_is_logged_in', false);
@@ -640,6 +655,56 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   useEffect(() => { saveToStorage('pos_cash_drops_cache', cashDrops); }, [cashDrops]);
   useEffect(() => { saveToStorage('pos_rider_resets_cache', riderResets); }, [riderResets]);
 
+  // Robust check to ensure user password/PIN updates completely invalidate existing sessions and force re-authentication
+  useEffect(() => {
+    if (!isLoggedIn || !currentUser || !currentUser.id) return;
+
+    let isMounted = true;
+
+    const checkSessionValidity = async () => {
+      try {
+        const token = loadFromStorage<string | null>('pos_jwt_token', null);
+        const storedUser = loadFromStorage<UserAccount | null>('pos_current_user', null);
+        
+        const res = await fetch('/api/auth/validate-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: currentUser.id,
+            pin: storedUser?.pin || currentUser.pin,
+            token: token
+          })
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (isMounted && data && data.valid === false) {
+            console.warn('Session validation failed:', data.reason);
+            // Invalidate session and force re-authentication
+            setIsLoggedIn(false);
+            saveToStorage('pos_is_logged_in', false);
+            saveToStorage('pos_jwt_token', null);
+            saveToStorage('pos_current_user', null);
+            showToast(`⚠️ Session Invalidated: ${data.reason || 'Password/PIN updated. Please login again.'}`);
+          }
+        }
+      } catch (err) {
+        console.warn('Session validity background check failed:', err);
+      }
+    };
+
+    // Run immediately on load/mount
+    checkSessionValidity();
+
+    // Run periodically every 12 seconds to force near-immediate logout on other terminals if password is updated
+    const intervalId = setInterval(checkSessionValidity, 12000);
+
+    return () => {
+      isMounted = false;
+      clearInterval(intervalId);
+    };
+  }, [isLoggedIn, currentUser, showToast]);
+
   // Dynamically compute list of active delivery drivers from users with role 'rider'
   const deliveryDrivers = useMemo(() => {
     const riderUsers = users
@@ -654,7 +719,9 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       if (!riderIdentifier) {
         return {
           totalAssigned: 0,
+          assignedItemsCount: 0,
           delivered: 0,
+          deliveredItemsCount: 0,
           cancelled: 0,
           active: 0,
           inTransit: 0,
@@ -701,6 +768,10 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         );
       });
 
+      const assignedItemsCount = assigned.reduce((sum, o) => {
+        return sum + (o.items || []).reduce((itemSum, item) => itemSum + (item.quantity || 0), 0);
+      }, 0);
+
       const deliveredOrders = assigned.filter(
         (o) => o.status === 'completed' || o.status === 'delivered'
       );
@@ -714,6 +785,10 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           o.status !== 'cancelled' &&
           o.status !== 'refunded'
       );
+
+      const deliveredItemsCount = deliveredOrders.reduce((sum, o) => {
+        return sum + (o.items || []).reduce((itemSum, item) => itemSum + (item.quantity || 0), 0);
+      }, 0);
 
       const totalRevenue = deliveredOrders.reduce(
         (sum, o) => sum + (o.total || o.subtotal || 0),
@@ -763,7 +838,9 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
       return {
         totalAssigned: assigned.length,
+        assignedItemsCount,
         delivered: deliveredOrders.length,
+        deliveredItemsCount,
         cancelled: cancelledOrders.length,
         active: activeOrders.length,
         inTransit: activeOrders.length,
@@ -819,6 +896,12 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   };
 
   const addOrder = (order: Order) => {
+    if (!currentShift) {
+      const defaultFloat = 0;
+      const notes = `Shift auto-started on order creation by ${currentUser?.name || 'Cashier'}`;
+      openShift(defaultFloat, notes);
+      showToast(`🚀 Auto-started Shift for cashier ${currentUser?.name || 'Cashier'}!`);
+    }
     setOrders((prev) => {
       const filtered = prev.filter(
         (o) => o.id !== order.id && (!order.orderNumber || o.orderNumber !== order.orderNumber)
@@ -991,6 +1074,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             image: i.imageUrl || i.image || 'https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=400&q=80',
             available: i.active !== false,
             flavors: i.flavors ? (typeof i.flavors === 'string' ? JSON.parse(i.flavors) : i.flavors) : [],
+            options: i.options ? (typeof i.options === 'string' ? JSON.parse(i.options) : i.options) : [],
             isPopular: i.isPopular || false,
             preparationTimeMinutes: i.preparationTime || 10,
           }));
@@ -1586,6 +1670,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           active: item.available !== false,
           available: item.available !== false,
           flavors: item.flavors || [],
+          options: item.options || [],
         }),
       });
 
@@ -1601,6 +1686,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           image: created.imageUrl || item.image,
           available: created.active !== false,
           flavors: item.flavors || [],
+          options: created.options ? (typeof created.options === 'string' ? JSON.parse(created.options) : created.options) : [],
           isPopular: item.isPopular || false,
         };
         setMenuItems((prev) => {
@@ -1654,6 +1740,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           active: updates.available,
           available: updates.available,
           flavors: updates.flavors,
+          options: updates.options,
         })
       });
 
@@ -1883,6 +1970,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         extraCheesePrice: item.extraCheesePrice,
         extraChickenPrice: item.extraChickenPrice,
         thinCrustPrice: item.thinCrustPrice,
+        options: item.options,
         itemNote: '',
         image: item.image,
       };
@@ -2426,6 +2514,14 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     isPunchOrderInFlightRef.current = true;
 
     try {
+      // Ensure shift is started
+      if (!currentShift) {
+        const defaultFloat = 0;
+        const notes = `Shift auto-started on order punch by ${currentUser?.name || 'Cashier'}`;
+        openShift(defaultFloat, notes);
+        showToast(`🚀 Auto-started Shift for cashier ${currentUser?.name || 'Cashier'}!`);
+      }
+
       if (posCart.orderType === 'delivery' && !posCart.deliveryDriver) {
         throw new Error('A delivery rider must be selected for delivery orders.');
       }
@@ -3103,10 +3199,145 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   );
 };
 
-export const useRestaurant = () => {
+const DEFAULT_FALLBACK_USER: UserAccount = {
+  id: 'usr-1',
+  name: 'Administrator (Robert Vance)',
+  username: 'admin',
+  email: 'admin@masterpos.com',
+  pin: '1111',
+  password: '1111',
+  role: 'owner',
+  outlet: 'All Outlets',
+  active: true,
+  createdAt: '2025-01-01',
+};
+
+export const useRestaurant = (): RestaurantContextType => {
   const context = useContext(RestaurantContext);
   if (!context) {
-    throw new Error('useRestaurant must be used within a RestaurantProvider');
+    console.warn('useRestaurant was called outside of a RestaurantProvider. Returning fallback context.');
+    return {
+      theme: 'dark',
+      toggleTheme: () => {},
+      currentUser: DEFAULT_FALLBACK_USER,
+      setCurrentUser: () => {},
+      isLoggedIn: true,
+      setIsLoggedIn: () => {},
+      loginUser: () => ({ success: true }),
+      logoutUser: () => {},
+      isRestricted: () => false,
+      loginTheme: 'dark',
+      setLoginTheme: () => {},
+      outlets: [],
+      addOutlet: async () => {},
+      deleteOutlet: async () => {},
+      users: [],
+      addNewUser: async () => {},
+      updateUser: async () => true,
+      updateUserPin: async () => {},
+      toggleUserActive: async () => {},
+      deleteUser: async () => true,
+      menuItems: [],
+      categories: [],
+      selectedCategory: 'all',
+      setSelectedCategory: () => {},
+      searchQuery: '',
+      setSearchQuery: () => {},
+      addMenuItem: () => {},
+      updateMenuItem: () => {},
+      deleteMenuItem: async () => true,
+      toggleItemAvailability: () => {},
+      addCategory: () => {},
+      updateCategory: () => {},
+      deleteCategory: () => {},
+      reorderCategories: () => {},
+      salesAdjustments: [],
+      addSalesAdjustment: () => {},
+      historicalShifts: [],
+      posCart: DEFAULT_EMPTY_CART,
+      addToPosCart: () => {},
+      removeFromPosCart: () => {},
+      updateCartItemQty: () => {},
+      updateCartItemFlavor: () => {},
+      toggleCartItemModifier: () => {},
+      updateCartItemNote: () => {},
+      toggleCartItemCollapse: () => {},
+      clearPosCart: () => {},
+      setPosOrderType: () => {},
+      setPosTableNumber: () => {},
+      setPosServer: () => {},
+      setPosDeliveryDriver: () => {},
+      setPosDiscountPercent: () => {},
+      setPosTipAmount: () => {},
+      setPosPaymentMethod: () => {},
+      setPosNotes: () => {},
+      setPosCustomerField: () => {},
+      setFullCustomer: () => {},
+      customers: [],
+      lookupCustomer: async () => ({ found: false }),
+      upsertCustomer: async () => ({} as Customer),
+      blockCustomer: async () => ({ success: false }),
+      unblockCustomer: async () => ({ success: false }),
+      isCustomerBlocked: () => ({ blocked: false }),
+      orders: [],
+      parkedOrders: [],
+      parkCurrentOrder: () => {},
+      recallParkedOrder: () => {},
+      deleteParkedOrder: () => {},
+      cashDrops: [],
+      dropRiderCash: () => {},
+      addOrder: () => {},
+      punchOrder: async () => ({} as Order),
+      updateOrderStatus: () => {},
+      refundOrder: async () => true,
+      cancelOrder: async () => true,
+      editOrder: async () => true,
+      assignDeliveryDriver: async () => true,
+      activeReceiptOrder: null,
+      setActiveReceiptOrder: () => {},
+      activeDeliverySlipOrder: null,
+      setActiveDeliverySlipOrder: () => {},
+      printQueueOrder: null,
+      setPrintQueueOrder: () => {},
+      currentShift: null,
+      openShift: async () => {},
+      closeShift: async () => {},
+      updatePettyCash: () => {},
+      stockItems: [],
+      updateStockQuantity: () => {},
+      tables: [],
+      addTable: async () => {},
+      deleteTable: async () => {},
+      updateTableStatus: async () => {},
+      cartSubtotal: 0,
+      cartTax: 0,
+      cartDeliveryFee: 0,
+      cartDiscount: 0,
+      cartTotal: 0,
+      drivers: [],
+      deliveryDrivers: [],
+      addDriver: () => {},
+      addDeliveryDriver: () => {},
+      getRiderStats: () => ({
+        totalAssigned: 0,
+        assignedItemsCount: 0,
+        delivered: 0,
+        deliveredItemsCount: 0,
+        cancelled: 0,
+        active: 0,
+        inTransit: 0,
+        totalRevenue: 0,
+        cancelledRevenue: 0,
+        netFleetRevenue: 0,
+        codCashOnHand: 0,
+      }),
+      riderResets: {},
+      resetRiderStats: () => {},
+      resetAllRidersStats: () => {},
+      toast: null,
+      showToast: () => {},
+      syncFromServer: async () => {},
+    };
   }
   return context;
 };

@@ -41,7 +41,7 @@ export const Navigation: React.FC<NavigationProps> = ({
   }, []);
 
   const pendingKitchenCount = orders.filter(
-    (o) => o.status === 'pending' || o.status === 'in_kitchen'
+    (o) => ['pending', 'PUNCHED', 'MODIFIED', 'punched', 'modified', 'in_kitchen', 'open'].includes(o.status)
   ).length;
 
   const activeDeliveriesCount = orders.filter(

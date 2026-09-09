@@ -272,7 +272,7 @@ export const OrderFilterPanel: React.FC<OrderFilterPanelProps> = ({
             <option value="active">Active In-Progress Only</option>
             <option value="in_kitchen">In Kitchen / Preparing</option>
             <option value="ready">Ready for Dispatch</option>
-            <option value="dispatched">Dispatched / On the Way</option>
+            <option value="dispatched">Ready for Pickup / On the Way</option>
             <option value="delivered">Delivered / Completed</option>
             <option value="cancelled_all">Cancelled & Refunded</option>
           </select>

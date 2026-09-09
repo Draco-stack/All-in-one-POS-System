@@ -112,8 +112,23 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ order, onClose }) =>
                     </span>
                     <span className="font-bold">Rs. {(item.quantity * item.price).toFixed(0)}</span>
                   </div>
+                  {item.flavor && (
+                    <p className="text-[9px] text-stone-600 pl-2">Flavor: {item.flavor}</p>
+                  )}
+                  {item.modifiers && item.modifiers.length > 0 && (
+                    <div className="text-[9px] text-stone-600 pl-2">
+                      {item.modifiers.map((mod, mIdx) => (
+                        <div key={mIdx}>
+                          + {mod.name} {mod.price > 0 ? `(Rs. ${mod.price.toFixed(0)})` : ''}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                   {item.customization && (
                     <p className="text-[9px] text-slate-400 dark:text-stone-500 italic pl-2">↳ {item.customization}</p>
+                  )}
+                  {(item.itemNote || item.notes) && (
+                    <p className="text-[9px] text-red-700 font-bold italic pl-2">↳ * Special: {item.itemNote || item.notes}</p>
                   )}
                   {item.selectedOptions && item.selectedOptions.length > 0 && (
                     <div className="text-[9px] text-slate-400 dark:text-stone-500 pl-2">
@@ -127,6 +142,16 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ order, onClose }) =>
                 </div>
               ))}
             </div>
+
+            {/* Global Order Instructions */}
+            {(order.notes || order.customer?.deliveryNotes || order.customer?.notes) && (
+              <div className="pb-2 text-left border-b border-stone-200">
+                <span className="text-[10px] font-bold text-red-600 uppercase">Special Instructions:</span>
+                <p className="m-0 text-[10px] italic font-bold text-stone-800 bg-stone-100 p-1 mt-0.5 rounded">
+                  "{order.notes || order.customer?.deliveryNotes || order.customer?.notes}"
+                </p>
+              </div>
+            )}
 
             {/* Financial Totals */}
             <div className="space-y-1.5 text-stone-700 text-[11px] pt-1">

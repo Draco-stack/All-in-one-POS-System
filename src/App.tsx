@@ -37,6 +37,14 @@ const AppContent: React.FC = () => {
 
   React.useEffect(() => {
     if (!isLoggedIn) return;
+
+    // Enforce Admin portal restriction for Owner, Admin, and Manager roles only
+    const isPrivilegedRole = currentUser?.role === 'owner' || currentUser?.role === 'admin' || currentUser?.role === 'manager';
+    if (activeView === 'admin' && !isPrivilegedRole) {
+      setActiveView('pos');
+      return;
+    }
+
     const viewMapping: Record<string, string> = {
       delivery: 'delivery',
       pos: 'pos',
@@ -70,7 +78,7 @@ const AppContent: React.FC = () => {
   }
 
   const activeKitchenCount = (orders || []).filter((o) =>
-    ['pending', 'PUNCHED', 'MODIFIED', 'in_kitchen', 'ready'].includes(o.status)
+    ['pending', 'PUNCHED', 'MODIFIED', 'punched', 'modified', 'in_kitchen', 'open'].includes(o.status)
   ).length;
 
   return (

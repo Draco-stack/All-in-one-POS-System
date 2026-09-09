@@ -66,27 +66,27 @@ export const CancelOrderModal: React.FC<CancelOrderModalProps> = ({ order, onClo
   };
 
   return (
-    <div id="cancel-order-modal" className="fixed inset-0 z-50 bg-slate-900/40 dark:bg-black/60 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-150">
-      <div className="bg-gradient-to-b from-stone-900 to-[#121212] border border-slate-300 dark:border-white/10 ring-1 ring-white/10 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl">
+    <div id="cancel-order-modal" className="fixed inset-0 z-50 bg-slate-900/40 dark:bg-black/60 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-150">
+      <div className="bg-gradient-to-b from-stone-900 to-[#121212] border border-slate-300 dark:border-white/10 ring-1 ring-white/10 rounded-2xl w-full max-w-md max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
         {/* Header */}
-        <div className="p-4 bg-rose-950/40 border-b border-rose-500/20 flex items-center justify-between">
-          <div className="flex items-center gap-2.5 text-rose-400">
-            <div className="w-8 h-8 rounded-xl bg-rose-500/20 border border-rose-500/30 flex items-center justify-center">
+        <div className="p-3.5 sm:p-4 bg-rose-950/40 border-b border-rose-500/20 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-2 text-rose-400">
+            <div className="w-8 h-8 rounded-xl bg-rose-500/20 border border-rose-500/30 flex items-center justify-center shrink-0">
               <AlertTriangle className="w-4 h-4" />
             </div>
-            <h3 className="font-extrabold text-white text-base">Cancel Order {order.orderNumber}</h3>
+            <h3 className="font-extrabold text-white text-sm sm:text-base truncate">Cancel Order {order.orderNumber}</h3>
           </div>
           <button
             id="close-cancel-modal-btn"
             onClick={onClose}
-            className="p-1.5 rounded-xl hover:bg-white/5 text-slate-500 dark:text-stone-400 hover:text-white transition-all cursor-pointer"
+            className="p-1.5 rounded-xl hover:bg-white/5 text-slate-500 dark:text-stone-400 hover:text-white transition-all cursor-pointer shrink-0"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Content */}
-        <div className="p-5 space-y-4 text-xs text-slate-700 dark:text-stone-300">
+        <div className="p-3.5 sm:p-5 space-y-3 sm:space-y-4 text-xs text-slate-700 dark:text-stone-300 overflow-y-auto flex-1">
           <div className="bg-stone-950/80 p-3.5 rounded-xl border border-slate-200 dark:border-white/5 space-y-1">
             <div className="flex justify-between font-bold text-white text-sm">
               <span>{order.customer?.name || 'Walk-in Guest'}</span>

@@ -267,9 +267,9 @@ export const AdminSalesOverview: React.FC = () => {
   }, [salesAdjustments, adjustmentFilter]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 mobile-admin-viewport">
       {/* Top Banner: Real-Time Live KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 mobile-admin-card-grid">
         {/* KPI 1: Net Sales */}
         <div className={`border rounded-2xl p-4.5 shadow-sm relative overflow-hidden flex flex-col justify-between transition-all duration-150 ${
           theme === 'dark' 
@@ -646,8 +646,8 @@ export const AdminSalesOverview: React.FC = () => {
         </div>
 
         {/* Adjustments Table */}
-        <div className="overflow-x-auto">
-          <table className={`w-full text-left text-xs border-collapse ${theme === 'dark' ? 'text-stone-300' : 'text-slate-700'}`}>
+        <div className="overflow-x-auto mobile-admin-table-wrapper">
+          <table className={`w-full text-left text-xs border-collapse mobile-table-card-row ${theme === 'dark' ? 'text-stone-300' : 'text-slate-700'}`}>
             <thead>
               <tr className={`border-b font-bold uppercase tracking-wider text-[10px] ${
                 theme === 'dark' ? 'border-white/10 text-stone-400 bg-[#0c0d12]' : 'border-slate-200 text-slate-500 bg-slate-50'
@@ -699,7 +699,7 @@ export const AdminSalesOverview: React.FC = () => {
 
                   return (
                     <tr key={adj.id} className={`transition ${theme === 'dark' ? 'hover:bg-white/[0.03]' : 'hover:bg-slate-50/80'}`}>
-                      <td className="py-2.5 px-3">
+                      <td className="py-2.5 px-3" data-label="Type">
                         <span
                           className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase font-mono border ${
                             adj.type === 'CANCELLATION'
@@ -710,7 +710,7 @@ export const AdminSalesOverview: React.FC = () => {
                           {adj.type}
                         </span>
                       </td>
-                      <td className={`py-2.5 px-3 font-mono font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
+                      <td className={`py-2.5 px-3 font-mono font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`} data-label="Order #">
                         <button
                           onClick={handleInspectOrder}
                           className="hover:text-blue-400 transition cursor-pointer text-left underline decoration-blue-500/30"
@@ -719,16 +719,16 @@ export const AdminSalesOverview: React.FC = () => {
                           {adj.orderNumber}
                         </button>
                       </td>
-                      <td className="py-2.5 px-3">
+                      <td className="py-2.5 px-3" data-label="Authorizer">
                         <span className={`font-semibold ${theme === 'dark' ? 'text-stone-200' : 'text-slate-900'}`}>{adj.authorizerName}</span>
                         <span className="text-[10px] text-stone-400 dark:text-stone-500 block uppercase font-mono">{adj.authorizerRole}</span>
                       </td>
-                      <td className={`py-2.5 px-3 max-w-xs truncate ${theme === 'dark' ? 'text-stone-300' : 'text-slate-600'}`} title={adj.itemsSummary}>
+                      <td className={`py-2.5 px-3 max-w-xs truncate ${theme === 'dark' ? 'text-stone-300' : 'text-slate-600'}`} title={adj.itemsSummary} data-label="Item Changes">
                         {adj.itemsSummary}
                       </td>
-                      <td className={`py-2.5 px-3 text-right font-mono ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`}>PKR {adj.originalAmount.toLocaleString()}</td>
-                      <td className={`py-2.5 px-3 text-right font-mono font-semibold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>PKR {adj.newAmount.toLocaleString()}</td>
-                      <td className="py-2.5 px-3 text-right font-mono font-bold">
+                      <td className={`py-2.5 px-3 text-right font-mono ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`} data-label="Old Total">PKR {adj.originalAmount.toLocaleString()}</td>
+                      <td className={`py-2.5 px-3 text-right font-mono font-semibold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`} data-label="New Total">PKR {adj.newAmount.toLocaleString()}</td>
+                      <td className="py-2.5 px-3 text-right font-mono font-bold" data-label="Net Delta">
                         <span
                           className={`inline-flex items-center gap-0.5 px-2 py-0.5 rounded text-xs ${
                             isNegative
@@ -741,21 +741,23 @@ export const AdminSalesOverview: React.FC = () => {
                           {isNegative ? '-' : isPositive ? '+' : ''}PKR {Math.abs(adj.netDelta).toLocaleString()}
                         </span>
                       </td>
-                      <td className="py-2.5 px-3 text-stone-400 italic max-w-xs truncate" title={adj.reason}>
+                      <td className="py-2.5 px-3 text-stone-400 italic max-w-xs truncate" title={adj.reason} data-label="Reason Code">
                         {adj.reason}
                       </td>
-                      <td className="py-2.5 px-3 text-right font-mono text-[11px] text-stone-400 whitespace-nowrap">
+                      <td className="py-2.5 px-3 text-right font-mono text-[11px] text-stone-400 whitespace-nowrap" data-label="Timestamp">
                         {new Date(adj.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </td>
-                      <td className="py-2.5 px-3 text-center">
-                        <button
-                          onClick={handleInspectOrder}
-                          className="px-2.5 py-1 rounded-lg bg-blue-600/15 hover:bg-blue-600 text-blue-400 hover:text-white text-xs font-bold transition inline-flex items-center gap-1 border border-blue-500/30 cursor-pointer shadow-xs"
-                          title="Inspect complete order breakdown"
-                        >
-                          <Eye className="w-3 h-3" />
-                          <span>View</span>
-                        </button>
+                      <td className="py-2.5 px-3 text-center" data-label="Inspect">
+                        <div className="flex items-center justify-center mobile-table-card-row-actions">
+                          <button
+                            onClick={handleInspectOrder}
+                            className="px-2.5 py-1 rounded-lg bg-blue-600/15 hover:bg-blue-600 text-blue-400 hover:text-white text-xs font-bold transition inline-flex items-center gap-1 border border-blue-500/30 cursor-pointer shadow-xs"
+                            title="Inspect complete order breakdown"
+                          >
+                            <Eye className="w-3 h-3" />
+                            <span>View</span>
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );

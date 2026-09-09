@@ -109,14 +109,9 @@ const ThermalBarcodeSVG: React.FC<{ value: string }> = ({ value }) => {
 };
 
 export const ThermalReceipt: React.FC<ThermalReceiptProps> = (props) => {
-  // Gracefully attempt context access if rendered inside RestaurantProvider
-  let setPrintQueueOrder: ((order: Order | null) => void) | undefined;
-  try {
-    const restaurantContext = useRestaurant();
-    setPrintQueueOrder = restaurantContext?.setPrintQueueOrder;
-  } catch (e) {
-    // Context unavailable, standalone mode
-  }
+  // Access context directly conforming to Rules of Hooks
+  const restaurantContext = useRestaurant();
+  const setPrintQueueOrder = restaurantContext?.setPrintQueueOrder;
 
   const ord = props.order || {};
 
@@ -499,6 +494,16 @@ export const ThermalReceipt: React.FC<ThermalReceiptProps> = (props) => {
             </tbody>
           </table>
         </div>
+
+        {/* Global Special Instructions / Notes */}
+        {(ord.notes || ord.customer?.deliveryNotes || ord.customer?.notes) && (
+          <div className="pb-2 mb-2 border-b border-black border-dashed text-[10px] text-left">
+            <span className="font-bold block uppercase text-red-600">Special Instructions:</span>
+            <p className="m-0 italic text-[9px] font-bold leading-tight bg-gray-100 p-1 mt-0.5 break-words">
+              "{ord.notes || ord.customer?.deliveryNotes || ord.customer?.notes}"
+            </p>
+          </div>
+        )}
 
         {/* ========================================== */}
         {/* 5. FINANCIAL SUMMARY                       */}

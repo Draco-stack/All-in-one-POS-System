@@ -147,7 +147,7 @@ export const OrderQueueView: React.FC = () => {
   const delayed15MinOrdersCount = useMemo(() => {
     return orders.filter((o) => {
       const currentSt = (o.status || 'pending').toLowerCase();
-      const isActive = ['pending', 'open', 'punched', 'modified', 'in_kitchen', 'ready'].includes(currentSt);
+      const isActive = ['pending', 'open', 'punched', 'modified', 'in_kitchen'].includes(currentSt);
       const elapsed = Math.floor((Date.now() - new Date(o.createdAt).getTime()) / 60000);
       return isActive && elapsed >= 15;
     }).length;
@@ -165,11 +165,9 @@ export const OrderQueueView: React.FC = () => {
           currentSt === 'open' ||
           currentSt === 'punched' ||
           currentSt === 'modified' ||
-          currentSt === 'in_kitchen' ||
-          currentSt === 'ready' ||
-          currentSt === 'dispatched'
+          currentSt === 'in_kitchen'
         : filterStatus === 'delayed_15m'
-        ? ['pending', 'open', 'punched', 'modified', 'in_kitchen', 'ready'].includes(currentSt) && elapsedMins >= 15
+        ? ['pending', 'open', 'punched', 'modified', 'in_kitchen'].includes(currentSt) && elapsedMins >= 15
         : currentSt === filterStatus.toLowerCase();
 
     const query = search.toLowerCase();
@@ -275,7 +273,7 @@ export const OrderQueueView: React.FC = () => {
                 : 'bg-slate-50 border-slate-300 text-slate-800 focus:border-emerald-600'
             }`}
           >
-            <option value="active">Active Tickets ({orders.filter((o) => ['pending', 'PUNCHED', 'MODIFIED', 'in_kitchen', 'ready'].includes(o.status)).length})</option>
+            <option value="active">Active Tickets ({orders.filter((o) => ['pending', 'PUNCHED', 'MODIFIED', 'punched', 'modified', 'in_kitchen', 'open'].includes(o.status)).length})</option>
             {delayed15MinOrdersCount > 0 && (
               <option value="delayed_15m">🔥 Priority Overdue &gt;15m ({delayed15MinOrdersCount})</option>
             )}
@@ -333,28 +331,71 @@ export const OrderQueueView: React.FC = () => {
           <motion.div layout className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             <AnimatePresence mode="popLayout">
             {displayedOrders.map((order, idx) => {
-              const conf = statusConfig[order.status] || statusConfig[order.status?.toLowerCase() as OrderStatus] || statusConfig.pending;
               const elapsedMins = Math.floor((Date.now() - new Date(order.createdAt).getTime()) / 60000);
               const currentSt = (order.status || 'pending').toLowerCase();
+              
+              const isDineIn = (order.type as string) === 'dine_in' || (order.type as string) === 'dine-in' || (order.orderType as string) === 'dine_in' || (order.orderType as string) === 'dine-in';
+              const isDelivery = order.type === 'delivery' || order.orderType === 'delivery';
+              const isTakeaway = order.type === 'takeaway' || order.orderType === 'takeaway';
+
+              const isReady = currentSt === 'ready';
+              const isReadyTakeaway = isReady && (isTakeaway || (!isDineIn && !isDelivery));
+              const isReadyDineIn = isReady && isDineIn;
+              const isReadyDelivery = isReady && isDelivery;
+
+              let conf = statusConfig[order.status] || statusConfig[order.status?.toLowerCase() as OrderStatus] || statusConfig.pending;
+              if (isReady) {
+                if (isReadyDineIn) {
+                  conf = {
+                    ...conf,
+                    label: 'Ready to Serve',
+                    bg: 'bg-purple-500/20 border-purple-500/40',
+                    text: 'text-purple-400',
+                  };
+                } else if (isReadyDelivery) {
+                  conf = {
+                    ...conf,
+                    label: 'Ready for Delivery',
+                    bg: 'bg-blue-500/20 border-blue-500/40',
+                    text: 'text-blue-400',
+                  };
+                } else {
+                  conf = {
+                    ...conf,
+                    label: 'Ready for Pickup',
+                    bg: 'bg-emerald-500/20 border-emerald-500/40',
+                    text: 'text-emerald-400',
+                  };
+                }
+              } else if (currentSt === 'dispatched' && isTakeaway) {
+                conf = {
+                  ...conf,
+                  label: 'Ready for Pickup',
+                  nextLabel: 'Complete Order'
+                };
+              }
+
               const isFinished = currentSt === 'completed' || currentSt === 'delivered' || currentSt === 'refunded' || currentSt === 'cancelled';
-              const isDelayed15M = elapsedMins >= 15 && !isFinished;
-              const isUrgent = elapsedMins >= 20 && !isFinished;
-              const isWarming = elapsedMins >= 8 && elapsedMins < 15 && !isFinished;
+              const isDelayed15M = elapsedMins >= 15 && !isFinished && !isReady;
+              const isUrgent = elapsedMins >= 20 && !isFinished && !isReady;
+              const isWarming = elapsedMins >= 8 && elapsedMins < 15 && !isFinished && !isReady;
               const isCancelled = currentSt === 'cancelled' || currentSt === 'refunded' || currentSt === 'void';
-              const isDelivered = currentSt === 'delivered' || currentSt === 'completed' || currentSt === 'ready';
-              const isOnTheWay = currentSt === 'dispatched' || currentSt === 'on_the_way' || currentSt === 'in_transit' || currentSt === 'out_for_delivery';
+              const isDelivered = currentSt === 'delivered' || currentSt === 'completed' || (currentSt === 'ready' && isReadyTakeaway) || (currentSt === 'dispatched' && isTakeaway);
+              const isOnTheWay = (currentSt === 'dispatched' || currentSt === 'on_the_way' || currentSt === 'in_transit' || currentSt === 'out_for_delivery') && !isTakeaway;
               const isKitchen = currentSt === 'in_kitchen';
               const isPunched = currentSt === 'punched' || currentSt === 'open' || currentSt === 'pending' || currentSt === 'modified';
 
               // Visual styling adhering strictly to light reflection rules & 15m priority indicator:
-              // 1. Cancelled -> Reflects Red Light
-              // 2. Delivered / Ready -> Reflects Green Light
-              // 3. On The Way / Dispatched -> Reflects Yellow-Orange Light
-              // 4. Waiting > 15 mins -> Subtle Pulsing Border Glow with Priority Alert
               const darkCardStyle = isDelayed15M
                 ? 'animate-pulse-glow bg-gradient-to-b from-[#2b0e16] via-[#1a0e14] to-[#0f070b] border-rose-500/95 shadow-[0_0_32px_rgba(244,63,94,0.48)] ring-2 ring-rose-500/60'
                 : isCancelled
                 ? 'bg-gradient-to-b from-[#281016] via-[#170e12] to-[#0d070a] border-rose-500/95 shadow-[0_0_28px_rgba(244,63,94,0.38)] ring-1 ring-rose-500/50'
+                : isReadyDineIn
+                ? 'bg-gradient-to-b from-[#1a0c2e] via-[#12091c] to-[#08050e] border-purple-400/95 shadow-[0_0_28px_rgba(168,85,247,0.38)] ring-1 ring-purple-400/50 animate-pulse-glow'
+                : isReadyDelivery
+                ? 'bg-gradient-to-b from-[#0c1a2d] via-[#09121f] to-[#050910] border-blue-400/95 shadow-[0_0_28px_rgba(59,130,246,0.38)] ring-1 ring-blue-400/50 animate-pulse-glow'
+                : isReadyTakeaway
+                ? 'bg-gradient-to-b from-[#0c2217] via-[#0f1914] to-[#080f0c] border-emerald-400/95 shadow-[0_0_28px_rgba(52,211,153,0.38)] ring-1 ring-emerald-400/50 animate-pulse-glow'
                 : isDelivered
                 ? 'bg-gradient-to-b from-[#0c2217] via-[#0f1914] to-[#080f0c] border-emerald-400/95 shadow-[0_0_28px_rgba(52,211,153,0.38)] ring-1 ring-emerald-400/50'
                 : isOnTheWay
@@ -373,6 +414,12 @@ export const OrderQueueView: React.FC = () => {
                 ? 'animate-pulse-glow bg-red-50/90 border-2 border-rose-500 shadow-xl shadow-rose-200/60 ring-2 ring-rose-400/50'
                 : isCancelled
                 ? 'bg-red-50/80 border-2 border-red-500 shadow-lg shadow-red-200/50'
+                : isReadyDineIn
+                ? 'bg-purple-50/85 border-2 border-purple-500 shadow-md shadow-purple-200/45 animate-pulse-glow'
+                : isReadyDelivery
+                ? 'bg-blue-50/85 border-2 border-blue-500 shadow-md shadow-blue-200/45 animate-pulse-glow'
+                : isReadyTakeaway
+                ? 'bg-emerald-50/80 border-2 border-emerald-500 shadow-md shadow-emerald-200/40 animate-pulse-glow'
                 : isDelivered
                 ? 'bg-emerald-50/80 border-2 border-emerald-500 shadow-md shadow-emerald-200/40'
                 : isOnTheWay
@@ -405,12 +452,18 @@ export const OrderQueueView: React.FC = () => {
                         ? 'bg-gradient-to-r from-red-600 via-rose-300 to-red-600 shadow-[0_0_16px_rgba(244,63,94,1)] animate-pulse'
                         : isCancelled
                         ? 'bg-gradient-to-r from-red-600 via-rose-300 to-red-600 shadow-[0_0_14px_rgba(244,63,94,0.95)]'
+                        : isReadyDineIn
+                        ? 'bg-gradient-to-r from-purple-500 via-pink-400 to-purple-500 shadow-[0_0_14px_rgba(168,85,247,0.95)]'
+                        : isReadyDelivery
+                        ? 'bg-gradient-to-r from-blue-500 via-cyan-400 to-blue-500 shadow-[0_0_14px_rgba(59,130,246,0.95)]'
+                        : isReadyTakeaway
+                        ? 'bg-gradient-to-r from-emerald-500 via-green-300 to-emerald-500 shadow-[0_0_14px_rgba(52,211,153,0.95)]'
                         : isDelivered
                         ? 'bg-gradient-to-r from-emerald-500 via-green-300 to-emerald-500 shadow-[0_0_14px_rgba(52,211,153,0.95)]'
                         : isOnTheWay
                         ? 'bg-gradient-to-r from-amber-400 via-orange-400 to-yellow-300 shadow-[0_0_14px_rgba(245,158,11,0.95)]'
                         : isUrgent
-                        ? 'bg-gradient-to-r from-rose-500 via-rose-300 to-rose-500 shadow-[0_0_12px_rgba(244,63,94,0.9)]'
+                        ? 'bg-gradient-to-r from-rose-500 via-rose-300 to-rose-500 shadow-[0_0_12px_rgba(244,63,94,0.95)]'
                         : isWarming
                         ? 'bg-gradient-to-r from-amber-500 via-amber-200 to-amber-500 shadow-[0_0_12px_rgba(245,158,11,0.8)]'
                         : isKitchen
@@ -424,13 +477,49 @@ export const OrderQueueView: React.FC = () => {
 
                 {/* Priority Service Warning Banner when waiting > 15 minutes */}
                 {isDelayed15M && (
-                  <div className="flex items-center justify-between px-3 py-1.5 rounded-xl bg-rose-500/20 border border-rose-500/60 text-rose-200 text-xs font-black shadow-[0_0_12px_rgba(244,63,94,0.3)]">
+                  <div className="flex items-center justify-between px-3 py-1.5 rounded-xl bg-rose-500/20 border border-rose-500/60 text-rose-200 text-xs font-black shadow-[0_0_12px_rgba(244,63,94,0.3)] animate-pulse-glow">
                     <span className="flex items-center gap-1.5 text-rose-300">
                       <AlertCircle className="w-3.5 h-3.5 text-rose-400 animate-pulse" />
                       <span>PRIORITY SERVICE • OVERDUE</span>
                     </span>
                     <span className="font-mono text-[10px] font-black px-2 py-0.5 rounded-md bg-rose-600/40 text-rose-100 border border-rose-400/60">
                       WAITING {elapsedMins}M (&gt;15m)
+                    </span>
+                  </div>
+                )}
+
+                {isReadyDineIn && (
+                  <div className="flex items-center justify-between px-3 py-1.5 rounded-xl bg-purple-500/20 border border-purple-500/60 text-purple-200 text-xs font-black shadow-[0_0_12px_rgba(168,85,247,0.3)] animate-pulse-glow">
+                    <span className="flex items-center gap-1.5 text-purple-300">
+                      <Sparkles className="w-3.5 h-3.5 text-purple-400 animate-pulse" />
+                      <span>READY TO SERVE • TABLE RUNNER</span>
+                    </span>
+                    <span className="font-mono text-[10px] font-black px-2 py-0.5 rounded-md bg-purple-600/40 text-purple-100 border border-purple-400/60">
+                      IMMEDIATE ACTION
+                    </span>
+                  </div>
+                )}
+
+                {isReadyDelivery && (
+                  <div className="flex items-center justify-between px-3 py-1.5 rounded-xl bg-blue-500/20 border border-blue-500/60 text-blue-200 text-xs font-black shadow-[0_0_12px_rgba(59,130,246,0.3)] animate-pulse-glow">
+                    <span className="flex items-center gap-1.5 text-blue-300">
+                      <Truck className="w-3.5 h-3.5 text-blue-400 animate-pulse" />
+                      <span>READY FOR DELIVERY • DISPATCH RIDER</span>
+                    </span>
+                    <span className="font-mono text-[10px] font-black px-2 py-0.5 rounded-md bg-blue-600/40 text-blue-100 border border-blue-400/60">
+                      DISPATCH QUEUE
+                    </span>
+                  </div>
+                )}
+
+                {isReadyTakeaway && (
+                  <div className="flex items-center justify-between px-3 py-1.5 rounded-xl bg-emerald-500/20 border border-emerald-500/60 text-emerald-200 text-xs font-black shadow-[0_0_12px_rgba(52,211,153,0.3)]">
+                    <span className="flex items-center gap-1.5 text-emerald-300">
+                      <CheckCircle className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
+                      <span>READY FOR PICKUP • CALL CUSTOMER</span>
+                    </span>
+                    <span className="font-mono text-[10px] font-black px-2 py-0.5 rounded-md bg-emerald-600/40 text-emerald-100 border border-emerald-400/60">
+                      WAITING CUSTOMER
                     </span>
                   </div>
                 )}
@@ -488,48 +577,107 @@ export const OrderQueueView: React.FC = () => {
 
                 {/* Items List */}
                 <div className="space-y-2 flex-1">
-                  {order.items.map((item, itemIdx) => (
-                    <div
-                      key={itemIdx}
-                      className={`p-2.5 rounded-xl border flex items-center justify-between text-xs transition-colors ${
-                        theme === 'dark'
-                          ? 'bg-[#08090d]/90 border-white/15 text-stone-100 hover:border-white/30'
-                          : 'bg-white border-slate-200 text-slate-900 shadow-2xs'
-                      }`}
-                    >
-                      <div className="flex items-start gap-2.5">
-                        <span className={`w-6 h-6 rounded-lg font-mono font-black flex items-center justify-center text-xs shrink-0 ${
+                  {order.items.map((item, itemIdx) => {
+                    const modifiersField = (item as any).modifiers;
+                    const safeModifiers = (() => {
+                      if (!modifiersField) return [];
+                      if (Array.isArray(modifiersField)) return modifiersField;
+                      if (typeof modifiersField === 'string' && (modifiersField as string).trim()) {
+                        try {
+                          const parsed = JSON.parse(modifiersField);
+                          if (Array.isArray(parsed)) return parsed;
+                        } catch (e) {
+                          if ((modifiersField as string).includes(',')) {
+                            return (modifiersField as string).split(',').map((m: string) => ({ name: m.trim() }));
+                          }
+                          return [{ name: (modifiersField as string).trim() }];
+                        }
+                      }
+                      return [];
+                    })();
+
+                    const safeNote = item.itemNote || item.notes || item.customization || '';
+
+                    return (
+                      <div
+                        key={itemIdx}
+                        className={`p-2.5 rounded-xl border flex items-center justify-between text-xs transition-colors ${
                           theme === 'dark'
-                            ? 'bg-emerald-500/25 border border-emerald-400/60 text-emerald-300 shadow-[0_0_8px_rgba(52,211,153,0.25)]'
-                            : 'bg-emerald-100 border border-emerald-300 text-emerald-800'
-                        }`}>
-                          {item.quantity}x
-                        </span>
-                        <div>
-                          <span className={`font-bold text-sm leading-snug ${
-                            theme === 'dark' ? 'text-white drop-shadow-xs' : 'text-slate-900'
+                            ? 'bg-[#08090d]/90 border-white/15 text-stone-100 hover:border-white/30'
+                            : 'bg-white border-slate-200 text-slate-900 shadow-2xs'
+                        }`}
+                      >
+                        <div className="flex items-start gap-2.5">
+                          <span className={`w-6 h-6 rounded-lg font-mono font-black flex items-center justify-center text-xs shrink-0 ${
+                            theme === 'dark'
+                              ? 'bg-emerald-500/25 border border-emerald-400/60 text-emerald-300 shadow-[0_0_8px_rgba(52,211,153,0.25)]'
+                              : 'bg-emerald-100 border border-emerald-300 text-emerald-800'
                           }`}>
-                            {item.name}
+                            {item.quantity}x
                           </span>
-                          {item.flavor && (
-                            <p className={`text-[11px] font-semibold mt-1 px-2 py-0.5 rounded-md inline-block border ${
-                              theme === 'dark'
-                                ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-xs'
-                                : 'bg-amber-100 text-amber-900 border-amber-300'
+                          <div className="space-y-1">
+                            <span className={`font-bold text-sm leading-snug block ${
+                              theme === 'dark' ? 'text-white drop-shadow-xs' : 'text-slate-900'
                             }`}>
-                              ✦ {item.flavor}
-                            </p>
-                          )}
+                              {item.name}
+                            </span>
+                            {item.flavor && (
+                              <p className={`text-[11px] font-semibold px-2 py-0.5 rounded-md inline-block border ${
+                                theme === 'dark'
+                                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-xs'
+                                  : 'bg-amber-100 text-amber-900 border-amber-300'
+                              }`}>
+                                ✦ {item.flavor}
+                              </p>
+                            )}
+                            {safeModifiers && safeModifiers.length > 0 && (
+                              <div className="space-y-0.5 pl-1">
+                                {safeModifiers.map((mod: any, mIdx: number) => (
+                                  <span
+                                    key={mIdx}
+                                    className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md inline-flex items-center gap-1 border mr-1 ${
+                                      theme === 'dark'
+                                        ? 'bg-emerald-950/20 text-emerald-400 border-emerald-500/30'
+                                        : 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                                    }`}
+                                  >
+                                    + {mod.name}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                            {safeNote && (
+                              <p className="text-[11px] font-extrabold italic text-amber-500 dark:text-amber-400 pl-1">
+                                ⚠️ Note: "{safeNote}"
+                              </p>
+                            )}
+                          </div>
                         </div>
+                        <span className={`font-mono text-xs font-bold shrink-0 ${
+                          theme === 'dark' ? 'text-stone-300' : 'text-slate-700'
+                        }`}>
+                          PKR {(item.price * item.quantity).toLocaleString()}
+                        </span>
                       </div>
-                      <span className={`font-mono text-xs font-bold shrink-0 ${
-                        theme === 'dark' ? 'text-stone-300' : 'text-slate-700'
-                      }`}>
-                        PKR {(item.price * item.quantity).toLocaleString()}
-                      </span>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
+
+                {/* Global Order Instructions */}
+                {(order.notes || order.customer?.deliveryNotes || order.customer?.notes) && (
+                  <div className={`p-2.5 rounded-xl border text-[11px] ${
+                    theme === 'dark'
+                      ? 'bg-red-500/10 border-red-500/30 text-red-200'
+                      : 'bg-red-50 border-red-200 text-red-800'
+                  }`}>
+                    <span className="font-extrabold block uppercase tracking-wider mb-0.5">
+                      🚨 Special Instructions / Order Notes:
+                    </span>
+                    <span className="font-bold italic">
+                      "{order.notes || order.customer?.deliveryNotes || order.customer?.notes}"
+                    </span>
+                  </div>
+                )}
 
                 {/* Delivery details */}
                 {order.type === 'delivery' && order.customer?.address && (
@@ -818,7 +966,7 @@ export const OrderQueueView: React.FC = () => {
                   const stats = getRiderStats(driver);
                   return (
                     <option key={driver} value={driver}>
-                      🛵 {driver} ({stats.totalAssigned} assigned • ✓{stats.delivered} delivered | ✗{stats.cancelled} void)
+                      🛵 {driver} ({stats.assignedItemsCount} items assigned • ✓{stats.deliveredItemsCount} items delivered | ✗{stats.cancelled} void)
                     </option>
                   );
                 })}

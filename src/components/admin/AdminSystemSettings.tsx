@@ -43,7 +43,7 @@ export const AdminSystemSettings: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 mobile-admin-viewport">
       <div className="flex items-center gap-2 mb-4">
         <Settings className="w-5 h-5 text-amber-500" />
         <h2 className={`text-lg font-black uppercase tracking-wider ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>System Settings & Resources</h2>
@@ -59,7 +59,7 @@ export const AdminSystemSettings: React.FC = () => {
               <Store className="w-4 h-4 text-[#00897b]" /> Manage Branches (Outlets)
             </h3>
             
-            <div className="flex items-center gap-3 mb-6">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-6">
               <input 
                 type="text" 
                 placeholder="New Branch Name..." 
@@ -71,7 +71,7 @@ export const AdminSystemSettings: React.FC = () => {
               />
               <button 
                 onClick={handleAddOutlet}
-                className="px-4 py-2 rounded-xl bg-[#00897b] hover:bg-[#00796b] text-white font-bold text-sm flex items-center gap-2 transition cursor-pointer shrink-0"
+                className="px-4 py-2 rounded-xl bg-[#00897b] hover:bg-[#00796b] text-white font-bold text-sm flex items-center justify-center gap-2 transition cursor-pointer shrink-0 w-full sm:w-auto"
               >
                 <Plus className="w-4 h-4" /> Add Branch
               </button>

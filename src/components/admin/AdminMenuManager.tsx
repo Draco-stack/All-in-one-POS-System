@@ -58,6 +58,10 @@ export const AdminMenuManager: React.FC = () => {
     available: boolean;
     flavors: string[];
     isPopular: boolean;
+    extraCheesePrice?: number;
+    extraChickenPrice?: number;
+    thinCrustPrice?: number;
+    options: { name: string; price: number }[];
   }>({
     name: '',
     description: '',
@@ -67,7 +71,15 @@ export const AdminMenuManager: React.FC = () => {
     available: true,
     flavors: [],
     isPopular: false,
+    extraCheesePrice: undefined,
+    extraChickenPrice: undefined,
+    thinCrustPrice: undefined,
+    options: [],
   });
+
+  // Local helper states for adding custom dynamic modifiers
+  const [newModName, setNewModName] = useState<string>('');
+  const [newModPrice, setNewModPrice] = useState<string>('');
 
   // Category Manager Modal State
   const [isCatModalOpen, setIsCatModalOpen] = useState<boolean>(false);
@@ -127,6 +139,10 @@ export const AdminMenuManager: React.FC = () => {
       available: true,
       flavors: ['Chicken Tikka', 'Fajita Classic', 'Cheese Feast'],
       isPopular: false,
+      extraCheesePrice: undefined,
+      extraChickenPrice: undefined,
+      thinCrustPrice: undefined,
+      options: [],
     });
     setIsItemModalOpen(true);
   };
@@ -142,6 +158,10 @@ export const AdminMenuManager: React.FC = () => {
       available: item.available !== false,
       flavors: item.flavors || [],
       isPopular: !!item.isPopular,
+      extraCheesePrice: item.extraCheesePrice,
+      extraChickenPrice: item.extraChickenPrice,
+      thinCrustPrice: item.thinCrustPrice,
+      options: item.options || [],
     });
     setIsItemModalOpen(true);
   };
@@ -167,6 +187,10 @@ export const AdminMenuManager: React.FC = () => {
         available: itemFormData.available,
         flavors: itemFormData.flavors,
         isPopular: itemFormData.isPopular,
+        extraCheesePrice: itemFormData.extraCheesePrice,
+        extraChickenPrice: itemFormData.extraChickenPrice,
+        thinCrustPrice: itemFormData.thinCrustPrice,
+        options: itemFormData.options,
       });
       showToast(`Updated "${itemFormData.name}"`);
     } else {
@@ -179,6 +203,10 @@ export const AdminMenuManager: React.FC = () => {
         available: itemFormData.available,
         flavors: itemFormData.flavors,
         isPopular: itemFormData.isPopular,
+        extraCheesePrice: itemFormData.extraCheesePrice,
+        extraChickenPrice: itemFormData.extraChickenPrice,
+        thinCrustPrice: itemFormData.thinCrustPrice,
+        options: itemFormData.options,
       });
     }
 
@@ -211,7 +239,7 @@ export const AdminMenuManager: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 mobile-admin-viewport">
       {/* Action Header & Category Toolbar */}
       <div className={`rounded-2xl p-5 shadow-sm flex flex-col gap-4 border ${
         theme === 'dark' 
@@ -326,8 +354,8 @@ export const AdminMenuManager: React.FC = () => {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className={`w-full text-left text-xs border-collapse ${theme === 'dark' ? 'text-stone-300' : 'text-slate-700'}`}>
+        <div className="overflow-x-auto mobile-admin-table-wrapper">
+          <table className={`w-full text-left text-xs border-collapse mobile-table-card-row ${theme === 'dark' ? 'text-stone-300' : 'text-slate-700'}`}>
             <thead>
               <tr className={`border-b font-bold uppercase tracking-wider text-[10px] ${theme === 'dark' ? 'border-white/10 text-stone-400 bg-[#0c0d12]' : 'border-slate-200 text-slate-500 bg-slate-50'}`}>
                 <th className="py-3 px-3">Item Details</th>
@@ -358,7 +386,7 @@ export const AdminMenuManager: React.FC = () => {
                       }`}
                     >
                       {/* Item Details */}
-                      <td className="py-3 px-3">
+                      <td className="py-3 px-3" data-label="Item Details">
                         <div className="flex items-center gap-3">
                           <MenuItemThumbnail
                             image={item.image}
@@ -384,7 +412,7 @@ export const AdminMenuManager: React.FC = () => {
                       </td>
 
                       {/* Category */}
-                      <td className="py-3 px-3">
+                      <td className="py-3 px-3" data-label="Category">
                         <span className={`px-2 py-0.5 rounded-md text-[11px] font-semibold capitalize font-mono border ${
                           theme === 'dark' 
                             ? 'bg-stone-850 text-stone-300 border-white/5' 
@@ -395,7 +423,7 @@ export const AdminMenuManager: React.FC = () => {
                       </td>
 
                       {/* Floor Price with On-the-Fly Quick Editing */}
-                      <td className="py-3 px-3 text-right">
+                      <td className="py-3 px-3 text-right" data-label="Floor Price (PKR)">
                         {quickPriceEditId === item.id ? (
                            <div className="inline-flex items-center gap-1">
                             <input
@@ -442,7 +470,7 @@ export const AdminMenuManager: React.FC = () => {
                       </td>
 
                       {/* Flavors / Modifiers */}
-                      <td className="py-3 px-3">
+                      <td className="py-3 px-3" data-label="Custom Flavors">
                         <div className="flex flex-wrap gap-1 max-w-xs">
                           {item.flavors && item.flavors.length > 0 ? (
                             item.flavors.map((f, i) => (
@@ -464,7 +492,7 @@ export const AdminMenuManager: React.FC = () => {
                       </td>
 
                       {/* Active/Inactive Toggle (Soft Delete) */}
-                      <td className="py-3 px-3 text-center">
+                      <td className="py-3 px-3 text-center" data-label="POS Status">
                         <button
                           onClick={() => toggleItemAvailability(item.id)}
                           className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase transition-all duration-150 cursor-pointer border ${
@@ -488,8 +516,8 @@ export const AdminMenuManager: React.FC = () => {
                       </td>
 
                       {/* Actions */}
-                      <td className="py-3 px-3 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
+                      <td className="py-3 px-3 text-right" data-label="Actions">
+                        <div className="flex items-center justify-end gap-1.5 mobile-table-card-row-actions">
                           <button
                             onClick={() => handleOpenEditModal(item)}
                             className={`p-1.5 rounded-lg transition-all duration-150 cursor-pointer border active:scale-95 ${
@@ -653,6 +681,145 @@ export const AdminMenuManager: React.FC = () => {
                       : 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400'
                   }`}
                 />
+              </div>
+
+              {/* Premium Modifiers (Extra Charges) */}
+              <div className="space-y-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-[#0a0b10] border border-slate-200 dark:border-white/5">
+                <h4 className={`text-xs font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-amber-400' : 'text-amber-700'}`}>Premium Modifiers</h4>
+                <div className="grid grid-cols-3 gap-2 pb-2 border-b border-dashed border-slate-200 dark:border-white/5">
+                  <div>
+                    <label className={`block text-[10px] font-semibold mb-1 ${theme === 'dark' ? 'text-stone-300' : 'text-slate-700'}`}>Extra Cheese (PKR)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={itemFormData.extraCheesePrice || ''}
+                      onChange={(e) => setItemFormData({ ...itemFormData, extraCheesePrice: Number(e.target.value) || undefined })}
+                      className={`w-full px-2.5 py-2 rounded-lg text-xs font-mono focus:outline-none focus:border-emerald-500 transition border ${
+                        theme === 'dark'
+                          ? 'bg-[#08090d] border-white/10 text-white'
+                          : 'bg-white border-slate-300 text-slate-900'
+                      }`}
+                      placeholder="e.g. 150"
+                    />
+                  </div>
+                  <div>
+                    <label className={`block text-[10px] font-semibold mb-1 ${theme === 'dark' ? 'text-stone-300' : 'text-slate-700'}`}>Extra Chicken (PKR)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={itemFormData.extraChickenPrice || ''}
+                      onChange={(e) => setItemFormData({ ...itemFormData, extraChickenPrice: Number(e.target.value) || undefined })}
+                      className={`w-full px-2.5 py-2 rounded-lg text-xs font-mono focus:outline-none focus:border-emerald-500 transition border ${
+                        theme === 'dark'
+                          ? 'bg-[#08090d] border-white/10 text-white'
+                          : 'bg-white border-slate-300 text-slate-900'
+                      }`}
+                      placeholder="e.g. 250"
+                    />
+                  </div>
+                  <div>
+                    <label className={`block text-[10px] font-semibold mb-1 ${theme === 'dark' ? 'text-stone-300' : 'text-slate-700'}`}>Thin Crust (PKR)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={itemFormData.thinCrustPrice || ''}
+                      onChange={(e) => setItemFormData({ ...itemFormData, thinCrustPrice: Number(e.target.value) || undefined })}
+                      className={`w-full px-2.5 py-2 rounded-lg text-xs font-mono focus:outline-none focus:border-emerald-500 transition border ${
+                        theme === 'dark'
+                          ? 'bg-[#08090d] border-white/10 text-white'
+                          : 'bg-white border-slate-300 text-slate-900'
+                      }`}
+                      placeholder="e.g. 100"
+                    />
+                  </div>
+                </div>
+
+                {/* Dynamic Custom Modifiers List & Add Form */}
+                <div className="space-y-2 pt-1">
+                  <span className={`block text-[10px] font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-stone-400' : 'text-slate-500'}`}>Custom Menu Modifiers</span>
+                  
+                  {/* Current Custom Modifiers */}
+                  {itemFormData.options && itemFormData.options.length > 0 ? (
+                    <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto p-1 border border-dashed border-slate-200 dark:border-white/5 rounded-lg bg-white/50 dark:bg-[#050608]">
+                      {itemFormData.options.map((mod, index) => (
+                        <div key={index} className="flex items-center gap-1.5 px-2 py-1 bg-emerald-500/10 border border-emerald-500/35 rounded-lg text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                          <span>{mod.name} (+{mod.price} PKR)</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setItemFormData({
+                                ...itemFormData,
+                                options: itemFormData.options.filter((_, idx) => idx !== index)
+                              });
+                            }}
+                            className="text-red-500 hover:text-red-700 font-bold transition cursor-pointer"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className={`text-[10px] italic ${theme === 'dark' ? 'text-stone-500' : 'text-slate-400'}`}>No custom modifiers defined. Add some below!</p>
+                  )}
+
+                  {/* Inline Form to Add Modifier */}
+                  <div className="flex gap-1.5 items-end mt-2">
+                    <div className="flex-1">
+                      <input
+                        type="text"
+                        value={newModName}
+                        onChange={(e) => setNewModName(e.target.value)}
+                        className={`w-full px-2 py-1.5 rounded-lg text-[11px] focus:outline-none focus:border-emerald-500 transition border ${
+                          theme === 'dark'
+                            ? 'bg-[#08090d] border-white/10 text-white placeholder-stone-500'
+                            : 'bg-white border-slate-300 text-slate-900 placeholder-slate-400'
+                        }`}
+                        placeholder="Modifier name (e.g. Extra Olives)"
+                      />
+                    </div>
+                    <div className="w-20">
+                      <input
+                        type="number"
+                        min="0"
+                        value={newModPrice}
+                        onChange={(e) => setNewModPrice(e.target.value)}
+                        className={`w-full px-2 py-1.5 rounded-lg text-[11px] font-mono focus:outline-none focus:border-emerald-500 transition border ${
+                          theme === 'dark'
+                            ? 'bg-[#08090d] border-white/10 text-white placeholder-stone-500'
+                            : 'bg-white border-slate-300 text-slate-900 placeholder-slate-400'
+                        }`}
+                        placeholder="Price"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const name = newModName.trim();
+                        const price = parseFloat(newModPrice);
+                        if (!name) {
+                          alert('Please enter a modifier name');
+                          return;
+                        }
+                        if (isNaN(price) || price < 0) {
+                          alert('Please enter a valid price');
+                          return;
+                        }
+                        // Add to local options list
+                        setItemFormData({
+                          ...itemFormData,
+                          options: [...itemFormData.options, { name, price }]
+                        });
+                        // Reset fields
+                        setNewModName('');
+                        setNewModPrice('');
+                      }}
+                      className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold transition cursor-pointer"
+                    >
+                      + Add
+                    </button>
+                  </div>
+                </div>
               </div>
 
               {/* Toggles */}

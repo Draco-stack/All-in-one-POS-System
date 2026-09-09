@@ -558,6 +558,15 @@ export const AllOrdersSearchView: React.FC = () => {
       );
     }
     if (st === 'dispatched') {
+      const isTakeaway = order.type === 'takeaway' || order.orderType === 'takeaway';
+      if (isTakeaway) {
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-950/80 text-emerald-400 border border-emerald-800/60 font-mono text-[11px] font-bold">
+            <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+            Ready for Pickup
+          </span>
+        );
+      }
       return (
         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-950/80 text-blue-400 border border-blue-800/60 font-mono text-[11px] font-bold">
           <Truck className="w-3 h-3 text-blue-400" />

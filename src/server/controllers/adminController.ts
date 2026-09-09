@@ -336,6 +336,7 @@ export async function addMenuItem(req: Request, res: Response): Promise<Response
     const resolvedImageUrl = imageUrl || image || '';
     const resolvedActive = active !== undefined ? Boolean(active) : (available !== undefined ? Boolean(available) : true);
     const resolvedFlavors = flavors ? (typeof flavors === 'string' ? flavors : JSON.stringify(flavors)) : '[]';
+    const resolvedOptions = options ? (typeof options === 'string' ? options : JSON.stringify(options)) : '[]';
     const resolvedPrepTime = Number(preparationTime) || 10;
 
     // Create real menu item record in database
@@ -348,6 +349,7 @@ export async function addMenuItem(req: Request, res: Response): Promise<Response
         active: resolvedActive,
         categoryId: targetCategoryId,
         flavors: resolvedFlavors,
+        options: resolvedOptions,
         preparationTime: resolvedPrepTime,
       },
       include: {
@@ -488,7 +490,7 @@ export async function deleteMenuItem(req: Request, res: Response): Promise<Respo
 export async function updateMenuItem(req: Request, res: Response): Promise<Response> {
   try {
     const { id } = req.params;
-    const { title, name, description, price, imageUrl, image, categoryId, categoryTitle, category, active, available, flavors, preparationTime } = req.body;
+    const { title, name, description, price, imageUrl, image, categoryId, categoryTitle, category, active, available, flavors, options, preparationTime } = req.body;
 
     if (!id || typeof id !== 'string' || !id.trim()) {
       return res.status(400).json({ error: 'Menu item ID is required.' });
@@ -550,6 +552,10 @@ export async function updateMenuItem(req: Request, res: Response): Promise<Respo
 
     if (flavors !== undefined) {
       dataToUpdate.flavors = typeof flavors === 'string' ? flavors : JSON.stringify(flavors);
+    }
+
+    if (options !== undefined) {
+      dataToUpdate.options = typeof options === 'string' ? options : JSON.stringify(options);
     }
 
     if (preparationTime !== undefined) {

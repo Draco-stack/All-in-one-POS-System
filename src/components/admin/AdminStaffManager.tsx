@@ -231,7 +231,7 @@ export const AdminStaffManager: React.FC = () => {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 mobile-admin-viewport">
       {/* Top Header & Quick Add */}
       <div className={`rounded-2xl p-5 border transition-colors ${
         theme === 'dark' 
@@ -311,8 +311,8 @@ export const AdminStaffManager: React.FC = () => {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className={`w-full text-left text-xs border-collapse ${theme === 'dark' ? 'text-stone-300' : 'text-slate-700'}`}>
+        <div className="overflow-x-auto mobile-admin-table-wrapper">
+          <table className={`w-full text-left text-xs border-collapse mobile-table-card-row ${theme === 'dark' ? 'text-stone-300' : 'text-slate-700'}`}>
             <thead>
               <tr className={`border-b font-bold uppercase tracking-wider text-[10px] ${
                 theme === 'dark' ? 'border-white/10 text-stone-400 bg-[#090a0f]' : 'border-slate-200 text-slate-500 bg-slate-50/80'
@@ -342,7 +342,7 @@ export const AdminStaffManager: React.FC = () => {
                     }`}
                   >
                     {/* Name & Badge */}
-                    <td className="py-3 px-3">
+                    <td className="py-3 px-3" data-label="Staff Member">
                       <div className="flex items-center gap-3">
                         <div
                           className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs uppercase ${
@@ -392,10 +392,10 @@ export const AdminStaffManager: React.FC = () => {
                     </td>
 
                     {/* Username */}
-                    <td className={`py-3 px-3 font-mono font-medium ${theme === 'dark' ? 'text-slate-700 dark:text-stone-300' : 'text-slate-700'}`}>@{u.username}</td>
+                    <td className={`py-3 px-3 font-mono font-medium ${theme === 'dark' ? 'text-slate-700 dark:text-stone-300' : 'text-slate-700'}`} data-label="Username">@{u.username}</td>
 
                     {/* Role */}
-                    <td className="py-3 px-3">
+                    <td className="py-3 px-3" data-label="Assigned Role">
                       <span
                         className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase font-mono border ${
                           u.role === 'owner'
@@ -414,7 +414,7 @@ export const AdminStaffManager: React.FC = () => {
                     </td>
 
                     {/* Outlet & Rider Stats */}
-                    <td className="py-3 px-3">
+                    <td className="py-3 px-3" data-label="Fleet Performance / Outlet">
                       {isRider && riderStats ? (
                         <div className="space-y-1">
                           <div className={`font-medium text-[11px] ${theme === 'dark' ? 'text-slate-700 dark:text-stone-300' : 'text-slate-700'}`}>{u.outlet || 'Main Branch'}</div>
@@ -443,7 +443,7 @@ export const AdminStaffManager: React.FC = () => {
                     </td>
 
                     {/* Active / Inactive Status */}
-                    <td className="py-3 px-3 text-center">
+                    <td className="py-3 px-3 text-center" data-label="Status">
                       <button
                         onClick={() => toggleUserActive(u.id)}
                         disabled={isCurrent && u.role === 'owner'}
@@ -467,8 +467,8 @@ export const AdminStaffManager: React.FC = () => {
                     </td>
 
                     {/* Actions */}
-                    <td className="py-3 px-3 text-right">
-                      <div className="flex items-center justify-end gap-1.5">
+                    <td className="py-3 px-3 text-right" data-label="Actions">
+                      <div className="flex items-center justify-end gap-1.5 mobile-table-card-row-actions">
                         <button
                           onClick={() => handleOpenEdit(u)}
                           className={`px-2 py-1 text-xs font-semibold flex items-center gap-1 transition cursor-pointer border rounded-lg ${
@@ -546,8 +546,8 @@ export const AdminStaffManager: React.FC = () => {
           </span>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className={`w-full text-left text-xs border-collapse ${theme === 'dark' ? 'text-stone-300' : 'text-slate-700'}`}>
+        <div className="overflow-x-auto mobile-admin-table-wrapper">
+          <table className={`w-full text-left text-xs border-collapse mobile-table-card-row ${theme === 'dark' ? 'text-stone-300' : 'text-slate-700'}`}>
             <thead>
               <tr className={`border-b font-bold uppercase tracking-wider text-[10px] ${
                 theme === 'dark' ? 'border-white/10 text-stone-400 bg-[#090a0f]' : 'border-slate-200 text-slate-500 bg-slate-50/80'
@@ -561,8 +561,8 @@ export const AdminStaffManager: React.FC = () => {
             <tbody className={`divide-y font-sans ${theme === 'dark' ? 'divide-white/5' : 'divide-slate-200'}`}>
               {permissionMatrix.map((row, i) => (
                 <tr key={i} className={`transition ${theme === 'dark' ? 'hover:bg-white/[0.02]' : 'hover:bg-slate-50'}`}>
-                  <td className={`py-2.5 px-3 font-medium ${theme === 'dark' ? 'text-stone-200' : 'text-slate-700'}`}>{row.permission}</td>
-                  <td className="py-2.5 px-3 text-center">
+                  <td className={`py-2.5 px-3 font-medium ${theme === 'dark' ? 'text-stone-200' : 'text-slate-700'}`} data-label="System Operation / Action">{row.permission}</td>
+                  <td className="py-2.5 px-3 text-center" data-label="Cashier">
                     {row.cashier ? (
                       <span className="inline-flex items-center gap-1 text-emerald-500 font-bold text-[11px]">
                         <Check className="w-3.5 h-3.5" /> Allowed
@@ -573,7 +573,7 @@ export const AdminStaffManager: React.FC = () => {
                       </span>
                     )}
                   </td>
-                  <td className="py-2.5 px-3 text-center">
+                  <td className="py-2.5 px-3 text-center" data-label="Manager">
                     {row.manager ? (
                       <span className="inline-flex items-center gap-1 text-emerald-500 font-bold text-[11px]">
                         <Check className="w-3.5 h-3.5" /> Allowed
@@ -584,7 +584,7 @@ export const AdminStaffManager: React.FC = () => {
                       </span>
                     )}
                   </td>
-                  <td className="py-2.5 px-3 text-center">
+                  <td className="py-2.5 px-3 text-center" data-label="Owner">
                     {row.owner ? (
                       <span className="inline-flex items-center gap-1 text-amber-500 font-bold text-[11px]">
                         <Check className="w-3.5 h-3.5" /> Full Access

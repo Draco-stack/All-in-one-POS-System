@@ -78,6 +78,7 @@ export const AdminRidersFleet: React.FC = () => {
         stats: {
           total: stats.totalAssigned,
           delivered: stats.delivered,
+          deliveredItemsCount: stats.deliveredItemsCount,
           cancelled: stats.cancelled,
           inProgress: stats.active,
           deliveredRevenue: stats.totalRevenue,
@@ -94,6 +95,7 @@ export const AdminRidersFleet: React.FC = () => {
   const fleetTotals = useMemo(() => {
     const totalAssigned = riderStats.reduce((sum, r) => sum + r.stats.total, 0);
     const totalDelivered = riderStats.reduce((sum, r) => sum + r.stats.delivered, 0);
+    const totalDeliveredItems = riderStats.reduce((sum, r) => sum + r.stats.deliveredItemsCount, 0);
     const totalCancelled = riderStats.reduce((sum, r) => sum + r.stats.cancelled, 0);
     const totalActive = riderStats.reduce((sum, r) => sum + r.stats.inProgress, 0);
     const totalRevenue = riderStats.reduce((sum, r) => sum + r.stats.deliveredRevenue, 0);
@@ -108,6 +110,7 @@ export const AdminRidersFleet: React.FC = () => {
       activeRidersCount: riders.filter((r) => r.active !== false).length,
       totalAssigned,
       totalDelivered,
+      totalDeliveredItems,
       totalCancelled,
       totalActive,
       totalRevenue,
@@ -146,7 +149,7 @@ export const AdminRidersFleet: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 mobile-admin-viewport">
       {/* Header & Actions */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -161,7 +164,7 @@ export const AdminRidersFleet: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <div className="relative">
             <Search className="w-3.5 h-3.5 text-slate-500 dark:text-stone-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
@@ -225,11 +228,13 @@ export const AdminRidersFleet: React.FC = () => {
 
         <div className="bg-gradient-to-b from-stone-900/90 to-[#141414]/90 backdrop-blur-md border border-slate-300 dark:border-white/10 rounded-2xl p-4 shadow-lg">
           <div className="flex items-center justify-between text-slate-500 dark:text-stone-400 text-[11px] font-semibold mb-1">
-            <span>Delivered</span>
+            <span>Delivered (Orders/Items)</span>
             <CheckCircle className="w-4 h-4 text-emerald-400" />
           </div>
-          <div className="text-xl font-bold text-emerald-400 font-mono">{fleetTotals.totalDelivered}</div>
-          <div className="text-[10px] text-slate-400 dark:text-stone-500 mt-1">Fulfilled successfully</div>
+          <div className="text-xl font-bold text-emerald-400 font-mono">
+            {fleetTotals.totalDelivered} <span className="text-sm">/ {fleetTotals.totalDeliveredItems}</span>
+          </div>
+          <div className="text-[10px] text-slate-400 dark:text-stone-500 mt-1">Orders / Total Items</div>
         </div>
 
         <div className="bg-gradient-to-b from-stone-900/90 to-[#141414]/90 backdrop-blur-md border border-slate-300 dark:border-white/10 rounded-2xl p-4 shadow-lg">
@@ -342,10 +347,10 @@ export const AdminRidersFleet: React.FC = () => {
                 </div>
                 <div className="bg-stone-950/80 rounded-xl p-2.5 text-center border border-slate-200 dark:border-white/5 shadow-inner">
                   <div className="text-[10px] text-emerald-400 font-semibold mb-0.5 uppercase tracking-wider">
-                    Delivered
+                    Delivered (O/I)
                   </div>
                   <div className="text-emerald-400 font-mono font-bold text-sm">
-                    {rider.stats.delivered}
+                    {rider.stats.delivered} / {rider.stats.deliveredItemsCount}
                   </div>
                 </div>
                 <div className="bg-stone-950/80 rounded-xl p-2.5 text-center border border-slate-200 dark:border-white/5 shadow-inner">

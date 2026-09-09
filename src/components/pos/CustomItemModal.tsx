@@ -29,27 +29,27 @@ export const CustomItemModal: React.FC<CustomItemModalProps> = ({ isOpen, onClos
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/40 dark:bg-black/60 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-150">
-      <div className="bg-gradient-to-b from-stone-900 to-[#121212] border border-slate-300 dark:border-white/10 ring-1 ring-white/10 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl">
-        <div className="p-4 bg-white/60 dark:bg-stone-950/60 backdrop-blur-xs border-b border-slate-200 dark:border-white/5 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shadow-sm">
+    <div className="fixed inset-0 z-50 bg-slate-900/40 dark:bg-black/60 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-150">
+      <div className="bg-gradient-to-b from-stone-900 to-[#121212] border border-slate-300 dark:border-white/10 ring-1 ring-white/10 rounded-2xl w-full max-w-md max-h-[90vh] overflow-hidden shadow-2xl flex flex-col">
+        <div className="p-3 sm:p-4 bg-white/60 dark:bg-stone-950/60 backdrop-blur-xs border-b border-slate-200 dark:border-white/5 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shadow-sm shrink-0">
               <DollarSign className="w-4 h-4" />
             </div>
-            <div>
-              <h3 className="text-base font-extrabold text-white">Add Custom / Open Item</h3>
-              <p className="text-[10px] uppercase font-bold tracking-wider text-slate-500 dark:text-stone-400">Add ad-hoc charges or specials</p>
+            <div className="min-w-0">
+              <h3 className="text-sm sm:text-base font-extrabold text-white truncate">Add Custom / Open Item</h3>
+              <p className="text-[9.5px] sm:text-[10px] uppercase font-bold tracking-wider text-slate-500 dark:text-stone-400 truncate">Add ad-hoc charges or specials</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-xl hover:bg-white/5 text-slate-500 dark:text-stone-400 hover:text-white transition-all cursor-pointer"
+            className="p-1.5 rounded-xl hover:bg-white/5 text-slate-500 dark:text-stone-400 hover:text-white transition-all cursor-pointer shrink-0"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-5 space-y-4">
+        <form onSubmit={handleSubmit} className="p-3.5 sm:p-5 space-y-3 sm:space-y-4 overflow-y-auto flex-1">
           <div className="space-y-1.5">
             <label className="text-[10px] uppercase font-bold tracking-wider text-slate-500 dark:text-stone-400">Item Name *</label>
             <input

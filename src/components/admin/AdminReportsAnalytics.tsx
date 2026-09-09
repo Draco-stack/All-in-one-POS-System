@@ -363,14 +363,14 @@ export const AdminReportsAnalytics: React.FC = () => {
   return (
     <>
       {isPrintingThermal && <DailyFinancialSummaryThermal {...dailySummaryData} />}
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6 mobile-admin-viewport">
       {/* Top Tabs */}
       <div className={`backdrop-blur-md rounded-2xl p-4.5 shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-4 border ${
         theme === 'dark' 
           ? 'bg-gradient-to-b from-stone-900/90 to-[#141414]/90 border-slate-300 dark:border-white/10' 
           : 'bg-white border-slate-200 shadow-sm'
       }`}>
-        <div className={`flex p-1 rounded-xl border text-xs font-semibold overflow-x-auto ${
+        <div className={`flex p-1 rounded-xl border text-xs font-semibold overflow-x-auto mobile-admin-nav-scroll ${
           theme === 'dark' ? 'bg-stone-950/80 border-slate-300 dark:border-white/10' : 'bg-slate-100 border-slate-200'
         }`}>
           <button
@@ -463,8 +463,8 @@ export const AdminReportsAnalytics: React.FC = () => {
             />
           </div>
 
-          <div className="overflow-x-auto">
-            <table className={`w-full text-left text-xs border-collapse ${theme === 'dark' ? 'text-slate-700 dark:text-stone-300' : 'text-slate-600'}`}>
+          <div className="overflow-x-auto mobile-admin-table-wrapper">
+            <table className={`w-full text-left text-xs border-collapse mobile-table-card-row ${theme === 'dark' ? 'text-slate-700 dark:text-stone-300' : 'text-slate-600'}`}>
               <thead>
                 <tr className={`border-b text-slate-500 dark:text-stone-400 font-bold uppercase tracking-wider text-[10px] ${theme === 'dark' ? 'border-slate-300 dark:border-white/10' : 'border-slate-200'}`}>
                   <th className="py-2.5 px-3">Shift #</th>
@@ -487,27 +487,27 @@ export const AdminReportsAnalytics: React.FC = () => {
 
                   return (
                     <tr key={sh.id} className={`transition ${theme === 'dark' ? 'hover:bg-white/[0.02]' : 'hover:bg-slate-50'}`}>
-                      <td className={`py-3 px-3 font-mono font-bold whitespace-nowrap ${theme === 'dark' ? 'text-white' : 'text-slate-700'}`}>
+                      <td className={`py-3 px-3 font-mono font-bold whitespace-nowrap ${theme === 'dark' ? 'text-white' : 'text-slate-700'}`} data-label="Shift #">
                         {sh.shiftNumber}
                       </td>
-                      <td className={`py-3 px-3 font-medium ${theme === 'dark' ? 'text-stone-200' : 'text-slate-800'}`}>
+                      <td className={`py-3 px-3 font-medium ${theme === 'dark' ? 'text-stone-200' : 'text-slate-800'}`} data-label="Cashier / Staff">
                         {sh.cashierName}
                         <span className={`block text-[10px] font-mono ${theme === 'dark' ? 'text-slate-400 dark:text-stone-500' : 'text-slate-400'}`}>{sh.role}</span>
                       </td>
-                      <td className="py-3 px-3 whitespace-nowrap">{sh.outlet}</td>
-                      <td className={`py-3 px-3 text-right font-mono ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`}>
+                      <td className="py-3 px-3 whitespace-nowrap" data-label="Outlet">{sh.outlet}</td>
+                      <td className={`py-3 px-3 text-right font-mono ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`} data-label="Petty Float">
                         PKR {sh.startingPettyCash.toLocaleString()}
                       </td>
-                      <td className={`py-3 px-3 text-right font-mono font-semibold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
+                      <td className={`py-3 px-3 text-right font-mono font-semibold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`} data-label="Gross Sales">
                         PKR {sh.totalGrossSales.toLocaleString()}
                       </td>
-                      <td className={`py-3 px-3 text-right font-mono ${theme === 'dark' ? 'text-slate-700 dark:text-stone-300' : 'text-slate-600'}`}>
+                      <td className={`py-3 px-3 text-right font-mono ${theme === 'dark' ? 'text-slate-700 dark:text-stone-300' : 'text-slate-600'}`} data-label="Expected Cash">
                         PKR {sh.expectedCash.toLocaleString()}
                       </td>
-                      <td className={`py-3 px-3 text-right font-mono font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
+                      <td className={`py-3 px-3 text-right font-mono font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`} data-label="Actual Count">
                         PKR {sh.actualCash.toLocaleString()}
                       </td>
-                      <td className="py-3 px-3 text-right font-mono font-bold whitespace-nowrap">
+                      <td className="py-3 px-3 text-right font-mono font-bold whitespace-nowrap" data-label="Variance">
                         <span
                           className={`px-2 py-0.5 rounded text-[11px] inline-flex items-center gap-0.5 ${
                             isShortage
@@ -520,7 +520,7 @@ export const AdminReportsAnalytics: React.FC = () => {
                           {isShortage ? '-' : isOverage ? '+' : ''}PKR {Math.abs(variance).toLocaleString()}
                         </span>
                       </td>
-                      <td className="py-3 px-3 text-center">
+                      <td className="py-3 px-3 text-center" data-label="Status">
                         <span
                           className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase font-mono ${
                             sh.status === 'open'
@@ -531,7 +531,7 @@ export const AdminReportsAnalytics: React.FC = () => {
                           {sh.status}
                         </span>
                       </td>
-                      <td className={`py-3 px-3 italic text-[11px] max-w-xs truncate ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`} title={sh.notes}>
+                      <td className={`py-3 px-3 italic text-[11px] max-w-xs truncate ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`} title={sh.notes} data-label="Auditor Notes">
                         {sh.notes || '—'}
                       </td>
                     </tr>
@@ -635,8 +635,8 @@ export const AdminReportsAnalytics: React.FC = () => {
             <span className={`text-xs ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`}>All Outlets Combined</span>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className={`w-full text-left text-xs border-collapse ${theme === 'dark' ? 'text-slate-700 dark:text-stone-300' : 'text-slate-600'}`}>
+          <div className="overflow-x-auto mobile-admin-table-wrapper">
+            <table className={`w-full text-left text-xs border-collapse mobile-table-card-row ${theme === 'dark' ? 'text-slate-700 dark:text-stone-300' : 'text-slate-600'}`}>
               <thead>
                 <tr className={`border-b text-slate-500 dark:text-stone-400 font-bold uppercase tracking-wider text-[10px] ${theme === 'dark' ? 'border-slate-300 dark:border-white/10' : 'border-slate-200'}`}>
                   <th className="py-2.5 px-3 text-center">Rank</th>
@@ -651,7 +651,7 @@ export const AdminReportsAnalytics: React.FC = () => {
               <tbody className={`divide-y font-sans ${theme === 'dark' ? 'divide-white/5' : 'divide-slate-100'}`}>
                 {topSellingItems.map((it, idx) => (
                   <tr key={idx} className={`transition ${theme === 'dark' ? 'hover:bg-white/[0.02]' : 'hover:bg-slate-50'}`}>
-                    <td className="py-3 px-3 text-center">
+                    <td className="py-3 px-3 text-center" data-label="Rank">
                       <span
                         className={`w-6 h-6 rounded-full inline-flex items-center justify-center font-bold text-xs font-mono ${
                           idx === 0
@@ -666,22 +666,22 @@ export const AdminReportsAnalytics: React.FC = () => {
                         {idx + 1}
                       </span>
                     </td>
-                    <td className={`py-3 px-3 font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>{it.name}</td>
-                    <td className="py-3 px-3">
+                    <td className={`py-3 px-3 font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`} data-label="Item Title">{it.name}</td>
+                    <td className="py-3 px-3" data-label="Category">
                       <span className={`px-2 py-0.5 rounded text-[10px] uppercase font-mono border ${
                         theme === 'dark' ? 'bg-slate-50 dark:bg-stone-800/80 text-slate-700 dark:text-stone-300 border-slate-200 dark:border-white/5' : 'bg-slate-100 text-slate-600 border-slate-200'
                       }`}>
                         {it.category}
                       </span>
                     </td>
-                    <td className={`py-3 px-3 text-right font-mono font-semibold ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>
+                    <td className={`py-3 px-3 text-right font-mono font-semibold ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`} data-label="Units Sold">
                       {it.soldCount.toLocaleString()} units
                     </td>
-                    <td className="py-3 px-3 text-right font-mono font-bold text-emerald-400">
+                    <td className="py-3 px-3 text-right font-mono font-bold text-emerald-400" data-label="Total Revenue">
                       PKR {it.revenue.toLocaleString()}
                     </td>
-                    <td className={`py-3 px-3 text-right font-mono font-semibold ${theme === 'dark' ? 'text-slate-700 dark:text-stone-300' : 'text-slate-600'}`}>{it.margin}</td>
-                    <td className="py-3 px-3 text-center">
+                    <td className={`py-3 px-3 text-right font-mono font-semibold ${theme === 'dark' ? 'text-slate-700 dark:text-stone-300' : 'text-slate-600'}`} data-label="Gross Margin">{it.margin}</td>
+                    <td className="py-3 px-3 text-center" data-label="Performance Indicator">
                       <span className="inline-flex items-center gap-1 text-[11px] text-emerald-400 font-semibold">
                         <TrendingUp className="w-3.5 h-3.5" /> High Velocity
                       </span>

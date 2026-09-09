@@ -170,6 +170,15 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
                         • Flavor: <strong className="text-black">{it.flavor}</strong>
                       </div>
                     )}
+                    {it.modifiers && it.modifiers.length > 0 && (
+                      <div className="text-xs text-stone-700 pl-2">
+                        {it.modifiers.map((mod, mIdx) => (
+                          <div key={mIdx}>
+                            + {mod.name} {mod.price > 0 ? `(PKR ${mod.price})` : ''}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                     {it.customization && (
                       <div className="text-xs text-stone-700 pl-2">
                         • {it.customization}
@@ -301,8 +310,20 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
                     {it.flavor && (
                       <p className="text-[10px] text-stone-600 pl-2">Flavor: {it.flavor}</p>
                     )}
+                    {it.modifiers && it.modifiers.length > 0 && (
+                      <div className="text-[10px] text-stone-600 pl-2">
+                        {it.modifiers.map((mod, mIdx) => (
+                          <div key={mIdx}>
+                            + {mod.name} {mod.price > 0 ? `(PKR ${mod.price})` : ''}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                     {it.customization && (
                       <p className="text-[10px] text-stone-600 italic pl-2">↳ {it.customization}</p>
+                    )}
+                    {(it.itemNote || it.notes) && (
+                      <p className="text-[10px] text-red-700 font-bold italic pl-2">↳ * Special: {it.itemNote || it.notes}</p>
                     )}
                   </div>
                 ))}
