@@ -950,6 +950,13 @@ app.post('/api/orders', validateRequest(OrderPunchSchema), async (req: Request, 
         }
       }
 
+      const itemIdsToCheck = (items || []).map((i: any) => i.menuItemId || i.id).filter(Boolean);
+      const existingMenuItems = await tx.menuItem.findMany({
+        where: { id: { in: itemIdsToCheck } },
+        select: { id: true },
+      });
+      const validMenuItemIds = new Set(existingMenuItems.map((m) => m.id));
+
       const order = await tx.order.create({
         data: {
           orderNumber,
@@ -980,16 +987,19 @@ app.post('/api/orders', validateRequest(OrderPunchSchema), async (req: Request, 
           deliveryNotes: deliveryNotes || '',
           preOrder: !!preOrder,
           items: {
-            create: (items || []).map((item: any) => ({
-              menuItemId: item.menuItemId || (item.id && !item.id.startsWith('cart-') ? item.id : null),
-              name: item.name,
-              price: item.price,
-              quantity: item.quantity || 1,
-              flavor: item.flavor || '',
-              itemNote: item.itemNote || '',
-              notes: item.itemNote || '',
-              modifiers: JSON.stringify(item.modifiers || []),
-            })),
+            create: (items || []).map((item: any) => {
+              const targetId = item.menuItemId || (item.id && !item.id.startsWith('cart-') ? item.id : null);
+              return {
+                menuItemId: targetId && validMenuItemIds.has(targetId) ? targetId : null,
+                name: item.name,
+                price: item.price,
+                quantity: item.quantity || 1,
+                flavor: item.flavor || '',
+                itemNote: item.itemNote || '',
+                notes: item.itemNote || '',
+                modifiers: JSON.stringify(item.modifiers || []),
+              };
+            }),
           },
         },
         include: {
