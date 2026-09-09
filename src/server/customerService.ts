@@ -1,8 +1,9 @@
 import { prisma } from './prisma';
 import { CustomerUpsertSchema } from './validators';
-import { Customer, Order } from '../types';
+import { Customer } from '../types';
+import { DEFAULT_ORG_ID } from './seed';
 
-// In-Memory Fallback Cache to ensure 100% uptime even during DB connection drops
+// In-Memory Fallback Cache keyed by `${organizationId}:${digitsOnly}` to ensure multi-tenant isolation
 const memoryCustomers: Map<string, any> = new Map();
 
 /**
@@ -14,9 +15,12 @@ export function normalizePhone(rawPhone: string): string {
 }
 
 /**
- * Lookup a customer by phone number using Prisma ORM with indexed lookup
+ * Lookup a customer by phone number using Prisma ORM with tenant indexed lookup
  */
-export async function findCustomerByPhone(rawPhone: string): Promise<{
+export async function findCustomerByPhone(
+  rawPhone: string,
+  organizationId: string = DEFAULT_ORG_ID
+): Promise<{
   found: boolean;
   customer?: any;
   pastOrders?: any[];
@@ -29,13 +33,22 @@ export async function findCustomerByPhone(rawPhone: string): Promise<{
     return { found: false, source: 'prisma' };
   }
 
-  // 1. Try Prisma indexed lookup
+  // 1. Try Prisma indexed lookup scoped to organizationId
   try {
-    // Exact phone match
-    let cust = await prisma.customer.findUnique({
-      where: { phoneNumber: clean },
+    const cust = await prisma.customer.findFirst({
+      where: {
+        organizationId,
+        OR: [
+          { phoneNumber: clean },
+          { phone: clean },
+          ...(digitsOnly.length >= 7
+            ? [{ phoneNumber: { contains: digitsOnly } }, { phone: { contains: digitsOnly } }]
+            : []),
+        ],
+      },
       include: {
         orders: {
+          where: { organizationId },
           take: 10,
           orderBy: { createdAt: 'desc' },
           include: { items: true },
@@ -43,30 +56,11 @@ export async function findCustomerByPhone(rawPhone: string): Promise<{
       },
     });
 
-    // If not found by raw string, search by digits match
-    if (!cust && digitsOnly.length >= 7) {
-      cust = await prisma.customer.findFirst({
-        where: {
-          OR: [
-            { phoneNumber: { contains: digitsOnly } },
-            { phoneNumber: clean },
-          ],
-        },
-        include: {
-          orders: {
-            take: 10,
-            orderBy: { createdAt: 'desc' },
-            include: { items: true },
-          },
-        },
-      });
-    }
-
     if (cust) {
       const formattedCustomer: Customer = {
         id: cust.id,
         name: cust.name,
-        phone: cust.phoneNumber,
+        phone: cust.phoneNumber || cust.phone,
         email: cust.email || undefined,
         address: cust.address || 'Walk-in / Counter',
         deliveryNotes: cust.deliveryNotes || '',
@@ -106,8 +100,12 @@ export async function findCustomerByPhone(rawPhone: string): Promise<{
     console.warn('[Prisma] Customer lookup falling back to in-memory store:', err);
   }
 
-  // 2. Fallback to in-memory search
-  for (const [phoneKey, memCust] of memoryCustomers.entries()) {
+  // 2. Fallback to in-memory search strictly scoped to tenant organization
+  const memPrefix = `${organizationId}:`;
+  for (const [key, memCust] of memoryCustomers.entries()) {
+    if (!key.startsWith(memPrefix)) continue;
+    const phoneKey = key.substring(memPrefix.length);
+
     if (phoneKey === digitsOnly || (digitsOnly.length >= 7 && (phoneKey.endsWith(digitsOnly) || digitsOnly.endsWith(phoneKey)))) {
       return {
         found: true,
@@ -134,7 +132,7 @@ export async function findCustomerByPhone(rawPhone: string): Promise<{
 }
 
 /**
- * Upsert Customer (Create if new, update if existing) via Prisma
+ * Upsert Customer (Create if new, update if existing) via Prisma with strict tenant scoping
  */
 export async function upsertCustomerRecord(payload: {
   name?: string;
@@ -145,9 +143,11 @@ export async function upsertCustomerRecord(payload: {
   notes?: string;
   vipTier?: string;
   loyaltyPoints?: number;
+  organizationId?: string;
 }): Promise<{ success: boolean; isNew: boolean; customer: Customer }> {
   const cleanPhone = payload.phone.trim();
   const digitsOnly = cleanPhone.replace(/\D/g, '');
+  const orgId = payload.organizationId || DEFAULT_ORG_ID;
   const custName = (payload.name && payload.name.trim()) || 'Guest Customer';
   const custAddress = (payload.address && payload.address.trim()) || 'Walk-in / Counter';
   const custNotes = (payload.deliveryNotes || payload.notes || '').trim();
@@ -171,9 +171,10 @@ export async function upsertCustomerRecord(payload: {
   let resultCustomer: Customer;
 
   try {
-    // Check if customer exists in Prisma
+    // Check if customer exists in Prisma strictly under this organizationId
     const existing = await prisma.customer.findFirst({
       where: {
+        organizationId: orgId,
         OR: [
           { phone: cleanPhone },
           { phoneNumber: cleanPhone },
@@ -212,6 +213,7 @@ export async function upsertCustomerRecord(payload: {
       isNew = true;
       const created = await prisma.customer.create({
         data: {
+          organizationId: orgId,
           phone: cleanPhone,
           phoneNumber: cleanPhone,
           name: custName,
@@ -241,8 +243,9 @@ export async function upsertCustomerRecord(payload: {
     }
   } catch (err) {
     console.warn('[Prisma] Upsert fallback to in-memory store:', err);
-    // In-memory fallback
-    const memCust = memoryCustomers.get(digitsOnly);
+    // In-memory fallback scoped by organizationId
+    const memKey = `${orgId}:${digitsOnly}`;
+    const memCust = memoryCustomers.get(memKey);
     if (memCust) {
       isNew = false;
       memCust.name = custName;
@@ -267,6 +270,7 @@ export async function upsertCustomerRecord(payload: {
       const newId = `cust-${Date.now()}`;
       const newEntry = {
         id: newId,
+        organizationId: orgId,
         phoneNumber: cleanPhone,
         name: custName,
         email: payload.email || null,
@@ -279,7 +283,7 @@ export async function upsertCustomerRecord(payload: {
         createdAt: new Date(),
         updatedAt: new Date(),
       };
-      memoryCustomers.set(digitsOnly, newEntry);
+      memoryCustomers.set(memKey, newEntry);
       resultCustomer = {
         id: newId,
         name: custName,
@@ -297,8 +301,10 @@ export async function upsertCustomerRecord(payload: {
   }
 
   // Update memory cache
-  memoryCustomers.set(digitsOnly, {
+  const memKey = `${orgId}:${digitsOnly}`;
+  memoryCustomers.set(memKey, {
     id: resultCustomer.id,
+    organizationId: orgId,
     phoneNumber: resultCustomer.phone,
     name: resultCustomer.name,
     email: resultCustomer.email || null,
@@ -326,7 +332,8 @@ export async function recordCustomerOrderStats(
   phoneNumber: string,
   customerName: string,
   orderTotal: number,
-  address?: string
+  address?: string,
+  organizationId: string = DEFAULT_ORG_ID
 ) {
   if (!phoneNumber || !phoneNumber.trim()) return;
 
@@ -335,8 +342,11 @@ export async function recordCustomerOrderStats(
   const pointsEarned = Math.floor(orderTotal * 2);
 
   try {
-    const existing = await prisma.customer.findUnique({
-      where: { phoneNumber: cleanPhone },
+    const existing = await prisma.customer.findFirst({
+      where: {
+        organizationId,
+        OR: [{ phoneNumber: cleanPhone }, { phone: cleanPhone }],
+      },
     });
 
     if (existing) {
@@ -349,7 +359,7 @@ export async function recordCustomerOrderStats(
       else if (newPoints > 100 || newSpent > 1000) newTier = 'Silver';
 
       await prisma.customer.update({
-        where: { phoneNumber: cleanPhone },
+        where: { id: existing.id },
         data: {
           totalVisits: newVisits,
           totalSpent: newSpent,
@@ -362,6 +372,7 @@ export async function recordCustomerOrderStats(
     } else {
       await prisma.customer.create({
         data: {
+          organizationId,
           phone: cleanPhone,
           phoneNumber: cleanPhone,
           name: customerName || 'Guest Customer',
@@ -378,7 +389,8 @@ export async function recordCustomerOrderStats(
   }
 
   // Also update in-memory
-  const memCust = memoryCustomers.get(digitsOnly);
+  const memKey = `${organizationId}:${digitsOnly}`;
+  const memCust = memoryCustomers.get(memKey);
   if (memCust) {
     memCust.totalVisits += 1;
     memCust.totalSpent += orderTotal;

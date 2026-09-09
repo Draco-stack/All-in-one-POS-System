@@ -93,38 +93,6 @@ export default defineConfig({
               },
             },
           },
-          {
-            // Cache POS Catalog & Reference Data for Seamless Offline Operation
-            urlPattern: /^\/api\/(menu-items|categories|outlets|tables|users\/public|settings).*/i,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'pos-api-catalog-cache',
-              networkTimeoutSeconds: 3,
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days
-              },
-              cacheableResponse: {
-                statuses: [0, 200],
-              },
-            },
-          },
-          {
-            // Cache Customer Lookup Data
-            urlPattern: /^\/api\/customers\/.*/i,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'pos-api-customer-cache',
-              networkTimeoutSeconds: 2,
-              expiration: {
-                maxEntries: 200,
-                maxAgeSeconds: 60 * 60 * 24 * 3, // 3 days
-              },
-              cacheableResponse: {
-                statuses: [0, 200],
-              },
-            },
-          },
         ],
       },
       devOptions: {
@@ -134,6 +102,8 @@ export default defineConfig({
     }),
   ],
   build: {
+    outDir: 'dist',
+    emptyOutDir: true,
     rollupOptions: {
       output: {
         manualChunks: {

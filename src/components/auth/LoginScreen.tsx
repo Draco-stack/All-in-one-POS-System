@@ -25,7 +25,31 @@ export const LoginScreen: React.FC = () => {
     setIsSubmitting(true);
     setErrorMsg(null);
 
-    const result = loginUser(email.trim(), password.trim());
+    let result = loginUser(email.trim(), password.trim());
+    if (!result.success) {
+      // Try direct server authentication
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: email.trim(),
+            email: email.trim(),
+            pin: password.trim(),
+            password: password.trim(),
+          }),
+        });
+        if (res.ok) {
+          const authData = await res.json();
+          if (authData?.user) {
+            result = loginUser(authData.user.username || authData.user.name || email.trim(), password.trim());
+          }
+        }
+      } catch (err) {
+        console.warn('Server login attempt fallback failed:', err);
+      }
+    }
+
     if (result.success && result.user) {
       showToast(`✓ Welcome back, ${result.user.name} (${result.user.role.toUpperCase()})`);
     } else {

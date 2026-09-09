@@ -1,6 +1,6 @@
 generator client {
   provider      = "prisma-client-js"
-  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x", "debian-openssl-3.0.x", "debian-openssl-1.1.x", "rhel-openssl-3.0.x"]
 }
 
 datasource db {
@@ -8,124 +8,307 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ============================================================================
+// MULTI-TENANT ROOT ENTITIES (PHASE 1)
+// ============================================================================
+
+model Organization {
+  id            String         @id @default(cuid())
+  name          String
+  slug          String         @unique
+  status        String         @default("ACTIVE") // ACTIVE, SUSPENDED, TRIAL, CANCELLED
+  settings      String         @default("{}")     // JSON string for business configurations
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  branches      Branch[]
+  users         User[]
+  customers     Customer[]
+  categories    Category[]
+  menuItems     MenuItem[]
+  orders        Order[]
+  shifts        RegisterShift[]
+  tables        Table[]
+  devices       Device[]
+  auditLogs     AuditLog[]
+  subscriptions Subscription[]
+  outlets       Outlet[]
+  sessions      Session[]
+  devicePairings DevicePairing[]
+  deviceCredentials DeviceCredential[]
+  printJobs     PrintJob[]
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Branch {
+  id             String          @id @default(cuid())
+  organizationId String
+  organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  slug           String
+  address        String?
+  phone          String?
+  taxRate        Float           @default(0)
+  settings       String          @default("{}") // JSON string for branch-specific configs
+  printerIp      String?
+  printerPort    Int?            @default(9100)
+  active         Boolean         @default(true)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  users          User[]
+  orders         Order[]
+  shifts         RegisterShift[]
+  tables         Table[]
+  devices        Device[]
+  auditLogs      AuditLog[]
+
+  @@unique([organizationId, slug])
+  @@index([organizationId])
+  @@index([organizationId, active])
+}
+
+model Subscription {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  plan           String       @default("STARTER") // FREE, STARTER, BUSINESS, ENTERPRISE
+  status         String       @default("ACTIVE")  // ACTIVE, TRIALING, PAST_DUE, CANCELLED
+  trialEndsAt    DateTime?
+  startDate      DateTime     @default(now())
+  endDate        DateTime?
+  features       String       @default("[]")      // JSON array of enabled feature flags
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([organizationId])
+  @@index([status])
+}
+
+model Device {
+  id               String       @id @default(cuid())
+  organizationId   String
+  organization     Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  branchId         String?
+  branch           Branch?      @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  deviceIdentifier String       // e.g. "POS-COUNTER-01", "KDS-01", "TABLET-02"
+  name             String
+  deviceType       String       @default("POS") // POS, KDS, TABLET, MANAGER, CUSTOMER_DISPLAY
+  status           String       @default("ACTIVE") // ACTIVE, REVOKED, OFFLINE
+  lastSeenAt       DateTime?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  deviceCredential DeviceCredential?
+  printJobs        PrintJob[]
+
+  @@unique([organizationId, deviceIdentifier])
+  @@index([organizationId])
+  @@index([branchId])
+}
+
+model AuditLog {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  branchId       String?
+  branch         Branch?      @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  userId         String?
+  user           User?        @relation("AuditLogUser", fields: [userId], references: [id], onDelete: SetNull)
+  action         String       // LOGIN, LOGOUT, ORDER_CANCELLED, SHIFT_CLOSED, PRICE_CHANGED, etc.
+  entity         String       // ORDER, USER, SHIFT, MENU_ITEM, SETTINGS
+  entityId       String?
+  metadata       String?      @default("{}") // JSON metadata
+  ipAddress      String?
+  createdAt      DateTime     @default(now())
+
+  @@index([organizationId, createdAt])
+  @@index([organizationId, entity, entityId])
+  @@index([organizationId, branchId])
+}
+
+model Session {
+  id             String       @id @default(cuid())
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  branchId       String?
+  tokenHash      String?      // sha256 of the JWT/token
+  status         String       @default("ACTIVE") // ACTIVE, REVOKED, EXPIRED
+  deviceInfo     String?      // user-agent or device descriptor
+  ipAddress      String?
+  expiresAt      DateTime
+  revokedAt      DateTime?
+  lastUsedAt     DateTime     @default(now())
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([userId, status])
+  @@index([organizationId, status])
+  @@index([expiresAt])
+}
+
+// ============================================================================
+// CORE APPLICATION MODELS WITH TENANT ISOLATION (PHASE 1)
+// ============================================================================
+
 model User {
   id             String          @id @default(cuid())
+  organizationId String?
+  organization   Organization?   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  branchId       String?
+  branch         Branch?         @relation(fields: [branchId], references: [id], onDelete: SetNull)
   name           String
-  username       String?         @unique
+  username       String?
   pin            String          // 4-digit fast security PIN for workstation & manager overrides
-  role           String          @default("CASHIER") // Role: CASHIER, MANAGER, OWNER
+  role           String          @default("CASHIER") // Role: CASHIER, MANAGER, OWNER, RIDER, SERVER, ADMIN
   phone          String?         // Phone number of the staff member
   avatar         String?
   active         Boolean         @default(true)
-  restrictions   String          @default("[]") // JSON array of strings: restricted capabilities (e.g., ["dashboard", "pos"])
+  restrictions   String          @default("[]") // JSON array of strings: restricted capabilities
   createdOrders  Order[]         @relation("CreatedByUser")
   modifiedOrders Order[]         @relation("ModifiedByUser")
   riderOrders    Order[]         @relation("OrderRider")
   auditLogs      OrderAuditLog[]
   shiftsOpened   RegisterShift[] @relation("ShiftOpenedBy")
   shiftsClosed   RegisterShift[] @relation("ShiftClosedBy")
+  unifiedAuditLogs AuditLog[]    @relation("AuditLogUser")
+  sessions       Session[]
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
+
+  @@unique([organizationId, username])
+  @@index([organizationId])
+  @@index([organizationId, branchId])
+  @@index([organizationId, role])
 }
 
 model Customer {
-  id            String    @id @default(cuid())
-  phone         String    @unique
-  phoneNumber   String?   @unique
-  name          String
-  email         String?
-  address       String?
-  deliveryNotes String?
-  notes         String?
-  loyaltyPoints Int       @default(0)
-  vipTier       String    @default("BRONZE") // BRONZE, SILVER, GOLD, PLATINUM
-  totalVisits   Int       @default(0)
-  totalSpent    Float     @default(0)
-  isBlocked     Boolean   @default(false)
-  blockReason   String?
-  blockedAt     DateTime?
-  blockedBy     String?
-  orders        Order[]
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id             String        @id @default(cuid())
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  phone          String
+  phoneNumber    String?
+  name           String
+  email          String?
+  address        String?
+  deliveryNotes  String?
+  notes          String?
+  loyaltyPoints  Int           @default(0)
+  vipTier        String        @default("BRONZE") // BRONZE, SILVER, GOLD, PLATINUM
+  totalVisits    Int           @default(0)
+  totalSpent     Float         @default(0)
+  isBlocked      Boolean       @default(false)
+  blockReason    String?
+  blockedAt      DateTime?
+  blockedBy      String?
+  orders         Order[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@unique([organizationId, phone])
+  @@index([organizationId])
+  @@index([organizationId, createdAt])
+  @@index([organizationId, isBlocked])
 }
 
 model Category {
-  id        String     @id @default(cuid())
-  title     String     @unique
-  slug      String     @unique
-  icon      String?
-  active    Boolean    @default(true)
-  menuItems MenuItem[]
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  id             String        @id @default(cuid())
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  title          String
+  slug           String
+  icon           String?
+  active         Boolean       @default(true)
+  menuItems      MenuItem[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@unique([organizationId, slug])
+  @@index([organizationId])
+  @@index([organizationId, active])
 }
 
 model MenuItem {
-  id              String      @id @default(cuid())
+  id              String        @id @default(cuid())
+  organizationId  String?
+  organization    Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   title           String
   price           Float
-  imageUrl        String      @default("")
+  imageUrl        String        @default("")
   description     String?
   categoryId      String
-  category        Category    @relation(fields: [categoryId], references: [id])
-  active          Boolean     @default(true)
-  preparationTime Int         @default(10)
-  flavors         String      @default("[]") // JSON string of available flavors
-  options         String      @default("[]") // JSON string of modifiers
+  category        Category      @relation(fields: [categoryId], references: [id])
+  active          Boolean       @default(true)
+  preparationTime Int           @default(10)
+  flavors         String        @default("[]") // JSON string of available flavors
+  options         String        @default("[]") // JSON string of modifiers
   orderItems      OrderItem[]
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([organizationId])
+  @@index([categoryId])
+  @@index([organizationId, active])
 }
 
 model Order {
-  id             String          @id @default(cuid())
-  orderNumber    String          @unique
-  customerId     String?
-  customer       Customer?       @relation(fields: [customerId], references: [id])
-  status         String          @default("PUNCHED") // Status: PENDING, PUNCHED, CANCELLED, MODIFIED, COMPLETED
-  orderType      String          @default("DINE_IN") // Type: DINE_IN, TAKEAWAY, DELIVERY
-  paymentStatus  String          @default("PAID")    // Status: PAID, UNPAID, REFUNDED
-  paymentMethod  String          @default("CASH")    // Method: CASH, CARD, ONLINE
-  splitPayments  String?         @default("[]")      // JSON serialized split payment entries
-  tableNumber    String?
-  deliveryDriver String?
-  serverId       String?
-  serverName     String?
+  id              String          @id @default(cuid())
+  organizationId  String?
+  organization    Organization?   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  branchId        String?
+  branch          Branch?         @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  orderNumber     String
+  customerId      String?
+  customer        Customer?       @relation(fields: [customerId], references: [id])
+  status          String          @default("PUNCHED") // Status: PENDING, PUNCHED, CANCELLED, MODIFIED, COMPLETED
+  orderType       String          @default("DINE_IN") // Type: DINE_IN, TAKEAWAY, DELIVERY
+  paymentStatus   String          @default("PAID")    // Status: PAID, UNPAID, REFUNDED
+  paymentMethod   String          @default("CASH")    // Method: CASH, CARD, ONLINE
+  splitPayments   String?         @default("[]")      // JSON serialized split payment entries
+  tableNumber     String?
+  deliveryDriver  String?
+  serverId        String?
+  serverName      String?
   assignedRiderId String?
-  assignedRider  User?           @relation("OrderRider", fields: [assignedRiderId], references: [id])
-  cashierName    String?         @default("Cashier")
-  customerName   String?
-  customerPhone  String?
+  assignedRider   User?           @relation("OrderRider", fields: [assignedRiderId], references: [id])
+  cashierName     String?         @default("Cashier")
+  customerName    String?
+  customerPhone   String?
   
-  subtotal       Float           @default(0)
-  tax            Float           @default(0)
-  discount       Float           @default(0)
-  tip            Float           @default(0)
-  deliveryFee    Float           @default(0)
-  total          Float           @default(0)
-  totalAmount    Float           @default(0)
+  subtotal        Float           @default(0)
+  tax             Float           @default(0)
+  discount        Float           @default(0)
+  tip             Float           @default(0)
+  deliveryFee     Float           @default(0)
+  total           Float           @default(0)
+  totalAmount     Float           @default(0)
 
-  createdById    String?
-  createdBy      User?           @relation("CreatedByUser", fields: [createdById], references: [id])
-  modifiedById   String?
-  modifiedBy     User?           @relation("ModifiedByUser", fields: [modifiedById], references: [id])
+  createdById     String?
+  createdBy       User?           @relation("CreatedByUser", fields: [createdById], references: [id])
+  modifiedById    String?
+  modifiedBy      User?           @relation("ModifiedByUser", fields: [modifiedById], references: [id])
   
-  items          OrderItem[]
-  auditLogs      OrderAuditLog[]
+  items           OrderItem[]
+  auditLogs       OrderAuditLog[]
   
-  notes          String?
-  deliveryNotes  String?
-  preOrder       Boolean         @default(false)
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
+  notes           String?
+  deliveryNotes   String?
+  preOrder        Boolean         @default(false)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
 
-  @@index([createdAt])
-  @@index([status])
+  @@unique([organizationId, orderNumber])
+  @@index([organizationId])
+  @@index([organizationId, branchId])
+  @@index([organizationId, createdAt])
+  @@index([organizationId, status])
+  @@index([organizationId, orderType])
   @@index([createdById])
   @@index([customerId])
   @@index([assignedRiderId])
-  @@index([orderType])
 }
 
 model OrderItem {
@@ -158,11 +341,17 @@ model OrderAuditLog {
   previousData  String?  // JSON snapshot of previous state
   newData       String?  // JSON snapshot of new state
   createdAt     DateTime @default(now())
+
+  @@index([orderId])
 }
 
 model RegisterShift {
   id                   String        @id @default(cuid())
-  shiftNumber          String        @unique
+  organizationId       String?
+  organization         Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  branchId             String?
+  branch               Branch?       @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  shiftNumber          String
   openedById           String?
   openedBy             User?         @relation("ShiftOpenedBy", fields: [openedById], references: [id])
   closedById           String?
@@ -189,6 +378,12 @@ model RegisterShift {
   openedAt             DateTime      @default(now())
   closedAt             DateTime?
   audits               ShiftAudit[]
+
+  @@unique([organizationId, branchId, shiftNumber])
+  @@index([organizationId])
+  @@index([organizationId, branchId])
+  @@index([organizationId, status])
+  @@index([openedAt])
 }
 
 model ShiftAudit {
@@ -208,31 +403,97 @@ model ShiftAudit {
   shortageOverage       Float         @default(0)
   floatRetained         Float         @default(0)
   lockerDeposit         Float         @default(0)
-  denominationBreakdown String        @default("{}") // JSON string: { "5000": 2, "1000": 10, "500": 5, ... }
+  denominationBreakdown String        @default("{}")
   notes                 String?
   status                String        @default("closed")
   createdAt             DateTime      @default(now())
 
-  @@index([startTime, endTime])
   @@index([shiftId])
+  @@index([startTime, endTime])
 }
 
 model Outlet {
-  id        String   @id @default(cuid())
-  name      String   @unique
-  address   String?
-  phone     String?
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             String        @id @default(cuid())
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  branchId       String?
+  name           String
+  address        String?
+  phone          String?
+  active         Boolean       @default(true)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([organizationId])
 }
 
 model Table {
-  id        String   @id @default(cuid())
-  number    String   @unique
-  capacity  Int      @default(4)
-  status    String   @default("AVAILABLE") // AVAILABLE, OCCUPIED, RESERVED
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             String        @id @default(cuid())
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  branchId       String?
+  branch         Branch?       @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  number         String
+  capacity       Int           @default(4)
+  status         String        @default("AVAILABLE") // AVAILABLE, OCCUPIED, RESERVED
+  active         Boolean       @default(true)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@unique([organizationId, branchId, number])
+  @@index([organizationId])
+  @@index([organizationId, branchId])
+}
+
+model DevicePairing {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  branchId       String?
+  code           String       @unique
+  deviceId       String       // The device ID to pair this agent with
+  status         String       @default("PENDING") // PENDING, USED, EXPIRED
+  expiresAt      DateTime
+  createdAt      DateTime     @default(now())
+
+  @@index([organizationId])
+  @@index([code])
+}
+
+model DeviceCredential {
+  id             String       @id @default(cuid())
+  deviceId       String       @unique
+  device         Device       @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  branchId       String?
+  tokenHash      String       @unique // Secure SHA256 hash of the device credential token
+  status         String       @default("ACTIVE") // ACTIVE, REVOKED
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([organizationId])
+  @@index([tokenHash])
+}
+
+model PrintJob {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  branchId       String?
+  deviceId       String
+  device         Device       @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  jobType        String       // RECEIPT, KITCHEN, CASH_DRAWER
+  status         String       @default("QUEUED") // QUEUED, SENT, ACKNOWLEDGED, FAILED, UNKNOWN
+  payload        String       // The print payload text or ESC/POS payload reference
+  attempts       Int          @default(0)
+  lastError      String?
+  idempotencyKey String?
+  createdAt      DateTime     @default(now())
+  completedAt    DateTime?
+
+  @@unique([organizationId, idempotencyKey])
+  @@index([organizationId])
+  @@index([deviceId])
+  @@index([status])
 }

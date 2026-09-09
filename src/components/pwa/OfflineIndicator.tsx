@@ -2,9 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { WifiOff, Wifi, RefreshCw, CheckCircle2, CloudOff } from 'lucide-react';
 import { useOnlineStatus } from '../../hooks/useOnlineStatus';
 import { posDB } from '../../utils/indexedDB';
+import { useRestaurant } from '../../context/RestaurantContext';
 
 export const OfflineIndicator: React.FC = () => {
   const isOnline = useOnlineStatus();
+  const { currentUser, drainOfflineQueue } = useRestaurant();
   const [queuedCount, setQueuedCount] = useState(0);
   const [isSyncing, setIsSyncing] = useState(false);
   const [showSyncedToast, setShowSyncedToast] = useState(false);
@@ -12,7 +14,7 @@ export const OfflineIndicator: React.FC = () => {
 
   const checkPendingOrders = async () => {
     try {
-      const orders = await posDB.getQueuedOrders();
+      const orders = await posDB.getQueuedOrders(currentUser?.organizationId);
       setQueuedCount(orders.length);
     } catch (e) {
       // Ignore IndexedDB query errors
@@ -23,7 +25,7 @@ export const OfflineIndicator: React.FC = () => {
     checkPendingOrders();
     const interval = setInterval(checkPendingOrders, 4000);
     return () => clearInterval(interval);
-  }, []);
+  }, [currentUser?.organizationId]);
 
   useEffect(() => {
     if (!lastOnlineState && isOnline) {
@@ -39,19 +41,7 @@ export const OfflineIndicator: React.FC = () => {
     if (isSyncing) return;
     setIsSyncing(true);
     try {
-      const pending = await posDB.getQueuedOrders();
-      for (const item of pending) {
-        if (item.status === 'queued' || item.status === 'failed') {
-          const res = await fetch('/api/orders', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(item.data),
-          });
-          if (res.ok || res.status === 400 || res.status === 409 || res.status === 422) {
-            await posDB.removeQueuedOrder(item.localId);
-          }
-        }
-      }
+      await drainOfflineQueue();
       await checkPendingOrders();
     } catch (err) {
       console.warn('Manual sync failed:', err);

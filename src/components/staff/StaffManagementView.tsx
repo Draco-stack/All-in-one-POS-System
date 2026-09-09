@@ -193,16 +193,20 @@ export const StaffManagementView: React.FC = () => {
             <div className="space-y-3">
               <div>
                 <label className="text-xs text-slate-700 dark:text-stone-300 font-semibold block mb-1">
-                  New 4-Digit Security PIN
+                  New Security Password / PIN
                 </label>
                 <input
                   type="password"
-                  maxLength={4}
-                  placeholder="e.g. 5555"
+                  placeholder="Enter new password"
                   value={newPinInput}
-                  onChange={(e) => setNewPinInput(e.target.value.replace(/\D/g, ''))}
-                  className="w-full bg-white dark:bg-stone-950 border border-slate-200 dark:border-stone-800 rounded-xl p-3 text-center text-xl font-mono tracking-widest text-slate-900 dark:text-white focus:outline-none focus:border-[#00897b]"
+                  onChange={(e) => setNewPinInput(e.target.value)}
+                  className="w-full bg-white dark:bg-stone-950 border border-slate-200 dark:border-stone-800 rounded-xl p-3 text-center text-lg font-mono tracking-widest text-slate-900 dark:text-white focus:outline-none focus:border-[#00897b]"
                 />
+              </div>
+
+              <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-300/90 leading-relaxed flex items-start gap-2">
+                <span className="font-bold text-amber-400">Notice:</span>
+                <span>The previous password will be deleted automatically and immediately replaced.</span>
               </div>
 
               <div className="pt-2 flex justify-end gap-2">
@@ -214,10 +218,10 @@ export const StaffManagementView: React.FC = () => {
                 </button>
                 <button
                   onClick={handleSaveNewPin}
-                  disabled={newPinInput.length !== 4}
+                  disabled={!newPinInput.trim()}
                   className="px-5 py-2 rounded-xl bg-[#00897b] hover:bg-[#00796b] disabled:opacity-50 text-white text-xs font-bold shadow-md"
                 >
-                  Update PIN
+                  Update Password
                 </button>
               </div>
             </div>

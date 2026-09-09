@@ -214,18 +214,22 @@ export const CallCenterOrderModal: React.FC<CallCenterOrderModalProps> = ({
         // Direct transmission fallback: store locally and post to backend
         addOrder(newOrder);
         try {
+          const token = localStorage.getItem('pos_jwt_token');
           const res = await fetch('/api/orders', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
             body: JSON.stringify(newOrder),
           });
           if (!res.ok) {
             console.warn('Direct order API returned non-OK status. Queuing offline:', res.status);
-            await posDB.queueOrder(newOrder);
+            await posDB.queueOrder(newOrder, currentUser?.organizationId, currentUser?.branchId);
           }
         } catch (netErr) {
           console.warn('Network offline during call center order dispatch. Queuing in IndexedDB:', netErr);
-          await posDB.queueOrder(newOrder);
+          await posDB.queueOrder(newOrder, currentUser?.organizationId, currentUser?.branchId);
         }
       }
 

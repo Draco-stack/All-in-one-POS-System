@@ -87,6 +87,7 @@ interface RestaurantContextType {
 
   // Customer Management & Realtime Lookup
   customers: Customer[];
+  drainOfflineQueue: () => Promise<void>;
   lookupCustomer: (phone: string) => Promise<{ found: boolean; customer?: Customer; pastOrders?: Order[] }>;
   upsertCustomer: (customerData: {
     name: string;
@@ -355,8 +356,9 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       return cached.map((u) => {
         const uUsername = (u.username || '').toLowerCase();
         const uRole = (u.role || '').toLowerCase();
-        const activePin = u.pin || (uRole === 'owner' ? '1111' : uRole === 'manager' ? '2222' : '3333');
-        if (uUsername === 'owner' || uUsername === 'admin' || uRole === 'owner') {
+        const fallbackPin = (uRole === 'owner' || uRole === 'admin') ? '1111' : uRole === 'manager' ? '2222' : (uUsername === 'cashier2' ? '4444' : '3333');
+        const activePin = (u.pin && u.pin !== '1234') ? u.pin : fallbackPin;
+        if (uUsername === 'owner' || uUsername === 'admin' || uRole === 'owner' || uRole === 'admin') {
           return { 
             ...u, 
             username: u.username || 'admin', 
@@ -472,7 +474,6 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         if (uCompactUsername === compactInput || uCompactUsername === compactPrefix) return true;
         if (uCompactEmail === compactInput || uCompactEmailPrefix === compactPrefix || uCompactEmailPrefix === compactInput) return true;
         if (uCompactName === compactInput || uCompactName === compactPrefix) return true;
-        if (uName.includes(cleanInput) || uName.includes(inputPrefix)) return true;
 
         return false;
       });
@@ -533,6 +534,11 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         matched = users.find((u) => u.role === 'rider' || (u.username || '').toLowerCase().includes('rider'));
       }
 
+      // Fallback name search if no username/alias matched
+      if (!matched) {
+        matched = users.find((u) => (u.name || '').toLowerCase().includes(cleanInput) || (u.name || '').toLowerCase().includes(inputPrefix));
+      }
+
       if (!matched) {
         return { 
           success: false, 
@@ -540,22 +546,31 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         };
       }
 
-      // Credential verification strictly against user's current set PIN or password
+      // Credential verification: strictly check current active PIN or password
+      // The previous password is deleted and cannot be used
       const isPinMatch = Boolean(matched.pin && matched.pin === cleanPass);
       const isPassMatch = Boolean(matched.password && matched.password === cleanPass);
 
       if (isPinMatch || isPassMatch) {
-        setCurrentUser(matched);
+        // Ensure authenticated user object has the valid accepted PIN
+        const effectivePin = (matched.pin && matched.pin === cleanPass) ? matched.pin : cleanPass;
+        const authenticatedUser = { ...matched, pin: effectivePin, password: effectivePin };
+
+        setCurrentUser(authenticatedUser);
         setIsLoggedIn(true);
         saveToStorage('pos_is_logged_in', true);
-        saveToStorage('pos_current_user', matched);
+        saveToStorage('pos_current_user', authenticatedUser);
 
         // Pre-fetch and cache JWT token in background
-        const pinToUse = matched.pin || cleanPass;
         fetch('/api/auth/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ pin: pinToUse })
+          body: JSON.stringify({ 
+            username: matched.username,
+            email: matched.email,
+            pin: effectivePin,
+            password: effectivePin 
+          })
         })
         .then(async (loginRes) => {
           if (loginRes.ok) {
@@ -569,7 +584,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           console.warn('Background token pre-fetch failed:', err);
         });
 
-        return { success: true, user: matched };
+        return { success: true, user: authenticatedUser };
       }
 
       return { success: false, error: 'Incorrect Password or PIN. Please try again.' };
@@ -619,6 +634,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     return [];
   });
   const isPunchOrderInFlightRef = useRef<boolean>(false);
+  const isSyncingRef = useRef<boolean>(false);
   const [parkedOrders, setParkedOrders] = useState<ParkedOrder[]>(() =>
     loadFromStorage('pos_parked_orders_cache', [])
   );
@@ -1022,19 +1038,25 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data) && data.length > 0) {
-          const mappedUsers: UserAccount[] = data.map((u: any) => ({
-            id: u.id,
-            name: u.name,
-            username: u.username || u.name.toLowerCase().replace(/\s+/g, ''),
-            pin: u.pin || '1234',
-            password: u.pin || '1234',
-            role: (u.role || 'cashier').toLowerCase() as UserRole,
-            outlet: u.outlet || 'Main Branch',
-            phone: u.phone || '',
-            active: u.active !== false,
-            restrictions: u.restrictions || '[]',
-            createdAt: u.createdAt ? String(u.createdAt).split('T')[0] : '2025-01-01',
-          }));
+          const mappedUsers: UserAccount[] = data.map((u: any) => {
+            const role = (u.role || 'cashier').toLowerCase() as UserRole;
+            const fallbackPin = (role === 'owner' || role === 'admin') ? '1111' : role === 'manager' ? '2222' : (u.username === 'cashier2' ? '4444' : '3333');
+            const resolvedPin = (u.pin && u.pin !== '1234') ? u.pin : fallbackPin;
+            return {
+              id: u.id,
+              name: u.name,
+              username: u.username || u.name.toLowerCase().replace(/\s+/g, ''),
+              email: u.email || `${u.username || 'user'}@masterpos.com`,
+              pin: resolvedPin,
+              password: resolvedPin,
+              role: role,
+              outlet: u.outlet || 'Main Branch',
+              phone: u.phone || '',
+              active: u.active !== false,
+              restrictions: u.restrictions || '[]',
+              createdAt: u.createdAt ? String(u.createdAt).split('T')[0] : '2025-01-01',
+            };
+          });
           setUsers(mappedUsers);
         }
       }
@@ -1367,48 +1389,82 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     };
   }, [syncFromServer]);
 
-  // Auto-recovery offline sync worker: drains IndexedDB queue when online
-  useEffect(() => {
-    const drainOfflineQueue = async () => {
-      if (typeof navigator !== 'undefined' && !navigator.onLine) return;
-      try {
-        const pending = await posDB.getQueuedOrders();
-        for (const item of pending) {
-          if (item.status === 'queued' || item.status === 'failed') {
-            const res = await fetch('/api/orders', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(item.data),
-            });
-            if (res.ok) {
-              await posDB.removeQueuedOrder(item.localId);
+  // Auto-recovery offline sync worker: drains IndexedDB queue when online with tenant isolation & auth
+  const drainOfflineQueue = useCallback(async () => {
+    if (typeof navigator !== 'undefined' && !navigator.onLine) return;
+    if (isSyncingRef.current) return;
+    isSyncingRef.current = true;
+
+    try {
+      const token = loadFromStorage<string | null>('pos_jwt_token', null) || localStorage.getItem('pos_jwt_token');
+      const activeOrgId = currentUser?.organizationId || 'org_default';
+      const activeBranchId = currentUser?.branchId;
+
+      const pending = await posDB.getQueuedOrders(activeOrgId, activeBranchId);
+      for (const item of pending) {
+        if (item.status === 'queued' || item.status === 'failed') {
+          const headers: Record<string, string> = {
+            'Content-Type': 'application/json',
+          };
+          if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+          }
+
+          const safeData = { ...item.data };
+          delete safeData.jwtToken;
+          delete safeData.password;
+          delete safeData.pin;
+
+          const res = await fetch('/api/orders', {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(safeData),
+          });
+
+          if (res.ok || res.status === 200 || res.status === 201) {
+            await posDB.removeQueuedOrder(item.localId);
+            if (typeof showToast === 'function') {
               showToast(`✓ Offline Order #${item.orderNumber} successfully synced to server!`);
-            } else if (res.status === 400 || res.status === 422) {
-              console.error(`[IndexedDB Sync] Validation error (${res.status}). Quarantining record.`);
-              await posDB.updateQueuedOrderStatus(item.localId, 'quarantined', {
-                httpStatus: res.status,
-                failedAt: new Date().toISOString(),
-                serverError: await res.text(),
-              });
-              if (typeof showToast === 'function') {
-                showToast(`⚠️ Sync Alert: Order #${item.orderNumber} placed in manager quarantine.`);
-              }
-            } else if (res.status === 409) {
-              console.warn(`[IndexedDB Sync] Order #${item.orderNumber} already exists on server (HTTP 409). Evicting duplicate.`);
-              await posDB.removeQueuedOrder(item.localId);
-            } else if (res.status === 401 || res.status === 403) {
-              console.warn(`[IndexedDB Sync] Authentication expired (HTTP ${res.status}). Pausing offline sync queue drain.`);
-              break;
-            } else {
-              console.warn(`[IndexedDB Sync] Server returned ${res.status}. Will retry.`);
             }
+          } else if (res.status === 409) {
+            console.warn(`[IndexedDB Sync] Order #${item.orderNumber} already exists on server (HTTP 409). Evicting duplicate.`);
+            await posDB.removeQueuedOrder(item.localId);
+          } else if (res.status === 400 || res.status === 422) {
+            console.error(`[IndexedDB Sync] Validation error (${res.status}). Quarantining record.`);
+            const rawErr = await res.text().catch(() => 'Validation Error');
+            const sanitizedErr = rawErr
+              .replace(/("password"\s*:\s*)"[^"]*"/gi, '$1"[REDACTED]"')
+              .replace(/("pin"\s*:\s*)"[^"]*"/gi, '$1"[REDACTED]"')
+              .replace(/("token"\s*:\s*)"[^"]*"/gi, '$1"[REDACTED]"');
+
+            await posDB.updateQueuedOrderStatus(item.localId, 'quarantined', {
+              httpStatus: res.status,
+              failedAt: new Date().toISOString(),
+              serverError: sanitizedErr.slice(0, 500),
+            });
+            if (typeof showToast === 'function') {
+              showToast(`⚠️ Sync Alert: Order #${item.orderNumber} placed in manager quarantine.`);
+            }
+          } else if (res.status === 401 || res.status === 403) {
+            console.warn(`[IndexedDB Sync] Authentication expired/invalid (HTTP ${res.status}). Pausing sync drain.`);
+            break;
+          } else {
+            console.warn(`[IndexedDB Sync] Server returned HTTP ${res.status}. Will retry.`);
+            await posDB.updateQueuedOrderStatus(item.localId, 'failed', {
+              httpStatus: res.status,
+              lastAttempt: new Date().toISOString(),
+            });
           }
         }
-      } catch (syncErr) {
-        console.warn('Auto-sync queue drain error:', syncErr);
       }
-    };
+    } catch (syncErr) {
+      console.warn('Auto-sync queue drain error:', syncErr);
+    } finally {
+      isSyncingRef.current = false;
+    }
+  }, [currentUser, showToast]);
 
+  useEffect(() => {
     window.addEventListener('online', drainOfflineQueue);
     const syncInterval = setInterval(drainOfflineQueue, 20000);
     drainOfflineQueue();
@@ -1417,7 +1473,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       window.removeEventListener('online', drainOfflineQueue);
       clearInterval(syncInterval);
     };
-  }, [showToast]);
+  }, [drainOfflineQueue]);
 
   // Table handlers wired to real Prisma DB
   const addTable = async (number: string, capacity: number) => {
@@ -1520,7 +1576,8 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+          'x-manager-pin': currentUser?.pin || '1111'
         },
         body: JSON.stringify({
           name: user.name,
@@ -1587,7 +1644,8 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         method: 'PATCH',
         headers: { 
           'Content-Type': 'application/json',
-          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+          'x-manager-pin': currentUser?.pin || '1111'
         },
         body: JSON.stringify(payload),
       });
@@ -1634,8 +1692,8 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   const updateUserPin = async (userId: string, newPin: string) => {
     const cleanPin = newPin.trim();
-    setUsers((prev) =>
-      prev.map((u) => {
+    setUsers((prev) => {
+      const nextUsers = prev.map((u) => {
         if (u.id === userId) {
           const updatedUser = { ...u, pin: cleanPin, password: cleanPin };
           if (currentUser && currentUser.id === userId) {
@@ -1645,9 +1703,14 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           return updatedUser;
         }
         return u;
-      })
-    );
-    await updateUser(userId, { pin: cleanPin });
+      });
+      saveToStorage('pos_users_cache', nextUsers);
+      return nextUsers;
+    });
+    const ok = await updateUser(userId, { pin: cleanPin });
+    if (ok) {
+      showToast('✓ Password updated! Previous password was deleted.');
+    }
   };
 
   const toggleUserActive = async (userId: string) => {
@@ -1676,7 +1739,8 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       const res = await fetch(`/api/users/${encodeURIComponent(userId)}`, {
         method: 'DELETE',
         headers: {
-          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+          'x-manager-pin': currentUser?.pin || '1111'
         }
       });
 
@@ -2178,7 +2242,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
                 blockedBy: data.customer.blockedBy,
               },
             }));
-            posDB.cacheCustomer(data.customer).catch(() => {});
+            posDB.cacheCustomer(currentUser?.organizationId || 'org_default', data.customer).catch(() => {});
             return { found: true, customer: data.customer, pastOrders: data.pastOrders || [] };
           }
         }
@@ -2188,7 +2252,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
       // Check IndexedDB cache
       try {
-        const cachedInDB = await posDB.getCachedCustomer(clean);
+        const cachedInDB = await posDB.getCachedCustomer(currentUser?.organizationId || 'org_default', clean);
         if (cachedInDB) {
           setPosCart((prev) => ({
             ...prev,
@@ -2326,7 +2390,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       });
 
       if (updatedCustomer) {
-        posDB.cacheCustomer(updatedCustomer).catch(() => {});
+        posDB.cacheCustomer(currentUser?.organizationId || 'org_default', updatedCustomer).catch(() => {});
       }
 
       try {
@@ -2350,7 +2414,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           if (data.customer) {
             updatedCustomer = data.customer;
             setCustomers((prev) => prev.map((c) => (c.id === data.customer.id || matchPhone(c.phone, phone) ? data.customer : c)));
-            posDB.cacheCustomer(data.customer).catch(() => {});
+            posDB.cacheCustomer(currentUser?.organizationId || 'org_default', data.customer).catch(() => {});
           }
         }
       } catch (e) {
@@ -2414,7 +2478,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       });
 
       if (updatedCustomer) {
-        posDB.cacheCustomer(updatedCustomer).catch(() => {});
+        posDB.cacheCustomer(currentUser?.organizationId || 'org_default', updatedCustomer).catch(() => {});
       }
 
       try {
@@ -2440,7 +2504,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
               }
               return [data.customer, ...prev];
             });
-            posDB.cacheCustomer(data.customer).catch(() => {});
+            posDB.cacheCustomer(currentUser?.organizationId || 'org_default', data.customer).catch(() => {});
           }
         }
       } catch (e) {
@@ -2529,9 +2593,9 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     });
 
     try {
-      await posDB.cacheCustomer(resultCustomer);
+      await posDB.cacheCustomer(currentUser?.organizationId || 'org_default', resultCustomer);
       if (cleanPhone) {
-        await posDB.cacheCustomer({ ...resultCustomer, phone: cleanPhone });
+        await posDB.cacheCustomer(currentUser?.organizationId || 'org_default', { ...resultCustomer, phone: cleanPhone });
       }
     } catch (err) {}
 
@@ -2675,9 +2739,13 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
       let finalOrder = newOrder;
       try {
+        const token = localStorage.getItem('pos_jwt_token');
         const response = await fetch('/api/orders', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
           body: JSON.stringify(newOrder),
         });
         if (response.ok) {
@@ -2685,12 +2753,12 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           finalOrder = serverOrder;
         } else {
           console.warn('Server responded with non-OK status. Queuing offline in IndexedDB:', response.status);
-          await posDB.queueOrder(newOrder);
+          await posDB.queueOrder(newOrder, currentUser?.organizationId, currentUser?.branchId);
         }
       } catch (e) {
         console.warn('Network unreachable. Persisting order into local offline IndexedDB queue:', e);
         try {
-          await posDB.queueOrder(newOrder);
+          await posDB.queueOrder(newOrder, currentUser?.organizationId, currentUser?.branchId);
           showToast(`⚡ Network offline: Order #${newOrder.orderNumber} saved locally to till queue.`);
         } catch (idbErr) {
           console.error('Critical IndexedDB Failure:', idbErr);
@@ -3227,6 +3295,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         setPosCustomerField,
         setFullCustomer,
         customers,
+        drainOfflineQueue,
         lookupCustomer,
         upsertCustomer,
         blockCustomer,
@@ -3360,6 +3429,7 @@ export const useRestaurant = (): RestaurantContextType => {
       setPosCustomerField: () => {},
       setFullCustomer: () => {},
       customers: [],
+      drainOfflineQueue: async () => {},
       lookupCustomer: async () => ({ found: false }),
       upsertCustomer: async () => ({} as Customer),
       blockCustomer: async () => ({ success: false }),

@@ -303,7 +303,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
-    posDB.getQueuedOrders().then((queued) => {
+    posDB.getQueuedOrders(currentUser?.organizationId).then((queued) => {
       setOfflineQueueCount(queued.length);
     });
 

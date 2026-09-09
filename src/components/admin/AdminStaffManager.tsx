@@ -794,7 +794,7 @@ export const AdminStaffManager: React.FC = () => {
 
             <form onSubmit={handleSaveNewPin} className="p-5 space-y-4">
               <div className={`text-xs ${theme === 'dark' ? 'text-stone-300' : 'text-slate-600'}`}>
-                Set a new password for <span className={`font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>{targetUserForPin.name}</span> ({targetUserForPin.role.toUpperCase()}). Password can contain letters, numbers, or special characters.
+                Set a new password for <span className={`font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>{targetUserForPin.name}</span> ({targetUserForPin.role.toUpperCase()}).
               </div>
 
               <div>
@@ -812,6 +812,11 @@ export const AdminStaffManager: React.FC = () => {
                   }`}
                   autoFocus
                 />
+              </div>
+
+              <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-300/90 leading-relaxed flex items-start gap-2">
+                <span className="font-bold text-amber-400">Notice:</span>
+                <span>The previous password will be deleted automatically. Only this new password will be valid for login.</span>
               </div>
 
               <div className={`flex items-center justify-end gap-2 pt-3 border-t ${theme === 'dark' ? 'border-white/10' : 'border-slate-200'}`}>

@@ -1,15 +1,20 @@
 import { Request, Response } from 'express';
 import { Prisma } from '@prisma/client';
+import bcrypt from 'bcryptjs';
 import prisma from '../prisma';
+import { resolveTenantContext, sendTenantNotFound } from '../tenantHelper';
+import { revokeAllUserSessions } from '../auth/sessionService';
+import { assertResourceLimit } from '../billing/billingSystem';
 
 // ============================================================================
 // 1. ADD USER
-// Creates a real user record in the database (prisma.user.create)
-// with name, username, pin, and role (CASHIER, MANAGER, OWNER).
+// Creates a real user record in the database scoped strictly to req.tenant
+// with name, username, pin, and role (CASHIER, MANAGER, OWNER, etc.).
 // ============================================================================
 export async function addUser(req: Request, res: Response): Promise<Response> {
   try {
-    const { name, username, pin, role, phone } = req.body;
+    const tenant = await resolveTenantContext(req);
+    const { name, username, pin, role, phone, branchId } = req.body;
 
     if (!name || typeof name !== 'string' || !name.trim()) {
       return res.status(400).json({ error: 'Name is required.' });
@@ -31,41 +36,64 @@ export async function addUser(req: Request, res: Response): Promise<Response> {
       return res.status(400).json({ error: `Invalid role. Allowed roles: ${validRoles.join(', ')}` });
     }
 
-    // Check if username already exists in database
-    const existingUser = await prisma.user.findUnique({
-      where: { username: sanitizedUsername },
+    // Check if username already exists in database FOR THIS TENANT
+    const existingUser = await prisma.user.findFirst({
+      where: {
+        organizationId: tenant.organizationId,
+        username: sanitizedUsername,
+      },
     });
 
     if (existingUser) {
-      return res.status(409).json({ error: `Username '${sanitizedUsername}' is already taken.` });
+      return res.status(409).json({ error: `Username '${sanitizedUsername}' is already taken in this organization.` });
+    }
+
+    // Validate optional branchId belongs to tenant organization
+    let resolvedBranchId = tenant.branchId || null;
+    if (branchId) {
+      const branchMatch = await prisma.branch.findFirst({
+        where: { id: String(branchId), organizationId: tenant.organizationId },
+      });
+      if (branchMatch) {
+        resolvedBranchId = branchMatch.id;
+      }
     }
 
     const { restrictions } = req.body;
     const serializedRestrictions = typeof restrictions === 'string' ? restrictions : JSON.stringify(restrictions || []);
 
-    // Create real user record in database
-    const createdUser = await prisma.user.create({
-      data: {
-        name: name.trim(),
-        username: sanitizedUsername,
-        pin: pin.trim(),
-        role: roleUpper,
-        phone: phone ? phone.trim() : null,
-        active: true,
-        restrictions: serializedRestrictions,
-      },
-      select: {
-        id: true,
-        name: true,
-        username: true,
-        role: true,
-        phone: true,
-        pin: true,
-        active: true,
-        restrictions: true,
-        createdAt: true,
-        updatedAt: true,
-      },
+    // Securely hash PIN
+    const hashedPin = pin.trim().startsWith('$2') ? pin.trim() : await bcrypt.hash(pin.trim(), 10);
+
+    // Create real user record in database scoped to tenant organization under transaction
+    const createdUser = await prisma.$transaction(async (tx) => {
+      await assertResourceLimit(tx, tenant.organizationId, 'users');
+      return await tx.user.create({
+        data: {
+          organizationId: tenant.organizationId,
+          branchId: resolvedBranchId,
+          name: name.trim(),
+          username: sanitizedUsername,
+          pin: hashedPin,
+          role: roleUpper,
+          phone: phone ? phone.trim() : null,
+          active: true,
+          restrictions: serializedRestrictions,
+        },
+        select: {
+          id: true,
+          organizationId: true,
+          branchId: true,
+          name: true,
+          username: true,
+          role: true,
+          phone: true,
+          active: true,
+          restrictions: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      });
     });
 
     return res.status(201).json({
@@ -75,6 +103,9 @@ export async function addUser(req: Request, res: Response): Promise<Response> {
     });
   } catch (error: any) {
     console.error('[adminController.addUser] Error:', error);
+    if (error.message && (error.message.includes('LIMIT_EXCEEDED') || error.message.includes('SUBSCRIPTION_RESTRICTED'))) {
+      return res.status(403).json({ error: error.message });
+    }
     return res.status(500).json({
       error: 'Failed to create user record in database.',
       details: error.message || 'Internal database error.',
@@ -85,22 +116,30 @@ export async function addUser(req: Request, res: Response): Promise<Response> {
 // ============================================================================
 // 1.5 UPDATE USER
 // Updates user details in database (name, role, phone, pin, active status, restrictions)
+// strictly scoped to the tenant organization.
 // ============================================================================
 export async function updateUser(req: Request, res: Response): Promise<Response> {
   try {
+    const tenant = await resolveTenantContext(req);
     const { id } = req.params;
-    const { name, role, phone, pin, active, restrictions } = req.body;
+    const { name, role, phone, pin, active, restrictions, branchId } = req.body;
 
     if (!id) {
       return res.status(400).json({ error: 'User ID is required.' });
     }
 
-    const existingUser = await prisma.user.findUnique({
-      where: { id },
+    const targetId = id.trim();
+
+    // IDOR Hardening: Only find user belonging to this tenant organization
+    const existingUser = await prisma.user.findFirst({
+      where: {
+        id: targetId,
+        organizationId: tenant.organizationId,
+      },
     });
 
     if (!existingUser) {
-      return res.status(404).json({ error: `User with ID '${id}' was not found.` });
+      return sendTenantNotFound(res, 'User', targetId);
     }
 
     const dataToUpdate: any = {};
@@ -128,11 +167,24 @@ export async function updateUser(req: Request, res: Response): Promise<Response>
       if (typeof pin !== 'string' || !pin.trim()) {
         return res.status(400).json({ error: 'Password / PIN cannot be empty.' });
       }
-      dataToUpdate.pin = pin.trim();
+      dataToUpdate.pin = pin.trim().startsWith('$2') ? pin.trim() : await bcrypt.hash(pin.trim(), 10);
     }
 
     if (active !== undefined) {
       dataToUpdate.active = Boolean(active);
+    }
+
+    if (branchId !== undefined) {
+      if (branchId) {
+        const branchMatch = await prisma.branch.findFirst({
+          where: { id: String(branchId), organizationId: tenant.organizationId },
+        });
+        if (branchMatch) {
+          dataToUpdate.branchId = branchMatch.id;
+        }
+      } else {
+        dataToUpdate.branchId = null;
+      }
     }
 
     if (restrictions !== undefined) {
@@ -140,21 +192,26 @@ export async function updateUser(req: Request, res: Response): Promise<Response>
     }
 
     const updated = await prisma.user.update({
-      where: { id },
+      where: { id: existingUser.id },
       data: dataToUpdate,
       select: {
         id: true,
+        organizationId: true,
+        branchId: true,
         name: true,
         username: true,
         role: true,
         phone: true,
-        pin: true,
         active: true,
         restrictions: true,
         createdAt: true,
         updatedAt: true,
       },
     });
+    
+    if (pin !== undefined) {
+      await revokeAllUserSessions(existingUser.id, tenant.organizationId);
+    }
 
     return res.status(200).json({
       success: true,
@@ -172,11 +229,12 @@ export async function updateUser(req: Request, res: Response): Promise<Response>
 
 // ============================================================================
 // 2. DELETE USER
-// Permanently deletes a user from the database (prisma.user.delete) using their unique ID.
+// Permanently deletes a user from the database strictly scoped to the tenant organization.
 // Unlinks any relationships (historical orders, audit logs, register shifts, shift audits) first.
 // ============================================================================
 export async function deleteUser(req: Request, res: Response): Promise<Response> {
   try {
+    const tenant = await resolveTenantContext(req);
     const { id } = req.params;
 
     if (!id || typeof id !== 'string' || !id.trim()) {
@@ -185,16 +243,19 @@ export async function deleteUser(req: Request, res: Response): Promise<Response>
 
     const targetId = id.trim();
 
-    // Verify user exists in database
-    const existingUser = await prisma.user.findUnique({
-      where: { id: targetId },
+    // IDOR Hardening: Verify user exists and belongs to the requesting tenant organization
+    const existingUser = await prisma.user.findFirst({
+      where: {
+        id: targetId,
+        organizationId: tenant.organizationId,
+      },
     });
 
     if (!existingUser) {
-      return res.status(404).json({ error: `User with ID '${targetId}' was not found.` });
+      return sendTenantNotFound(res, 'User', targetId);
     }
 
-    // Force deletion by unlinking historical relations first, then hard deleting
+    // Unlink relationships and delete user in transaction
     const [
       createdOrdersUnlinked,
       modifiedOrdersUnlinked,
@@ -206,37 +267,38 @@ export async function deleteUser(req: Request, res: Response): Promise<Response>
       deletedUser,
     ] = await prisma.$transaction([
       prisma.order.updateMany({
-        where: { createdById: targetId },
-        data: { createdById: null }
+        where: { createdById: targetId, organizationId: tenant.organizationId },
+        data: { createdById: null },
       }),
       prisma.order.updateMany({
-        where: { modifiedById: targetId },
-        data: { modifiedById: null }
+        where: { modifiedById: targetId, organizationId: tenant.organizationId },
+        data: { modifiedById: null },
       }),
       prisma.order.updateMany({
-        where: { assignedRiderId: targetId },
-        data: { assignedRiderId: null }
+        where: { assignedRiderId: targetId, organizationId: tenant.organizationId },
+        data: { assignedRiderId: null },
       }),
       prisma.orderAuditLog.updateMany({
         where: { performedById: targetId },
-        data: { performedById: null }
+        data: { performedById: null },
       }),
       prisma.registerShift.updateMany({
-        where: { openedById: targetId },
-        data: { openedById: null }
+        where: { openedById: targetId, organizationId: tenant.organizationId },
+        data: { openedById: null },
       }),
       prisma.registerShift.updateMany({
-        where: { closedById: targetId },
-        data: { closedById: null }
+        where: { closedById: targetId, organizationId: tenant.organizationId },
+        data: { closedById: null },
       }),
       prisma.shiftAudit.updateMany({
         where: { userId: targetId },
-        data: { userId: null }
+        data: { userId: null },
       }),
       prisma.user.delete({
-        where: { id: targetId },
+        where: { id: existingUser.id },
         select: {
           id: true,
+          organizationId: true,
           name: true,
           username: true,
           role: true,
@@ -268,10 +330,11 @@ export async function deleteUser(req: Request, res: Response): Promise<Response>
 // ============================================================================
 // 3. ADD MENU ITEM
 // Creates a real menu item record (prisma.menuItem.create) linked to a
-// category with title, price, image URL, and active status.
+// category strictly scoped to the tenant organization.
 // ============================================================================
 export async function addMenuItem(req: Request, res: Response): Promise<Response> {
   try {
+    const tenant = await resolveTenantContext(req);
     const { title, name, description, price, imageUrl, image, categoryId, categoryTitle, category, active, available, flavors, options, preparationTime } = req.body;
 
     const itemTitle = (title || name || '').trim();
@@ -287,43 +350,62 @@ export async function addMenuItem(req: Request, res: Response): Promise<Response
     let targetCategoryId = categoryId ? String(categoryId).trim() : '';
     const resolvedCatTitle = categoryTitle || category;
 
-    // If categoryId is not directly provided or not found, find or create category by categoryTitle
+    // Resolve or create category strictly within tenant organization
     if (!targetCategoryId && resolvedCatTitle) {
       const catSlug = String(resolvedCatTitle).toLowerCase().replace(/\s+/g, '-');
-      const cat = await prisma.category.upsert({
-        where: { slug: catSlug },
-        update: { title: resolvedCatTitle },
-        create: {
-          title: resolvedCatTitle,
+      let cat = await prisma.category.findFirst({
+        where: {
+          organizationId: tenant.organizationId,
           slug: catSlug,
-          active: true,
         },
       });
+      if (!cat) {
+        cat = await prisma.category.create({
+          data: {
+            organizationId: tenant.organizationId,
+            title: resolvedCatTitle,
+            slug: catSlug,
+            active: true,
+          },
+        });
+      } else {
+        cat = await prisma.category.update({
+          where: { id: cat.id },
+          data: { title: resolvedCatTitle },
+        });
+      }
       targetCategoryId = cat.id;
     } else if (targetCategoryId) {
-      const categoryExists = await prisma.category.findUnique({
-        where: { id: targetCategoryId },
+      const categoryExists = await prisma.category.findFirst({
+        where: {
+          id: targetCategoryId,
+          organizationId: tenant.organizationId,
+        },
       });
 
       if (!categoryExists) {
-        // Fallback: check if slug or title matches
+        // Fallback: check if slug or title matches in same organization
         const catBySlug = await prisma.category.findFirst({
           where: {
+            organizationId: tenant.organizationId,
             OR: [{ slug: targetCategoryId }, { title: targetCategoryId }],
           },
         });
         if (catBySlug) {
           targetCategoryId = catBySlug.id;
         } else {
-          return res.status(404).json({ error: `Category with ID '${targetCategoryId}' does not exist.` });
+          return res.status(404).json({ error: `Category with ID '${targetCategoryId}' does not exist in this organization.` });
         }
       }
     } else {
-      // Default to first existing category or create a general one
-      let defaultCat = await prisma.category.findFirst();
+      // Default to first existing category in tenant or create one
+      let defaultCat = await prisma.category.findFirst({
+        where: { organizationId: tenant.organizationId },
+      });
       if (!defaultCat) {
         defaultCat = await prisma.category.create({
           data: {
+            organizationId: tenant.organizationId,
             title: 'General',
             slug: 'general',
             active: true,
@@ -339,24 +421,28 @@ export async function addMenuItem(req: Request, res: Response): Promise<Response
     const resolvedOptions = options ? (typeof options === 'string' ? options : JSON.stringify(options)) : '[]';
     const resolvedPrepTime = Number(preparationTime) || 10;
 
-    // Create real menu item record in database
-    const createdItem = await prisma.menuItem.create({
-      data: {
-        title: itemTitle,
-        description: description ? String(description).trim() : null,
-        price: numericPrice,
-        imageUrl: resolvedImageUrl,
-        active: resolvedActive,
-        categoryId: targetCategoryId,
-        flavors: resolvedFlavors,
-        options: resolvedOptions,
-        preparationTime: resolvedPrepTime,
-      },
-      include: {
-        category: {
-          select: { id: true, title: true, slug: true },
+    // Create menu item record in database scoped to tenant organization under transaction
+    const createdItem = await prisma.$transaction(async (tx) => {
+      await assertResourceLimit(tx, tenant.organizationId, 'menuItems');
+      return await tx.menuItem.create({
+        data: {
+          organizationId: tenant.organizationId,
+          title: itemTitle,
+          description: description ? String(description).trim() : null,
+          price: numericPrice,
+          imageUrl: resolvedImageUrl,
+          active: resolvedActive,
+          categoryId: targetCategoryId,
+          flavors: resolvedFlavors,
+          options: resolvedOptions,
+          preparationTime: resolvedPrepTime,
         },
-      },
+        include: {
+          category: {
+            select: { id: true, title: true, slug: true },
+          },
+        },
+      });
     });
 
     const io = (req.app as any).get('io');
@@ -371,6 +457,9 @@ export async function addMenuItem(req: Request, res: Response): Promise<Response
     });
   } catch (error: any) {
     console.error('[adminController.addMenuItem] Error:', error);
+    if (error.message && (error.message.includes('LIMIT_EXCEEDED') || error.message.includes('SUBSCRIPTION_RESTRICTED'))) {
+      return res.status(403).json({ error: error.message });
+    }
     return res.status(500).json({
       error: 'Failed to create menu item record in database.',
       details: error.message || 'Internal database error.',
@@ -379,30 +468,34 @@ export async function addMenuItem(req: Request, res: Response): Promise<Response
 }
 
 // ============================================================================
-// 4. DELETE MENU ITEM (PRODUCTION-SAFE PRISMA PERMANENT DELETE)
+// 4. DELETE MENU ITEM (TENANT-ISOLATED PERMANENT DELETE)
 // Dissociates foreign key from orderItem records while preserving sales numbers,
-// and deletes the menu item from PostgreSQL so it is truly and dynamically removed.
+// and deletes the menu item strictly scoped to tenant organization.
 // ============================================================================
 export async function deleteMenuItem(req: Request, res: Response): Promise<Response> {
   const paramId = req.params.id || req.params.itemId;
-  console.log("RECEIVED DELETE REQUEST FOR ID:", paramId);
 
   try {
+    const tenant = await resolveTenantContext(req);
+
     if (!paramId || typeof paramId !== 'string' || !paramId.trim()) {
       return res.status(400).json({ error: 'Menu item ID parameter is required.' });
     }
 
     const targetId = paramId.trim();
-    console.log('[adminController.deleteMenuItem] Processing request for targetId:', targetId);
 
-    // 1. Verify item exists in database (check by id or by title)
-    let existingItem = await prisma.menuItem.findUnique({
-      where: { id: targetId },
+    // 1. Verify item exists strictly in this tenant organization
+    let existingItem = await prisma.menuItem.findFirst({
+      where: {
+        id: targetId,
+        organizationId: tenant.organizationId,
+      },
     });
 
     if (!existingItem) {
       existingItem = await prisma.menuItem.findFirst({
         where: {
+          organizationId: tenant.organizationId,
           OR: [
             { title: { equals: targetId, mode: 'insensitive' } },
             { id: { contains: targetId } },
@@ -412,21 +505,12 @@ export async function deleteMenuItem(req: Request, res: Response): Promise<Respo
     }
 
     if (!existingItem) {
-      console.warn(`[adminController.deleteMenuItem] Item '${targetId}' not in DB. Returning success for catalog consistency.`);
-      const io = (req.app as any).get('io');
-      if (io) {
-        io.emit('menuItemDeleted', { id: targetId });
-      }
-      return res.status(200).json({
-        success: true,
-        strategy: 'LOCAL_ONLY',
-        message: `Menu item '${targetId}' removed from catalog.`,
-      });
+      return sendTenantNotFound(res, 'MenuItem', targetId);
     }
 
     const realId = existingItem.id;
 
-    // 2. Safe dissociation: nullify menuItemId on past order records so financial receipts remain intact
+    // 2. Safe dissociation: nullify menuItemId on past order records
     await prisma.orderItem.updateMany({
       where: { menuItemId: realId },
       data: { menuItemId: null },
@@ -437,12 +521,11 @@ export async function deleteMenuItem(req: Request, res: Response): Promise<Respo
       where: { id: realId },
       select: {
         id: true,
+        organizationId: true,
         title: true,
         price: true,
       },
     });
-
-    console.log(`[adminController.deleteMenuItem] Permanently deleted item '${deletedItem.title}' (${realId}) from database`);
 
     const io = (req.app as any).get('io');
     if (io) {
@@ -456,39 +539,21 @@ export async function deleteMenuItem(req: Request, res: Response): Promise<Respo
       data: deletedItem,
     });
   } catch (error: any) {
-    console.error("PRISMA DELETE ERROR:", error);
-    // Fallback: soft-deactivate if database constraint error occurs
-    try {
-      const targetId = String(paramId).trim();
-      const fallbackItem = await prisma.menuItem.updateMany({
-        where: { OR: [{ id: targetId }, { title: targetId }] },
-        data: { active: false },
-      });
-      const io = (req.app as any).get('io');
-      if (io) {
-        io.emit('menuItemDeleted', { id: targetId });
-      }
-      return res.status(200).json({
-        success: true,
-        strategy: 'SOFT_DELETE_FALLBACK',
-        message: 'Menu item deactivated in database.',
-        data: fallbackItem,
-      });
-    } catch (fallbackErr) {
-      return res.status(500).json({
-        error: 'Failed to delete menu item from database.',
-        details: error.message || 'Internal database error.',
-      });
-    }
+    console.error('PRISMA DELETE ERROR:', error);
+    return res.status(500).json({
+      error: 'Failed to delete menu item from database.',
+      details: error.message || 'Internal database error.',
+    });
   }
 }
 
 // ============================================================================
 // 5. UPDATE MENU ITEM
-// Updates an existing menu item in the database (title, price, description, active status, image, category, flavors).
+// Updates an existing menu item in the database strictly scoped to tenant organization.
 // ============================================================================
 export async function updateMenuItem(req: Request, res: Response): Promise<Response> {
   try {
+    const tenant = await resolveTenantContext(req);
     const { id } = req.params;
     const { title, name, description, price, imageUrl, image, categoryId, categoryTitle, category, active, available, flavors, options, preparationTime } = req.body;
 
@@ -498,13 +563,17 @@ export async function updateMenuItem(req: Request, res: Response): Promise<Respo
 
     const targetId = id.trim();
 
-    let existingItem = await prisma.menuItem.findUnique({
-      where: { id: targetId },
+    let existingItem = await prisma.menuItem.findFirst({
+      where: {
+        id: targetId,
+        organizationId: tenant.organizationId,
+      },
     });
 
     if (!existingItem) {
       existingItem = await prisma.menuItem.findFirst({
         where: {
+          organizationId: tenant.organizationId,
           OR: [
             { title: { equals: targetId, mode: 'insensitive' } },
             { title: { equals: title || name, mode: 'insensitive' } },
@@ -514,7 +583,7 @@ export async function updateMenuItem(req: Request, res: Response): Promise<Respo
     }
 
     if (!existingItem) {
-      return res.status(404).json({ error: `Menu item with ID '${targetId}' was not found.` });
+      return sendTenantNotFound(res, 'MenuItem', targetId);
     }
 
     const realId = existingItem.id;
@@ -564,18 +633,32 @@ export async function updateMenuItem(req: Request, res: Response): Promise<Respo
 
     const targetCatTitle = categoryTitle || category;
     if (categoryId) {
-      dataToUpdate.categoryId = String(categoryId).trim();
+      const catMatch = await prisma.category.findFirst({
+        where: { id: String(categoryId).trim(), organizationId: tenant.organizationId },
+      });
+      if (catMatch) {
+        dataToUpdate.categoryId = catMatch.id;
+      }
     } else if (targetCatTitle) {
       const catSlug = String(targetCatTitle).toLowerCase().replace(/\s+/g, '-');
-      const cat = await prisma.category.upsert({
-        where: { slug: catSlug },
-        update: { title: targetCatTitle },
-        create: {
-          title: targetCatTitle,
-          slug: catSlug,
-          active: true,
-        },
+      let cat = await prisma.category.findFirst({
+        where: { slug: catSlug, organizationId: tenant.organizationId },
       });
+      if (!cat) {
+        cat = await prisma.category.create({
+          data: {
+            organizationId: tenant.organizationId,
+            title: targetCatTitle,
+            slug: catSlug,
+            active: true,
+          },
+        });
+      } else {
+        cat = await prisma.category.update({
+          where: { id: cat.id },
+          data: { title: targetCatTitle },
+        });
+      }
       dataToUpdate.categoryId = cat.id;
     }
 
@@ -607,3 +690,4 @@ export async function updateMenuItem(req: Request, res: Response): Promise<Respo
     });
   }
 }
+

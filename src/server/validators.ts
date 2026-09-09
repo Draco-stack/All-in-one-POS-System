@@ -65,7 +65,7 @@ export const OrderPunchSchema = z.object({
     })
     .passthrough()
     .optional(),
-  items: z.array(OrderItemSchema).min(1, 'Order must contain at least 1 item'),
+  items: z.array(OrderItemSchema).min(1, 'Order must contain at least 1 item').max(100, 'Order cannot contain more than 100 items'),
   splitPayments: z.array(SplitPaymentEntrySchema).or(z.string()).optional(),
 }).passthrough();
 

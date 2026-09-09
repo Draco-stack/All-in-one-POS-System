@@ -292,6 +292,8 @@ export interface UserAccount {
   name: string;
   role: UserRole;
   pin: string;
+  organizationId?: string;
+  branchId?: string;
   username?: string;
   email?: string;
   password?: string;
@@ -344,4 +346,74 @@ export interface RiderStats {
   netFleetRevenue: number;
   codCashOnHand: number;
 }
+
+// ============================================================================
+// MULTI-TENANT TYPES (PHASE 1)
+// ============================================================================
+
+export interface Organization {
+  id: string;
+  name: string;
+  slug: string;
+  status: 'ACTIVE' | 'SUSPENDED' | 'TRIAL' | 'CANCELLED';
+  settings?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Branch {
+  id: string;
+  organizationId: string;
+  name: string;
+  slug: string;
+  address?: string;
+  phone?: string;
+  taxRate?: number;
+  settings?: string;
+  printerIp?: string;
+  printerPort?: number;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Subscription {
+  id: string;
+  organizationId: string;
+  plan: 'FREE' | 'STARTER' | 'BUSINESS' | 'ENTERPRISE';
+  status: 'ACTIVE' | 'TRIALING' | 'PAST_DUE' | 'CANCELLED';
+  trialEndsAt?: string;
+  startDate: string;
+  endDate?: string;
+  features?: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Device {
+  id: string;
+  organizationId: string;
+  branchId?: string;
+  deviceIdentifier: string;
+  name: string;
+  deviceType: 'POS' | 'KDS' | 'TABLET' | 'MANAGER' | 'CUSTOMER_DISPLAY';
+  status: 'ACTIVE' | 'REVOKED' | 'OFFLINE';
+  lastSeenAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AuditLogEntry {
+  id: string;
+  organizationId: string;
+  branchId?: string;
+  userId?: string;
+  action: string;
+  entity: string;
+  entityId?: string;
+  metadata?: any;
+  ipAddress?: string;
+  createdAt: string;
+}
+
 
