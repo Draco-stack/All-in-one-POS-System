@@ -87,6 +87,7 @@ model Order {
   orderType      String          @default("DINE_IN") // Type: DINE_IN, TAKEAWAY, DELIVERY
   paymentStatus  String          @default("PAID")    // Status: PAID, UNPAID, REFUNDED
   paymentMethod  String          @default("CASH")    // Method: CASH, CARD, ONLINE
+  splitPayments  String?         @default("[]")      // JSON serialized split payment entries
   tableNumber    String?
   deliveryDriver String?
   serverId       String?
@@ -122,6 +123,9 @@ model Order {
   @@index([createdAt])
   @@index([status])
   @@index([createdById])
+  @@index([customerId])
+  @@index([assignedRiderId])
+  @@index([orderType])
 }
 
 model OrderItem {

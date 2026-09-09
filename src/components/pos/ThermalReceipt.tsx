@@ -3,6 +3,7 @@ import QRCode from 'react-qr-code';
 import { Order, OrderType } from '../../types';
 import { useRestaurant } from '../../context/RestaurantContext';
 import { connectAndKickDrawer } from '../../utils/hardware';
+import { parseModifiers, parseOptions } from '../../utils/parseItemOptions';
 
 export type ThermalOrderType = 'DINE_IN' | 'TAKE_AWAY' | 'DELIVERY' | string;
 
@@ -16,11 +17,12 @@ export interface ReceiptItem {
   name: string;
   quantity: number;
   price: number;
-  modifiers?: ItemModifier[];
+  modifiers?: ItemModifier[] | string;
   customization?: string;
   flavor?: string;
   itemNote?: string;
-  selectedOptions?: { name?: string; choice?: string; label?: string; extraPrice?: number; price?: number }[];
+  notes?: string;
+  selectedOptions?: any[] | string;
 }
 
 export interface ThermalReceiptProps {
@@ -431,6 +433,8 @@ export const ThermalReceipt: React.FC<ThermalReceiptProps> = (props) => {
             <tbody>
               {items.map((item, idx) => {
                 const itemTotal = item.price * item.quantity;
+                const safeMods = parseModifiers(item.modifiers);
+                const safeOpts = parseOptions(item.selectedOptions);
                 return (
                   <React.Fragment key={item.id || idx}>
                     <tr className="align-top border-b border-gray-200">
@@ -449,8 +453,8 @@ export const ThermalReceipt: React.FC<ThermalReceiptProps> = (props) => {
                     </tr>
 
                     {/* Indented Item Modifiers & Options */}
-                    {item.modifiers && item.modifiers.length > 0 && (
-                      item.modifiers.map((mod, mIdx) => (
+                    {safeMods.length > 0 && (
+                      safeMods.map((mod, mIdx) => (
                         <tr key={`mod-${idx}-${mIdx}`} className="text-[9px]">
                           <td></td>
                           <td colSpan={2} className="pl-2 pb-0.5 text-left italic font-normal">
@@ -460,8 +464,8 @@ export const ThermalReceipt: React.FC<ThermalReceiptProps> = (props) => {
                       ))
                     )}
 
-                    {item.selectedOptions && item.selectedOptions.length > 0 && (
-                      item.selectedOptions.map((opt, oIdx) => (
+                    {safeOpts.length > 0 && (
+                      safeOpts.map((opt, oIdx) => (
                         <tr key={`opt-${idx}-${oIdx}`} className="text-[9px]">
                           <td></td>
                           <td colSpan={2} className="pl-2 pb-0.5 text-left italic font-normal">
@@ -474,17 +478,17 @@ export const ThermalReceipt: React.FC<ThermalReceiptProps> = (props) => {
                     {item.customization && (
                       <tr className="text-[9px]">
                         <td></td>
-                        <td colSpan={2} className="pl-2 pb-0.5 text-left italic">
-                          ↳ Note: {item.customization}
+                        <td colSpan={2} className="pl-2 pb-0.5 text-left italic font-normal">
+                          • {item.customization}
                         </td>
                       </tr>
                     )}
-
-                    {item.itemNote && (
+                    
+                    {(item.itemNote || item.notes) && (
                       <tr className="text-[9px]">
                         <td></td>
-                        <td colSpan={2} className="pl-2 pb-0.5 text-left italic">
-                          ↳ Note: {item.itemNote}
+                        <td colSpan={2} className="pl-2 pb-0.5 text-left italic font-bold">
+                          * Special: {item.itemNote || item.notes}
                         </td>
                       </tr>
                     )}

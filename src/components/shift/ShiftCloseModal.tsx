@@ -39,6 +39,7 @@ export const ShiftCloseModal: React.FC<ShiftCloseModalProps> = ({
   initialNotes,
 }) => {
   const { currentShift, closeShift, openShift, currentUser, orders, showToast, logoutUser } = useRestaurant();
+  const isCashier = currentUser?.role === 'cashier';
 
   // State for Opening Shift (when shift is closed/none)
   const [openingFloatInput, setOpeningFloatInput] = useState<string>('5000');
@@ -387,24 +388,27 @@ export const ShiftCloseModal: React.FC<ShiftCloseModalProps> = ({
                 <p className="text-[10px] text-slate-400 dark:text-stone-500">Cashier: {closedAuditData.cashierName}</p>
               </div>
 
-              <div className="space-y-1 border-b border-dashed border-stone-400 pb-2">
-                <div className="flex justify-between">
-                  <span>Starting Petty Cash:</span>
-                  <span>PKR {closedAuditData.startingPettyCash.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Cash Sales:</span>
-                  <span>PKR {closedAuditData.cashSales.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Card / Online Sales:</span>
-                  <span>PKR {closedAuditData.cardSales.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between font-bold">
-                  <span>Total Shift Revenue:</span>
-                  <span>PKR {closedAuditData.totalSales.toLocaleString()}</span>
-                </div>
-              </div>
+                {/* Sales Section - HIDE FROM CASHIER */}
+                {!isCashier && (
+                  <div className="space-y-1 border-b border-dashed border-stone-400 pb-2">
+                    <div className="flex justify-between">
+                      <span>Starting Petty Cash:</span>
+                      <span>PKR {closedAuditData.startingPettyCash.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Cash Sales:</span>
+                      <span>PKR {closedAuditData.cashSales.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Card / Online Sales:</span>
+                      <span>PKR {closedAuditData.cardSales.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between font-bold">
+                      <span>Total Shift Revenue:</span>
+                      <span>PKR {closedAuditData.totalSales.toLocaleString()}</span>
+                    </div>
+                  </div>
+                )}
 
               {/* Denomination Breakdown */}
               <div className="space-y-0.5 border-b border-dashed border-stone-400 pb-2 text-[11px]">
@@ -418,20 +422,24 @@ export const ShiftCloseModal: React.FC<ShiftCloseModalProps> = ({
               </div>
 
               <div className="space-y-1 pt-1">
-                <div className="flex justify-between font-bold">
-                  <span>Expected in Drawer:</span>
-                  <span>PKR {closedAuditData.expectedCash.toLocaleString()}</span>
-                </div>
+                {!isCashier && (
+                  <div className="flex justify-between font-bold">
+                    <span>Expected in Drawer:</span>
+                    <span>PKR {closedAuditData.expectedCash.toLocaleString()}</span>
+                  </div>
+                )}
                 <div className="flex justify-between font-black text-sm">
                   <span>Actual Cash Counted:</span>
                   <span>PKR {closedAuditData.actualCash.toLocaleString()}</span>
                 </div>
-                <div className="flex justify-between font-black text-xs pt-1 border-t border-dashed border-stone-400">
-                  <span>Variance ({closedAuditData.shortageOverage >= 0 ? 'OVERAGE' : 'SHORTAGE'}):</span>
-                  <span className={closedAuditData.shortageOverage >= 0 ? 'text-emerald-700' : 'text-red-600'}>
-                    {closedAuditData.shortageOverage >= 0 ? '+' : ''}PKR {closedAuditData.shortageOverage.toLocaleString()}
-                  </span>
-                </div>
+                {!isCashier && (
+                  <div className="flex justify-between font-black text-xs pt-1 border-t border-dashed border-stone-400">
+                    <span>Variance ({closedAuditData.shortageOverage >= 0 ? 'OVERAGE' : 'SHORTAGE'}):</span>
+                    <span className={closedAuditData.shortageOverage >= 0 ? 'text-emerald-700' : 'text-red-600'}>
+                      {closedAuditData.shortageOverage >= 0 ? '+' : ''}PKR {closedAuditData.shortageOverage.toLocaleString()}
+                    </span>
+                  </div>
+                )}
 
                 {/* Cash Allocation Breakdown */}
                 <div className="space-y-1 pt-1 border-t border-dashed border-stone-400 text-[11px]">

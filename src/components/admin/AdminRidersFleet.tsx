@@ -228,13 +228,13 @@ export const AdminRidersFleet: React.FC = () => {
 
         <div className="bg-gradient-to-b from-stone-900/90 to-[#141414]/90 backdrop-blur-md border border-slate-300 dark:border-white/10 rounded-2xl p-4 shadow-lg">
           <div className="flex items-center justify-between text-slate-500 dark:text-stone-400 text-[11px] font-semibold mb-1">
-            <span>Delivered (Orders/Items)</span>
+            <span>Delivered Orders</span>
             <CheckCircle className="w-4 h-4 text-emerald-400" />
           </div>
           <div className="text-xl font-bold text-emerald-400 font-mono">
-            {fleetTotals.totalDelivered} <span className="text-sm">/ {fleetTotals.totalDeliveredItems}</span>
+            {fleetTotals.totalDelivered}
           </div>
-          <div className="text-[10px] text-slate-400 dark:text-stone-500 mt-1">Orders / Total Items</div>
+          <div className="text-[10px] text-slate-400 dark:text-stone-500 mt-1">Successfully completed</div>
         </div>
 
         <div className="bg-gradient-to-b from-stone-900/90 to-[#141414]/90 backdrop-blur-md border border-slate-300 dark:border-white/10 rounded-2xl p-4 shadow-lg">
@@ -347,10 +347,10 @@ export const AdminRidersFleet: React.FC = () => {
                 </div>
                 <div className="bg-stone-950/80 rounded-xl p-2.5 text-center border border-slate-200 dark:border-white/5 shadow-inner">
                   <div className="text-[10px] text-emerald-400 font-semibold mb-0.5 uppercase tracking-wider">
-                    Delivered (O/I)
+                    Delivered
                   </div>
                   <div className="text-emerald-400 font-mono font-bold text-sm">
-                    {rider.stats.delivered} / {rider.stats.deliveredItemsCount}
+                    {rider.stats.delivered}
                   </div>
                 </div>
                 <div className="bg-stone-950/80 rounded-xl p-2.5 text-center border border-slate-200 dark:border-white/5 shadow-inner">

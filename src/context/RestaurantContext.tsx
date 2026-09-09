@@ -13,6 +13,7 @@ import {
   PosCartItem,
   OrderType,
   PaymentMethod,
+  SplitPaymentEntry,
   UserAccount,
   UserRole,
   InventoryStockItem,
@@ -105,7 +106,7 @@ interface RestaurantContextType {
   parkCurrentOrder: (title?: string) => void;
   recallParkedOrder: (parkedId: string) => void;
   deleteParkedOrder: (parkedId: string) => void;
-  punchOrder: (tenderedAmount?: number, outletName?: string) => Promise<Order>;
+  punchOrder: (tenderedAmount?: number, outletName?: string, splitPayments?: SplitPaymentEntry[]) => Promise<Order>;
   updateOrderStatus: (
     orderId: string, 
     status: Order['status'], 
@@ -115,6 +116,7 @@ interface RestaurantContextType {
       riderId?: string;
       amountTendered?: number;
       changeGiven?: number;
+      splitPayments?: SplitPaymentEntry[];
     }
   ) => void;
   refundOrder: (orderId: string, reason: string) => void;
@@ -791,12 +793,12 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       }, 0);
 
       const totalRevenue = deliveredOrders.reduce(
-        (sum, o) => sum + (o.total || o.subtotal || 0),
+        (sum, o) => sum + (o.total ?? o.subtotal ?? 0),
         0
       );
 
       const cancelledRevenue = cancelledOrders.reduce(
-        (sum, o) => sum + (o.total || o.subtotal || 0),
+        (sum, o) => sum + (o.total ?? o.subtotal ?? 0),
         0
       );
 
@@ -814,7 +816,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             (!pm.includes('card') && !pm.includes('online') && !pm.includes('pos'))
           );
         })
-        .reduce((sum, o) => sum + (o.total || o.subtotal || 0), 0);
+        .reduce((sum, o) => sum + (o.total ?? o.subtotal ?? 0), 0);
 
       // Total cash dropped by rider in cash drops audit ledger
       const totalDropped = (cashDrops || [])
@@ -836,14 +838,22 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       // COD Cash Reconciliation: Any order that cancels is naturally excluded/subtracted from delivered cash balance
       const codCashOnHand = Math.max(0, deliveredCODCash - totalDropped);
 
+      const cancelledItemsCount = cancelledOrders.reduce((sum, o) => {
+        return sum + (o.items || []).reduce((itemSum, item) => itemSum + (item.quantity || 0), 0);
+      }, 0);
+
+      const activeItemsCount = activeOrders.reduce((sum, o) => {
+        return sum + (o.items || []).reduce((itemSum, item) => itemSum + (item.quantity || 0), 0);
+      }, 0);
+
       return {
-        totalAssigned: assigned.length,
+        totalAssigned: assignedItemsCount,
         assignedItemsCount,
-        delivered: deliveredOrders.length,
+        delivered: deliveredItemsCount,
         deliveredItemsCount,
-        cancelled: cancelledOrders.length,
-        active: activeOrders.length,
-        inTransit: activeOrders.length,
+        cancelled: cancelledItemsCount,
+        active: activeItemsCount,
+        inTransit: activeItemsCount,
         totalRevenue,
         cancelledRevenue,
         netFleetRevenue,
@@ -1159,6 +1169,44 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         }
       }
     } catch (e) {}
+
+    // 7. Fetch Current Active Shift to unify across multiple accounts/terminals
+    try {
+      const res = await fetch('/api/shifts/current');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.shift) {
+          const s = data.shift;
+          setCurrentShift(prev => {
+            // Unify open shift across all accounts if there's a live one on the server
+            if (!prev || prev.status !== 'open' || prev.shiftNumber !== s.shiftNumber) {
+              const activeShift: RegisterShift = {
+                id: s.id || `shift-${s.shiftNumber}`,
+                shiftNumber: s.shiftNumber,
+                cashierName: s.cashierName || 'Cashier',
+                openedBy: s.openedById || 'usr-1',
+                openedAt: s.openedAt ? new Date(s.openedAt).toISOString() : new Date().toISOString(),
+                openingFloat: Number(s.startingFloat) || 0,
+                startingFloat: Number(s.startingFloat) || 0,
+                cashSales: 0,
+                cardSales: 0,
+                otherSales: 0,
+                totalGrossSales: 0,
+                totalTax: 0,
+                totalDiscounts: 0,
+                totalTips: 0,
+                cashInDrawerExpected: Number(s.startingFloat) || 0,
+                transactionsCount: 0,
+                status: 'open',
+                notes: s.notes || '',
+              };
+              return activeShift;
+            }
+            return prev;
+          });
+        }
+      }
+    } catch (e) {}
   }, []);
 
   // Initial mount fetch & periodic 15s background realtime sync
@@ -1335,12 +1383,24 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             if (res.ok) {
               await posDB.removeQueuedOrder(item.localId);
               showToast(`✓ Offline Order #${item.orderNumber} successfully synced to server!`);
-            } else if (res.status === 400 || res.status === 409 || res.status === 422) {
-              console.warn(`[IndexedDB Sync] Order #${item.orderNumber} returned HTTP ${res.status} (invalid/duplicate payload). Evicting from offline queue.`);
+            } else if (res.status === 400 || res.status === 422) {
+              console.error(`[IndexedDB Sync] Validation error (${res.status}). Quarantining record.`);
+              await posDB.updateQueuedOrderStatus(item.localId, 'quarantined', {
+                httpStatus: res.status,
+                failedAt: new Date().toISOString(),
+                serverError: await res.text(),
+              });
+              if (typeof showToast === 'function') {
+                showToast(`⚠️ Sync Alert: Order #${item.orderNumber} placed in manager quarantine.`);
+              }
+            } else if (res.status === 409) {
+              console.warn(`[IndexedDB Sync] Order #${item.orderNumber} already exists on server (HTTP 409). Evicting duplicate.`);
               await posDB.removeQueuedOrder(item.localId);
             } else if (res.status === 401 || res.status === 403) {
               console.warn(`[IndexedDB Sync] Authentication expired (HTTP ${res.status}). Pausing offline sync queue drain.`);
               break;
+            } else {
+              console.warn(`[IndexedDB Sync] Server returned ${res.status}. Will retry.`);
             }
           }
         }
@@ -2504,7 +2564,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   }, [cartSubtotal, cartDiscount, cartTax, cartDeliveryFee, posCart.tipAmount]);
 
   // Order Punch & Persistence
-  const punchOrder = async (tenderedAmount?: number, outletName?: string): Promise<Order> => {
+  const punchOrder = async (tenderedAmount?: number, outletName?: string, splitPayments?: SplitPaymentEntry[]): Promise<Order> => {
     if (isPunchOrderInFlightRef.current) {
       throw new Error('An order is already being processed. Please wait.');
     }
@@ -2543,7 +2603,11 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         ? (posCart.deliveryDriver || (posCart.orderType === 'delivery' ? 'Unassigned Rider' : 'Self Pickup'))
         : undefined;
 
-      const isPaid = tenderedAmount !== undefined ? tenderedAmount > 0 : false;
+      const isPaid = tenderedAmount !== undefined ? tenderedAmount > 0 : (splitPayments && splitPayments.length > 0);
+
+      const effectivePaymentMethod: PaymentMethod = (splitPayments && splitPayments.length > 0)
+        ? 'split'
+        : (posCart.paymentMethod || 'cash');
 
       const newOrder: Order = {
         id: `ord-${Date.now()}`,
@@ -2552,7 +2616,8 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         orderType: posCart.orderType,
         status: 'PUNCHED',
         paymentStatus: isPaid ? 'paid' : 'unpaid',
-        paymentMethod: posCart.paymentMethod || 'cash',
+        paymentMethod: effectivePaymentMethod,
+        splitPayments: splitPayments && splitPayments.length > 0 ? splitPayments : undefined,
         customer: {
           name: posCart.customer?.name || (posCart.orderType === 'delivery' ? 'Delivery Customer' : posCart.orderType === 'takeaway' ? 'Takeaway Customer' : 'Walk-in Customer'),
           phone: posCart.customer?.phone || '',
@@ -2642,11 +2707,25 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         return deduplicateOrders([finalOrder, ...filtered]);
       });
       
-      // Auto-print receipt
+      // Network Thermal ESC/POS Receipt Printing Service
       setPrintQueueOrder(finalOrder);
-      setTimeout(() => {
-        window.print();
-      }, 500);
+      fetch('/api/printer/print', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ order: finalOrder }),
+      }).catch((e) => console.warn('Network thermal print error:', e));
+
+      // Trigger Cash Drawer Kick pulse if cash payment is tendered
+      const hasCashTendered =
+        finalOrder.paymentMethod === 'cash' ||
+        (finalOrder.splitPayments && finalOrder.splitPayments.some((p: any) => p.method === 'cash'));
+      if (hasCashTendered) {
+        fetch('/api/printer/drawer-kick', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({}),
+        }).catch((e) => console.warn('Drawer kick error:', e));
+      }
 
       // Auto-deduct inventory
       setStockItems((prev) =>
@@ -2677,6 +2756,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       changeGiven?: number;
       reason?: string;
       cancelReason?: string;
+      splitPayments?: SplitPaymentEntry[];
     }
   ) => {
     const normalizedStatus = (status || '').toLowerCase() as Order['status'];
@@ -2700,6 +2780,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         status: normalizedStatus,
         ...(meta?.paymentStatus ? { paymentStatus: meta.paymentStatus as any } : {}),
         ...(meta?.paymentMethod ? { paymentMethod: meta.paymentMethod as any } : {}),
+        ...(meta?.splitPayments ? { splitPayments: meta.splitPayments } : {}),
         ...(meta?.amountTendered !== undefined ? { amountTendered: meta.amountTendered, tenderedAmount: meta.amountTendered } : {}),
         ...(meta?.changeGiven !== undefined ? { changeGiven: meta.changeGiven } : {}),
         updatedAt: new Date().toISOString() 
@@ -2712,6 +2793,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         status: normalizedStatus,
         ...(meta?.paymentStatus ? { paymentStatus: meta.paymentStatus } : {}),
         ...(meta?.paymentMethod ? { paymentMethod: meta.paymentMethod } : {}),
+        ...(meta?.splitPayments ? { splitPayments: meta.splitPayments } : {}),
         ...(meta?.riderId ? { riderId: meta.riderId } : {}),
       }),
     }).catch((err) => {

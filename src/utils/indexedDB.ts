@@ -14,7 +14,7 @@ export interface OfflineOrder {
   orderNumber: string;
   timestamp: number;
   data: any;
-  status: 'queued' | 'syncing' | 'synced' | 'failed';
+  status: 'queued' | 'syncing' | 'synced' | 'failed' | 'quarantined';
   retryCount: number;
   lastError?: string;
 }
@@ -116,6 +116,38 @@ class POSIndexedDB {
       const req = store.delete(localId);
 
       req.onsuccess = () => resolve();
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  /**
+   * Update queued order status (e.g. to 'quarantined' on validation failure)
+   */
+  async updateQueuedOrderStatus(
+    localId: string,
+    status: OfflineOrder['status'],
+    details?: { httpStatus?: number; failedAt?: string; serverError?: string; [key: string]: any }
+  ): Promise<void> {
+    const db = await this.initDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction('pending_orders', 'readwrite');
+      const store = tx.objectStore('pending_orders');
+      const req = store.get(localId);
+
+      req.onsuccess = () => {
+        const item = req.result as OfflineOrder | undefined;
+        if (item) {
+          item.status = status;
+          if (details) {
+            item.lastError = JSON.stringify(details);
+          }
+          const putReq = store.put(item);
+          putReq.onsuccess = () => resolve();
+          putReq.onerror = () => reject(putReq.error);
+        } else {
+          resolve();
+        }
+      };
       req.onerror = () => reject(req.error);
     });
   }

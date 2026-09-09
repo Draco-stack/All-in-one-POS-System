@@ -646,6 +646,22 @@ export const OrderQueueView: React.FC = () => {
                                 ))}
                               </div>
                             )}
+                            {item.selectedOptions && item.selectedOptions.length > 0 && (
+                              <div className="space-y-0.5 pl-1">
+                                {item.selectedOptions.map((opt: any, oIdx: number) => (
+                                  <span
+                                    key={`opt-${oIdx}`}
+                                    className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md inline-flex items-center gap-1 border mr-1 ${
+                                      theme === 'dark'
+                                        ? 'bg-blue-950/20 text-blue-400 border-blue-500/30'
+                                        : 'bg-blue-50 text-blue-800 border-blue-200'
+                                    }`}
+                                  >
+                                    ↳ {opt.choice || opt.name || opt.label}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
                             {safeNote && (
                               <p className="text-[11px] font-extrabold italic text-amber-500 dark:text-amber-400 pl-1">
                                 ⚠️ Note: "{safeNote}"

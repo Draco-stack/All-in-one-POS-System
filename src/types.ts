@@ -126,7 +126,14 @@ export type OrderItem = OrderItemRecord;
 export type OrderType = 'dine_in' | 'takeaway' | 'delivery' | 'drive_thru';
 export type OrderStatus = 'open' | 'pending' | 'in_kitchen' | 'ready' | 'dispatched' | 'delivered' | 'completed' | 'cancelled' | 'refunded' | 'PUNCHED' | 'MODIFIED' | 'punched' | 'modified';
 export type PaymentStatus = 'paid' | 'unpaid' | 'partially_paid' | 'refunded';
-export type PaymentMethod = 'cash' | 'card' | 'online' | 'unpaid';
+export type PaymentMethod = 'cash' | 'card' | 'online' | 'split' | 'unpaid';
+
+export interface SplitPaymentEntry {
+  id?: string;
+  method: 'cash' | 'card' | 'online';
+  amount: number;
+  reference?: string;
+}
 
 export interface Order {
   id: string;
@@ -141,6 +148,7 @@ export interface Order {
   status: OrderStatus;
   paymentStatus: PaymentStatus;
   paymentMethod: PaymentMethod;
+  splitPayments?: SplitPaymentEntry[];
   items: OrderItemRecord[];
   customer?: Customer;
   deliveryDriver?: string;

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Order } from '../../types';
 import { useRestaurant } from '../../context/RestaurantContext';
 import { X, Printer, Truck, Phone, MapPin, UserCheck, Plus } from 'lucide-react';
+import { parseModifiers, parseOptions } from '../../utils/parseItemOptions';
 
 interface DeliveryDriverSlipModalProps {
   order: Order | null;
@@ -201,14 +202,17 @@ export const DeliveryDriverSlipModal: React.FC<DeliveryDriverSlipModalProps> = (
                 <span>Qty</span>
               </div>
 
-              {order.items.map((item) => (
+              {order.items.map((item) => {
+                const safeMods = parseModifiers(item.modifiers);
+                const safeOpts = parseOptions(item.selectedOptions);
+                return (
                 <div key={item.id} className="flex justify-between items-start text-stone-900 py-0.5">
                   <div className="space-y-0.5 max-w-[260px]">
                     <span className="font-bold">[ ] {item.name}</span>
                     {item.flavor && <p className="text-[10px] text-stone-600 pl-4">Flavor: {item.flavor}</p>}
-                    {item.modifiers && item.modifiers.length > 0 && (
+                    {safeMods.length > 0 && (
                       <div className="text-[10px] text-stone-600 pl-4">
-                        {item.modifiers.map((mod, mIdx) => (
+                        {safeMods.map((mod, mIdx) => (
                           <div key={mIdx}>
                             + {mod.name}
                           </div>
@@ -216,11 +220,11 @@ export const DeliveryDriverSlipModal: React.FC<DeliveryDriverSlipModalProps> = (
                       </div>
                     )}
                     {item.customization && <p className="text-[10px] text-stone-600 pl-4 italic">↳ {item.customization}</p>}
-                    {item.selectedOptions && item.selectedOptions.length > 0 && (
+                    {safeOpts.length > 0 && (
                       <div className="text-[10px] text-stone-600 pl-4">
-                        {item.selectedOptions.map((opt, i) => (
+                        {safeOpts.map((opt, i) => (
                           <span key={i} className="mr-2">
-                            + {opt.choice}
+                            + {opt.choice || opt.name || opt.label}
                           </span>
                         ))}
                       </div>
@@ -235,7 +239,7 @@ export const DeliveryDriverSlipModal: React.FC<DeliveryDriverSlipModalProps> = (
                     x{item.quantity}
                   </span>
                 </div>
-              ))}
+              )})}
             </div>
 
             {/* Total Amount & Collection Instruction */}

@@ -437,7 +437,7 @@ export const ShiftManagementView: React.FC = () => {
                   onClick={handleDirectClose}
                   className="w-full py-2.5 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-bold tracking-wide transition cursor-pointer active:scale-95"
                 >
-                  Quick Close Register (PKR {(enteredCashNum || expectedCashInDrawer).toLocaleString()})
+                  Quick Close Register {isCashier ? '' : `(PKR ${(enteredCashNum || expectedCashInDrawer).toLocaleString()})`}
                 </button>
               </div>
             </div>

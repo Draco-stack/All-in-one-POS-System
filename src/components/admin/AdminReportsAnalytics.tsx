@@ -120,9 +120,9 @@ export const AdminReportsAnalytics: React.FC = () => {
       const oDate = new Date(o.createdAt);
       if (oDate.getTime() >= today.getTime()) {
         if (o.status === 'cancelled' || o.status === 'refunded') {
-          discounts += (o.total || o.subtotal || 0);
+          discounts += (o.total ?? o.subtotal ?? 0);
         } else {
-          const amt = (o.total || o.subtotal || 0);
+          const amt = (o.total ?? o.subtotal ?? 0);
           grossSales += amt;
           totalOrders++;
           
@@ -207,7 +207,7 @@ export const AdminReportsAnalytics: React.FC = () => {
         };
       }
 
-      const amt = o.total || o.subtotal || 0;
+      const amt = o.total ?? o.subtotal ?? 0;
       if (o.status === 'cancelled' || o.status === 'refunded') {
         monthsMap[monthKey].discountsAndRefunds += amt;
       } else {

@@ -9,6 +9,7 @@ interface ReceiptModalProps {
 }
 
 import { useRestaurant } from '../../context/RestaurantContext';
+import { parseModifiers, parseOptions } from '../../utils/parseItemOptions';
 
 export const ReceiptModal: React.FC<ReceiptModalProps> = ({ order, onClose }) => {
   const { setPrintQueueOrder } = useRestaurant();
@@ -103,7 +104,10 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ order, onClose }) =>
                 <span>TOTAL</span>
               </div>
 
-              {order.items.map((item) => (
+              {order.items.map((item) => {
+                const safeMods = parseModifiers(item.modifiers);
+                const safeOpts = parseOptions(item.selectedOptions);
+                return (
                 <div key={item.id} className="space-y-0.5">
                   <div className="flex justify-between items-start text-stone-800">
                     <span className="font-medium max-w-[170px] truncate">{item.name}</span>
@@ -115,9 +119,9 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ order, onClose }) =>
                   {item.flavor && (
                     <p className="text-[9px] text-stone-600 pl-2">Flavor: {item.flavor}</p>
                   )}
-                  {item.modifiers && item.modifiers.length > 0 && (
+                  {safeMods.length > 0 && (
                     <div className="text-[9px] text-stone-600 pl-2">
-                      {item.modifiers.map((mod, mIdx) => (
+                      {safeMods.map((mod, mIdx) => (
                         <div key={mIdx}>
                           + {mod.name} {mod.price > 0 ? `(Rs. ${mod.price.toFixed(0)})` : ''}
                         </div>
@@ -130,17 +134,17 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ order, onClose }) =>
                   {(item.itemNote || item.notes) && (
                     <p className="text-[9px] text-red-700 font-bold italic pl-2">↳ * Special: {item.itemNote || item.notes}</p>
                   )}
-                  {item.selectedOptions && item.selectedOptions.length > 0 && (
+                  {safeOpts.length > 0 && (
                     <div className="text-[9px] text-slate-400 dark:text-stone-500 pl-2">
-                      {item.selectedOptions.map((opt, i) => (
+                      {safeOpts.map((opt, i) => (
                         <span key={i} className="mr-2">
-                          + {opt.choice} ({opt.extraPrice > 0 ? `Rs. ${opt.extraPrice}` : 'inc'})
+                          + {opt.choice || opt.name || opt.label} ({opt.extraPrice > 0 ? `Rs. ${opt.extraPrice}` : 'inc'})
                         </span>
                       ))}
                     </div>
                   )}
                 </div>
-              ))}
+              )})}
             </div>
 
             {/* Global Order Instructions */}

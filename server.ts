@@ -8,6 +8,10 @@ import cors from 'cors';
 import compression from 'compression';
 import rateLimit from 'express-rate-limit';
 import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
+import { validateRequest } from './src/server/middleware/validate';
+import { OrderPunchSchema, ShiftCloseSchema } from './src/server/validators';
+import { printReceipt, openCashDrawer, formatReceiptEscPos } from './src/server/printer';
 import {
   addUser,
   updateUser,
@@ -102,17 +106,31 @@ app.post('/api/auth/login', async (req, res) => {
   const { pin } = req.body;
   if (!pin) return res.status(400).json({ error: 'PIN or Password required' });
   
-  const user = await prisma.user.findFirst({ where: { pin: String(pin).trim(), active: true } });
+  const rawPin = String(pin).trim();
+  const users = await prisma.user.findMany({ where: { active: true } });
+  let matchedUser = null;
 
-  if (!user) return res.status(401).json({ error: 'Invalid Password or PIN' });
+  for (const u of users) {
+    const isMatch = u.pin.startsWith('$2')
+      ? await bcrypt.compare(rawPin, u.pin)
+      : rawPin === u.pin;
+    if (isMatch) {
+      matchedUser = u;
+      break;
+    }
+  }
+
+  if (!matchedUser) return res.status(401).json({ error: 'Invalid Password or PIN' });
   
+  const jwtSecret = process.env.JWT_SECRET || 'secure_fallback';
   const token = jwt.sign(
-    { id: user.id, role: user.role, name: user.name, pin: user.pin },
-    process.env.JWT_SECRET || 'secure_fallback',
+    { id: matchedUser.id, role: matchedUser.role, name: matchedUser.name },
+    jwtSecret,
     { expiresIn: '12h' }
   );
   
-  return res.json({ token, user });
+  const { pin: _scrubbedPin, ...safeUser } = matchedUser;
+  return res.json({ token, user: safeUser });
 });
 
 app.post('/api/auth/validate-session', async (req, res) => {
@@ -133,16 +151,19 @@ app.post('/api/auth/validate-session', async (req, res) => {
         if (decoded.id !== userId) {
           return res.json({ valid: false, reason: 'Token user ID mismatch' });
         }
-        if (decoded.pin !== user.pin) {
-          return res.json({ valid: false, reason: 'Password updated, session invalidated' });
-        }
       } catch (err) {
         return res.json({ valid: false, reason: 'Invalid or expired token' });
       }
     }
 
-    if (pin && String(pin).trim() !== user.pin) {
-      return res.json({ valid: false, reason: 'Password updated' });
+    if (pin) {
+      const rawPin = String(pin).trim();
+      const isMatch = user.pin.startsWith('$2')
+        ? await bcrypt.compare(rawPin, user.pin)
+        : rawPin === user.pin;
+      if (!isMatch) {
+        return res.json({ valid: false, reason: 'Password updated' });
+      }
     }
 
     return res.json({ valid: true });
@@ -152,58 +173,56 @@ app.post('/api/auth/validate-session', async (req, res) => {
   }
 });
 
-const authenticateManager = async (req: Request, res: Response, next: NextFunction) => {
-  const authHeader = req.headers.authorization;
-  const token = authHeader?.startsWith('Bearer ') ? authHeader.split(' ')[1] : authHeader;
-  
-  if (token && token !== 'null' && token !== 'undefined') {
-    try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secure_fallback') as any;
-      const dbUser = await prisma.user.findUnique({ where: { id: decoded.id } });
-      if (dbUser && dbUser.active && dbUser.pin === decoded.pin) {
-        const role = String(decoded.role || '').toUpperCase();
-        if (role === 'MANAGER' || role === 'OWNER' || role === 'ADMIN') {
-          (req as any).user = decoded;
+export const authenticateManager = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) {
+      return res.status(500).json({ error: 'Server authentication configuration missing' });
+    }
+
+    // Path A: Bearer JWT validation
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
+
+    if (token) {
+      const decoded = jwt.verify(token, jwtSecret) as { id: string; role: string };
+      const dbUser = await prisma.user.findUnique({
+        where: { id: decoded.id },
+        select: { id: true, role: true, active: true, name: true }
+      });
+
+      if (dbUser && dbUser.active && ['OWNER', 'MANAGER', 'ADMIN'].includes(dbUser.role.toUpperCase())) {
+        (req as any).user = dbUser;
+        return next();
+      }
+    }
+
+    // Path B: Manager PIN override header
+    const managerPin = req.headers['x-manager-pin'];
+    if (typeof managerPin === 'string' && managerPin.trim().length >= 4) {
+      const activeManagers = await prisma.user.findMany({
+        where: {
+          role: { in: ['OWNER', 'MANAGER', 'ADMIN', 'owner', 'manager', 'admin'] },
+          active: true
+        }
+      });
+
+      for (const mgr of activeManagers) {
+        const isMatch = mgr.pin.startsWith('$2') 
+          ? await bcrypt.compare(managerPin.trim(), mgr.pin)
+          : managerPin.trim() === mgr.pin;
+
+        if (isMatch) {
+          (req as any).user = { id: mgr.id, role: mgr.role, name: mgr.name };
           return next();
         }
       }
-    } catch (err) {
-      // Continue to pin/header fallbacks
     }
-  }
 
-  // Check manager/owner PIN from headers or body
-  const pin = req.headers['x-manager-pin'] || req.headers['x-user-pin'] || req.body?.managerPin || req.body?.pin;
-  if (pin) {
-    const user = await prisma.user.findFirst({
-      where: {
-        pin: String(pin),
-        role: { in: ['OWNER', 'MANAGER', 'ADMIN', 'owner', 'manager', 'admin'] },
-        active: true,
-      },
-    });
-    if (user) {
-      (req as any).user = user;
-      return next();
-    }
+    return res.status(403).json({ error: 'Forbidden: Elevated manager credentials required' });
+  } catch (err) {
+    return res.status(401).json({ error: 'Unauthorized: Invalid or expired authorization' });
   }
-
-  // Header role check for authenticated POS terminal sessions
-  const userRole = String(req.headers['x-user-role'] || '').toUpperCase();
-  if (userRole === 'OWNER' || userRole === 'MANAGER' || userRole === 'ADMIN') {
-    return next();
-  }
-
-  // In trusted local workstation POS environment, allow if an active owner or manager exists in DB
-  const fallbackManager = await prisma.user.findFirst({
-    where: { role: { in: ['OWNER', 'MANAGER', 'ADMIN', 'owner', 'manager', 'admin'] }, active: true }
-  });
-  if (fallbackManager) {
-    (req as any).user = fallbackManager;
-    return next();
-  }
-
-  return res.status(401).json({ error: 'Unauthorized: Manager or Owner privilege required' });
 };
 
 // API Routes
@@ -212,14 +231,13 @@ app.get('/api/health', (req, res) => {
 });
 
 // User Management (Admin RBAC)
-app.get('/api/users', async (req, res) => {
+app.get('/api/users', async (req: Request, res: Response) => {
   try {
     const users = await prisma.user.findMany({
       select: {
         id: true,
         name: true,
         username: true,
-        pin: true,
         role: true,
         phone: true,
         active: true,
@@ -232,7 +250,7 @@ app.get('/api/users', async (req, res) => {
     return res.json(users);
   } catch (error) {
     console.error('[Prisma] Get users error:', error);
-    return res.status(500).json({ error: 'Failed to retrieve users' });
+    return res.status(500).json({ error: 'Failed to retrieve staff profiles' });
   }
 });
 app.post('/api/users', authenticateManager, addUser);
@@ -807,7 +825,7 @@ app.get('/api/orders', async (req, res) => {
 });
 
 // Create new order
-app.post('/api/orders', async (req, res) => {
+app.post('/api/orders', validateRequest(OrderPunchSchema), async (req: Request, res: Response) => {
   try {
     const {
       orderNumber: clientOrderNum,
@@ -827,12 +845,26 @@ app.post('/api/orders', async (req, res) => {
       assignedRiderId,
       paymentMethod,
       paymentStatus,
+      splitPayments,
       preOrder,
       notes,
       tableNumber,
       serverId,
       serverName,
     } = req.body;
+
+    const idempotencyKey = (req.headers['idempotency-key'] as string) || clientOrderNum;
+
+    if (idempotencyKey) {
+      const existingOrder = await prisma.order.findFirst({
+        where: { orderNumber: String(idempotencyKey) },
+        include: { customer: true, items: true, assignedRider: true, auditLogs: true },
+      });
+      if (existingOrder) {
+        console.log(`[Idempotency] Duplicate order submission intercepted for key: ${idempotencyKey}`);
+        return res.status(200).json(transformOrder(existingOrder));
+      }
+    }
 
     // Check if customer is blocked
     if (customer && customer.phone) {
@@ -857,7 +889,7 @@ app.post('/api/orders', async (req, res) => {
       }
     }
 
-    const orderNumber = clientOrderNum || `ORD-${Math.floor(1000 + Math.random() * 9000)}`;
+    const orderNumber = idempotencyKey ? String(idempotencyKey) : `ORD-${Math.floor(1000 + Math.random() * 9000)}`;
 
     if (!items || !Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ error: 'Order must contain at least one item.' });
@@ -925,6 +957,9 @@ app.post('/api/orders', async (req, res) => {
           status: 'PUNCHED',
           paymentMethod: (paymentMethod || 'cash').toUpperCase(),
           paymentStatus: (paymentStatus || 'paid').toUpperCase(),
+          splitPayments: Array.isArray(splitPayments)
+            ? JSON.stringify(splitPayments)
+            : (typeof splitPayments === 'string' ? splitPayments : '[]'),
           subtotal: roundToCurrency(subtotal !== undefined ? subtotal : calculatedSubtotal),
           tax: roundToCurrency(tax || 0),
           discount: roundToCurrency(discount || 0),
@@ -982,7 +1017,7 @@ app.post('/api/orders', async (req, res) => {
 // Update Order Status (e.g. PUNCHED -> in_kitchen -> ready -> dispatched -> completed)
 app.patch('/api/orders/:id/status', async (req, res) => {
   try {
-    const { status, riderId, paymentStatus, paymentMethod } = req.body;
+    const { status, riderId, paymentStatus, paymentMethod, splitPayments } = req.body;
     const orderId = req.params.id;
 
     const existing = await prisma.order.findFirst({
@@ -1001,6 +1036,11 @@ app.patch('/api/orders/:id/status', async (req, res) => {
     }
     if (paymentMethod) {
       dataToUpdate.paymentMethod = paymentMethod.toUpperCase();
+    }
+    if (splitPayments !== undefined) {
+      dataToUpdate.splitPayments = Array.isArray(splitPayments)
+        ? JSON.stringify(splitPayments)
+        : (typeof splitPayments === 'string' ? splitPayments : '[]');
     }
     if (riderId) {
       const user = await prisma.user.findFirst({
@@ -1342,92 +1382,122 @@ app.post('/api/shifts/open', async (req, res) => {
   }
 });
 
-// Close Shift & Store Audit Record
-app.post('/api/shifts/close', async (req, res) => {
+// Close Shift & Store Audit Record (Server-Authoritative Reconciliation)
+app.post('/api/shifts/close', validateRequest(ShiftCloseSchema), async (req: Request, res: Response) => {
   try {
-    const {
-      shiftId,
-      userId,
-      cashierName,
-      startTime,
-      endTime,
-      startingPettyCash,
-      totalSales,
-      cashSales,
-      cardSales,
-      expectedCash,
-      actualCash,
-      shortageOverage,
-      floatRetained,
-      lockerDeposit,
-      denominationBreakdown,
-      notes,
-    } = req.body;
+    const { shiftId, actualCash, floatRetained, denominationBreakdown, notes } = req.body;
+    if (!shiftId) return res.status(400).json({ error: 'Shift ID required' });
 
-    const shiftAudit = await prisma.shiftAudit.create({
-      data: {
-        shift: {
-          connectOrCreate: {
-            where: { shiftNumber: shiftId || `SH-${Date.now().toString().slice(-4)}` },
-            create: {
-              shiftNumber: shiftId || `SH-${Date.now().toString().slice(-4)}`,
-              cashierName: cashierName || 'Cashier',
-              startingFloat: startingPettyCash || 0,
-              startingPettyCash: startingPettyCash || 0,
-              totalSales: totalSales || 0,
-              cashSales: cashSales || 0,
-              cardSales: cardSales || 0,
-              expectedCash: expectedCash || 0,
-              actualCash: actualCash || 0,
-              shortageOverage: shortageOverage || 0,
-              floatRetained: floatRetained || 0,
-              lockerDeposit: lockerDeposit || 0,
-              status: 'closed',
-              closedAt: new Date(),
-            },
-          },
-        },
-        cashierName: cashierName || 'Cashier',
-        startTime: startTime ? new Date(startTime) : new Date(),
-        endTime: endTime ? new Date(endTime) : new Date(),
-        startingPettyCash: startingPettyCash || 0,
-        totalSales: totalSales || 0,
-        cashSales: cashSales || 0,
-        cardSales: cardSales || 0,
-        expectedCash: expectedCash || 0,
-        actualCash: actualCash || 0,
-        shortageOverage: shortageOverage || 0,
-        floatRetained: floatRetained || 0,
-        lockerDeposit: lockerDeposit || 0,
-        denominationBreakdown: JSON.stringify(denominationBreakdown || {}),
-        notes: notes || '',
-        status: 'closed',
-      },
+    const shift = await prisma.registerShift.findFirst({
+      where: { OR: [{ id: shiftId }, { shiftNumber: shiftId }], status: 'open' },
+    });
+    if (!shift) return res.status(404).json({ error: 'Active open shift not found' });
+
+    const closeTime = new Date();
+    const shiftOrders = await prisma.order.findMany({
+      where: { createdAt: { gte: shift.openedAt, lte: closeTime }, status: { notIn: ['CANCELLED', 'cancelled'] } },
+      select: { paymentMethod: true, paymentStatus: true, total: true, splitPayments: true },
     });
 
-    // Also update the RegisterShift directly if we have the shiftId
-    if (shiftId) {
-      await prisma.registerShift.update({
-        where: { shiftNumber: shiftId },
-        data: {
-          totalSales: totalSales || 0,
-          cashSales: cashSales || 0,
-          cardSales: cardSales || 0,
-          expectedCash: expectedCash || 0,
-          actualCash: actualCash || 0,
-          shortageOverage: shortageOverage || 0,
-          floatRetained: floatRetained || 0,
-          lockerDeposit: lockerDeposit || 0,
-          status: 'closed',
-          closedAt: new Date(),
+    let systemCashSales = 0, systemCardSales = 0, systemTotalSales = 0;
+    for (const ord of shiftOrders) {
+      if (ord.paymentStatus === 'PAID' || ord.paymentStatus === 'paid') {
+        const orderTotal = Number(ord.total) || 0;
+        systemTotalSales += orderTotal;
+
+        let handledViaSplit = false;
+        if (ord.splitPayments) {
+          try {
+            const splits = typeof ord.splitPayments === 'string' ? JSON.parse(ord.splitPayments) : ord.splitPayments;
+            if (Array.isArray(splits) && splits.length > 0) {
+              for (const sp of splits) {
+                const spAmt = Number(sp.amount) || 0;
+                if (String(sp.method).toUpperCase() === 'CASH') {
+                  systemCashSales += spAmt;
+                } else {
+                  systemCardSales += spAmt;
+                }
+              }
+              handledViaSplit = true;
+            }
+          } catch {}
         }
-      }).catch(() => {}); // Ignore if it doesn't exist
+
+        if (!handledViaSplit) {
+          String(ord.paymentMethod).toUpperCase() === 'CASH' ? (systemCashSales += orderTotal) : (systemCardSales += orderTotal);
+        }
+      }
     }
 
-    return res.json({ success: true, audit: shiftAudit });
+    const startingFloat = Number(shift.startingFloat) || 0;
+    const expectedCashInDrawer = startingFloat + systemCashSales;
+    const countedCash = Number(actualCash) || 0;
+    const cashVariance = countedCash - expectedCashInDrawer;
+    const retained = Number(floatRetained) || 0;
+    const lockerDeposit = Math.max(0, countedCash - retained);
+
+    const shiftUpdateData = {
+      status: 'closed', closedAt: closeTime, totalSales: systemTotalSales,
+      cashSales: systemCashSales, cardSales: systemCardSales,
+      cashInDrawerExpected: expectedCashInDrawer, expectedCash: expectedCashInDrawer,
+      actualCashInDrawer: countedCash, actualCash: countedCash,
+      cashDifference: cashVariance, shortageOverage: cashVariance,
+      floatRetained: retained, lockerDeposit: lockerDeposit,
+      denominationBreakdown: typeof denominationBreakdown === 'object' ? JSON.stringify(denominationBreakdown) : denominationBreakdown,
+      notes: notes || '',
+    };
+
+    const [closedShift, auditRecord] = await prisma.$transaction([
+      prisma.registerShift.update({ where: { id: shift.id }, data: shiftUpdateData }),
+      prisma.shiftAudit.create({ data: { shiftId: shift.id, cashierName: shift.cashierName, startTime: shift.openedAt, endTime: closeTime, startingPettyCash: startingFloat, ...shiftUpdateData } }),
+    ]);
+
+    return res.json({ success: true, message: 'Shift closed', shift: closedShift, audit: auditRecord });
   } catch (err) {
     console.error('Close shift error:', err);
-    return res.status(500).json({ error: 'Failed to record shift audit' });
+    return res.status(500).json({ error: 'Server error during shift reconciliation' });
+  }
+});
+
+// ESC/POS Network Socket Thermal Printing Endpoints
+app.post('/api/printer/print', async (req: Request, res: Response) => {
+  try {
+    const { printerIp, printerPort, receiptData, order } = req.body;
+    const targetIp = printerIp || process.env.PRINTER_IP || '192.168.1.200';
+    const targetPort = Number(printerPort || process.env.PRINTER_PORT || 9100);
+
+    const payload = receiptData || (order ? formatReceiptEscPos(order) : '');
+    if (!payload) {
+      return res.status(400).json({ error: 'Receipt data or order payload required' });
+    }
+
+    const printed = await printReceipt(targetIp, targetPort, payload);
+    return res.json({
+      success: printed,
+      message: printed ? `Receipt printed on ${targetIp}:${targetPort}` : `Could not connect to printer at ${targetIp}:${targetPort}`,
+      simulated: !printed,
+    });
+  } catch (err: any) {
+    console.error('[Printer Route Error]:', err);
+    return res.status(500).json({ error: 'Failed to process print request', details: err.message });
+  }
+});
+
+app.post('/api/printer/drawer-kick', async (req: Request, res: Response) => {
+  try {
+    const { printerIp, printerPort } = req.body;
+    const targetIp = printerIp || process.env.PRINTER_IP || '192.168.1.200';
+    const targetPort = Number(printerPort || process.env.PRINTER_PORT || 9100);
+
+    const kicked = await openCashDrawer(targetIp, targetPort);
+    return res.json({
+      success: kicked,
+      message: kicked ? `Drawer pulse sent to ${targetIp}:${targetPort}` : `Failed to send drawer kick to ${targetIp}:${targetPort}`,
+      simulated: !kicked,
+    });
+  } catch (err: any) {
+    console.error('[Drawer Kick Route Error]:', err);
+    return res.status(500).json({ error: 'Failed to send cash drawer pulse', details: err.message });
   }
 });
 
@@ -1593,6 +1663,7 @@ function transformOrder(o: any) {
     serverName: o.serverName || undefined,
     paymentMethod: (o.paymentMethod || 'cash').toString().toLowerCase(),
     paymentStatus: (o.paymentStatus || 'paid').toString().toLowerCase(),
+    splitPayments: o.splitPayments ? (typeof o.splitPayments === 'string' ? (() => { try { return JSON.parse(o.splitPayments); } catch { return []; } })() : o.splitPayments) : [],
     cashierName: o.cashierName ?? 'Cashier',
     deliveryNotes: o.deliveryNotes || '',
     preOrder: !!o.preOrder,

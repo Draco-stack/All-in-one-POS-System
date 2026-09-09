@@ -55,9 +55,10 @@ import {
   Pencil,
   ChevronDown,
   ChevronUp,
+  Split,
 } from 'lucide-react';
 import { useRestaurant } from '../../context/RestaurantContext';
-import { MenuItem, Order, Customer, OrderStatus } from '../../types';
+import { MenuItem, Order, Customer, OrderStatus, SplitPaymentEntry, PaymentMethod } from '../../types';
 import { ShiftCloseModal } from '../shift/ShiftCloseModal';
 import { CustomerViewModal } from './CustomerViewModal';
 import { CustomerManageModal } from './CustomerManageModal';
@@ -67,6 +68,7 @@ import { BlockedCustomerAlertModal } from './BlockedCustomerAlertModal';
 import { OrderEditCancelModal } from '../orders/OrderEditCancelModal';
 import { CancelOrderModal } from '../orders/CancelOrderModal';
 import { ReceiptModal } from '../orders/ReceiptModal';
+import { PaymentModal } from './PaymentModal';
 import { CustomerHistoryView } from '../history/CustomerHistoryView';
 import { CategoryIcon, getCategoryIcon } from '../../utils/categoryIcons';
 import { MenuItemThumbnail } from '../common/MenuItemThumbnail';
@@ -242,6 +244,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
   const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
   const [selectedOrderForCashout, setSelectedOrderForCashout] = useState<Order | null>(null);
   const [isCashoutModalOpen, setIsCashoutModalOpen] = useState(false);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isCashoutSubmitting, setIsCashoutSubmitting] = useState<boolean>(false);
   const cashoutLockRef = useRef<boolean>(false);
   const [cashoutPaymentMethod, setCashoutPaymentMethod] = useState<'cash' | 'card' | 'online'>('cash');
@@ -649,6 +652,58 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
       console.error('Place order failed:', err);
       playErrorSound();
       showToast(`❌ Place order failed: ${err.message || 'Unknown error'}`);
+    } finally {
+      isPunchingRef.current = false;
+      setIsPunching(false);
+    }
+  };
+
+  const handlePaymentModalComplete = async (
+    tendered: number,
+    method: PaymentMethod,
+    splitPayments?: SplitPaymentEntry[]
+  ) => {
+    if (isPunchingRef.current || isPunching) return;
+    if (posCart.items.length === 0) return;
+
+    isPunchingRef.current = true;
+    setIsPunching(true);
+
+    try {
+      if (posCart.customer?.phone && posCart.customer.name) {
+        const cleanDigits = posCart.customer.phone.replace(/\D/g, '');
+        if (cleanDigits.length >= 7) {
+          await upsertCustomer({
+            name: posCart.customer.name.trim(),
+            phone: cleanDigits,
+            address: posCart.customer.address || '',
+            notes: activeDeliveryNote || posCart.customer.notes || '',
+          });
+        }
+      }
+
+      setPosNotes(activeDeliveryNote);
+      const createdOrder = await punchOrder(
+        tendered > 0 ? tendered : undefined,
+        selectedOutlet,
+        splitPayments
+      );
+
+      playCashRegisterSound();
+      setPunchSuccessAnimation(true);
+      showToast(`✓ Order #${createdOrder.orderNumber} successfully placed via ${method.toUpperCase()}!`);
+
+      setSelectedOrderId(createdOrder.id);
+      setMiddleTab('order_details');
+
+      setBottomInputVal('0');
+      setActiveDeliveryNote('');
+      setIsPaymentModalOpen(false);
+      setTimeout(() => setPunchSuccessAnimation(false), 1000);
+    } catch (err: any) {
+      console.error('Split/Tender order punch failed:', err);
+      playErrorSound();
+      showToast(`❌ Payment failed: ${err.message || 'Unknown error'}`);
     } finally {
       isPunchingRef.current = false;
       setIsPunching(false);
@@ -2334,6 +2389,16 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                 </label>
                 <button
                   type="button"
+                  onClick={() => setIsPaymentModalOpen(true)}
+                  disabled={posCart.items.length === 0 || isPunching}
+                  className="bg-amber-600 hover:bg-amber-500 active:scale-[0.97] text-white font-black text-xs py-2.5 px-3 rounded-xl transition-all duration-75 shadow-md flex items-center justify-center gap-1.5 border border-amber-400/20 tabular-nums cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+                  title="Split tender payment (Cash, Card, QR, Multiple methods)"
+                >
+                  <Split className="w-3.5 h-3.5" />
+                  <span>Split / Pay</span>
+                </button>
+                <button
+                  type="button"
                   onClick={handlePlaceOrder}
                   disabled={isPunching}
                   className={`flex-1 bg-emerald-600 hover:bg-emerald-500 active:scale-[0.97] text-white font-black text-xs py-2.5 px-4 rounded-xl transition-all duration-75 shadow-md flex items-center justify-center gap-2 border border-emerald-400/20 tabular-nums ${
@@ -3433,6 +3498,21 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
           setSelectedOrderForReceipt(null);
         }}
         order={selectedOrderForReceipt}
+      />
+
+      {/* ========================================================================= */}
+      {/* SPLIT TENDER & MULTI-METHOD PAYMENT REGISTER MODAL                        */}
+      {/* ========================================================================= */}
+      <PaymentModal
+        isOpen={isPaymentModalOpen}
+        onClose={() => setIsPaymentModalOpen(false)}
+        subtotal={cartSubtotal}
+        tax={cartTax}
+        discount={cartDiscount}
+        deliveryFee={cartDeliveryFee}
+        tip={posCart.tipAmount || 0}
+        total={cartTotal}
+        onComplete={handlePaymentModalComplete}
       />
 
       {/* ========================================================================= */}

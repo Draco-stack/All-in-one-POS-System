@@ -95,11 +95,11 @@ export const AdminSalesOverview: React.FC = () => {
   }, [todayValidOrders]);
 
   const todayGrossSales = useMemo(() => {
-    return todayValidOrders.reduce((sum, o) => sum + (o.total || o.subtotal || 0), 0);
+    return todayValidOrders.reduce((sum, o) => sum + (o.total ?? o.subtotal ?? 0), 0);
   }, [todayValidOrders]);
 
   const totalCancelledAmount = useMemo(() => {
-    return todayCancelledOrders.reduce((sum, o) => sum + (o.total || o.subtotal || 0), 0);
+    return todayCancelledOrders.reduce((sum, o) => sum + (o.total ?? o.subtotal ?? 0), 0);
   }, [todayCancelledOrders]);
 
   const totalDeltasFromModifications = useMemo(() => {
@@ -139,7 +139,7 @@ export const AdminSalesOverview: React.FC = () => {
       else if (h >= 13) slot = '14:00';
       else if (h >= 11) slot = '12:00';
 
-      const amt = o.total || o.subtotal || 0;
+      const amt = o.total ?? o.subtotal ?? 0;
       buckets[slot].sales += amt;
       buckets[slot].net += amt;
       buckets[slot].orders += 1;
@@ -171,7 +171,7 @@ export const AdminSalesOverview: React.FC = () => {
       orders.forEach((o) => {
         const orderDateStr = new Date(o.createdAt || Date.now()).toISOString().split('T')[0];
         if (orderDateStr === dateStr) {
-          const amt = o.total || o.subtotal || 0;
+          const amt = o.total ?? o.subtotal ?? 0;
           if (o.status === 'cancelled' || o.status === 'refunded') {
             deductions += amt;
           } else {
@@ -208,7 +208,7 @@ export const AdminSalesOverview: React.FC = () => {
     orders.forEach((o) => {
       const orderTime = new Date(o.createdAt || Date.now()).getTime();
       const diffDays = (now - orderTime) / DAY_MS;
-      const amt = o.total || o.subtotal || 0;
+      const amt = o.total ?? o.subtotal ?? 0;
 
       let idx = 3; // Current Week
       if (diffDays > 21) idx = 0;

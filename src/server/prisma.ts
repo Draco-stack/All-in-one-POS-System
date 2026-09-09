@@ -6,20 +6,11 @@ dotenv.config();
 function getDatabaseUrl(): string | undefined {
   let url = process.env.DATABASE_URL;
   if (url && (url.startsWith('postgres://') || url.startsWith('postgresql://'))) {
-    const paramsToAdd = [
-      'pgbouncer=true',
-      'connection_limit=3',
-      'pool_timeout=20',
-      'connect_timeout=20',
-      'socket_timeout=30',
-    ];
-    for (const param of paramsToAdd) {
-      const key = param.split('=')[0];
-      if (!url.includes(key + '=')) {
-        const separator = url.includes('?') ? '&' : '?';
-        url = `${url}${separator}${param}`;
-      }
-    }
+    const parsedUrl = new URL(url);
+    parsedUrl.searchParams.set('connection_limit', process.env.DB_POOL_LIMIT || '15');
+    parsedUrl.searchParams.set('pool_timeout', '15');
+    parsedUrl.searchParams.set('connect_timeout', '10');
+    return parsedUrl.toString();
   }
   return url;
 }
@@ -57,27 +48,6 @@ rawPrisma.$on('error' as never, (e: any) => {
 rawPrisma.$on('warn' as never, (e: any) => {
   console.warn('[Prisma Engine Warning]', e?.message || e);
 });
-
-// Periodic lightweight ping to keep connection warm
-if (process.env.DATABASE_URL) {
-  const pingInterval = setInterval(async () => {
-    try {
-      await rawPrisma.$queryRaw`SELECT 1`;
-    } catch {
-      // Reconnect cleanly if pool dropped connection during idle period
-      try {
-        await rawPrisma.$disconnect();
-        await rawPrisma.$connect();
-      } catch {
-        // Silently ignore; next user query will reconnect with retries
-      }
-    }
-  }, 15000);
-
-  if (pingInterval.unref) {
-    pingInterval.unref();
-  }
-}
 
 function isConnectionResetError(error: any): boolean {
   const errorStr = String(error?.message || error?.cause || error || '');

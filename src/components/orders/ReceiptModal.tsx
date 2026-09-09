@@ -179,6 +179,15 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
                         ))}
                       </div>
                     )}
+                    {it.selectedOptions && it.selectedOptions.length > 0 && (
+                      <div className="text-xs text-stone-700 pl-2">
+                        {it.selectedOptions.map((opt, oIdx) => (
+                          <div key={oIdx}>
+                            ↳ {opt.choice || opt.name || opt.label} {opt.extraPrice > 0 ? `(PKR ${opt.extraPrice})` : ''}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                     {it.customization && (
                       <div className="text-xs text-stone-700 pl-2">
                         • {it.customization}
