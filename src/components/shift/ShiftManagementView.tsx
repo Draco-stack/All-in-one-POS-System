@@ -23,6 +23,7 @@ import { MasterPOSLogo } from '../common/MasterPOSLogo';
 
 export const ShiftManagementView: React.FC = () => {
   const { currentShift, openShift, closeShift, orders, currentUser, showToast, theme } = useRestaurant();
+  const isCashier = currentUser.role === 'cashier';
   const [openingFloatInput, setOpeningFloatInput] = useState<string>('5000');
   const [shiftNotes, setShiftNotes] = useState<string>('');
   const [actualCashCounted, setActualCashCounted] = useState<string>('');
@@ -206,6 +207,7 @@ export const ShiftManagementView: React.FC = () => {
               </div>
 
               {/* KPI Metrics */}
+              {!isCashier && (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <div className={`p-3.5 rounded-xl border transition-colors ${
                   theme === 'dark' ? 'bg-[#08090d] border-white/10' : 'bg-slate-50 border-slate-200'
@@ -251,8 +253,10 @@ export const ShiftManagementView: React.FC = () => {
                   </p>
                 </div>
               </div>
+              )}
 
-              {/* Total Expected in Drawer */}
+              {/* Total Expected in Drawer - HIDE FROM CASHIER */}
+              {!isCashier && (
               <div className={`border rounded-xl p-4 flex items-center justify-between transition-colors ${
                 theme === 'dark'
                   ? 'bg-emerald-950/20 border-emerald-500/30'
@@ -276,6 +280,7 @@ export const ShiftManagementView: React.FC = () => {
                   </span>
                 </div>
               </div>
+              )}
             </div>
 
             {/* Shift Transactions Ledger */}
@@ -369,7 +374,7 @@ export const ShiftManagementView: React.FC = () => {
                 <input
                   type="number"
                   min="0"
-                  placeholder={`Expected: PKR ${expectedCashInDrawer.toLocaleString()}`}
+                  placeholder="Enter counted physical cash..."
                   value={actualCashCounted}
                   onChange={(e) => setActualCashCounted(e.target.value)}
                   className={`w-full border rounded-xl p-3 text-sm font-mono focus:outline-none transition-colors ${
@@ -380,7 +385,7 @@ export const ShiftManagementView: React.FC = () => {
                 />
               </div>
 
-              {actualCashCounted !== '' && !isNaN(enteredCashNum) && (
+              {actualCashCounted !== '' && !isNaN(enteredCashNum) && !isCashier && (
                 <div
                   className={`p-3 rounded-xl border flex items-center justify-between text-xs font-bold ${
                     Math.abs(variance) < 1
@@ -605,7 +610,8 @@ export const ShiftManagementView: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Sales Section */}
+                {/* Sales Section - HIDE FROM CASHIER */}
+                {!isCashier && (
                 <div className="space-y-1 border-b border-dashed border-stone-400 pb-2 text-[11px]">
                   <div className="flex justify-between">
                     <span>Opening Cash Float:</span>
@@ -624,8 +630,10 @@ export const ShiftManagementView: React.FC = () => {
                     <span>PKR {displayTotalGross.toLocaleString()}</span>
                   </div>
                 </div>
+                )}
 
-                {/* Cash Drawer Expected */}
+                {/* Cash Drawer Expected - HIDE FROM CASHIER */}
+                {!isCashier && (
                 <div className="space-y-1 border-b border-dashed border-stone-400 pb-2 text-[11px]">
                   <div className="flex justify-between font-black text-xs text-stone-900">
                     <span>Expected Cash in Till:</span>
@@ -640,6 +648,7 @@ export const ShiftManagementView: React.FC = () => {
                     <span>{currentShiftTransactions.length} receipts</span>
                   </div>
                 </div>
+                )}
 
                 {/* Notice */}
                 <div className="text-center pt-1 text-[9px] text-stone-500 uppercase tracking-wider font-bold">

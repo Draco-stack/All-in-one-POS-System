@@ -73,6 +73,7 @@ export const ShiftCloseModal: React.FC<ShiftCloseModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessZReport, setShowSuccessZReport] = useState(false);
   const [closedAuditData, setClosedAuditData] = useState<ShiftAuditRecord | null>(null);
+  const [activeStep, setActiveStep] = useState<'counting' | 'verification' | 'confirm'>('counting');
 
   // Helper to decompose amount into optimal PKR denominations
   const getDenominationsForAmount = (amount: number): { counts: DenominationCounts; coins: number } => {
@@ -173,6 +174,12 @@ export const ShiftCloseModal: React.FC<ShiftCloseModalProps> = ({
       return true;
     });
   }, [orders, currentShift, currentUser]);
+
+  const verificationData = useMemo(() => {
+    const totalTransactions = userShiftOrders.length;
+    const adjustments = userShiftOrders.filter(o => o.status === 'MODIFIED' || (o.timeline && o.timeline.some(t => t.status === 'MODIFIED')));
+    return { totalTransactions, adjustments };
+  }, [userShiftOrders]);
 
   const userCashSales = useMemo(() => {
     const total = userShiftOrders
@@ -600,13 +607,6 @@ export const ShiftCloseModal: React.FC<ShiftCloseModalProps> = ({
                   PKR {cardSalesVal.toLocaleString()}
                 </p>
               </div>
-
-              <div className="bg-white dark:bg-stone-950 p-3 rounded-xl border border-slate-200 dark:border-stone-800">
-                <span className="text-[10px] uppercase font-bold text-slate-500 dark:text-stone-400">System Expected Cash</span>
-                <p className="text-base font-black text-cyan-400 font-mono mt-0.5">
-                  PKR {expectedCashInDrawer.toLocaleString()}
-                </p>
-              </div>
             </div>
 
             {/* Petty Cash Float Adjustment */}
@@ -630,222 +630,104 @@ export const ShiftCloseModal: React.FC<ShiftCloseModalProps> = ({
               />
             </div>
 
-            {/* Notes & Bills Counter Matrix */}
-            <div className="bg-stone-950/90 p-4 rounded-xl border border-slate-200 dark:border-stone-800 space-y-3">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-200 dark:border-stone-800 pb-2 gap-2">
-                <div>
-                  <h4 className="text-xs font-bold text-white flex items-center gap-1.5">
-                    <Banknote className="w-4 h-4 text-[#00897b]" />
-                    Banknotes & Currency Denomination Counter Matrix
-                  </h4>
-                  <p className="text-[11px] text-slate-500 dark:text-stone-400">
-                    Input individual physical note counts: Total = ∑(Note × Quantity)
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={handleAutoFillExpected}
-                    className="px-2.5 py-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-lg text-[10px] font-bold transition flex items-center gap-1 cursor-pointer"
-                    title="Auto fill denominations to match expected cash"
-                  >
-                    <Sparkles className="w-3 h-3" />
-                    Auto-Fill Expected
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleResetCounts}
-                    className="px-2.5 py-1 bg-stone-850 hover:bg-slate-100 dark:hover:bg-stone-800 text-slate-500 dark:text-stone-400 hover:text-white border border-slate-300 dark:border-stone-700 rounded-lg text-[10px] font-bold transition flex items-center gap-1 cursor-pointer"
-                    title="Clear all denomination counts"
-                  >
-                    <RotateCcw className="w-3 h-3" />
-                    Clear
-                  </button>
-                  <div className="text-right pl-2 border-l border-slate-200 dark:border-stone-800">
-                    <span className="text-[10px] uppercase text-slate-500 dark:text-stone-400 font-bold block">Counted</span>
-                    <p className="text-sm font-black text-emerald-400 font-mono">
-                      PKR {totalPhysicalCashCounted.toLocaleString()}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Denomination Matrix Grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                {([5000, 1000, 500, 100, 50, 20, 10] as const).map((denom) => {
-                  const qty = denomCounts[denom] || 0;
-                  const lineTotal = qty * denom;
-                  return (
-                    <div
-                      key={denom}
-                      className="bg-white dark:bg-stone-900 border border-slate-200 dark:border-stone-800 rounded-xl p-2.5 flex flex-col justify-between space-y-1.5 focus-within:border-[#00897b] transition"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-black text-slate-900 dark:text-white font-mono bg-white dark:bg-stone-950 px-2 py-0.5 rounded border border-slate-200 dark:border-stone-800">
-                          Rs. {denom}
-                        </span>
-                        <span className="text-[10px] font-mono text-slate-500 dark:text-stone-400">
-                          = {lineTotal.toLocaleString()}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center gap-1.5">
-                        <input
-                          id={`denom-input-${denom}`}
-                          type="number"
-                          min="0"
-                          value={qty === 0 ? '' : qty}
-                          placeholder="0 pcs"
-                          onChange={(e) => handleDenomChange(denom, e.target.value)}
-                          className="w-full bg-white dark:bg-stone-950 border border-slate-200 dark:border-stone-800 rounded-lg px-2 py-1.5 text-xs font-mono font-bold text-center text-slate-900 dark:text-white placeholder:text-stone-600 focus:outline-none focus:border-[#00897b]"
-                        />
+            {activeStep === 'counting' && (
+              <>
+                <div className="bg-stone-950/90 p-4 rounded-xl border border-slate-200 dark:border-stone-800 space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-200 dark:border-stone-800 pb-2 gap-2">
+                    <div>
+                      <h4 className="text-xs font-bold text-white flex items-center gap-1.5"><Banknote className="w-4 h-4 text-[#00897b]" /> Banknotes & Currency Denomination Counter Matrix</h4>
+                      <p className="text-[11px] text-slate-500 dark:text-stone-400">Input individual physical note counts: Total = ∑(Note × Quantity)</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button type="button" onClick={handleResetCounts} className="px-2.5 py-1 bg-stone-850 hover:bg-slate-100 dark:hover:bg-stone-800 text-slate-500 dark:text-stone-400 hover:text-white border border-slate-300 dark:border-stone-700 rounded-lg text-[10px] font-bold transition flex items-center gap-1 cursor-pointer" title="Clear all denomination counts"><RotateCcw className="w-3 h-3" /> Clear</button>
+                      <div className="text-right pl-2 border-l border-slate-200 dark:border-stone-800">
+                        <span className="text-[10px] uppercase text-slate-500 dark:text-stone-400 font-bold block">Counted</span>
+                        <p className="text-sm font-black text-emerald-400 font-mono">PKR {totalPhysicalCashCounted.toLocaleString()}</p>
                       </div>
                     </div>
-                  );
-                })}
-
-                {/* Loose Coins / Small Change */}
-                <div className="bg-white dark:bg-stone-900 border border-slate-200 dark:border-stone-800 rounded-xl p-2.5 flex flex-col justify-between space-y-1.5 focus-within:border-[#00897b] transition">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-black text-amber-300 font-mono bg-white dark:bg-stone-950 px-2 py-0.5 rounded border border-slate-200 dark:border-stone-800">
-                      Coins (PKR)
-                    </span>
-                    <span className="text-[10px] font-mono text-slate-500 dark:text-stone-400">
-                      = {coinsAmount.toLocaleString()}
-                    </span>
                   </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                    {([5000, 1000, 500, 100, 50, 20, 10] as const).map((denom) => {
+                      const qty = denomCounts[denom] || 0;
+                      const lineTotal = qty * denom;
+                      return (
+                        <div key={denom} className="bg-white dark:bg-stone-900 border border-slate-200 dark:border-stone-800 rounded-xl p-2.5 flex flex-col justify-between space-y-1.5 focus-within:border-[#00897b] transition">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-black text-slate-900 dark:text-white font-mono bg-white dark:bg-stone-950 px-2 py-0.5 rounded border border-slate-200 dark:border-stone-800">Rs. {denom}</span>
+                            <span className="text-[10px] font-mono text-slate-500 dark:text-stone-400">= {lineTotal.toLocaleString()}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <input id={`denom-input-${denom}`} type="number" min="0" value={qty === 0 ? '' : qty} placeholder="0 pcs" onChange={(e) => handleDenomChange(denom, e.target.value)} className="w-full bg-white dark:bg-stone-950 border border-slate-200 dark:border-stone-800 rounded-lg px-2 py-1.5 text-xs font-mono font-bold text-center text-slate-900 dark:text-white placeholder:text-stone-600 focus:outline-none focus:border-[#00897b]" />
+                          </div>
+                        </div>
+                      );
+                    })}
+                    <div className="bg-white dark:bg-stone-900 border border-slate-200 dark:border-stone-800 rounded-xl p-2.5 flex flex-col justify-between space-y-1.5 focus-within:border-[#00897b] transition">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-black text-amber-300 font-mono bg-white dark:bg-stone-950 px-2 py-0.5 rounded border border-slate-200 dark:border-stone-800">Coins (PKR)</span>
+                        <span className="text-[10px] font-mono text-slate-500 dark:text-stone-400">= {coinsAmount.toLocaleString()}</span>
+                      </div>
+                      <input type="number" min="0" value={coinsAmount === 0 ? '' : coinsAmount} placeholder="Coins sum" onChange={(e) => setCoinsAmount(parseFloat(e.target.value) || 0)} className="w-full bg-white dark:bg-stone-950 border border-slate-200 dark:border-stone-800 rounded-lg px-2 py-1.5 text-xs font-mono font-bold text-center text-slate-900 dark:text-white placeholder:text-stone-600 focus:outline-none focus:border-[#00897b]" />
+                    </div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="bg-white/60 dark:bg-stone-950/60 p-3.5 rounded-xl border border-slate-200 dark:border-stone-800 space-y-1.5">
+                    <div className="flex items-center justify-between"><label className="text-xs font-bold text-slate-700 dark:text-stone-300 flex items-center gap-1.5"><Lock className="w-4 h-4 text-[#00897b]" /> Next Shift Float Kept (PKR):</label></div>
+                    <input type="number" min="0" value={floatRetained} onChange={(e) => setFloatRetained(parseFloat(e.target.value) || 0)} className="w-full bg-white dark:bg-stone-900 border border-slate-200 dark:border-stone-800 rounded-lg px-3 py-2 text-sm font-mono font-bold text-slate-900 dark:text-white focus:outline-none focus:border-[#00897b]" placeholder="Amount left in drawer" />
+                  </div>
+                  <div className="bg-[#00897b]/10 p-3.5 rounded-xl border border-[#00897b]/30 space-y-1.5 flex flex-col justify-center">
+                    <span className="text-[10px] uppercase font-bold text-emerald-400">Safe / Locker Deposit</span>
+                    <p className="text-xl font-black text-emerald-400 font-mono">PKR {(totalPhysicalCashCounted - floatRetained).toLocaleString()}</p>
+                    <p className="text-[10px] text-slate-500 dark:text-stone-400">Actual Cash Counted - Next Shift Float Kept</p>
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-700 dark:text-stone-300">Shift Handover / Audit Notes (Optional):</label>
+                  <textarea rows={2} placeholder="Enter any drawer discrepancy explanations or handover notes..." value={shiftNotes} onChange={(e) => setShiftNotes(e.target.value)} className="w-full bg-white dark:bg-stone-950 border border-slate-200 dark:border-stone-800 rounded-xl p-3 text-xs text-slate-900 dark:text-white placeholder:text-stone-600 focus:outline-none focus:border-[#00897b]" />
+                </div>
+                <div className="flex items-center justify-end gap-3 pt-2 border-t border-slate-200 dark:border-stone-800">
+                  <button type="button" onClick={onClose} className="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-500 dark:text-stone-400 hover:text-white transition cursor-pointer">Cancel</button>
+                  <button type="button" onClick={() => setActiveStep('verification')} className="px-6 py-2.5 bg-[#00897b] hover:bg-[#00796b] text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 shadow-xl shadow-teal-950/50 cursor-pointer"><ArrowRight className="w-4 h-4" /> Verify Shift Data</button>
+                </div>
+              </>
+            )}
 
-                  <input
-                    type="number"
-                    min="0"
-                    value={coinsAmount === 0 ? '' : coinsAmount}
-                    placeholder="Coins sum"
-                    onChange={(e) => setCoinsAmount(parseFloat(e.target.value) || 0)}
-                    className="w-full bg-white dark:bg-stone-950 border border-slate-200 dark:border-stone-800 rounded-lg px-2 py-1.5 text-xs font-mono font-bold text-center text-slate-900 dark:text-white placeholder:text-stone-600 focus:outline-none focus:border-[#00897b]"
-                  />
+            {activeStep === 'verification' && (
+              <div className="p-4 bg-stone-50 dark:bg-stone-900 rounded-xl space-y-4 border border-stone-200 dark:border-stone-800">
+                <h3 className="font-bold text-slate-900 dark:text-white">Verify Transaction Summary</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-3 bg-white dark:bg-stone-950 rounded-lg border">
+                    <p className="text-xs text-stone-500">Total Transactions</p>
+                    <p className="text-xl font-black">{verificationData.totalTransactions}</p>
+                  </div>
+                  <div className="p-3 bg-white dark:bg-stone-950 rounded-lg border">
+                    <p className="text-xs text-stone-500">Manual Overrides</p>
+                    <p className="text-xl font-black text-amber-500">{verificationData.adjustments.length}</p>
+                  </div>
+                </div>
+                {verificationData.adjustments.length > 0 && (
+                   <div className="text-xs text-amber-500 bg-amber-500/10 p-2 rounded">Review manual modifications in order logs before proceeding.</div>
+                )}
+                <div className="flex items-center justify-end gap-3">
+                  <button type="button" onClick={() => setActiveStep('counting')} className="px-4 py-2.5 text-xs font-bold text-stone-500">Back</button>
+                  <button type="button" onClick={() => setActiveStep('confirm')} className="px-6 py-2.5 bg-[#00897b] text-white rounded-xl text-xs font-black uppercase">Confirm & Finalize</button>
                 </div>
               </div>
-            </div>
-
-            {/* Next Shift Float / Locker Deposit Split */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="bg-white/60 dark:bg-stone-950/60 p-3.5 rounded-xl border border-slate-200 dark:border-stone-800 space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold text-slate-700 dark:text-stone-300 flex items-center gap-1.5">
-                    <Lock className="w-4 h-4 text-[#00897b]" />
-                    Next Shift Float Kept (PKR):
-                  </label>
-                </div>
-                <input
-                  type="number"
-                  min="0"
-                  value={floatRetained}
-                  onChange={(e) => setFloatRetained(parseFloat(e.target.value) || 0)}
-                  className="w-full bg-white dark:bg-stone-900 border border-slate-200 dark:border-stone-800 rounded-lg px-3 py-2 text-sm font-mono font-bold text-slate-900 dark:text-white focus:outline-none focus:border-[#00897b]"
-                  placeholder="Amount left in drawer"
-                />
-              </div>
-
-              <div className="bg-[#00897b]/10 p-3.5 rounded-xl border border-[#00897b]/30 space-y-1.5 flex flex-col justify-center">
-                <span className="text-[10px] uppercase font-bold text-emerald-400">Safe / Locker Deposit</span>
-                <p className="text-xl font-black text-emerald-400 font-mono">
-                  PKR {(totalPhysicalCashCounted - floatRetained).toLocaleString()}
-                </p>
-                <p className="text-[10px] text-slate-500 dark:text-stone-400">Actual Cash Counted - Next Shift Float Kept</p>
-              </div>
-            </div>
-
-            {/* Reconciliation Comparison Summary Box */}
-            <div
-              className={`p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
-                isBalanced
-                  ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-300'
-                  : isOverage
-                  ? 'bg-sky-950/40 border-sky-500/40 text-sky-300'
-                  : 'bg-red-950/40 border-red-500/40 text-red-300'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <div
-                  className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                    isBalanced
-                      ? 'bg-emerald-500/20 text-emerald-400'
-                      : isOverage
-                      ? 'bg-sky-500/20 text-sky-400'
-                      : 'bg-red-500/20 text-red-400'
-                  }`}
-                >
-                  {isBalanced ? (
-                    <CheckCircle className="w-5 h-5" />
-                  ) : (
-                    <AlertTriangle className="w-5 h-5" />
-                  )}
-                </div>
-                <div>
-                  <h4 className="font-extrabold text-sm flex items-center gap-2">
-                    {isBalanced
-                      ? 'Cash Drawer Perfectly Balanced (0 Discrepancy)'
-                      : isOverage
-                      ? `Cash Overage Detected (+PKR ${discrepancy.toLocaleString()})`
-                      : `Cash Shortage Detected (-PKR ${Math.abs(discrepancy).toLocaleString()})`}
-                  </h4>
-                  <p className="text-xs text-slate-500 dark:text-stone-400 mt-0.5">
-                    Physical Count: PKR {totalPhysicalCashCounted.toLocaleString()} | System Expected: PKR {expectedCashInDrawer.toLocaleString()}
-                  </p>
+            )}
+            
+            {activeStep === 'confirm' && (
+              <div className="p-4 space-y-4">
+                <h3 className="font-bold text-slate-900 dark:text-white">Final Confirmation</h3>
+                <p className="text-sm text-stone-500">Are you sure you want to close this shift? This action is permanent.</p>
+                <div className="flex items-center justify-end gap-3">
+                  <button type="button" onClick={() => setActiveStep('verification')} className="px-4 py-2.5 text-xs font-bold text-stone-500">Back</button>
+                  <button type="submit" disabled={isSubmitting} className="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 shadow-xl cursor-pointer disabled:opacity-50">
+                    <Lock className="w-4 h-4" /> {isSubmitting ? 'Closing...' : 'Close Shift Now'}
+                  </button>
                 </div>
               </div>
-
-              <div className="text-right shrink-0">
-                <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500 dark:text-stone-400 block">
-                  Variance
-                </span>
-                <span
-                  className={`text-xl font-black font-mono ${
-                    isBalanced
-                      ? 'text-emerald-400'
-                      : isOverage
-                      ? 'text-sky-400'
-                      : 'text-red-400'
-                  }`}
-                >
-                  {discrepancy >= 0 ? `+PKR ${discrepancy.toLocaleString()}` : `-PKR ${Math.abs(discrepancy).toLocaleString()}`}
-                </span>
-              </div>
-            </div>
-
-            {/* Shift Discrepancy & Handover Notes */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-700 dark:text-stone-300">
-                Shift Handover / Audit Notes (Optional):
-              </label>
-              <textarea
-                rows={2}
-                placeholder="Enter any drawer discrepancy explanations or handover notes for the incoming cashier..."
-                value={shiftNotes}
-                onChange={(e) => setShiftNotes(e.target.value)}
-                className="w-full bg-white dark:bg-stone-950 border border-slate-200 dark:border-stone-800 rounded-xl p-3 text-xs text-slate-900 dark:text-white placeholder:text-stone-600 focus:outline-none focus:border-[#00897b]"
-              />
-            </div>
-
-            {/* Form Action Buttons */}
-            <div className="flex items-center justify-end gap-3 pt-2 border-t border-slate-200 dark:border-stone-800">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-500 dark:text-stone-400 hover:text-white transition cursor-pointer"
-              >
-                Cancel
-              </button>
-
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="px-6 py-2.5 bg-[#00897b] hover:bg-[#00796b] text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 shadow-xl shadow-teal-950/50 cursor-pointer disabled:opacity-50"
-              >
-                <Lock className="w-4 h-4" />
-                {isSubmitting ? 'Closing Shift...' : 'Reconcile & Close Shift'}
-              </button>
-            </div>
+            )}
           </form>
         )}
       </div>

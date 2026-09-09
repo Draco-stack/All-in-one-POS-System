@@ -23,6 +23,7 @@ import {
 
 export const ShiftSummaryView: React.FC = () => {
   const { currentShift, openShift, closeShift, orders, currentUser } = useRestaurant();
+  const isCashier = currentUser.role === 'cashier';
   const [actualCashCounted, setActualCashCounted] = useState<string>('');
   const [isShiftClosing, setIsShiftClosing] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -176,7 +177,8 @@ export const ShiftSummaryView: React.FC = () => {
         </div>
       </div>
 
-      {/* 4 Financial Key Metrics */}
+      {/* 4 Financial Key Metrics - HIDE FROM CASHIER */}
+      {!isCashier && (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Gross Sales */}
         <div className="bg-white dark:bg-stone-900 border border-slate-200 dark:border-stone-800 rounded-2xl p-4 space-y-1 shadow-md">
@@ -226,6 +228,7 @@ export const ShiftSummaryView: React.FC = () => {
           <p className="text-[11px] text-slate-400 dark:text-stone-500">Opening float + Cash sales</p>
         </div>
       </div>
+      )}
 
       {/* Cash Drawer Counting Section & Shift Close Form */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -296,8 +299,8 @@ export const ShiftSummaryView: React.FC = () => {
                 />
               </div>
 
-              {/* Variance Display */}
-              {actualCashCounted !== '' && (
+              {/* Variance Display - HIDE FROM CASHIER */}
+              {!isCashier && actualCashCounted !== '' && (
                 <div
                   className={`p-3.5 rounded-xl border flex items-center justify-between ${
                     Math.abs(cashVariance) < 0.01
@@ -460,41 +463,47 @@ export const ShiftSummaryView: React.FC = () => {
               </p>
             </div>
 
-            <div className="space-y-1.5 border-b border-dashed border-stone-400 pb-3">
-              <div className="flex justify-between">
-                <span>Opening Float:</span>
-                <span className="font-bold">Rs. {openingFloat.toFixed(2)}</span>
+            {/* Financial Section - HIDE FROM CASHIER */}
+            {!isCashier && (
+              <div className="space-y-1.5 border-b border-dashed border-stone-400 pb-3">
+                <div className="flex justify-between">
+                  <span>Opening Float:</span>
+                  <span className="font-bold">Rs. {openingFloat.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Cash Sales:</span>
+                  <span className="font-bold">Rs. {cashSales.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Card Sales:</span>
+                  <span className="font-bold">Rs. {cardSales.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between border-t border-stone-300 pt-1 font-black text-sm">
+                  <span>TOTAL GROSS SALES:</span>
+                  <span>Rs. {totalGrossSales.toFixed(2)}</span>
+                </div>
               </div>
-              <div className="flex justify-between">
-                <span>Cash Sales:</span>
-                <span className="font-bold">Rs. {cashSales.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Card Sales:</span>
-                <span className="font-bold">Rs. {cardSales.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between border-t border-stone-300 pt-1 font-black text-sm">
-                <span>TOTAL GROSS SALES:</span>
-                <span>Rs. {totalGrossSales.toFixed(2)}</span>
-              </div>
-            </div>
+            )}
 
-            <div className="space-y-1.5 border-b border-dashed border-stone-400 pb-3">
-              <div className="flex justify-between font-bold">
-                <span>Expected in Drawer:</span>
-                <span>Rs. {expectedCashInDrawer.toFixed(2)}</span>
+            {/* Variance Section - HIDE FROM CASHIER */}
+            {!isCashier && (
+              <div className="space-y-1.5 border-b border-dashed border-stone-400 pb-3">
+                <div className="flex justify-between font-bold">
+                  <span>Expected in Drawer:</span>
+                  <span>Rs. {expectedCashInDrawer.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between font-bold">
+                  <span>Actual Cash Counted:</span>
+                  <span>Rs. {(currentShift?.cashInDrawerActual || userEnteredCash).toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between font-black text-sm pt-1 border-t border-stone-300">
+                  <span>CASH VARIANCE:</span>
+                  <span className={cashVariance < 0 ? 'text-rose-600' : 'text-emerald-700'}>
+                    {cashVariance >= 0 ? `+Rs. ${cashVariance.toFixed(2)}` : `-Rs. ${Math.abs(cashVariance).toFixed(2)}`}
+                  </span>
+                </div>
               </div>
-              <div className="flex justify-between font-bold">
-                <span>Actual Cash Counted:</span>
-                <span>Rs. {(currentShift?.cashInDrawerActual || userEnteredCash).toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between font-black text-sm pt-1 border-t border-stone-300">
-                <span>CASH VARIANCE:</span>
-                <span className={cashVariance < 0 ? 'text-rose-600' : 'text-emerald-700'}>
-                  {cashVariance >= 0 ? `+Rs. ${cashVariance.toFixed(2)}` : `-Rs. ${Math.abs(cashVariance).toFixed(2)}`}
-                </span>
-              </div>
-            </div>
+            )}
 
             <div className="text-center text-[10px] text-slate-400 dark:text-stone-500 pt-1">
               *** END OF Z-REPORT AUDIT ***

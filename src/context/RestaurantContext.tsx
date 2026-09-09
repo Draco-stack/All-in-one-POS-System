@@ -2960,6 +2960,10 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   // Shift Management
   const openShift = (openingFloat: number, notes?: string) => {
+    if (currentShift && currentShift.status === 'open') {
+      showToast('⚠️ A shift is already open. Please close the active shift before opening a new one.');
+      return;
+    }
     const shiftSeq = Date.now().toString().slice(-4);
     const sNumber = `SH-${shiftSeq}`;
     const shift: RegisterShift = {
