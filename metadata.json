@@ -1,6 +1,6 @@
 {
-  "name": "Master POS",
-  "description": "Commercial POS and Real-Time Delivery Monitoring System with Live Order Tracking, Call Center Dispatch, Multi-Branch Routing, Rider Assignment, and Financial Control",
+  "name": "Tillora",
+  "description": "The ultimate commercial restaurant operating system. Unified POS, delivery monitoring, and growth intelligence for modern hospitality businesses.",
   "requestFramePermissions": [],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"

@@ -5,8 +5,9 @@ export function initPWA() {
   if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
     const updateSW = registerSW({
       onNeedRefresh() {
-        console.log('[PWA] New content available, updating service worker...');
-        updateSW(true);
+        console.log('[PWA] New content available. Manual refresh recommended.');
+        // We disable the automatic updateSW(true) call here to prevent infinite reload loops
+        // in the preview environment.
       },
       onOfflineReady() {
         console.log('[PWA] Service worker ready for offline caching.');

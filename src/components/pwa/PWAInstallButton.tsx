@@ -27,7 +27,7 @@ export const PWAInstallButton: React.FC<{ className?: string }> = ({ className =
         }}
         disabled={isInstalling}
         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white text-xs font-bold shadow-md shadow-emerald-950/40 transition-all border border-emerald-400/40 ${className}`}
-        title="Install Master POS to desktop or tablet for full offline support"
+        title="Install Tillora to desktop or tablet for full offline support"
       >
         <Download className="w-3.5 h-3.5" />
         <span>{isInstalling ? 'Installing...' : 'Install App'}</span>
@@ -43,7 +43,7 @@ export const PWAInstallButton: React.FC<{ className?: string }> = ({ className =
           id="pwa-ios-install-btn"
           onClick={() => setShowIOSGuide(true)}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-bold border border-white/10 shadow-sm transition-all ${className}`}
-          title="Install Master POS on iPad / iPhone"
+          title="Install Tillora on iPad / iPhone"
         >
           <Smartphone className="w-3.5 h-3.5 text-emerald-400" />
           <span>Install on iOS</span>
@@ -91,7 +91,7 @@ export const PWAInstallButton: React.FC<{ className?: string }> = ({ className =
                     3
                   </span>
                   <p>
-                    Tap <strong className="text-white font-semibold">Add</strong>. Master POS will run in standalone fullscreen mode with offline ordering enabled!
+                    Tap <strong className="text-white font-semibold">Add</strong>. Tillora will run in standalone fullscreen mode with offline ordering enabled!
                   </p>
                 </div>
               </div>

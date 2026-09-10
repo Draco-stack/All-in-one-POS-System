@@ -59,15 +59,12 @@ export async function authenticate(req: Request, res: Response, next: NextFuncti
       });
     }
 
-    // Safe fallback to default organization if organization is not yet linked
     if (!organization) {
-      organization = await prisma.organization.findUnique({
-        where: { id: DEFAULT_ORG_ID },
+      return res.status(403).json({
+        error: 'Forbidden: Organization required. Please complete onboarding.',
+        code: 'NEEDS_ONBOARDING',
+        needsOnboarding: true,
       });
-    }
-
-    if (!organization) {
-      return res.status(401).json({ error: 'Unauthorized: Organization could not be resolved' });
     }
 
     // 3. Organization Status Enforcement
@@ -109,6 +106,15 @@ export async function authenticate(req: Request, res: Response, next: NextFuncti
       if (requestedBranch) {
         branch = requestedBranch;
       }
+    }
+
+    if (!branch) {
+      branch = await prisma.branch.findFirst({
+        where: {
+          organizationId: organization.id,
+          active: true,
+        },
+      });
     }
 
     // 5. Session Validation (if sessionId is present)

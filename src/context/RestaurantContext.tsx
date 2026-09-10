@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { io } from 'socket.io-client';
 import { posDB } from '../utils/indexedDB';
+import { analytics } from '../lib/analytics';
 import { roundToCurrency } from '../utils/financial';
 import {
   MenuItem,
@@ -303,19 +304,19 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [users, setUsers] = useState<UserAccount[]>(() => {
     const defaultList: UserAccount[] = [
       {
-        id: 'usr-1',
+        id: 'user-admin-1',
         name: 'Administrator (Robert Vance)',
         username: 'admin',
         email: 'admin@masterpos.com',
-        pin: '1111',
-        password: '1111',
+        pin: '1234',
+        password: '1234',
         role: 'owner',
         outlet: 'All Outlets',
         active: true,
         createdAt: '2025-01-01',
       },
       {
-        id: 'usr-2',
+        id: 'user-manager-1',
         name: 'Store Manager (Farhan Tariq)',
         username: 'storemanager',
         email: 'storemanager@masterpos.com',
@@ -327,7 +328,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         createdAt: '2025-01-01',
       },
       {
-        id: 'usr-3',
+        id: 'user-cashier-1',
         name: 'Cashier One (Ali Hassan)',
         username: 'cashier',
         email: 'cashier@masterpos.com',
@@ -339,7 +340,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         createdAt: '2025-01-01',
       },
       {
-        id: 'usr-4',
+        id: 'user-cashier-2',
         name: 'Cashier Two (Sana Malik)',
         username: 'cashier2',
         email: 'cashier2@masterpos.com',
@@ -351,12 +352,12 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         createdAt: '2025-01-01',
       },
     ];
-    const cached = loadFromStorage<UserAccount[]>('pos_users_cache', defaultList);
+    const cached = loadFromStorage<UserAccount[]>('pos_users_v5', defaultList);
     if (Array.isArray(cached) && cached.length > 0) {
       return cached.map((u) => {
         const uUsername = (u.username || '').toLowerCase();
         const uRole = (u.role || '').toLowerCase();
-        const fallbackPin = (uRole === 'owner' || uRole === 'admin') ? '1111' : uRole === 'manager' ? '2222' : (uUsername === 'cashier2' ? '4444' : '3333');
+        const fallbackPin = (uRole === 'owner' || uRole === 'admin') ? '1234' : uRole === 'manager' ? '2222' : (uUsername === 'cashier2' ? '4444' : '3333');
         const activePin = (u.pin && u.pin !== '1234') ? u.pin : fallbackPin;
         if (uUsername === 'owner' || uUsername === 'admin' || uRole === 'owner' || uRole === 'admin') {
           return { 
@@ -395,15 +396,15 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     return defaultList;
   });
   const [currentUser, setCurrentUser] = useState<UserAccount>(() => {
-    const saved = loadFromStorage<UserAccount | null>('pos_current_user', null);
+    const saved = loadFromStorage<UserAccount | null>('pos_current_user_v5', null);
     if (saved && saved.id) return saved;
     return users && users.length > 0 ? users[0] : {
-      id: 'usr-1',
+      id: 'user-admin-1',
       name: 'Administrator (Robert Vance)',
       username: 'admin',
       email: 'admin@masterpos.com',
-      pin: '1111',
-      password: '1111',
+      pin: '1234',
+      password: '1234',
       role: 'owner',
       outlet: 'All Outlets',
       active: true,
@@ -411,7 +412,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     };
   });
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
-    return loadFromStorage<boolean>('pos_is_logged_in', false);
+    return loadFromStorage<boolean>('pos_is_logged_in_v5', false);
   });
   const [loginTheme, setLoginThemeState] = useState<'dark' | 'wood' | 'pink' | 'midnight' | 'light' | 'blue'>(() => {
     return loadFromStorage('pos_login_theme', 'dark');
@@ -424,8 +425,8 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   const logoutUser = useCallback(() => {
     setIsLoggedIn(false);
-    saveToStorage('pos_is_logged_in', false);
-    saveToStorage('pos_jwt_token', null);
+    saveToStorage('pos_is_logged_in_v5', false);
+    saveToStorage('pos_jwt_token_v5', null);
     showToast('🔒 Logged out. Return to login screen.');
   }, [showToast]);
 
@@ -558,8 +559,8 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
         setCurrentUser(authenticatedUser);
         setIsLoggedIn(true);
-        saveToStorage('pos_is_logged_in', true);
-        saveToStorage('pos_current_user', authenticatedUser);
+        saveToStorage('pos_is_logged_in_v5', true);
+        saveToStorage('pos_current_user_v5', authenticatedUser);
 
         // Pre-fetch and cache JWT token in background
         fetch('/api/auth/login', {
@@ -576,7 +577,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           if (loginRes.ok) {
             const data = await loginRes.json();
             if (data && data.token) {
-              saveToStorage('pos_jwt_token', data.token);
+              saveToStorage('pos_jwt_token_v5', data.token);
             }
           }
         })
@@ -658,8 +659,8 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   );
 
   // Synchronize state changes to localStorage
-  useEffect(() => { saveToStorage('pos_users_cache', users); }, [users]);
-  useEffect(() => { saveToStorage('pos_current_user', currentUser); }, [currentUser]);
+  useEffect(() => { saveToStorage('pos_users_v5', users); }, [users]);
+  useEffect(() => { saveToStorage('pos_current_user_v5', currentUser); }, [currentUser]);
   useEffect(() => { saveToStorage('pos_outlets_cache', outlets); }, [outlets]);
   useEffect(() => { saveToStorage('pos_categories_cache', categories); }, [categories]);
   useEffect(() => { saveToStorage('pos_menu_items_cache', menuItems); }, [menuItems]);
@@ -678,11 +679,14 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     if (!isLoggedIn || !currentUser || !currentUser.id) return;
 
     let isMounted = true;
+    let checkInProgress = false;
 
     const checkSessionValidity = async () => {
+      if (checkInProgress) return;
+      checkInProgress = true;
       try {
-        const token = loadFromStorage<string | null>('pos_jwt_token', null);
-        const storedUser = loadFromStorage<UserAccount | null>('pos_current_user', null);
+        const token = loadFromStorage<string | null>('pos_jwt_token_v5', null);
+        const storedUser = loadFromStorage<UserAccount | null>('pos_current_user_v5', null);
         
         const res = await fetch('/api/auth/validate-session', {
           method: 'POST',
@@ -697,31 +701,37 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         if (res.ok) {
           const data = await res.json();
           if (isMounted && data && data.valid === false) {
-            console.warn('Session validation failed:', data.reason);
-            // Invalidate session and force re-authentication
+            console.warn('[Session] Validation failed:', data.reason);
+            
+            // Comprehensive cleanup to prevent stale state from blocking re-login
+            localStorage.removeItem('pos_is_logged_in_v5');
+            localStorage.removeItem('pos_jwt_token_v5');
+            localStorage.removeItem('pos_current_user_v5');
+            
             setIsLoggedIn(false);
-            saveToStorage('pos_is_logged_in', false);
-            saveToStorage('pos_jwt_token', null);
-            saveToStorage('pos_current_user', null);
-            showToast(`⚠️ Session Invalidated: ${data.reason || 'Password/PIN updated. Please login again.'}`);
+            setCurrentUser(null as any);
+            
+            showToast(`⚠️ Session Invalidated: ${data.reason || 'User not found or inactive. Please login again.'}`);
           }
         }
       } catch (err) {
-        console.warn('Session validity background check failed:', err);
+        console.warn('[Session] Background check failed:', err);
+      } finally {
+        checkInProgress = false;
       }
     };
 
     // Run immediately on load/mount
     checkSessionValidity();
 
-    // Run periodically every 12 seconds to force near-immediate logout on other terminals if password is updated
-    const intervalId = setInterval(checkSessionValidity, 12000);
+    // Run periodically
+    const intervalId = setInterval(checkSessionValidity, 30000);
 
     return () => {
       isMounted = false;
       clearInterval(intervalId);
     };
-  }, [isLoggedIn, currentUser, showToast]);
+  }, [isLoggedIn, currentUser?.id, showToast]);
 
   // Dynamically compute list of active delivery drivers from users with role 'rider'
   const deliveryDrivers = useMemo(() => {
@@ -1040,7 +1050,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         if (Array.isArray(data) && data.length > 0) {
           const mappedUsers: UserAccount[] = data.map((u: any) => {
             const role = (u.role || 'cashier').toLowerCase() as UserRole;
-            const fallbackPin = (role === 'owner' || role === 'admin') ? '1111' : role === 'manager' ? '2222' : (u.username === 'cashier2' ? '4444' : '3333');
+            const fallbackPin = (role === 'owner' || role === 'admin') ? '1234' : role === 'manager' ? '2222' : (u.username === 'cashier2' ? '4444' : '3333');
             const resolvedPin = (u.pin && u.pin !== '1234') ? u.pin : fallbackPin;
             return {
               id: u.id,
@@ -1206,7 +1216,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
                 id: s.id || `shift-${s.shiftNumber}`,
                 shiftNumber: s.shiftNumber,
                 cashierName: s.cashierName || 'Cashier',
-                openedBy: s.openedById || 'usr-1',
+                openedBy: s.openedById || 'user-admin-1',
                 openedAt: s.openedAt ? new Date(s.openedAt).toISOString() : new Date().toISOString(),
                 openingFloat: Number(s.startingFloat) || 0,
                 startingFloat: Number(s.startingFloat) || 0,
@@ -1231,12 +1241,28 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     } catch (e) {}
   }, []);
 
-  // Initial mount fetch & periodic 15s background realtime sync
+  // Initial mount fetch
   useEffect(() => {
     syncFromServer();
-    
-    // Real-time synchronization via WebSockets
-    const socket = io();
+  }, [syncFromServer]);
+
+  // Real-time synchronization via WebSockets - Only when logged in
+  useEffect(() => {
+    if (!isLoggedIn) return;
+
+    const token = loadFromStorage<string | null>('pos_jwt_token_v5', null);
+    if (!token) {
+      console.warn('[Socket] No token found in storage, skipping connection');
+      return;
+    }
+
+    const socket = io({
+      auth: { token },
+      query: { token, type: 'kds_user' },
+      extraHeaders: {
+        Authorization: `Bearer ${token}`
+      }
+    });
     
     socket.on('connect', () => {
       console.log('Connected to real-time synchronization server');
@@ -1301,7 +1327,8 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
               image: updatedItem.imageUrl || updatedItem.image || m.image,
               available: updatedItem.active !== false,
               flavors: updatedItem.flavors ? (typeof updatedItem.flavors === 'string' ? JSON.parse(updatedItem.flavors) : updatedItem.flavors) : m.flavors,
-              preparationTimeMinutes: updatedItem.preparationTime || m.preparationTimeMinutes,
+              isPopular: updatedItem.isPopular !== undefined ? updatedItem.isPopular : m.isPopular,
+              preparationTimeMinutes: updatedItem.preparationTime !== undefined ? updatedItem.preparationTime : m.preparationTimeMinutes,
             };
           }
           return m;
@@ -1387,7 +1414,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     return () => {
       socket.disconnect();
     };
-  }, [syncFromServer]);
+  }, [isLoggedIn]);
 
   // Auto-recovery offline sync worker: drains IndexedDB queue when online with tenant isolation & auth
   const drainOfflineQueue = useCallback(async () => {
@@ -1396,7 +1423,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     isSyncingRef.current = true;
 
     try {
-      const token = loadFromStorage<string | null>('pos_jwt_token', null) || localStorage.getItem('pos_jwt_token');
+      const token = loadFromStorage<string | null>('pos_jwt_token_v5', null) || localStorage.getItem('pos_jwt_token_v5');
       const activeOrgId = currentUser?.organizationId || 'org_default';
       const activeBranchId = currentUser?.branchId;
 
@@ -1534,7 +1561,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const getAuthToken = async (overridePin?: string) => {
     try {
       // Use cached token if available and valid
-      const cachedToken = loadFromStorage<string | null>('pos_jwt_token', null);
+      const cachedToken = loadFromStorage<string | null>('pos_jwt_token_v5', null);
       if (cachedToken && !overridePin) {
         try {
           const parts = cachedToken.split('.');
@@ -1559,7 +1586,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       });
       if (res.ok) {
         const data = await res.json();
-        saveToStorage('pos_jwt_token', data.token);
+        saveToStorage('pos_jwt_token_v5', data.token);
         return data.token;
       }
     } catch (e) {
@@ -1577,7 +1604,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         headers: { 
           'Content-Type': 'application/json',
           ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-          'x-manager-pin': currentUser?.pin || '1111'
+          'x-manager-pin': currentUser?.pin || '1234'
         },
         body: JSON.stringify({
           name: user.name,
@@ -1645,7 +1672,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         headers: { 
           'Content-Type': 'application/json',
           ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-          'x-manager-pin': currentUser?.pin || '1111'
+          'x-manager-pin': currentUser?.pin || '1234'
         },
         body: JSON.stringify(payload),
       });
@@ -1669,7 +1696,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
               };
               if (currentUser && currentUser.id === userId) {
                 setCurrentUser(updatedUser);
-                saveToStorage('pos_current_user', updatedUser);
+                saveToStorage('pos_current_user_v5', updatedUser);
               }
               return updatedUser;
             }
@@ -1698,13 +1725,13 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           const updatedUser = { ...u, pin: cleanPin, password: cleanPin };
           if (currentUser && currentUser.id === userId) {
             setCurrentUser(updatedUser);
-            saveToStorage('pos_current_user', updatedUser);
+            saveToStorage('pos_current_user_v5', updatedUser);
           }
           return updatedUser;
         }
         return u;
       });
-      saveToStorage('pos_users_cache', nextUsers);
+      saveToStorage('pos_users_v5', nextUsers);
       return nextUsers;
     });
     const ok = await updateUser(userId, { pin: cleanPin });
@@ -1740,7 +1767,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         method: 'DELETE',
         headers: {
           ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-          'x-manager-pin': currentUser?.pin || '1111'
+          'x-manager-pin': currentUser?.pin || '1234'
         }
       });
 
@@ -1779,7 +1806,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         headers: { 
           'Content-Type': 'application/json',
           ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-          'x-manager-pin': currentUser?.pin || '1111',
+          'x-manager-pin': currentUser?.pin || '1234',
           'x-user-role': currentUser?.role || 'owner',
         },
         body: JSON.stringify({
@@ -1849,7 +1876,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         headers: {
           'Content-Type': 'application/json',
           ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-          'x-manager-pin': currentUser?.pin || '1111',
+          'x-manager-pin': currentUser?.pin || '1234',
           'x-user-role': currentUser?.role || 'owner',
         },
         body: JSON.stringify({
@@ -1888,7 +1915,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         method: 'DELETE',
         headers: {
           ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-          'x-manager-pin': currentUser?.pin || '1111',
+          'x-manager-pin': currentUser?.pin || '1234',
           'x-user-role': currentUser?.role || 'owner',
         }
       });
@@ -1937,7 +1964,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         headers: {
           'Content-Type': 'application/json',
           ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-          'x-manager-pin': currentUser?.pin || '1111',
+          'x-manager-pin': currentUser?.pin || '1234',
           'x-user-role': currentUser?.role || 'owner',
         },
         body: JSON.stringify({ name: catName, title: catName })
@@ -1993,7 +2020,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         headers: {
           'Content-Type': 'application/json',
           ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-          'x-manager-pin': currentUser?.pin || '1111',
+          'x-manager-pin': currentUser?.pin || '1234',
           'x-user-role': currentUser?.role || 'owner',
         },
         body: JSON.stringify({ name: catName, title: catName })
@@ -2018,7 +2045,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         method: 'DELETE',
         headers: {
           ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-          'x-manager-pin': currentUser?.pin || '1111',
+          'x-manager-pin': currentUser?.pin || '1234',
           'x-user-role': currentUser?.role || 'owner',
         }
       });
@@ -2394,14 +2421,14 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       }
 
       try {
-        const token = localStorage.getItem('pos_jwt_token');
+        const token = localStorage.getItem('pos_jwt_token_v5');
         const res = await fetch('/api/customers/block', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
             'x-user-role': currentUser?.role || 'owner',
-            'x-manager-pin': currentUser?.pin || '1111',
+            'x-manager-pin': currentUser?.pin || '1234',
           },
           body: JSON.stringify({
             phone: clean || phone,
@@ -2482,14 +2509,14 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       }
 
       try {
-        const token = localStorage.getItem('pos_jwt_token');
+        const token = localStorage.getItem('pos_jwt_token_v5');
         const res = await fetch('/api/customers/unblock', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
             'x-user-role': currentUser?.role || 'owner',
-            'x-manager-pin': currentUser?.pin || '1111',
+            'x-manager-pin': currentUser?.pin || '1234',
           },
           body: JSON.stringify({ phone: clean || phone }),
         });
@@ -2739,7 +2766,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
       let finalOrder = newOrder;
       try {
-        const token = localStorage.getItem('pos_jwt_token');
+        const token = localStorage.getItem('pos_jwt_token_v5');
         const response = await fetch('/api/orders', {
           method: 'POST',
           headers: {
@@ -2751,6 +2778,14 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         if (response.ok) {
           const serverOrder = await response.json();
           finalOrder = serverOrder;
+          
+          // Growth Intelligence: Track successful sale
+          analytics.trackConversion('sale', finalOrder.total);
+          analytics.track('order_punched', {
+            order_type: finalOrder.type,
+            payment_method: finalOrder.paymentMethod,
+            items_count: finalOrder.items.length
+          });
         } else {
           console.warn('Server responded with non-OK status. Queuing offline in IndexedDB:', response.status);
           await posDB.queueOrder(newOrder, currentUser?.organizationId, currentUser?.branchId);
@@ -3225,7 +3260,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     showToast('Inventory stock updated');
   };
 
-  const isRestricted = (capability: string): boolean => {
+  const isRestricted = useCallback((capability: string): boolean => {
     try {
       if (!currentUser || !currentUser.restrictions) return false;
       const parsed = JSON.parse(currentUser.restrictions);
@@ -3233,7 +3268,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     } catch {
       return false;
     }
-  };
+  }, [currentUser]);
 
   return (
     <RestaurantContext.Provider
@@ -3355,12 +3390,12 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 };
 
 const DEFAULT_FALLBACK_USER: UserAccount = {
-  id: 'usr-1',
+  id: 'user-admin-1',
   name: 'Administrator (Robert Vance)',
   username: 'admin',
   email: 'admin@masterpos.com',
-  pin: '1111',
-  password: '1111',
+  pin: '1234',
+  password: '1234',
   role: 'owner',
   outlet: 'All Outlets',
   active: true,

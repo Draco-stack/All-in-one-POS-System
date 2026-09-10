@@ -88,7 +88,7 @@ export const exportToStyledExcel = ({
         <!-- TOP HEADER BANNER (Matching image style) -->
         <tr>
           <td colspan="11" class="banner-header" style="background-color: #f59e0b; color: #ffffff; font-size: 18pt; font-weight: bold; text-align: center; height: 50px; vertical-align: middle;">
-            MASTER POS - ${reportTitle}
+            TILLORA - ${reportTitle}
           </td>
         </tr>
 
@@ -220,7 +220,7 @@ export const exportToStyledExcel = ({
             PKR ${totalAmount.toLocaleString()}
           </td>
           <td colspan="4" style="background-color: #0f172a; color: #94a3b8; font-size: 10pt; font-weight: bold; text-align: center; padding: 8px; border: 1px solid #020617;">
-            Generated on ${new Date().toLocaleString()} | MASTER POS
+            Generated on ${new Date().toLocaleString()} | TILLORA
           </td>
         </tr>
       </table>

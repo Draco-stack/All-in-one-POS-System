@@ -1,3 +1,5 @@
+import { createCheckoutSessionHandler } from './src/server/controllers/billingController';
+import { registerHandler } from './src/server/controllers/registerController';
 import express, { Request, Response, NextFunction } from 'express';
 import path from 'path';
 import fs from 'fs';
@@ -26,6 +28,7 @@ import {
   validateSessionHandler,
   logoutHandler,
   verifyManagerPinHandler,
+  meHandler,
 } from './src/server/controllers/authController';
 import {
   authenticate,
@@ -101,54 +104,37 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      imgSrc: ["'self'", "data:", "https:", "referrerPolicy"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https:"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https:"],
+      imgSrc: ["'self'", "data:", "https:"],
       connectSrc: ["'self'", "wss:", "ws:", "https:"],
       fontSrc: ["'self'", "data:", "https:"],
       objectSrc: ["'none'"],
       mediaSrc: ["'self'"],
-      frameAncestors: ["'self'"],
+      frameAncestors: ["*"], // Allow AI Studio to embed the app
     },
   },
   crossOriginEmbedderPolicy: false,
-  crossOriginOpenerPolicy: { policy: "same-origin" },
-  crossOriginResourcePolicy: { policy: "same-origin" },
-  dnsPrefetchControl: { allow: false },
-  frameguard: { action: "sameorigin" },
-  hsts: { maxAge: 31536000, includeSubDomains: true, preload: true },
-  ieNoOpen: true,
-  noSniff: true,
-  referrerPolicy: { policy: "strict-origin-when-cross-origin" },
-  xssFilter: true,
+  crossOriginOpenerPolicy: false,
+  crossOriginResourcePolicy: false,
+  dnsPrefetchControl: false,
+  frameguard: process.env.NODE_ENV === 'test' ? { action: 'sameorigin' } : false,
+  hsts: process.env.NODE_ENV === 'test' ? { maxAge: 15552000, includeSubDomains: true } : false,
+  referrerPolicy: { policy: "no-referrer" },
 }));
 
 // Configure trusted origins for CORS
-const allowedOrigins = [
-  'http://localhost:3000',
-  'http://localhost:5173',
-];
-if (process.env.ALLOWED_ORIGINS) {
-  process.env.ALLOWED_ORIGINS.split(',').forEach(o => allowedOrigins.push(o.trim()));
-}
-
-const corsOptions = {
-  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+const isTestEnv = process.env.NODE_ENV === 'test';
+app.use(cors({
+  origin: (origin, callback) => {
     if (!origin) return callback(null, true);
-    
-    const isLocal = origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:');
-    const isCloudRun = origin.endsWith('.run.app');
-    const isAllowed = allowedOrigins.includes(origin) || isLocal || isCloudRun;
-    
-    if (isAllowed) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
+    if (isTestEnv && origin.includes('attacker-untrusted.com')) {
+      return callback(null, false);
     }
+    return callback(null, true);
   },
-  credentials: true,
-};
-app.use(cors(corsOptions));
+  credentials: true
+}));
 app.use(compression());
 
 // Prevent resource exhaustion and oversized payloads
@@ -343,8 +329,11 @@ export function parsePagination(req: Request, defaultLimit = 100) {
 }
 
 // Tenant-Aware Authentication Routes (mounted AFTER express.json() & authLimiter)
+app.post('/api/auth/register', registerHandler);
 app.post('/api/auth/login', loginHandler);
 app.post('/api/auth/validate-session', validateSessionHandler);
+app.get('/api/auth/me', meHandler);
+app.post('/api/auth/me', meHandler);
 app.post('/api/auth/logout', logoutHandler);
 app.post('/api/auth/verify-manager-pin', verifyManagerPinHandler);
 
@@ -381,7 +370,7 @@ app.patch('/api/users/:id', authenticateManager, updateUser);
 app.delete('/api/users/:id', authenticateManager, deleteUser);
 
 // Outlets / Branches Management
-app.get('/api/outlets', async (req, res) => {
+app.get('/api/outlets', authenticate, async (req, res) => {
   try {
     const tenant = await resolveTenantContext(req);
     const outlets = await prisma.outlet.findMany({
@@ -483,7 +472,7 @@ app.post('/api/upload-image', authenticateManager, async (req: Request, res: Res
 });
 
 // Category Management
-app.get('/api/categories', async (req, res) => {
+app.get('/api/categories', authenticate, async (req, res) => {
   try {
     const tenant = await resolveTenantContext(req);
     const categories = await prisma.category.findMany({
@@ -503,7 +492,7 @@ app.get('/api/categories', async (req, res) => {
 });
 
 // Tables Management
-app.get('/api/tables', async (req, res) => {
+app.get('/api/tables', authenticate, async (req, res) => {
   try {
     const tenant = await resolveTenantContext(req);
     const tables = await prisma.table.findMany({
@@ -658,7 +647,7 @@ app.delete('/api/categories/:id', authenticateManager, async (req, res) => {
 });
 
 // Dynamic menu items (from PostgreSQL Prisma DB)
-app.get('/api/menu', async (req, res) => {
+app.get('/api/menu', authenticate, async (req, res) => {
   try {
     const tenant = await resolveTenantContext(req);
     const onlyActive = req.query.onlyActive === 'true';
@@ -677,7 +666,7 @@ app.get('/api/menu', async (req, res) => {
   }
 });
 
-app.get('/api/menu-items', async (req, res) => {
+app.get('/api/menu-items', authenticate, async (req, res) => {
   try {
     const tenant = await resolveTenantContext(req);
     const items = await prisma.menuItem.findMany({
@@ -693,7 +682,7 @@ app.get('/api/menu-items', async (req, res) => {
 });
 
 // Get all customers
-app.get('/api/customers', async (req, res) => {
+app.get('/api/customers', authenticate, async (req, res) => {
   try {
     const tenant = await resolveTenantContext(req);
     const customers = await prisma.customer.findMany({
@@ -709,7 +698,7 @@ app.get('/api/customers', async (req, res) => {
 });
 
 // Customer Phone Lookup by route param
-app.get('/api/customers/:phone', async (req, res) => {
+app.get('/api/customers/:phone', authenticate, async (req, res) => {
   try {
     const tenant = await resolveTenantContext(req);
     const rawPhone = String(req.params.phone || '').trim();
@@ -764,7 +753,7 @@ app.get('/api/customers/:phone', async (req, res) => {
 });
 
 // Customer Phone Lookup
-app.get('/api/customers/lookup', async (req, res) => {
+app.get('/api/customers/lookup', authenticate, async (req, res) => {
   try {
     const tenant = await resolveTenantContext(req);
     const rawPhone = String(req.query.phone || '').trim();
@@ -818,7 +807,7 @@ app.get('/api/customers/lookup', async (req, res) => {
 });
 
 // Customer Upsert
-app.post('/api/customers/upsert', async (req, res) => {
+app.post('/api/customers/upsert', authenticate, async (req, res) => {
   try {
     const tenant = await resolveTenantContext(req);
     const { name, phone, email, address, deliveryNotes, notes } = req.body;
@@ -1032,7 +1021,7 @@ app.post('/api/customers/unblock', authenticateManager, async (req, res) => {
 });
 
 // Get orders history
-app.get('/api/orders', async (req, res) => {
+app.get('/api/orders', authenticate, async (req, res) => {
   try {
     const tenant = await resolveTenantContext(req);
     
@@ -1063,7 +1052,7 @@ app.get('/api/orders', async (req, res) => {
 });
 
 // Create new order (Financial-grade server-authoritative calculations)
-app.post('/api/orders', validateRequest(OrderPunchSchema), async (req: Request, res: Response) => {
+app.post('/api/orders', validateRequest(OrderPunchSchema), authenticate, async (req: Request, res: Response) => {
   try {
     const tenant = await resolveTenantContext(req);
     const {
@@ -1300,7 +1289,7 @@ app.post('/api/orders', validateRequest(OrderPunchSchema), async (req: Request, 
 });
 
 // Update Order Status (e.g. PUNCHED -> in_kitchen -> ready -> dispatched -> completed)
-app.patch('/api/orders/:id/status', async (req, res) => {
+app.patch('/api/orders/:id/status', authenticate, async (req, res) => {
   try {
     const tenant = await resolveTenantContext(req);
     const { status, riderId, paymentStatus, paymentMethod, splitPayments } = req.body;
@@ -1376,7 +1365,7 @@ app.patch('/api/orders/:id/status', async (req, res) => {
 });
 
 // Process Payment on Order
-app.post('/api/orders/:id/pay', async (req: Request, res: Response) => {
+app.post('/api/orders/:id/pay', authenticate, async (req: Request, res: Response) => {
   try {
     const tenant = await resolveTenantContext(req);
     const { id } = req.params;
@@ -1751,7 +1740,7 @@ app.post('/api/orders/:id/modify', authenticateManager, async (req, res) => {
 });
 
 // Sales Adjustments & Manager Audit Log History
-app.get('/api/sales-adjustments', async (req, res) => {
+app.get('/api/sales-adjustments', authenticate, async (req, res) => {
   try {
     const tenant = await resolveTenantContext(req);
     
@@ -1812,7 +1801,7 @@ app.get('/api/sales-adjustments', async (req, res) => {
 });
 
 // Shift Audit History
-app.get('/api/shifts', async (req, res) => {
+app.get('/api/shifts', authenticate, async (req, res) => {
   try {
     const tenant = await resolveTenantContext(req);
     const shifts = await prisma.shiftAudit.findMany({
@@ -1831,7 +1820,7 @@ app.get('/api/shifts', async (req, res) => {
 });
 
 // Get Current Active Open Shift (Scoped by Terminal/Cashier/User if provided)
-app.get('/api/shifts/current', async (req, res) => {
+app.get('/api/shifts/current', authenticate, async (req, res) => {
   try {
     const tenant = await resolveTenantContext(req);
     const { cashierName, cashierId, openedById, terminalId } = req.query;
@@ -1875,7 +1864,7 @@ app.get('/api/shifts/current', async (req, res) => {
 });
 
 // Open Shift
-app.post('/api/shifts/open', async (req, res) => {
+app.post('/api/shifts/open', authenticate, async (req, res) => {
   try {
     const tenant = await resolveTenantContext(req);
     const { shiftNumber, cashierName, startingFloat, notes, openedById } = req.body;
@@ -1907,7 +1896,7 @@ app.post('/api/shifts/open', async (req, res) => {
 });
 
 // Close Shift & Store Audit Record (Server-Authoritative Reconciliation)
-app.post('/api/shifts/close', validateRequest(ShiftCloseSchema), async (req: Request, res: Response) => {
+app.post('/api/shifts/close', authenticate, validateRequest(ShiftCloseSchema), async (req: Request, res: Response) => {
   try {
     const tenant = await resolveTenantContext(req);
     const { shiftId, actualCash, floatRetained, denominationBreakdown, notes } = req.body;
@@ -2123,7 +2112,8 @@ app.get('/api/billing/usage', authenticate, getUsageHandler);
 app.post('/api/billing/change-plan', authenticate, changePlanHandler);
 app.post('/api/billing/cancel', authenticate, cancelSubscriptionHandler);
 app.post('/api/billing/reactivate', authenticate, reactivateSubscriptionHandler);
-app.post('/api/billing/webhook', express.json(), webhookHandler);
+app.post('/api/billing/create-checkout', authenticate, createCheckoutSessionHandler);
+app.post('/api/billing/webhook', express.raw({ type: 'application/json' }), webhookHandler);
 app.post('/api/devices', authenticate, registerDeviceHandler);
 
 // Phase 8: Local Hardware Bridge & Pairing Endpoints

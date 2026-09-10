@@ -48,8 +48,11 @@ export class ErrorBoundary extends Component<Props, State> {
               An unexpected interface error was safely isolated to protect active database transactions and register records.
             </p>
             {this.state.error && (
-              <div className="bg-white dark:bg-stone-950 border border-slate-200 dark:border-stone-800 rounded-xl p-3 mb-6 text-left overflow-auto max-h-32 text-xs font-mono text-red-300">
-                {this.state.error.message}
+              <div className="bg-white dark:bg-stone-950 border border-slate-200 dark:border-stone-800 rounded-xl p-3 mb-6 text-left overflow-auto max-h-64 text-xs font-mono text-red-300">
+                <p className="font-bold mb-1">{this.state.error.message}</p>
+                {import.meta.env.MODE !== 'production' && this.state.error.stack && (
+                  <pre className="mt-2 whitespace-pre-wrap text-[10px] text-red-400">{this.state.error.stack}</pre>
+                )}
               </div>
             )}
             <button

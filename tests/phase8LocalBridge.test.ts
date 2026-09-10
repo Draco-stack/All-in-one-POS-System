@@ -612,6 +612,7 @@ async function runLocalBridgeTests() {
     process.exit(1);
   } else {
     console.log('🎉 ALL 35+ PHASE 8 HARDWARE BRIDGE ASSERTIONS PASSED SUCCESSFULLY!');
+    process.exit(0);
   }
 }
 

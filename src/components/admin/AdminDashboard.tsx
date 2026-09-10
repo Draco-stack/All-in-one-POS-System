@@ -28,7 +28,7 @@ import { AdminStaffManager } from './AdminStaffManager';
 import { AdminReportsAnalytics } from './AdminReportsAnalytics';
 import { AdminSystemSettings } from './AdminSystemSettings';
 import { AdminRidersFleet } from './AdminRidersFleet';
-import { MasterPOSLogo } from '../common/MasterPOSLogo';
+import { Logo } from '../common/Logo';
 
 type AdminTab = 'SALES' | 'MENU' | 'STAFF' | 'REPORTS' | 'SETTINGS' | 'RIDERS';
 
@@ -98,10 +98,10 @@ export const AdminDashboard: React.FC = () => {
           {/* Brand Crest */}
           <div className="flex flex-col items-center justify-center gap-2">
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-b from-[#1e2230] to-[#0d0f18] border border-blue-500/30 flex items-center justify-center shadow-lg shadow-blue-500/10">
-              <MasterPOSLogo className="w-8 h-8 text-blue-400" size={32} useColor={true} accent="cyan" />
+              <Logo className="scale-125" iconOnly={true} />
             </div>
             <span className="text-[11px] font-mono uppercase tracking-widest text-blue-400 font-bold">
-              Master POS • Security Guard
+              Tillora • Security Guard
             </span>
           </div>
 
@@ -166,7 +166,7 @@ export const AdminDashboard: React.FC = () => {
       }`}>
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white border border-blue-400/30 flex items-center justify-center shrink-0 shadow-lg shadow-blue-500/20">
-            <MasterPOSLogo className="w-5 h-5 sm:w-6 sm:h-6 text-white" size={24} useColor={false} />
+            <Logo className="scale-75" iconOnly={true} />
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap">
@@ -190,7 +190,7 @@ export const AdminDashboard: React.FC = () => {
               theme === 'dark' ? 'text-stone-400' : 'text-slate-500'
             }`}>
               <Store className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-              <span className="truncate">{currentUser.outlet || 'Master POS Main Branch'}</span>
+              <span className="truncate">{currentUser.outlet || 'Tillora Main Branch'}</span>
               <span className={theme === 'dark' ? 'text-stone-600' : 'text-slate-300'}>•</span>
               <span className="font-mono text-[10.5px]">
                 {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}

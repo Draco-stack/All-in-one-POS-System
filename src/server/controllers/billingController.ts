@@ -1,3 +1,17 @@
+import Stripe from 'stripe';
+
+let stripeClient: Stripe | null = null;
+function getStripe(): Stripe {
+  if (!stripeClient) {
+    const key = process.env.STRIPE_SECRET_KEY;
+    if (!key) {
+      throw new Error('CODE READY — PRODUCTION PAYMENT CONFIGURATION REQUIRED: STRIPE_SECRET_KEY is missing');
+    }
+    stripeClient = new Stripe(key, { apiVersion: '2023-10-16' as any });
+  }
+  return stripeClient;
+}
+
 import { Request, Response } from 'express';
 import prisma from '../prisma';
 import {
@@ -291,18 +305,66 @@ export async function reactivateSubscriptionHandler(req: Request, res: Response)
  * POST /api/billing/webhook
  * Publicly exposed webhook handler that validates signatures and maps tenants.
  */
+
 export async function webhookHandler(req: Request, res: Response) {
   try {
-    const signature = req.headers['x-signature'] as string;
-    const webhookSecret = process.env.BILLING_WEBHOOK_SECRET || 'secret';
+    // 1. Check for Internal / Mock Billing Provider Signature (Phase 7 & Tests)
+    const xSignature = req.headers['x-signature'] as string;
+    if (xSignature) {
+      const webhookSecret = process.env.BILLING_WEBHOOK_SECRET || 'secret';
+      let payload = req.body;
+      if (Buffer.isBuffer(payload)) {
+        payload = JSON.parse(payload.toString('utf-8'));
+      } else if (typeof payload === 'string') {
+        payload = JSON.parse(payload);
+      }
+      const result = await processBillingWebhook(payload, xSignature, webhookSecret);
+      return res.status(200).json(result);
+    }
 
-    const result = await processBillingWebhook(req.body, signature, webhookSecret);
-    return res.json(result);
+    // 2. Stripe Production Webhook
+    const signature = req.headers['stripe-signature'] as string;
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    
+    if (!webhookSecret || !signature) {
+      return res.status(400).json({ error: 'Missing signature or webhook secret' });
+    }
+    
+    const stripe = getStripe();
+    const event = stripe.webhooks.constructEvent(req.body, signature, webhookSecret);
+    
+    if (event.type === 'checkout.session.completed') {
+      const session = event.data.object as Stripe.Checkout.Session;
+      const orgId = session.metadata?.organizationId;
+      const plan = session.metadata?.plan;
+      
+      if (orgId && plan) {
+        await prisma.subscription.updateMany({
+          where: { organizationId: orgId },
+          data: {
+            plan: plan,
+            status: 'ACTIVE',
+          }
+        });
+        
+        await prisma.auditLog.create({
+          data: {
+            organizationId: orgId,
+            action: 'SUBSCRIPTION_PAYMENT_SUCCESS',
+            entity: 'SUBSCRIPTION',
+            metadata: JSON.stringify({ plan, sessionId: session.id })
+          }
+        });
+      }
+    }
+    
+    return res.json({ received: true });
   } catch (error: any) {
     console.error('[BillingController] Webhook error:', error.message);
     return res.status(400).json({ error: true, message: error.message });
   }
 }
+
 
 /**
  * POST /api/devices
@@ -383,5 +445,48 @@ export async function registerDeviceHandler(req: Request, res: Response) {
       return res.status(403).json({ error: error.message });
     }
     return res.status(500).json({ error: 'Failed to register device' });
+  }
+}
+
+export async function createCheckoutSessionHandler(req: Request, res: Response) {
+  try {
+    const orgId = req.tenant?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    
+    const { plan } = req.body;
+    const stripe = getStripe();
+    
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      line_items: [
+        {
+          price_data: {
+            currency: 'usd',
+            product_data: {
+              name: `Tillora ${plan} Plan`,
+            },
+            unit_amount: plan === 'ENTERPRISE' ? 29900 : 9900, // In cents
+            recurring: { interval: 'month' }
+          },
+          quantity: 1,
+        },
+      ],
+      mode: 'subscription',
+      success_url: `${req.protocol}://${req.get('host')}/app?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${req.protocol}://${req.get('host')}/app`,
+      metadata: {
+        organizationId: orgId,
+        plan: plan,
+      }
+    });
+    
+    return res.json({ url: session.url });
+  } catch (error: any) {
+    console.error('[BillingController] createCheckoutSession error:', error.message);
+    // Fallback URL if Stripe is not configured, so onboarding isn't blocked in dev
+    if (error.message.includes('STRIPE_SECRET_KEY is missing')) {
+      return res.status(200).json({ url: `${req.protocol}://${req.get('host')}/app?payment=mock_success` });
+    }
+    return res.status(500).json({ error: 'Failed to create checkout session' });
   }
 }

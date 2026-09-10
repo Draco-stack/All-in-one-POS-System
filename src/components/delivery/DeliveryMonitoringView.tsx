@@ -906,7 +906,7 @@ export const DeliveryMonitoringView: React.FC<DeliveryMonitoringViewProps> = ({
                                 {driver}
                               </h4>
                               <span className={`text-[11px] font-medium block ${theme === 'dark' ? 'text-slate-500 dark:text-stone-400' : 'text-slate-500'}`}>
-                                Master POS Delivery Fleet
+                                Tillora Delivery Fleet
                               </span>
                             </div>
                           </div>

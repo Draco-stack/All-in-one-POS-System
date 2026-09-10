@@ -379,7 +379,7 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
               </div>
 
               <div className="text-center pt-3 border-t border-dashed border-stone-300 text-[10px] text-slate-400 dark:text-stone-500">
-                <p>*** THANK YOU FOR ORDERING WITH MASTER POS ***</p>
+                <p>*** THANK YOU FOR ORDERING WITH TILLORA ***</p>
                 <p className="text-[9px]">Branch: {branchName}</p>
               </div>
             </>

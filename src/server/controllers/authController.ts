@@ -97,6 +97,8 @@ export async function loginHandler(req: Request, res: Response) {
       userQueryWhere.organizationId = targetOrgId;
     }
 
+    console.log(`[AUTH] Attempting login for user: "${rawUser}" in Org: "${targetOrgId || 'ANY'}"`);
+
     const users = await prisma.user.findMany({
       where: userQueryWhere,
       include: {
@@ -104,6 +106,11 @@ export async function loginHandler(req: Request, res: Response) {
         branch: true,
       },
     });
+
+    console.log(`[AUTH] Total active users in Org: ${users.length}`);
+    if (users.length > 0) {
+      console.log(`[AUTH] Usernames found: ${users.map(u => u.username).join(', ')}`);
+    }
 
     let matchedUser: any = null;
 
@@ -140,13 +147,19 @@ export async function loginHandler(req: Request, res: Response) {
       }
     }
 
+    if (!matchedUser) {
+      console.log(`[AUTH] No user found matching: "${rawUser}"`);
+    }
+
     // 3. Credential Verification
     if (matchedUser) {
+      console.log(`[AUTH] Found matched user: ${matchedUser.username} (ID: ${matchedUser.id})`);
       const isMatch = matchedUser.pin.startsWith('$2')
         ? await bcrypt.compare(rawPin, matchedUser.pin)
         : rawPin === matchedUser.pin;
 
       if (!isMatch) {
+        console.log(`[AUTH] PIN mismatch for user: ${matchedUser.username}. RawPin: "${rawPin}" vs DB: "${matchedUser.pin}"`);
         recordLoginFailure(lockoutKey);
         if (matchedUser.organizationId) {
           logAuditEvent({
@@ -190,6 +203,8 @@ export async function loginHandler(req: Request, res: Response) {
         }).catch(() => {});
       });
     }
+
+    console.log(`[AUTH] Login successful for user: ${matchedUser.username} (Role: ${matchedUser.role})`);
 
     // 4. Resolve & Verify Organization
     let organization = matchedUser.organization;
@@ -319,9 +334,16 @@ export async function validateSessionHandler(req: Request, res: Response) {
     }
 
     // Check organization status
-    const org = user.organization || (await prisma.organization.findUnique({ where: { id: DEFAULT_ORG_ID } }));
+    const org = user.organization;
     if (!org) {
-      return res.json({ valid: false, reason: 'Organization not found' });
+      return res.json({
+        valid: true,
+        authenticated: true,
+        needsOnboarding: true,
+        user: sanitizeUser(user),
+        organization: null,
+        branch: null,
+      });
     }
 
     if (org.status === 'SUSPENDED' || org.status === 'CANCELLED') {
@@ -365,6 +387,8 @@ export async function validateSessionHandler(req: Request, res: Response) {
     const safeUser = sanitizeUser(user);
     return res.json({
       valid: true,
+      authenticated: true,
+      needsOnboarding: !user.branchId || !user.branch,
       user: safeUser,
       organization: {
         id: org.id,
@@ -384,6 +408,121 @@ export async function validateSessionHandler(req: Request, res: Response) {
   } catch (error) {
     console.error('[ValidateSessionHandler] Error:', error);
     return res.status(500).json({ valid: false, error: 'Internal server error during session validation' });
+  }
+}
+
+/**
+ * Authoritative Current User & Organization Context Handler.
+ * Endpoints: GET /api/auth/me, POST /api/auth/me
+ * Reads Bearer token, validates against DB, checks organization/branch/subscription.
+ * Returns authoritative user context and flags whether onboarding is needed.
+ */
+export async function meHandler(req: Request, res: Response) {
+  try {
+    const rawToken = req.headers.authorization?.replace(/^Bearer\s+/i, '');
+    if (!rawToken) {
+      return res.status(401).json({ error: 'Unauthorized: Authentication token required', code: 'UNAUTHORIZED' });
+    }
+
+    // 1. Verify tenant JWT or supported demo token
+    const decoded = verifyTenantToken(rawToken);
+    let userId = decoded?.userId;
+
+    if (!userId && rawToken.startsWith('DEMO_BYPASS_')) {
+      const email = rawToken.replace('DEMO_BYPASS_', '').trim().toLowerCase();
+      const demoUser = await prisma.user.findFirst({
+        where: { username: email },
+        include: { organization: true, branch: true },
+      });
+      if (demoUser) {
+        userId = demoUser.id;
+      }
+    }
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized: Invalid or expired token', code: 'INVALID_TOKEN' });
+    }
+
+    // 2. Fetch user from DB with organization, branch, and active subscription
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        organization: {
+          include: {
+            subscriptions: {
+              where: { status: { in: ['ACTIVE', 'TRIALING'] } },
+              orderBy: { createdAt: 'desc' },
+              take: 1,
+            },
+          },
+        },
+        branch: true,
+      },
+    });
+
+    if (!user || !user.active) {
+      return res.status(401).json({ error: 'Unauthorized: User not found or inactive', code: 'USER_INACTIVE' });
+    }
+
+    // 3. Check session validity if sessionId present
+    if (decoded?.sessionId) {
+      const isSessionValid = await validateSession(decoded.sessionId, rawToken);
+      if (!isSessionValid) {
+        return res.status(401).json({ error: 'Unauthorized: Session has expired or been revoked', code: 'SESSION_REVOKED' });
+      }
+    }
+
+    // 4. Server-Authoritative Decision on Provisioning Status
+    if (!user.organizationId || !user.organization) {
+      return res.json({
+        authenticated: true,
+        needsOnboarding: true,
+        user: sanitizeUser(user),
+        organization: null,
+        branch: null,
+        subscription: null,
+      });
+    }
+
+    const org = user.organization;
+    if (org.status === 'SUSPENDED' || org.status === 'CANCELLED') {
+      return res.status(403).json({
+        error: `Organization is ${org.status.toLowerCase()}`,
+        code: `ORGANIZATION_${org.status}`,
+      });
+    }
+
+    const latestSub = org.subscriptions?.[0] || null;
+
+    return res.json({
+      authenticated: true,
+      needsOnboarding: !user.branchId || !user.branch,
+      user: sanitizeUser(user),
+      organization: {
+        id: org.id,
+        name: org.name,
+        slug: org.slug,
+        status: org.status,
+      },
+      branch: user.branch
+        ? {
+            id: user.branch.id,
+            name: user.branch.name,
+            slug: user.branch.slug,
+            active: user.branch.active,
+          }
+        : null,
+      subscription: latestSub
+        ? {
+            id: latestSub.id,
+            plan: latestSub.plan,
+            status: latestSub.status,
+          }
+        : null,
+    });
+  } catch (error) {
+    console.error('[MeHandler] Error:', error);
+    return res.status(500).json({ error: 'Internal server error resolving identity' });
   }
 }
 

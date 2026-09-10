@@ -149,113 +149,113 @@ export async function seedDatabaseIfNeeded() {
       data: { organizationId: defaultOrg.id },
     });
 
-    // 1. Seed Default Users if none exist
-    const userCount = await prisma.user.count({ where: { organizationId: defaultOrg.id } });
-    if (userCount === 0) {
-      console.log('[Seed] Seeding default users for Tillora Flagship...');
-      await prisma.user.createMany({
-        data: [
-          {
-            organizationId: defaultOrg.id,
-            branchId: defaultBranch.id,
-            name: 'Admin Manager',
-            username: 'admin',
-            pin: '1234',
-            role: 'OWNER',
-            active: true,
-          },
-          {
-            organizationId: defaultOrg.id,
-            branchId: defaultBranch.id,
-            name: 'Store Manager',
-            username: 'manager',
-            pin: '2222',
-            role: 'MANAGER',
-            active: true,
-          },
-          {
-            organizationId: defaultOrg.id,
-            branchId: defaultBranch.id,
-            name: 'Cashier One',
-            username: 'cashier',
-            pin: '3333',
-            role: 'CASHIER',
-            active: true,
-          },
-          {
-            organizationId: defaultOrg.id,
-            branchId: defaultBranch.id,
-            name: 'Carlos Rodriguez',
-            username: 'rider_carlos',
-            pin: '6666',
-            role: 'RIDER',
-            active: true,
-          },
-          {
-            organizationId: defaultOrg.id,
-            branchId: defaultBranch.id,
-            name: 'Samir Khan',
-            username: 'rider_samir',
-            pin: '7777',
-            role: 'RIDER',
-            active: true,
-          },
-          {
-            organizationId: defaultOrg.id,
-            branchId: defaultBranch.id,
-            name: 'Marcus Vance',
-            username: 'rider_marcus',
-            pin: '8888',
-            role: 'RIDER',
-            active: true,
-          },
-          {
-            organizationId: defaultOrg.id,
-            branchId: defaultBranch.id,
-            name: 'Ali Raza',
-            username: 'server_ali',
-            pin: '4444',
-            role: 'SERVER',
-            active: true,
-          },
-        ],
+    // 1. Seed Default Users with Deterministic IDs
+    const defaultUsers = [
+      {
+        id: 'user-admin-1',
+        organizationId: defaultOrg.id,
+        branchId: defaultBranch.id,
+        name: 'Admin Manager',
+        username: 'admin',
+        pin: '1234',
+        role: 'OWNER',
+        active: true,
+      },
+      {
+        id: 'user-manager-1',
+        organizationId: defaultOrg.id,
+        branchId: defaultBranch.id,
+        name: 'Store Manager',
+        username: 'manager',
+        pin: '2222',
+        role: 'MANAGER',
+        active: true,
+      },
+      {
+        id: 'user-cashier-1',
+        organizationId: defaultOrg.id,
+        branchId: defaultBranch.id,
+        name: 'Cashier One',
+        username: 'cashier',
+        pin: '3333',
+        role: 'CASHIER',
+        active: true,
+      },
+      {
+        id: 'user-cashier-2',
+        organizationId: defaultOrg.id,
+        branchId: defaultBranch.id,
+        name: 'Sana Malik',
+        username: 'cashier2',
+        pin: '4444',
+        role: 'CASHIER',
+        active: true,
+      },
+      {
+        id: 'user-rider-1',
+        organizationId: defaultOrg.id,
+        branchId: defaultBranch.id,
+        name: 'Carlos Rodriguez',
+        username: 'rider_carlos',
+        pin: '6666',
+        role: 'RIDER',
+        active: true,
+      },
+      {
+        id: 'user-rider-2',
+        organizationId: defaultOrg.id,
+        branchId: defaultBranch.id,
+        name: 'Samir Khan',
+        username: 'rider_samir',
+        pin: '7777',
+        role: 'RIDER',
+        active: true,
+      },
+      {
+        id: 'user-rider-3',
+        organizationId: defaultOrg.id,
+        branchId: defaultBranch.id,
+        name: 'Marcus Vance',
+        username: 'rider_marcus',
+        pin: '8888',
+        role: 'RIDER',
+        active: true,
+      },
+      {
+        id: 'user-server-1',
+        organizationId: defaultOrg.id,
+        branchId: defaultBranch.id,
+        name: 'Ali Raza',
+        username: 'server_ali',
+        pin: '4444',
+        role: 'SERVER',
+        active: true,
+      },
+    ];
+
+    console.log('[Seed] Synchronizing default users...');
+    for (const u of defaultUsers) {
+      // Clean up any user that might have the same username but a different ID to avoid unique constraint violations
+      await prisma.user.deleteMany({
+        where: {
+          username: u.username,
+          id: { not: u.id },
+          organizationId: u.organizationId
+        }
       });
-    } else {
-      // Ensure default riders exist if missing
-      const riderCount = await prisma.user.count({ where: { organizationId: defaultOrg.id, role: 'RIDER' } });
-      if (riderCount === 0) {
-        await prisma.user.createMany({
-          data: [
-            {
-              organizationId: defaultOrg.id,
-              branchId: defaultBranch.id,
-              name: 'Carlos Rodriguez',
-              username: 'rider_carlos',
-              pin: '6666',
-              role: 'RIDER',
-              active: true,
-            },
-            {
-              organizationId: defaultOrg.id,
-              branchId: defaultBranch.id,
-              name: 'Samir Khan',
-              username: 'rider_samir',
-              pin: '7777',
-              role: 'RIDER',
-              active: true,
-            },
-            {
-              organizationId: defaultOrg.id,
-              branchId: defaultBranch.id,
-              name: 'Marcus Vance',
-              username: 'rider_marcus',
-              pin: '8888',
-              role: 'RIDER',
-              active: true,
-            },
-          ],
-        });
-      }
+
+      await prisma.user.upsert({
+        where: { id: u.id },
+        update: {
+          pin: u.pin,
+          role: u.role,
+          active: true,
+          username: u.username,
+          organizationId: u.organizationId,
+          branchId: u.branchId,
+        },
+        create: u,
+      });
     }
 
     // Ensure default servers exist if missing

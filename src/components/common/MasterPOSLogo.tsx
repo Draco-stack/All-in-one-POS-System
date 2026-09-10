@@ -103,7 +103,7 @@ export const MasterPOSLogo: React.FC<MasterPOSLogoProps> = ({
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       className={className}
-      aria-label="Master POS Brand Emblem"
+      aria-label="Tillora Brand Emblem"
       style={{ overflow: 'visible' }}
     >
       <defs>
@@ -237,7 +237,7 @@ export const MasterPOSLogo: React.FC<MasterPOSLogoProps> = ({
           <polygon points="22,7 26.5,12 22,14.5 17.5,12" fill="black" />
           <polygon points="22,20.5 24.5,23 22,25.5 19.5,23" fill="white" stroke="black" strokeWidth="1" />
         </svg>
-        <span className="font-black text-sm tracking-widest uppercase mt-1">MASTER POS</span>
+        <span className="font-black text-sm tracking-widest uppercase mt-1">TILLORA</span>
       </div>
     );
   }
@@ -286,8 +286,8 @@ export const MasterPOSLogo: React.FC<MasterPOSLogoProps> = ({
       <div className="flex flex-col justify-center min-w-0">
         <div className="flex items-center gap-1.5 leading-tight">
           <span className="font-extrabold text-sm sm:text-base tracking-tight text-white font-sans flex items-center">
-            <span className="tracking-tight">MASTER</span>
-            <span className="ml-1 text-white/90">POS</span>
+            <span className="tracking-tight italic">TILL</span>
+            <span className="ml-0.5 text-amber-500 font-black">ORA</span>
           </span>
 
           {/* Edition Tag */}

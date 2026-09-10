@@ -3,6 +3,7 @@ import { Server as HttpServer } from 'http';
 import prisma from '../prisma';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
+import { getJwtSecret, verifyTenantToken } from '../auth/jwt';
 
 export const activeAgentSockets = new Map<string, Socket>();
 export const activeKdsSockets = new Map<string, Socket>();
@@ -25,14 +26,19 @@ export function initHardwareSocket(ioInstance: SocketIOServer) {
   // Main connection handler
   io.on('connection', async (socket: Socket) => {
     try {
-      const authHeader = socket.handshake.headers['authorization'] || '';
-      const authQuery = socket.handshake.query['token'] || '';
+      const authHeader = socket.handshake.headers['authorization'];
+      const authQuery = socket.handshake.query['token'];
       const authType = socket.handshake.query['type'] || 'agent'; // 'agent' or 'kds_user'
 
-      const token = String(authHeader).replace('Bearer ', '') || String(authQuery);
+      let token = '';
+      if (typeof authHeader === 'string' && authHeader.startsWith('Bearer ')) {
+        token = authHeader.substring(7);
+      } else if (typeof authQuery === 'string') {
+        token = authQuery;
+      }
 
-      if (!token) {
-        console.warn('[Socket Auth] Connection rejected: Missing credentials');
+      if (!token || token === 'null' || token === 'undefined') {
+        console.warn('[Socket Auth] Connection rejected: Missing or invalid credentials');
         socket.disconnect(true);
         return;
       }
@@ -162,13 +168,10 @@ export function initHardwareSocket(ioInstance: SocketIOServer) {
         // ----------------------------------------------------------------------
         // KDS USER REAL-TIME SYSTEM (Staff & Displays)
         // ----------------------------------------------------------------------
-        // Validate Standard Tenant JWT Token
-        const jwtSecret = process.env.JWT_SECRET || 'fallback_secret';
-        let decoded: any;
-        try {
-          decoded = jwt.verify(token, jwtSecret);
-        } catch (err) {
-          console.warn('[Socket KDS Auth] Token verification failed:', err);
+        // Validate Standard Tenant JWT Token using the authoritative verification utility
+        const decoded = verifyTenantToken(token);
+        if (!decoded) {
+          console.warn('[Socket KDS Auth] Token verification failed for token:', token.substring(0, 10) + '...');
           socket.disconnect(true);
           return;
         }
@@ -185,7 +188,7 @@ export function initHardwareSocket(ioInstance: SocketIOServer) {
         };
 
         activeKdsSockets.set(socket.id, socket);
-        console.log(`[Socket] KDS Client connected: User ${decoded.username} (Org: ${orgId}, Role: ${decoded.role})`);
+        console.log(`[Socket] KDS Client connected: User ${decoded.name} (Org: ${orgId}, Role: ${decoded.role})`);
 
         // Channel subscription model with strict authentication and tenant scoping
         socket.on('kds:subscribe', (data: { branchId: string }) => {

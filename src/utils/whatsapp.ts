@@ -60,7 +60,7 @@ export function getWhatsAppDispatchData(order: Order): WhatsAppDispatchResult {
 
   const customerName = order.customer?.name?.trim() || 'Valued Customer';
   const orderNumber = order.orderNumber || order.id?.slice(-4) || 'Order';
-  const branchName = order.branchName || order.outlet || 'Master POS';
+  const branchName = order.branchName || order.outlet || 'Tillora';
   const address = order.customer?.address || order.deliveryAddress || 'Customer Address';
   const total = order.total || order.subtotal || 0;
 
@@ -81,7 +81,7 @@ export function getWhatsAppDispatchData(order: Order): WhatsAppDispatchResult {
             return `• ${qty}x *${item.name}*${details} @ PKR ${unitPrice.toLocaleString()} = *PKR ${lineTotal.toLocaleString()}*`;
           })
           .join('\n')
-      : '• 1x *Master POS Special Order*';
+      : '• 1x *Tillora Special Order*';
 
   // Calculate clean subtotal
   const computedSubtotal =
@@ -111,16 +111,16 @@ export function getWhatsAppDispatchData(order: Order): WhatsAppDispatchResult {
 
   if (status === 'dispatched' || status === 'out_for_delivery') {
     statusLabel = 'Out for Delivery';
-    rawMessage = `🛵💨 *MASTER POS - OUT FOR DELIVERY!*\n━━━━━━━━━━━━━━━━━━━━\nDear *${customerName}*,\nYour order *#${orderNumber}* is now out for delivery!\n\n👤 *Rider:* ${riderName}\n📞 *Rider Contact:* ${riderPhone}\n🛵 *Vehicle:* ${riderVehicle}\n\n📋 *Order Items:*\n${itemsDetailedList}\n\n💵 *Billing Breakdown:*\n${financialBreakdown}\n\n📍 *Delivering To:* ${address}\n\n_Please keep the exact amount ready for Cash on Delivery. Enjoy your meal!_ 🍔✨\n_Master POS Delivery Fleet_`;
+    rawMessage = `🛵💨 *TILLORA - OUT FOR DELIVERY!*\n━━━━━━━━━━━━━━━━━━━━\nDear *${customerName}*,\nYour order *#${orderNumber}* is now out for delivery!\n\n👤 *Rider:* ${riderName}\n📞 *Rider Contact:* ${riderPhone}\n🛵 *Vehicle:* ${riderVehicle}\n\n📋 *Order Items:*\n${itemsDetailedList}\n\n💵 *Billing Breakdown:*\n${financialBreakdown}\n\n📍 *Delivering To:* ${address}\n\n_Please keep the exact amount ready for Cash on Delivery. Enjoy your meal!_ 🍔✨\n_Tillora Delivery Fleet_`;
   } else if (status === 'in_kitchen' || status === 'preparing') {
     statusLabel = 'In Kitchen Preparation';
-    rawMessage = `👨‍🍳🔥 *MASTER POS - IN KITCHEN*\n━━━━━━━━━━━━━━━━━━━━\nDear *${customerName}*,\nYour order *#${orderNumber}* is being freshly prepared in our kitchen!\n\n📋 *Order Items:*\n${itemsDetailedList}\n\n💵 *Billing Breakdown:*\n${financialBreakdown}\n\n⏱️ *Est. Prep Time:* 15-20 mins\n📍 *Delivering To:* ${address}\n\n_We will notify you the moment your rider is on the road!_ 🛵\n_Master POS Kitchen Team_`;
+    rawMessage = `👨‍🍳🔥 *TILLORA - IN KITCHEN*\n━━━━━━━━━━━━━━━━━━━━\nDear *${customerName}*,\nYour order *#${orderNumber}* is being freshly prepared in our kitchen!\n\n📋 *Order Items:*\n${itemsDetailedList}\n\n💵 *Billing Breakdown:*\n${financialBreakdown}\n\n⏱️ *Est. Prep Time:* 15-20 mins\n📍 *Delivering To:* ${address}\n\n_We will notify you the moment your rider is on the road!_ 🛵\n_Tillora Kitchen Team_`;
   } else if (status === 'ready') {
     statusLabel = 'Packed & Ready';
-    rawMessage = `📦 *MASTER POS - PACKED & READY*\n━━━━━━━━━━━━━━━━━━━━\nDear *${customerName}*,\nYour order *#${orderNumber}* is freshly packed and ready for rider dispatch!\n\n📋 *Order Items:*\n${itemsDetailedList}\n\n💵 *Billing Breakdown:*\n${financialBreakdown}\n\n📍 *Delivery Address:* ${address}\n\n_Our fleet rider is picking it up for instant delivery._ 🚀\n_Master POS Express_`;
+    rawMessage = `📦 *TILLORA - PACKED & READY*\n━━━━━━━━━━━━━━━━━━━━\nDear *${customerName}*,\nYour order *#${orderNumber}* is freshly packed and ready for rider dispatch!\n\n📋 *Order Items:*\n${itemsDetailedList}\n\n💵 *Billing Breakdown:*\n${financialBreakdown}\n\n📍 *Delivery Address:* ${address}\n\n_Our fleet rider is picking it up for instant delivery._ 🚀\n_Tillora Express_`;
   } else if (status === 'delivered' || status === 'completed') {
     statusLabel = 'Delivered';
-    rawMessage = `🎉 *MASTER POS - ORDER DELIVERED!*\n━━━━━━━━━━━━━━━━━━━━\nDear *${customerName}*,\nYour order *#${orderNumber}* has been successfully delivered! 🍽️\n\n📋 *Items Delivered:*\n${itemsDetailedList}\n\n💵 *Paid Summary:*\n${financialBreakdown}\n\nThank you for dining with Master POS. We hope you loved your meal!\n⭐ _Have feedback or loved your food? Let us know!_\n_Master POS Customer Care_`;
+    rawMessage = `🎉 *TILLORA - ORDER DELIVERED!*\n━━━━━━━━━━━━━━━━━━━━\nDear *${customerName}*,\nYour order *#${orderNumber}* has been successfully delivered! 🍽️\n\n📋 *Items Delivered:*\n${itemsDetailedList}\n\n💵 *Paid Summary:*\n${financialBreakdown}\n\nThank you for dining with Tillora. We hope you loved your meal!\n⭐ _Have feedback or loved your food? Let us know!_\n_Tillora Customer Care_`;
   } else if (status === 'cancelled') {
     statusLabel = 'Cancelled';
     const cancelReasonText =
@@ -132,11 +132,11 @@ export function getWhatsAppDispatchData(order: Order): WhatsAppDispatchResult {
         : order.notes) ||
       'Customer change of mind';
 
-    rawMessage = `❌ *MASTER POS - ORDER CANCELLED*\n━━━━━━━━━━━━━━━━━━━━\nDear *${customerName}*,\nYour order *#${orderNumber}* has been cancelled.\n\n📌 *Cancellation Reason:* ${cancelReasonText}\n\n📋 *Cancelled Items:*\n${itemsDetailedList}\n\n💵 *Order Subtotal:* PKR ${computedSubtotal.toLocaleString()}\n💵 *Order Total:* PKR ${total.toLocaleString()}\n\nIf you have any questions or need assistance, please reply to this chat or call us.\n📞 *Helpdesk:* 042-111-WHITES\n\n_Master POS Customer Support_`;
+    rawMessage = `❌ *TILLORA - ORDER CANCELLED*\n━━━━━━━━━━━━━━━━━━━━\nDear *${customerName}*,\nYour order *#${orderNumber}* has been cancelled.\n\n📌 *Cancellation Reason:* ${cancelReasonText}\n\n📋 *Cancelled Items:*\n${itemsDetailedList}\n\n💵 *Order Subtotal:* PKR ${computedSubtotal.toLocaleString()}\n💵 *Order Total:* PKR ${total.toLocaleString()}\n\nIf you have any questions or need assistance, please reply to this chat or call us.\n📞 *Helpdesk:* 042-111-TILLORA\n\n_Tillora Customer Support_`;
   } else {
     // Pending / Open / Punched
     statusLabel = 'Order Confirmed';
-    rawMessage = `🍔 *MASTER POS - ORDER CONFIRMED*\n━━━━━━━━━━━━━━━━━━━━\nDear *${customerName}*,\nYour order *#${orderNumber}* has been received & confirmed! 📋\n\n📋 *Order Items & Prices:*\n${itemsDetailedList}\n\n💵 *Billing Breakdown:*\n${financialBreakdown}\n\n📍 *Delivery Address:* ${address}\n🏢 *Branch:* ${branchName}\n\n⏳ _Our kitchen team is getting ready to prepare your meal freshly!_\n_Master POS Express_`;
+    rawMessage = `🍔 *TILLORA - ORDER CONFIRMED*\n━━━━━━━━━━━━━━━━━━━━\nDear *${customerName}*,\nYour order *#${orderNumber}* has been received & confirmed! 📋\n\n📋 *Order Items & Prices:*\n${itemsDetailedList}\n\n💵 *Billing Breakdown:*\n${financialBreakdown}\n\n📍 *Delivery Address:* ${address}\n🏢 *Branch:* ${branchName}\n\n⏳ _Our kitchen team is getting ready to prepare your meal freshly!_\n_Tillora Express_`;
   }
 
   const url = phone ? `https://wa.me/${phone}?text=${encodeURIComponent(rawMessage)}` : '';

@@ -208,7 +208,7 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ order, onClose }) =>
 
             {/* Barcode & Footer Thank You */}
             <div className="text-center pt-3 space-y-2 border-t-2 border-dashed border-stone-300">
-              <p className="text-[10px] text-stone-600 font-sans">Thank you for dining with Master POS!</p>
+              <p className="text-[10px] text-stone-600 font-sans">Thank you for dining with Tillora!</p>
               <div className="font-mono text-xs tracking-widest text-stone-600 bg-stone-100 py-1 rounded">
                 * * * {order.orderNumber} * * *
               </div>

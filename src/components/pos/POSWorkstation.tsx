@@ -1004,7 +1004,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
         <div className="flex flex-col items-center gap-2.5">
           <div 
             className="relative w-11 h-11 rounded-2xl bg-gradient-to-b from-[#1c1e28] via-[#12131b] to-[#0a0b10] flex items-center justify-center mb-2 shadow-xl shadow-black/50 border border-emerald-500/30 hover:border-emerald-400/60 transition-all duration-300 group cursor-pointer" 
-            title="Master POS Commercial Edition"
+            title="Tillora Commercial Edition"
           >
             <div className="absolute inset-0 rounded-2xl bg-radial from-emerald-500/30 to-transparent opacity-60 group-hover:opacity-100 transition-opacity" />
             <div className="absolute top-0 inset-x-2 h-[1px] bg-gradient-to-r from-transparent via-emerald-300/60 to-transparent" />

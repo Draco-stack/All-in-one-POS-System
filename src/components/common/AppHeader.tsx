@@ -18,7 +18,7 @@ import {
   LogOut,
 } from 'lucide-react';
 import { useRestaurant } from '../../context/RestaurantContext';
-import { MasterPOSLogo } from './MasterPOSLogo';
+import { Logo } from './Logo';
 import { PWAInstallButton } from '../pwa/PWAInstallButton';
 
 export interface AppHeaderProps {
@@ -135,7 +135,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   };
 
   const currentViewInfo = viewTitles[activeView] || {
-    title: 'Master POS',
+    title: 'Tillora',
     subtitle: 'Commercial Restaurant Operating System',
     iconBg: 'from-emerald-500 to-teal-700',
   };
@@ -155,22 +155,18 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         <div
           onClick={() => setActiveView('pos')}
           className="flex items-center gap-1.5 sm:gap-2.5 cursor-pointer group select-none min-w-0"
-          title="Master POS Operating System - Floor Terminal"
+          title="Tillora Operating System - Floor Terminal"
         >
           {/* Executive Brand Emblem */}
-          <div className="relative w-8 h-8 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-gradient-to-b from-[#1c1e28] via-[#12131b] to-[#0a0b10] flex items-center justify-center shadow-lg shadow-black/40 border border-emerald-500/30 group-hover:border-emerald-400/60 group-hover:shadow-emerald-500/10 transition-all duration-200 shrink-0">
-            <div className="absolute inset-0 rounded-lg sm:rounded-xl bg-radial from-emerald-500/25 to-transparent opacity-60 group-hover:opacity-100 transition-opacity" />
-            <div className="absolute top-0 inset-x-1.5 h-[1px] bg-gradient-to-r from-transparent via-emerald-300/60 to-transparent" />
-            <MasterPOSLogo className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400 relative z-10 group-hover:scale-105 transition-transform" size={20} useColor={true} accent="emerald" />
-          </div>
+          <Logo className="scale-75 origin-left" iconOnly={true} />
 
           <div className="flex flex-col justify-center min-w-0">
             <div className="flex items-center gap-1 leading-tight">
               <span className={`font-black text-[11px] sm:text-xs md:text-sm tracking-tight font-sans truncate ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                MASTER <span className="text-emerald-500 font-extrabold">POS</span>
+                TILL<span className="text-amber-500 font-extrabold italic">ORA</span>
               </span>
-              <span className="hidden md:inline-block px-1 py-0.2 rounded text-[8px] font-mono font-bold uppercase tracking-wider bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 leading-none">
-                PRO
+              <span className="hidden md:inline-block px-1 py-0.2 rounded text-[8px] font-mono font-bold uppercase tracking-wider bg-amber-500/15 border border-amber-500/30 text-amber-400 leading-none">
+                OS
               </span>
               <span className="relative flex h-1.5 w-1.5 shrink-0">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
