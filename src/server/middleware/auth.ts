@@ -260,6 +260,46 @@ export function requireRole(allowedRoles: string[]) {
 }
 
 /**
+ * Platform Executive Admin Authorization Middleware.
+ * 
+ * Strictly guards /api/platform-admin endpoints.
+ * Only users with PLATFORM_ADMIN or EXECUTIVE_ADMIN role are allowed.
+ * Restaurant-level roles (OWNER, ADMIN, MANAGER, CASHIER, etc.) are strictly FORBIDDEN (403).
+ */
+export function requirePlatformAdmin(req: Request, res: Response, next: NextFunction) {
+  if (!req.tenant && !req.auth) {
+    return res.status(401).json({ error: 'Unauthorized: Platform admin authentication required' });
+  }
+
+  const role = (req.tenant?.role || req.auth?.role || '').toUpperCase();
+  const isPlatformAdmin = role === 'PLATFORM_ADMIN' || role === 'EXECUTIVE_ADMIN';
+
+  if (!isPlatformAdmin) {
+    logAuditEvent({
+      organizationId: req.tenant?.organizationId || 'PLATFORM',
+      branchId: req.tenant?.branchId || null,
+      userId: req.tenant?.userId || req.auth?.userId || 'anonymous',
+      action: AUDIT_ACTIONS.PERMISSION_DENIED,
+      entity: 'PLATFORM_ADMIN_GATE',
+      entityId: req.path,
+      metadata: {
+        reason: 'Attempted unauthorized access to platform admin interface',
+        attemptedRole: role,
+        path: req.path,
+      },
+      ipAddress: req.ip,
+    }).catch(() => {});
+
+    return res.status(403).json({
+      error: 'Forbidden: Platform Executive Administrator privileges required.',
+      code: 'FORBIDDEN_PLATFORM_ADMIN_REQUIRED',
+    });
+  }
+
+  return next();
+}
+
+/**
  * Tenant-Isolated Manager Authentication Middleware.
  * 
  * Supports two authentication paths:

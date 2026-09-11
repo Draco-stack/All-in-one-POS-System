@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /app/
+Disallow: /pos/
+Disallow: /api/
+
+Sitemap: https://tillora.com/sitemap.xml

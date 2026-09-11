@@ -125,17 +125,36 @@ export interface SubscriptionWithDetails {
 
 export function isSubscriptionActive(sub: SubscriptionWithDetails): boolean {
   const now = new Date();
-  if (sub.status === 'ACTIVE' || sub.status === 'PAST_DUE') {
+
+  // If status is explicitly EXPIRED or SUSPENDED, return false
+  if (sub.status === 'EXPIRED' || sub.status === 'SUSPENDED') {
+    return false;
+  }
+
+  // If endDate is explicitly provided and in the past, subscription has expired
+  if (sub.endDate && new Date(sub.endDate) < now) {
+    return false;
+  }
+
+  if (sub.status === 'ACTIVE') {
     return true;
   }
+
+  if (sub.status === 'PAST_DUE') {
+    // If PAST_DUE has an endDate in the past, it's expired (handled above); otherwise grant grace period
+    return true;
+  }
+
   if (sub.status === 'TRIALING') {
     if (!sub.trialEndsAt) return true;
     return new Date(sub.trialEndsAt) > now;
   }
+
   if (sub.status === 'CANCELLED') {
-    if (!sub.endDate) return true; // Cancelled but period hasn't ended
+    if (!sub.endDate) return false;
     return new Date(sub.endDate) > now;
   }
+
   return false;
 }
 

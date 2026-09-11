@@ -18,6 +18,7 @@ import { useRestaurant } from '../../context/RestaurantContext';
 import { Order, MenuItem, Customer } from '../../types';
 import { playCashRegisterSound } from '../../utils/audio';
 import { posDB } from '../../utils/indexedDB';
+import { getAuthToken } from '../../utils/apiConfig';
 
 interface CallCenterOrderModalProps {
   isOpen: boolean;
@@ -214,7 +215,7 @@ export const CallCenterOrderModal: React.FC<CallCenterOrderModalProps> = ({
         // Direct transmission fallback: store locally and post to backend
         addOrder(newOrder);
         try {
-          const token = localStorage.getItem('pos_jwt_token');
+          const token = getAuthToken();
           const res = await fetch('/api/orders', {
             method: 'POST',
             headers: {

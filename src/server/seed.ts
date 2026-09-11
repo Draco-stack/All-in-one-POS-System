@@ -231,6 +231,16 @@ export async function seedDatabaseIfNeeded() {
         role: 'SERVER',
         active: true,
       },
+      {
+        id: 'user-platform-admin-1',
+        organizationId: defaultOrg.id,
+        branchId: defaultBranch.id,
+        name: 'Executive Platform Admin',
+        username: 'platform_admin',
+        pin: '9999',
+        role: 'PLATFORM_ADMIN',
+        active: true,
+      },
     ];
 
     console.log('[Seed] Synchronizing default users...');

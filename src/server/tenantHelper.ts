@@ -108,3 +108,75 @@ export function sendTenantNotFound(res: Response, entityName: string, id: string
     code: 'NOT_FOUND',
   });
 }
+
+/**
+ * Developer Security Guardrail: Asserts that an entity's organization matches the request tenant.
+ * Throws a safe, tenant-isolated error if the organization context does not match.
+ */
+export function assertTenantOwnership(
+  requestOrgId: string,
+  entityOrgId: string | null | undefined,
+  entityName: string
+): void {
+  if (!entityOrgId || entityOrgId !== requestOrgId) {
+    const err: any = new Error(`${entityName} not found or access denied.`);
+    err.status = 404;
+    err.code = 'NOT_FOUND';
+    throw err;
+  }
+}
+
+/**
+ * Developer Security Guardrail: Safe tenant-isolated order lookup helper.
+ */
+export async function findTenantOrder(orgId: string, orderIdOrNumber: string) {
+  return prisma.order.findFirst({
+    where: {
+      organizationId: orgId,
+      OR: [
+        { id: orderIdOrNumber },
+        { orderNumber: orderIdOrNumber },
+      ],
+    },
+    include: {
+      items: true,
+      customer: true,
+      branch: true,
+      auditLogs: {
+        orderBy: { createdAt: 'desc' },
+      },
+    },
+  });
+}
+
+/**
+ * Developer Security Guardrail: Safe tenant-isolated customer lookup helper.
+ */
+export async function findTenantCustomer(orgId: string, customerIdOrPhone: string) {
+  return prisma.customer.findFirst({
+    where: {
+      organizationId: orgId,
+      OR: [
+        { id: customerIdOrPhone },
+        { phone: customerIdOrPhone },
+      ],
+    },
+  });
+}
+
+/**
+ * Developer Security Guardrail: Safe tenant-isolated register shift lookup helper.
+ */
+export async function findTenantShift(orgId: string, shiftId: string) {
+  return prisma.registerShift.findFirst({
+    where: {
+      id: shiftId,
+      organizationId: orgId,
+    },
+    include: {
+      audits: true,
+      branch: true,
+    },
+  });
+}
+

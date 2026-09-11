@@ -27,14 +27,28 @@ export async function registerHandler(req: Request, res: Response) {
 
     const { name, email, password, restaurantName, branchName, plan } = parseResult.data;
 
-    // Check duplicate account
+    // Check duplicate account or trial consumption
+    const normalizedEmail = email.toLowerCase().trim();
     const existingUser = await prisma.user.findFirst({
-      where: { username: email },
+      where: { username: normalizedEmail },
+      include: { organization: true },
     });
 
     if (existingUser && existingUser.organizationId) {
       return res.status(409).json({ error: 'An account with this email already exists and is linked to an organization' });
     }
+
+    // Check if this owner email has EVER consumed a trial in the system
+    const previousTrialConsumption = await prisma.organization.findFirst({
+      where: {
+        users: {
+          some: { username: normalizedEmail }
+        },
+        trialUsedAt: { not: null }
+      }
+    });
+
+    const isEligibleForTrial = !previousTrialConsumption;
 
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -43,14 +57,19 @@ export async function registerHandler(req: Request, res: Response) {
     const orgSlug = restaurantName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '-' + Date.now().toString().slice(-4);
     const branchSlug = branchName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
-    // Transaction
+    // Transaction - Atomic & Race-Safe Creation
     const result = await prisma.$transaction(async (tx) => {
+      const now = new Date();
+      const trialDurationDays = 14;
+      const trialExpirationDate = new Date(now.getTime() + trialDurationDays * 24 * 60 * 60 * 1000);
+
       // Create Organization
       const org = await tx.organization.create({
         data: {
           name: restaurantName,
           slug: orgSlug,
-          status: 'ACTIVE',
+          status: isEligibleForTrial ? 'TRIAL' : 'ACTIVE',
+          trialUsedAt: isEligibleForTrial ? now : null, // Permanently records trial consumption
           settings: JSON.stringify({
             currency: 'USD',
             currencySymbol: '$',
@@ -91,7 +110,7 @@ export async function registerHandler(req: Request, res: Response) {
             organizationId: org.id,
             branchId: branch.id,
             name,
-            username: email, // use email as username
+            username: normalizedEmail, // use email as username
             pin: hashedPassword,
             role: 'OWNER',
             active: true,
@@ -107,7 +126,9 @@ export async function registerHandler(req: Request, res: Response) {
         data: {
           organizationId: org.id,
           plan: targetPlan,
-          status: 'ACTIVE', // Or PENDING if payment is required
+          status: isEligibleForTrial ? 'TRIALING' : 'ACTIVE',
+          startDate: now,
+          trialEndsAt: isEligibleForTrial ? trialExpirationDate : null,
         },
       });
 
@@ -117,9 +138,14 @@ export async function registerHandler(req: Request, res: Response) {
           organizationId: org.id,
           branchId: branch.id,
           userId: user.id,
-          action: 'ORGANIZATION_CREATED',
+          action: isEligibleForTrial ? 'ORGANIZATION_TRIAL_STARTED' : 'ORGANIZATION_CREATED',
           entity: 'ORGANIZATION',
           entityId: org.id,
+          metadata: JSON.stringify({
+            plan: targetPlan,
+            isTrial: isEligibleForTrial,
+            trialEndsAt: isEligibleForTrial ? trialExpirationDate.toISOString() : null,
+          }),
           ipAddress: req.ip,
         },
       });

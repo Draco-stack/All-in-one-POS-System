@@ -16,7 +16,8 @@ model Organization {
   id            String         @id @default(cuid())
   name          String
   slug          String         @unique
-  status        String         @default("ACTIVE") // ACTIVE, SUSPENDED, TRIAL, CANCELLED
+  status        String         @default("ACTIVE") // ACTIVE, SUSPENDED, TRIAL, CANCELLED, TRIAL_EXPIRED
+  trialUsedAt   DateTime?                         // Immutable record of trial consumption
   settings      String         @default("{}")     // JSON string for business configurations
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
@@ -37,6 +38,7 @@ model Organization {
   devicePairings DevicePairing[]
   deviceCredentials DeviceCredential[]
   printJobs     PrintJob[]
+  reminderLogs  SubscriptionReminderLog[]
 
   @@index([status])
   @@index([createdAt])
@@ -85,6 +87,20 @@ model Subscription {
 
   @@index([organizationId])
   @@index([status])
+}
+
+model SubscriptionReminderLog {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  reminderType   String       // subscription_expiry_3d, subscription_expiry_2d, subscription_expiry_1d
+  sentAt         DateTime     @default(now())
+  deliveryStatus String       @default("DELIVERED") // DELIVERED, FAILED
+  metadata       String?      @default("{}")
+
+  @@unique([organizationId, reminderType])
+  @@index([organizationId])
+  @@index([reminderType, sentAt])
 }
 
 model Device {

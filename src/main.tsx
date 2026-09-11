@@ -37,6 +37,7 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import './index.css';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { initPWA } from './pwa';
 
 console.log("App initializing...");
 
@@ -44,6 +45,9 @@ const rootElement = document.getElementById('root');
 console.log("Root element found:", !!rootElement);
 
 if (rootElement) {
+  // Initialize Progressive Web App (PWA) registration
+  initPWA();
+
   try {
     console.log("Rendering React root...");
     ReactDOM.createRoot(rootElement).render(

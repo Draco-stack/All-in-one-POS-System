@@ -15,3 +15,21 @@ export const getApiUrl = (endpoint: string): string => {
 };
 
 export const API_BASE = RAW_API_URL;
+
+/**
+ * Universal safe JWT token retriever that parses JSON-serialized or raw strings
+ */
+export const getAuthToken = (): string | null => {
+  try {
+    const raw = localStorage.getItem('pos_jwt_token_v5') || localStorage.getItem('pos_jwt_token');
+    if (!raw) return null;
+    try {
+      const parsed = JSON.parse(raw);
+      return typeof parsed === 'string' ? parsed : raw;
+    } catch {
+      return raw.replace(/^"|"$/g, '');
+    }
+  } catch {
+    return null;
+  }
+};

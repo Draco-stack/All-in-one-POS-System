@@ -9,7 +9,41 @@ export default defineConfig({
   },
   plugins: [
     react(),
-    // VitePWA is temporarily disabled to prevent abrupt reloads in preview environment
+    VitePWA({
+      registerType: 'prompt', // Use prompt instead of autoUpdate to prevent abrupt reloads
+      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
+      manifest: {
+        name: 'Tillora POS',
+        short_name: 'Tillora',
+        description: 'Advanced Cloud POS & Restaurant Management System',
+        theme_color: '#0c0a09',
+        background_color: '#0c0a09',
+        display: 'standalone',
+        start_url: '/',
+        icons: [
+          {
+            src: 'pwa-192x192.png',
+            sizes: '192x192',
+            type: 'image/png'
+          },
+          {
+            src: 'pwa-512x512.png',
+            sizes: '512x512',
+            type: 'image/png'
+          },
+          {
+            src: 'pwa-maskable-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable'
+          }
+        ]
+      },
+      devOptions: {
+        enabled: true,
+        type: 'module'
+      }
+    })
   ],
   build: {
     outDir: 'dist',

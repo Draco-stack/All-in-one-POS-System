@@ -4,6 +4,7 @@ import prisma from '../prisma';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import { getJwtSecret, verifyTenantToken } from '../auth/jwt';
+import { checkPOSEntitlement } from '../middleware/subscriptionMiddleware';
 
 export const activeAgentSockets = new Map<string, Socket>();
 export const activeKdsSockets = new Map<string, Socket>();
@@ -65,6 +66,15 @@ export function initHardwareSocket(ioInstance: SocketIOServer) {
         const deviceId = device.id;
         const orgId = credential.organizationId;
         const branchId = credential.branchId || '';
+
+        // Check SaaS Subscription Entitlement
+        const agentEntitlement = await checkPOSEntitlement(orgId);
+        if (!agentEntitlement.allowed) {
+          console.warn(`[Socket Auth] Agent rejected: Subscription status invalid for org ${orgId}`);
+          socket.emit('SUBSCRIPTION_EXPIRED', { error: agentEntitlement.reason, code: agentEntitlement.code });
+          socket.disconnect(true);
+          return;
+        }
 
         // Store secure session properties inside the socket object
         socket.data = {
@@ -178,6 +188,15 @@ export function initHardwareSocket(ioInstance: SocketIOServer) {
 
         const orgId = decoded.organizationId;
         const userBranchId = decoded.branchId || '';
+
+        // Check SaaS Subscription Entitlement
+        const kdsEntitlement = await checkPOSEntitlement(orgId);
+        if (!kdsEntitlement.allowed) {
+          console.warn(`[Socket Auth] KDS Client rejected: Subscription status invalid for org ${orgId}`);
+          socket.emit('SUBSCRIPTION_EXPIRED', { error: kdsEntitlement.reason, code: kdsEntitlement.code });
+          socket.disconnect(true);
+          return;
+        }
 
         socket.data = {
           type: 'kds_user',

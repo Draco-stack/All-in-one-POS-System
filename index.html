@@ -3,20 +3,62 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="The ultimate commercial restaurant operating system. Unified POS, delivery monitoring, and growth intelligence for modern hospitality businesses." />
-    <meta name="theme-color" content="#1c1917" />
+    <title>Tillora | Commercial Restaurant POS & Hospitality Operating System</title>
+    <meta name="description" content="Commercial restaurant operating system engineered for high-volume hospitality. Sub-50ms touchscreen POS, autonomous offline resilience, ESC/POS thermal printing, live kitchen display (KDS), and multi-branch management." />
+    <meta name="theme-color" content="#0c0c0e" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="Tillora" />
+    <meta name="apple-mobile-web-app-title" content="Tillora POS" />
+
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="Tillora | Commercial Restaurant POS & Operating System" />
+    <meta property="og:description" content="High-performance touchscreen POS, kitchen display system (KDS), driver fleet management, and offline fault-tolerant restaurant operating system." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://tillora.com" />
+    <meta property="og:image" content="/icons/icon-512x512.png" />
+
+    <!-- Twitter Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Tillora | Commercial Restaurant POS & Operating System" />
+    <meta name="twitter:description" content="High-performance touchscreen POS, kitchen display system (KDS), driver fleet management, and offline fault-tolerant restaurant operating system." />
+
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <title>Tillora | Commercial Restaurant POS & Operating System</title>
+    <link rel="manifest" href="/manifest.webmanifest" />
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+
+    <!-- Structured Data (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "SoftwareApplication",
+          "name": "Tillora POS",
+          "applicationCategory": "BusinessApplication",
+          "operatingSystem": "Web, iOS, Android, Windows, macOS, Linux",
+          "offers": {
+            "@type": "Offer",
+            "price": "0.00",
+            "priceCurrency": "USD"
+          },
+          "description": "Commercial hospitality point of sale with offline IndexedDB resilience, kitchen display routing, and multi-branch management."
+        },
+        {
+          "@type": "Organization",
+          "name": "Tillora Technologies Inc.",
+          "url": "https://tillora.com",
+          "logo": "https://tillora.com/favicon.svg"
+        }
+      ]
+    }
+    </script>
   </head>
-  <body class="bg-stone-900 text-stone-100 antialiased selection:bg-amber-500 selection:text-stone-900">
+  <body class="bg-stone-950 text-stone-100 antialiased selection:bg-amber-500 selection:text-stone-950">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

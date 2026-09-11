@@ -217,6 +217,21 @@ const saveToStorage = (key: string, value: any) => {
   } catch (e) {}
 };
 
+export const getStoredToken = (): string | null => {
+  try {
+    const raw = localStorage.getItem('pos_jwt_token_v5') || localStorage.getItem('pos_jwt_token');
+    if (!raw) return null;
+    try {
+      const parsed = JSON.parse(raw);
+      return typeof parsed === 'string' ? parsed : raw;
+    } catch {
+      return raw.replace(/^"|"$/g, '');
+    }
+  } catch {
+    return null;
+  }
+};
+
 export const deduplicateOrders = (ordersList: Order[]): Order[] => {
   if (!Array.isArray(ordersList)) return [];
   const seenIds = new Set<string>();
@@ -2421,7 +2436,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       }
 
       try {
-        const token = localStorage.getItem('pos_jwt_token_v5');
+        const token = getStoredToken();
         const res = await fetch('/api/customers/block', {
           method: 'POST',
           headers: {
@@ -2509,7 +2524,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       }
 
       try {
-        const token = localStorage.getItem('pos_jwt_token_v5');
+        const token = getStoredToken();
         const res = await fetch('/api/customers/unblock', {
           method: 'POST',
           headers: {
@@ -2766,7 +2781,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
       let finalOrder = newOrder;
       try {
-        const token = localStorage.getItem('pos_jwt_token_v5');
+        const token = getStoredToken();
         const response = await fetch('/api/orders', {
           method: 'POST',
           headers: {

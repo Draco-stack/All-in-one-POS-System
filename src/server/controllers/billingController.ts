@@ -465,7 +465,7 @@ export async function createCheckoutSessionHandler(req: Request, res: Response) 
             product_data: {
               name: `Tillora ${plan} Plan`,
             },
-            unit_amount: plan === 'ENTERPRISE' ? 29900 : 9900, // In cents
+            unit_amount: plan === 'ENTERPRISE' ? 29900 : 4900, // In cents ($49/mo for Business)
             recurring: { interval: 'month' }
           },
           quantity: 1,

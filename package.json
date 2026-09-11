@@ -7,7 +7,11 @@
     "build": "prisma generate && vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs",
     "start": "node dist/server.cjs",
     "lint": "tsc --noEmit",
-    "test": "NODE_ENV=test tsx tests/crossTenantSecurity.test.ts && NODE_ENV=test tsx tests/authRoutes.test.ts && NODE_ENV=test tsx tests/phase4OfflineSecurity.test.ts && NODE_ENV=test tsx tests/phase5FinancialIntegrity.test.ts && NODE_ENV=test tsx tests/phase6ProductionSecurity.test.ts && NODE_ENV=test tsx tests/phase7SaaSBilling.test.ts && NODE_ENV=test tsx tests/phase8LocalBridge.test.ts && NODE_ENV=test tsx tests/phase9ProductionReadiness.test.ts"
+    "test": "NODE_ENV=test tsx tests/crossTenantSecurity.test.ts && NODE_ENV=test tsx tests/authRoutes.test.ts && NODE_ENV=test tsx tests/phase4OfflineSecurity.test.ts && NODE_ENV=test tsx tests/phase5FinancialIntegrity.test.ts && NODE_ENV=test tsx tests/phase6ProductionSecurity.test.ts && NODE_ENV=test tsx tests/phase7SaaSBilling.test.ts && NODE_ENV=test tsx tests/phase8LocalBridge.test.ts && NODE_ENV=test tsx tests/phase9ProductionReadiness.test.ts && NODE_ENV=test tsx tests/phase10ExecutiveAdminAndTenantIsolation.test.ts && NODE_ENV=test tsx tests/phase11SecurityRegressionGate.test.ts && NODE_ENV=test tsx tests/phase12SaaSControlPlaneAndTrial.test.ts && NODE_ENV=test tsx tests/phase13SaaSControlAndEntitlement.test.ts",
+    "test:authorization": "NODE_ENV=test tsx tests/phase11SecurityRegressionGate.test.ts",
+    "test:phase12": "NODE_ENV=test tsx tests/phase12SaaSControlPlaneAndTrial.test.ts",
+    "test:phase13": "NODE_ENV=test tsx tests/phase13SaaSControlAndEntitlement.test.ts",
+    "test:tenant-isolation": "NODE_ENV=test tsx tests/crossTenantSecurity.test.ts && NODE_ENV=test tsx tests/phase10ExecutiveAdminAndTenantIsolation.test.ts && NODE_ENV=test tsx tests/phase11SecurityRegressionGate.test.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",

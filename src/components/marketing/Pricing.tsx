@@ -21,7 +21,7 @@ export const Pricing: React.FC = () => {
       popular: false
     },
     {
-      name: "Professional",
+      name: "Business",
       plan: "business",
       price: "$49",
       period: "/mo",
@@ -29,8 +29,8 @@ export const Pricing: React.FC = () => {
       features: [
         "Unlimited Workstations",
         "Unlimited Orders",
-        "Advanced Inventory + AI Alerts",
-        "Full Growth Intelligence",
+        "Automated Low-Stock Alerts",
+        "Real-time Sales Analytics",
         "24/7 Priority Support",
         "Rider App Integration"
       ],

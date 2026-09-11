@@ -45,7 +45,7 @@ import {
   calculateRemainingBalance,
   recalculateAuthoritativeOrderTotals,
 } from './src/server/financialHelper';
-import { resolveTenantContext, sendTenantNotFound, getTenantOrgId } from './src/server/tenantHelper';
+import { resolveTenantContext, sendTenantNotFound, getTenantOrgId, findTenantOrder } from './src/server/tenantHelper';
 import { assertResourceLimit } from './src/server/billing/billingSystem';
 import {
   getSubscriptionHandler,
@@ -56,6 +56,9 @@ import {
   webhookHandler,
   registerDeviceHandler,
 } from './src/server/controllers/billingController';
+import platformAdminRoutes from './src/server/routes/platformAdminRoutes';
+import portalRoutes from './src/server/routes/portalRoutes';
+import { requireActiveSubscription } from './src/server/middleware/subscriptionMiddleware';
 import { initHardwareSocket } from './src/server/hardware/hardwareSocket';
 import {
   generatePairingCodeHandler,
@@ -263,6 +266,54 @@ app.get('/api/readiness', async (req: Request, res: Response) => {
   }
 });
 
+// Dynamic SEO Endpoints (Configurable via APP_URL or PUBLIC_URL or Host Header)
+app.get('/robots.txt', (req: Request, res: Response) => {
+  const baseUrl = (process.env.APP_URL || process.env.PUBLIC_URL || `${req.protocol}://${req.get('host')}`).replace(/\/$/, '');
+  res.type('text/plain').send(
+`User-agent: *
+Allow: /
+Disallow: /app/
+Disallow: /pos/
+Disallow: /api/
+
+Sitemap: ${baseUrl}/sitemap.xml
+`
+  );
+});
+
+app.get('/sitemap.xml', (req: Request, res: Response) => {
+  const baseUrl = (process.env.APP_URL || process.env.PUBLIC_URL || `${req.protocol}://${req.get('host')}`).replace(/\/$/, '');
+  const pages = [
+    { path: '', changefreq: 'weekly', priority: '1.0' },
+    { path: '/features', changefreq: 'weekly', priority: '0.9' },
+    { path: '/pricing', changefreq: 'weekly', priority: '0.9' },
+    { path: '/docs', changefreq: 'weekly', priority: '0.8' },
+    { path: '/guides', changefreq: 'weekly', priority: '0.8' },
+    { path: '/compare', changefreq: 'weekly', priority: '0.7' },
+    { path: '/about', changefreq: 'monthly', priority: '0.6' },
+    { path: '/contact', changefreq: 'monthly', priority: '0.6' },
+    { path: '/faq', changefreq: 'monthly', priority: '0.6' },
+    { path: '/privacy', changefreq: 'monthly', priority: '0.3' },
+    { path: '/terms', changefreq: 'monthly', priority: '0.3' },
+    { path: '/security', changefreq: 'monthly', priority: '0.5' },
+  ];
+
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${pages
+  .map(
+    (p) => `  <url>
+    <loc>${baseUrl}${p.path}</loc>
+    <changefreq>${p.changefreq}</changefreq>
+    <priority>${p.priority}</priority>
+  </url>`
+  )
+  .join('\n')}
+</urlset>`;
+
+  res.type('application/xml').send(xml);
+});
+
 // Apply rate limiting
 app.use('/api', apiLimiter);
 app.use('/api/auth', authLimiter);
@@ -328,6 +379,9 @@ export function parsePagination(req: Request, defaultLimit = 100) {
   return { skip, take };
 }
 
+// Dedicated Platform Executive Admin Routes
+app.use('/api/platform-admin', platformAdminRoutes);
+
 // Tenant-Aware Authentication Routes (mounted AFTER express.json() & authLimiter)
 app.post('/api/auth/register', registerHandler);
 app.post('/api/auth/login', loginHandler);
@@ -365,9 +419,9 @@ app.get('/api/users', authenticate, async (req: Request, res: Response) => {
     return res.status(500).json({ error: 'Failed to retrieve staff profiles' });
   }
 });
-app.post('/api/users', authenticateManager, addUser);
-app.patch('/api/users/:id', authenticateManager, updateUser);
-app.delete('/api/users/:id', authenticateManager, deleteUser);
+app.post('/api/users', authenticateManager, requireActiveSubscription, addUser);
+app.patch('/api/users/:id', authenticateManager, requireActiveSubscription, updateUser);
+app.delete('/api/users/:id', authenticateManager, requireActiveSubscription, deleteUser);
 
 // Outlets / Branches Management
 app.get('/api/outlets', authenticate, async (req, res) => {
@@ -391,7 +445,7 @@ app.get('/api/outlets', authenticate, async (req, res) => {
   }
 });
 
-app.post('/api/outlets', authenticateManager, async (req, res) => {
+app.post('/api/outlets', authenticateManager, requireActiveSubscription, async (req, res) => {
   try {
     const tenant = await resolveTenantContext(req);
     const { name, address, phone } = req.body;
@@ -422,7 +476,7 @@ app.post('/api/outlets', authenticateManager, async (req, res) => {
   }
 });
 
-app.delete('/api/outlets/:name', authenticateManager, async (req, res) => {
+app.delete('/api/outlets/:name', authenticateManager, requireActiveSubscription, async (req, res) => {
   try {
     const tenant = await resolveTenantContext(req);
     const nameParam = decodeURIComponent(req.params.name);
@@ -443,14 +497,14 @@ app.delete('/api/outlets/:name', authenticateManager, async (req, res) => {
 });
 
 // Menu Catalog Management
-app.post('/api/menu-items', authenticateManager, addMenuItem);
-app.patch('/api/menu-items/:id', authenticateManager, updateMenuItem);
-app.put('/api/menu-items/:id', authenticateManager, updateMenuItem);
-app.delete('/api/menu-items/:id', authenticateManager, deleteMenuItem);
-app.delete('/api/menu-items/:itemId', authenticateManager, deleteMenuItem);
+app.post('/api/menu-items', authenticateManager, requireActiveSubscription, addMenuItem);
+app.patch('/api/menu-items/:id', authenticateManager, requireActiveSubscription, updateMenuItem);
+app.put('/api/menu-items/:id', authenticateManager, requireActiveSubscription, updateMenuItem);
+app.delete('/api/menu-items/:id', authenticateManager, requireActiveSubscription, deleteMenuItem);
+app.delete('/api/menu-items/:itemId', authenticateManager, requireActiveSubscription, deleteMenuItem);
 
 // Upload / Process Menu Image
-app.post('/api/upload-image', authenticateManager, async (req: Request, res: Response) => {
+app.post('/api/upload-image', authenticateManager, requireActiveSubscription, async (req: Request, res: Response) => {
   try {
     const { image, fileName } = req.body;
     if (!image || typeof image !== 'string') {
@@ -506,7 +560,7 @@ app.get('/api/tables', authenticate, async (req, res) => {
   }
 });
 
-app.post('/api/tables', authenticateManager, async (req, res) => {
+app.post('/api/tables', authenticateManager, requireActiveSubscription, async (req, res) => {
   try {
     const tenant = await resolveTenantContext(req);
     const { number, capacity } = req.body;
@@ -528,7 +582,7 @@ app.post('/api/tables', authenticateManager, async (req, res) => {
   }
 });
 
-app.delete('/api/tables/:id', authenticateManager, async (req, res) => {
+app.delete('/api/tables/:id', authenticateManager, requireActiveSubscription, async (req, res) => {
   try {
     const tenant = await resolveTenantContext(req);
     const { id } = req.params;
@@ -550,7 +604,7 @@ app.delete('/api/tables/:id', authenticateManager, async (req, res) => {
   }
 });
 
-app.post('/api/categories', authenticateManager, async (req, res) => {
+app.post('/api/categories', authenticateManager, requireActiveSubscription, async (req, res) => {
   try {
     const tenant = await resolveTenantContext(req);
     const { name, title } = req.body;
@@ -596,7 +650,7 @@ app.post('/api/categories', authenticateManager, async (req, res) => {
   }
 });
 
-app.patch('/api/categories/:id', authenticateManager, async (req, res) => {
+app.patch('/api/categories/:id', authenticateManager, requireActiveSubscription, async (req, res) => {
   try {
     const tenant = await resolveTenantContext(req);
     const { id } = req.params;
@@ -624,7 +678,7 @@ app.patch('/api/categories/:id', authenticateManager, async (req, res) => {
   }
 });
 
-app.delete('/api/categories/:id', authenticateManager, async (req, res) => {
+app.delete('/api/categories/:id', authenticateManager, requireActiveSubscription, async (req, res) => {
   try {
     const tenant = await resolveTenantContext(req);
     const { id } = req.params;
@@ -807,7 +861,7 @@ app.get('/api/customers/lookup', authenticate, async (req, res) => {
 });
 
 // Customer Upsert
-app.post('/api/customers/upsert', authenticate, async (req, res) => {
+app.post('/api/customers/upsert', authenticate, requireActiveSubscription, async (req, res) => {
   try {
     const tenant = await resolveTenantContext(req);
     const { name, phone, email, address, deliveryNotes, notes } = req.body;
@@ -873,7 +927,7 @@ app.post('/api/customers/upsert', authenticate, async (req, res) => {
 });
 
 // Block Customer API (Requires reason and Manager/Owner privilege)
-app.post('/api/customers/block', authenticateManager, async (req, res) => {
+app.post('/api/customers/block', authenticateManager, requireActiveSubscription, async (req, res) => {
   try {
     const tenant = await resolveTenantContext(req);
     const { phone, reason, name, blockedBy } = req.body;
@@ -949,7 +1003,7 @@ app.post('/api/customers/block', authenticateManager, async (req, res) => {
 });
 
 // Unblock Customer API (Requires Manager/Owner privilege)
-app.post('/api/customers/unblock', authenticateManager, async (req, res) => {
+app.post('/api/customers/unblock', authenticateManager, requireActiveSubscription, async (req, res) => {
   try {
     const tenant = await resolveTenantContext(req);
     const { phone } = req.body;
@@ -1051,8 +1105,24 @@ app.get('/api/orders', authenticate, async (req, res) => {
   }
 });
 
+// Get single order by ID or orderNumber with strict tenant isolation
+app.get('/api/orders/:id', authenticate, async (req, res) => {
+  try {
+    const tenant = await resolveTenantContext(req);
+    const orderId = req.params.id;
+    const order = await findTenantOrder(tenant.organizationId, orderId);
+    if (!order) {
+      return sendTenantNotFound(res, 'Order', orderId);
+    }
+    return res.json(transformOrder(order));
+  } catch (error) {
+    console.error('[Prisma] Get single order error:', error);
+    return res.status(500).json({ error: 'Failed to retrieve order' });
+  }
+});
+
 // Create new order (Financial-grade server-authoritative calculations)
-app.post('/api/orders', validateRequest(OrderPunchSchema), authenticate, async (req: Request, res: Response) => {
+app.post('/api/orders', validateRequest(OrderPunchSchema), authenticate, requireActiveSubscription, async (req: Request, res: Response) => {
   try {
     const tenant = await resolveTenantContext(req);
     const {
@@ -1289,7 +1359,7 @@ app.post('/api/orders', validateRequest(OrderPunchSchema), authenticate, async (
 });
 
 // Update Order Status (e.g. PUNCHED -> in_kitchen -> ready -> dispatched -> completed)
-app.patch('/api/orders/:id/status', authenticate, async (req, res) => {
+app.patch('/api/orders/:id/status', authenticate, requireActiveSubscription, async (req, res) => {
   try {
     const tenant = await resolveTenantContext(req);
     const { status, riderId, paymentStatus, paymentMethod, splitPayments } = req.body;
@@ -1365,7 +1435,7 @@ app.patch('/api/orders/:id/status', authenticate, async (req, res) => {
 });
 
 // Process Payment on Order
-app.post('/api/orders/:id/pay', authenticate, async (req: Request, res: Response) => {
+app.post('/api/orders/:id/pay', authenticate, requireActiveSubscription, async (req: Request, res: Response) => {
   try {
     const tenant = await resolveTenantContext(req);
     const { id } = req.params;
@@ -1426,7 +1496,7 @@ app.post('/api/orders/:id/pay', authenticate, async (req: Request, res: Response
 });
 
 // Manager Issue Refund with Audit Log
-app.post('/api/orders/:id/refund', authenticateManager, async (req: Request, res: Response) => {
+app.post('/api/orders/:id/refund', authenticateManager, requireActiveSubscription, async (req: Request, res: Response) => {
   try {
     const tenant = await resolveTenantContext(req);
     const { id } = req.params;
@@ -1531,7 +1601,7 @@ app.post('/api/orders/:id/refund', authenticateManager, async (req: Request, res
 });
 
 // Manager Cancel Order with Audit Log
-app.post('/api/orders/:id/cancel', authenticateManager, async (req, res) => {
+app.post('/api/orders/:id/cancel', authenticateManager, requireActiveSubscription, async (req, res) => {
   try {
     const tenant = await resolveTenantContext(req);
     const { id } = req.params;
@@ -1611,7 +1681,7 @@ app.post('/api/orders/:id/cancel', authenticateManager, async (req, res) => {
 });
 
 // Manager Modify Order with Audit Log
-app.post('/api/orders/:id/modify', authenticateManager, async (req, res) => {
+app.post('/api/orders/:id/modify', authenticateManager, requireActiveSubscription, async (req, res) => {
   try {
     const tenant = await resolveTenantContext(req);
     const { id } = req.params;
@@ -1864,7 +1934,7 @@ app.get('/api/shifts/current', authenticate, async (req, res) => {
 });
 
 // Open Shift
-app.post('/api/shifts/open', authenticate, async (req, res) => {
+app.post('/api/shifts/open', authenticate, requireActiveSubscription, async (req, res) => {
   try {
     const tenant = await resolveTenantContext(req);
     const { shiftNumber, cashierName, startingFloat, notes, openedById } = req.body;
@@ -1896,7 +1966,7 @@ app.post('/api/shifts/open', authenticate, async (req, res) => {
 });
 
 // Close Shift & Store Audit Record (Server-Authoritative Reconciliation)
-app.post('/api/shifts/close', authenticate, validateRequest(ShiftCloseSchema), async (req: Request, res: Response) => {
+app.post('/api/shifts/close', authenticate, requireActiveSubscription, validateRequest(ShiftCloseSchema), async (req: Request, res: Response) => {
   try {
     const tenant = await resolveTenantContext(req);
     const { shiftId, actualCash, floatRetained, denominationBreakdown, notes } = req.body;
@@ -1996,7 +2066,7 @@ app.post('/api/shifts/close', authenticate, validateRequest(ShiftCloseSchema), a
 });
 
 // Manager Cash Adjustment (Pay In / Pay Out / Cash Drawer Adjustment)
-app.post('/api/shifts/cash-adjustment', authenticateManager, async (req: Request, res: Response) => {
+app.post('/api/shifts/cash-adjustment', authenticateManager, requireActiveSubscription, async (req: Request, res: Response) => {
   try {
     const tenant = await resolveTenantContext(req);
     const { shiftId, amount, type, reason } = req.body;
@@ -2061,7 +2131,7 @@ app.post('/api/shifts/cash-adjustment', authenticateManager, async (req: Request
 });
 
 // Fortified ESC/POS Network Socket Thermal Printing Endpoints (Protected against SSRF and Raw TCP Injection)
-app.post('/api/printer/print', authenticate, async (req: Request, res: Response) => {
+app.post('/api/printer/print', authenticate, requireActiveSubscription, async (req: Request, res: Response) => {
   try {
     const { receiptData, order } = req.body;
     // Hardened: Ignore client-supplied IP/port to prevent SSRF and port scanning
@@ -2085,7 +2155,7 @@ app.post('/api/printer/print', authenticate, async (req: Request, res: Response)
   }
 });
 
-app.post('/api/printer/drawer-kick', authenticate, async (req: Request, res: Response) => {
+app.post('/api/printer/drawer-kick', authenticate, requireActiveSubscription, async (req: Request, res: Response) => {
   try {
     // Hardened: Ignore client-supplied IP/port to prevent SSRF and port scanning
     const targetIp = process.env.PRINTER_HOST || '127.0.0.1';
@@ -2116,12 +2186,14 @@ app.post('/api/billing/create-checkout', authenticate, createCheckoutSessionHand
 app.post('/api/billing/webhook', express.raw({ type: 'application/json' }), webhookHandler);
 app.post('/api/devices', authenticate, registerDeviceHandler);
 
-// Phase 8: Local Hardware Bridge & Pairing Endpoints
+// Phase 10, 11 & 12 Platform Admin & Customer Portal Routers
+app.use('/api/platform-admin', platformAdminRoutes);
+app.use('/api/portal', portalRoutes);
 app.post('/api/devices/generate-pairing-code', authenticate, generatePairingCodeHandler);
 app.post('/api/devices/pair', express.json(), pairDeviceHandler);
 app.post('/api/devices/revoke', authenticate, revokeDeviceHandler);
-app.post('/api/printer/print-job', authenticate, createPrintJobHandler);
-app.post('/api/printer/open-drawer', authenticate, triggerCashDrawerKickHandler);
+app.post('/api/printer/print-job', authenticate, requireActiveSubscription, createPrintJobHandler);
+app.post('/api/printer/open-drawer', authenticate, requireActiveSubscription, triggerCashDrawerKickHandler);
 
 
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
