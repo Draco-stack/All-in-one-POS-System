@@ -89,7 +89,7 @@ export const OnboardingWizard: React.FC = () => {
       localStorage.setItem('pos_is_logged_in_v5', JSON.stringify(true));
       
       if (formData.plan !== 'FREE' && formData.plan !== 'STARTER') {
-         // Create Stripe Checkout Session
+         // Create Rapid Gateway Checkout Session
          try {
            const checkoutRes = await fetch('/api/billing/create-checkout', {
              method: 'POST',

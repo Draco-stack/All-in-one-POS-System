@@ -204,7 +204,13 @@ export function structuredLogger(req: any, res: any, next: NextFunction) {
     if (isProduction) {
       console.log(JSON.stringify(logData));
     } else {
-      console.log(`[${logData.timestamp}] [REQ: ${requestId}] ${logData.method} ${logData.url} - Status ${logData.status} (${logData.duration})`);
+      // Avoid spamming dev console with raw internal Vite module imports (like /src/*.tsx or /node_modules/*)
+      const isInternalViteAsset = (req.originalUrl.startsWith('/@') || 
+                                   req.originalUrl.startsWith('/node_modules/') || 
+                                   req.originalUrl.startsWith('/src/')) && statusCode < 400;
+      if (!isInternalViteAsset) {
+        console.log(`[${logData.timestamp}] [REQ: ${requestId}] ${logData.method} ${logData.url} - Status ${logData.status} (${logData.duration})`);
+      }
     }
   });
 
@@ -2279,8 +2285,7 @@ async function startServer() {
     const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
       server: { 
-        middlewareMode: true,
-        hmr: { port: 24678 }
+        middlewareMode: true
       },
       appType: 'spa',
     });

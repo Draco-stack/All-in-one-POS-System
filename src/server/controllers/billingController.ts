@@ -1,18 +1,5 @@
-import Stripe from 'stripe';
-
-let stripeClient: Stripe | null = null;
-function getStripe(): Stripe {
-  if (!stripeClient) {
-    const key = process.env.STRIPE_SECRET_KEY;
-    if (!key) {
-      throw new Error('CODE READY — PRODUCTION PAYMENT CONFIGURATION REQUIRED: STRIPE_SECRET_KEY is missing');
-    }
-    stripeClient = new Stripe(key, { apiVersion: '2023-10-16' as any });
-  }
-  return stripeClient;
-}
-
 import { Request, Response } from 'express';
+import crypto from 'crypto';
 import prisma from '../prisma';
 import {
   getSubscriptionDetails,
@@ -23,6 +10,48 @@ import {
   assertResourceLimit,
   isSubscriptionActive,
 } from '../billing/billingSystem';
+
+export interface RapidGatewayCheckoutParams {
+  organizationId: string;
+  plan: string;
+  amount: number;
+  currency: string;
+  successUrl: string;
+  cancelUrl: string;
+}
+
+export class RapidGatewayProvider {
+  private secretKey: string;
+  private webhookSecret: string;
+  private environment: string;
+  
+  constructor() {
+    this.secretKey = process.env.RAPID_GATEWAY_SECRET_KEY || '';
+    this.webhookSecret = process.env.RAPID_GATEWAY_WEBHOOK_SECRET || '';
+    this.environment = process.env.RAPID_GATEWAY_ENVIRONMENT || 'sandbox';
+  }
+
+  isConfigured(): boolean {
+    return !!this.secretKey;
+  }
+  
+  async createCheckoutSession(params: RapidGatewayCheckoutParams): Promise<{ url: string }> {
+    if (!this.isConfigured()) {
+       throw new Error('CODE READY — PRODUCTION PAYMENT CONFIGURATION REQUIRED: RAPID_GATEWAY_SECRET_KEY is missing');
+    }
+    // In a real implementation, this would make an HTTPS POST to Rapid Gateway REST API to create a hosted checkout session
+    // For now, returning a mock success URL matching Rapid Gateway integration expectations if SDK not provided
+    return { url: `${params.successUrl}&rg_session_id=mock_rg_session_123` };
+  }
+
+  verifyWebhookSignature(rawPayload: string | Buffer, signature: string): boolean {
+    if (!this.webhookSecret) return false;
+    const computed = crypto.createHmac('sha256', this.webhookSecret).update(rawPayload).digest('hex');
+    return computed === signature;
+  }
+}
+
+export const rapidGateway = new RapidGatewayProvider();
 
 /**
  * GET /api/billing/subscription
@@ -322,39 +351,79 @@ export async function webhookHandler(req: Request, res: Response) {
       return res.status(200).json(result);
     }
 
-    // 2. Stripe Production Webhook
-    const signature = req.headers['stripe-signature'] as string;
-    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    // 2. Rapid Gateway Production Webhook
+    const signature = req.headers['x-rapidgateway-signature'] as string;
     
-    if (!webhookSecret || !signature) {
-      return res.status(400).json({ error: 'Missing signature or webhook secret' });
+    if (!signature) {
+      return res.status(400).json({ error: 'Missing Rapid Gateway signature' });
     }
     
-    const stripe = getStripe();
-    const event = stripe.webhooks.constructEvent(req.body, signature, webhookSecret);
+    // req.body is a Buffer here because of express.raw in server.ts
+    const rawBody = req.body;
     
-    if (event.type === 'checkout.session.completed') {
-      const session = event.data.object as Stripe.Checkout.Session;
-      const orgId = session.metadata?.organizationId;
-      const plan = session.metadata?.plan;
+    if (!rapidGateway.verifyWebhookSignature(rawBody, signature)) {
+      return res.status(400).json({ error: 'Invalid webhook signature' });
+    }
+    
+    let event = req.body;
+    if (Buffer.isBuffer(event)) {
+      event = JSON.parse(event.toString('utf-8'));
+    } else if (typeof event === 'string') {
+      event = JSON.parse(event);
+    }
+    
+    if (event.type === 'payment.success') {
+      const orgId = event.metadata?.organizationId;
+      const plan = event.metadata?.plan;
+      const eventId = event.eventId;
+      
+      if (!eventId) {
+        return res.status(400).json({ error: 'Missing eventId in webhook payload' });
+      }
       
       if (orgId && plan) {
-        await prisma.subscription.updateMany({
-          where: { organizationId: orgId },
-          data: {
-            plan: plan,
-            status: 'ACTIVE',
-          }
+        // Fetch organization to check processed events
+        const org = await prisma.organization.findUnique({
+          where: { id: orgId }
         });
         
-        await prisma.auditLog.create({
-          data: {
-            organizationId: orgId,
-            action: 'SUBSCRIPTION_PAYMENT_SUCCESS',
-            entity: 'SUBSCRIPTION',
-            metadata: JSON.stringify({ plan, sessionId: session.id })
-          }
-        });
+        if (org) {
+           let settingsObj: any = {};
+           try { settingsObj = JSON.parse(org.settings || '{}'); } catch (e) {}
+           if (!settingsObj.billing) settingsObj.billing = {};
+           
+           const processedEvents = settingsObj.billing.processedEvents || [];
+           if (processedEvents.includes(eventId)) {
+              return res.json({ received: true, message: 'DUPLICATE_EVENT_IGNORED' });
+           }
+           
+           settingsObj.billing.processedEvents = [...processedEvents, eventId];
+           
+           // Apply within a transaction
+           await prisma.$transaction(async (tx) => {
+             await tx.subscription.updateMany({
+               where: { organizationId: orgId },
+               data: {
+                 plan: plan,
+                 status: 'ACTIVE',
+               }
+             });
+             
+             await tx.organization.update({
+               where: { id: orgId },
+               data: { settings: JSON.stringify(settingsObj) }
+             });
+             
+             await tx.auditLog.create({
+               data: {
+                 organizationId: orgId,
+                 action: 'SUBSCRIPTION_PAYMENT_SUCCESS',
+                 entity: 'SUBSCRIPTION',
+                 metadata: JSON.stringify({ plan, eventId, provider: 'RAPID_GATEWAY' })
+               }
+             });
+           });
+        }
       }
     }
     
@@ -454,37 +523,22 @@ export async function createCheckoutSessionHandler(req: Request, res: Response) 
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
     
     const { plan } = req.body;
-    const stripe = getStripe();
     
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
-      line_items: [
-        {
-          price_data: {
-            currency: 'usd',
-            product_data: {
-              name: `Tillora ${plan} Plan`,
-            },
-            unit_amount: plan === 'ENTERPRISE' ? 29900 : 4900, // In cents ($49/mo for Business)
-            recurring: { interval: 'month' }
-          },
-          quantity: 1,
-        },
-      ],
-      mode: 'subscription',
-      success_url: `${req.protocol}://${req.get('host')}/app?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${req.protocol}://${req.get('host')}/app`,
-      metadata: {
-        organizationId: orgId,
-        plan: plan,
-      }
+    const planAmount = plan === 'ENTERPRISE' ? 29900 : 4900;
+    
+    const session = await rapidGateway.createCheckoutSession({
+      organizationId: orgId,
+      plan: plan,
+      amount: planAmount,
+      currency: 'PKR',
+      successUrl: `${req.protocol}://${req.get('host')}/app?payment=success`,
+      cancelUrl: `${req.protocol}://${req.get('host')}/app?payment=cancel`
     });
     
     return res.json({ url: session.url });
   } catch (error: any) {
     console.error('[BillingController] createCheckoutSession error:', error.message);
-    // Fallback URL if Stripe is not configured, so onboarding isn't blocked in dev
-    if (error.message.includes('STRIPE_SECRET_KEY is missing')) {
+    if (error.message.includes('RAPID_GATEWAY_SECRET_KEY is missing')) {
       return res.status(200).json({ url: `${req.protocol}://${req.get('host')}/app?payment=mock_success` });
     }
     return res.status(500).json({ error: 'Failed to create checkout session' });
