@@ -101,7 +101,8 @@ export const AllOrdersSearchView: React.FC = () => {
   // Real-time socket listener and background polling worker (5s interval)
   useEffect(() => {
     let isMounted = true;
-    const socket = io();
+    const token = localStorage.getItem('pos_token') || sessionStorage.getItem('pos_token') || '';
+    const socket = io({ auth: { token } });
 
     const handleRealtimeStatusChange = () => {
       if (!isMounted) return;

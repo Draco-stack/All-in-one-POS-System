@@ -30,7 +30,7 @@ export const Navigation: React.FC<NavigationProps> = ({
   setActiveTab,
   onOpenUserSwitch,
 }) => {
-  const { theme, toggleTheme, currentUser, currentShift, orders, isRestricted, logoutUser, showToast } = useRestaurant();
+  const { theme, toggleTheme, currentUser, currentShift, orders, isRestricted, hasPermission, logoutUser, showToast } = useRestaurant();
   const [time, setTime] = useState<string>(new Date().toLocaleTimeString());
 
   useEffect(() => {
@@ -49,15 +49,15 @@ export const Navigation: React.FC<NavigationProps> = ({
   ).length;
 
   const navItems = [
-    { id: 'delivery', label: 'Delivery Monitoring', icon: Truck, badge: activeDeliveriesCount > 0 ? activeDeliveriesCount : undefined },
-    { id: 'pos', label: 'POS Terminal', icon: Store },
-    { id: 'kitchen', label: 'Kitchen & Dispatch', icon: ChefHat, badge: pendingKitchenCount > 0 ? pendingKitchenCount : undefined },
-    { id: 'all-orders', label: 'All Orders Search', icon: Search },
-    { id: 'orders', label: 'Orders & Refunds', icon: Receipt },
-    { id: 'menu', label: 'Menu & Stock', icon: UtensilsCrossed },
-    { id: 'customers', label: 'Customers', icon: Users },
-    { id: 'shift', label: 'Shift & Float', icon: Calculator },
-    { id: 'staff', label: 'Staff & Security', icon: UserCheck, requiredRole: ['owner', 'manager'] },
+    { id: 'delivery', label: 'Delivery Monitoring', icon: Truck, badge: activeDeliveriesCount > 0 ? activeDeliveriesCount : undefined, perm: 'orders.view' },
+    { id: 'pos', label: 'POS Terminal', icon: Store, perm: 'orders.create' },
+    { id: 'kitchen', label: 'Kitchen & Dispatch', icon: ChefHat, badge: pendingKitchenCount > 0 ? pendingKitchenCount : undefined, perm: 'kds.view' },
+    { id: 'all-orders', label: 'All Orders Search', icon: Search, perm: 'orders.view' },
+    { id: 'orders', label: 'Orders & Refunds', icon: Receipt, perm: 'orders.view' },
+    { id: 'menu', label: 'Menu & Stock', icon: UtensilsCrossed, perm: 'menu.view' },
+    { id: 'customers', label: 'Customers', icon: Users, perm: 'customers.view' },
+    { id: 'shift', label: 'Shift & Float', icon: Calculator, perm: 'shifts.view' },
+    { id: 'staff', label: 'Staff & Security', icon: UserCheck, perm: 'staff.view' },
   ];
 
   return (
@@ -88,7 +88,7 @@ export const Navigation: React.FC<NavigationProps> = ({
       <div className="flex-1 min-w-0 flex items-center justify-start md:justify-center overflow-hidden relative">
         <nav className="flex items-center gap-1 bg-stone-950/70 p-1 rounded-xl border border-slate-200 dark:border-stone-800 overflow-x-auto no-scrollbar scroll-smooth overscroll-x-contain touch-pan-x min-w-0 max-w-full">
           {navItems.map((item) => {
-            if (item.requiredRole && !item.requiredRole.includes(currentUser.role)) {
+            if (item.perm && !hasPermission(item.perm)) {
               return null;
             }
             if (isRestricted(item.id)) {

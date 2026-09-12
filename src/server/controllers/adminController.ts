@@ -5,6 +5,7 @@ import prisma from '../prisma';
 import { resolveTenantContext, sendTenantNotFound } from '../tenantHelper';
 import { revokeAllUserSessions } from '../auth/sessionService';
 import { assertResourceLimit } from '../billing/billingSystem';
+import { logAuditEvent, AUDIT_ACTIONS } from '../auth/auditService';
 
 // ============================================================================
 // 1. ADD USER
@@ -31,6 +32,17 @@ export async function addUser(req: Request, res: Response): Promise<Response> {
     }
 
     const roleUpper = (role || 'CASHIER').toString().toUpperCase();
+
+    // Role Escalation Prevention: Non-Platform Admins cannot create PLATFORM_ADMIN or EXECUTIVE_ADMIN
+    if (['PLATFORM_ADMIN', 'EXECUTIVE_ADMIN'].includes(roleUpper)) {
+      return res.status(403).json({ error: 'Forbidden: Cannot create Platform Admin accounts' });
+    }
+
+    const currentRole = (tenant.role || '').toUpperCase();
+    if (currentRole === 'MANAGER' && ['OWNER', 'ADMIN', 'PLATFORM_ADMIN', 'EXECUTIVE_ADMIN'].includes(roleUpper)) {
+      return res.status(403).json({ error: 'Forbidden: Managers cannot create administrative or owner accounts' });
+    }
+
     const validRoles = ['CASHIER', 'MANAGER', 'OWNER', 'RIDER', 'KITCHEN', 'ADMIN', 'SERVER'];
     if (!validRoles.includes(roleUpper)) {
       return res.status(400).json({ error: `Invalid role. Allowed roles: ${validRoles.join(', ')}` });
@@ -49,13 +61,39 @@ export async function addUser(req: Request, res: Response): Promise<Response> {
     }
 
     // Validate optional branchId belongs to tenant organization
-    let resolvedBranchId = tenant.branchId || null;
+    let resolvedBranchId: string | null = null;
+    const authorizedBranches = tenant.authorizedBranchIds || (tenant.branchId ? [tenant.branchId] : []);
+
     if (branchId) {
       const branchMatch = await prisma.branch.findFirst({
         where: { id: String(branchId), organizationId: tenant.organizationId },
       });
-      if (branchMatch) {
-        resolvedBranchId = branchMatch.id;
+      if (!branchMatch) {
+        return res.status(400).json({ error: 'Selected branch does not belong to this organization.' });
+      }
+      if (currentRole === 'MANAGER' && !authorizedBranches.includes(branchMatch.id)) {
+        return res.status(403).json({ error: 'Forbidden: You cannot assign user to a branch you do not manage.' });
+      }
+      resolvedBranchId = branchMatch.id;
+    }
+
+    const allBranchIdsToAssign = new Set<string>();
+    if (resolvedBranchId) allBranchIdsToAssign.add(resolvedBranchId);
+
+    if (Array.isArray(req.body.branchIds)) {
+      for (const bId of req.body.branchIds) {
+        if (bId) {
+          const bMatch = await prisma.branch.findFirst({
+            where: { id: String(bId), organizationId: tenant.organizationId },
+          });
+          if (!bMatch) {
+            return res.status(400).json({ error: `Branch '${bId}' does not belong to this organization.` });
+          }
+          if (currentRole === 'MANAGER' && !authorizedBranches.includes(bMatch.id)) {
+            return res.status(403).json({ error: `Forbidden: Branch '${bMatch.name}' is outside your management scope.` });
+          }
+          allBranchIdsToAssign.add(bMatch.id);
+        }
       }
     }
 
@@ -64,11 +102,12 @@ export async function addUser(req: Request, res: Response): Promise<Response> {
 
     // Securely hash PIN
     const hashedPin = pin.trim().startsWith('$2') ? pin.trim() : await bcrypt.hash(pin.trim(), 10);
+    const mustChange = req.body.mustChangePassword !== undefined ? !!req.body.mustChangePassword : true;
 
     // Create real user record in database scoped to tenant organization under transaction
     const createdUser = await prisma.$transaction(async (tx) => {
       await assertResourceLimit(tx, tenant.organizationId, 'users');
-      return await tx.user.create({
+      const u = await tx.user.create({
         data: {
           organizationId: tenant.organizationId,
           branchId: resolvedBranchId,
@@ -78,6 +117,7 @@ export async function addUser(req: Request, res: Response): Promise<Response> {
           role: roleUpper,
           phone: phone ? phone.trim() : null,
           active: true,
+          mustChangePassword: mustChange,
           restrictions: serializedRestrictions,
         },
         select: {
@@ -89,11 +129,99 @@ export async function addUser(req: Request, res: Response): Promise<Response> {
           role: true,
           phone: true,
           active: true,
+          mustChangePassword: true,
           restrictions: true,
           createdAt: true,
           updatedAt: true,
         },
       });
+
+      for (const bId of allBranchIdsToAssign) {
+        await tx.userBranchAssignment.upsert({
+          where: {
+            userId_branchId: {
+              userId: u.id,
+              branchId: bId,
+            },
+          },
+          update: {},
+          create: {
+            organizationId: tenant.organizationId,
+            userId: u.id,
+            branchId: bId,
+          },
+        }).catch(() => {});
+      }
+
+      await tx.auditLog.create({
+        data: {
+          organizationId: tenant.organizationId,
+          branchId: resolvedBranchId,
+          userId: tenant.userId,
+          action: AUDIT_ACTIONS.ACCOUNT_CREATED,
+          entity: 'USER',
+          entityId: u.id,
+          metadata: JSON.stringify({
+            username: sanitizedUsername,
+            role: roleUpper,
+            mustChangePassword: mustChange,
+            branchId: resolvedBranchId,
+          }),
+          ipAddress: req.ip,
+        },
+      }).catch(() => {});
+
+      await tx.auditLog.create({
+        data: {
+          organizationId: tenant.organizationId,
+          branchId: resolvedBranchId,
+          userId: tenant.userId,
+          action: AUDIT_ACTIONS.STAFF_CREATED,
+          entity: 'USER',
+          entityId: u.id,
+          metadata: JSON.stringify({
+            username: sanitizedUsername,
+            role: roleUpper,
+            branchId: resolvedBranchId,
+          }),
+          ipAddress: req.ip,
+        },
+      }).catch(() => {});
+
+      await tx.auditLog.create({
+        data: {
+          organizationId: tenant.organizationId,
+          branchId: resolvedBranchId,
+          userId: tenant.userId,
+          action: AUDIT_ACTIONS.STAFF_INVITED,
+          entity: 'USER',
+          entityId: u.id,
+          metadata: JSON.stringify({
+            username: sanitizedUsername,
+            role: roleUpper,
+          }),
+          ipAddress: req.ip,
+        },
+      }).catch(() => {});
+
+      if (resolvedBranchId) {
+        await tx.auditLog.create({
+          data: {
+            organizationId: tenant.organizationId,
+            branchId: resolvedBranchId,
+            userId: tenant.userId,
+            action: AUDIT_ACTIONS.STAFF_BRANCH_ASSIGNED,
+            entity: 'USER',
+            entityId: u.id,
+            metadata: JSON.stringify({
+              branchId: resolvedBranchId,
+            }),
+            ipAddress: req.ip,
+          },
+        }).catch(() => {});
+      }
+
+      return u;
     });
 
     return res.status(201).json({
@@ -142,7 +270,25 @@ export async function updateUser(req: Request, res: Response): Promise<Response>
       return sendTenantNotFound(res, 'User', targetId);
     }
 
+    const currentRole = (tenant.role || '').toUpperCase();
+    const authorizedBranches = tenant.authorizedBranchIds || (tenant.branchId ? [tenant.branchId] : []);
+
+    // Role Hierarchy & Privilege Checks
+    if (currentRole === 'MANAGER') {
+      if (['OWNER', 'ADMIN', 'PLATFORM_ADMIN', 'EXECUTIVE_ADMIN'].includes(existingUser.role)) {
+        return res.status(403).json({ error: 'Forbidden: Managers cannot edit administrative or owner accounts' });
+      }
+      if (role && ['OWNER', 'ADMIN', 'PLATFORM_ADMIN', 'EXECUTIVE_ADMIN'].includes(role.toString().toUpperCase())) {
+        return res.status(403).json({ error: 'Forbidden: Managers cannot promote users to administrative or owner roles' });
+      }
+    }
+
     const dataToUpdate: any = {};
+    let roleChanged = false;
+    let branchChanged = false;
+    let pinChanged = false;
+    let statusChanged = false;
+
     if (name !== undefined) {
       if (typeof name !== 'string' || !name.trim()) {
         return res.status(400).json({ error: 'Name cannot be empty.' });
@@ -152,11 +298,17 @@ export async function updateUser(req: Request, res: Response): Promise<Response>
 
     if (role !== undefined) {
       const roleUpper = role.toString().toUpperCase();
+      if (['PLATFORM_ADMIN', 'EXECUTIVE_ADMIN'].includes(roleUpper)) {
+        return res.status(403).json({ error: 'Forbidden: Cannot assign Platform Admin role' });
+      }
       const validRoles = ['CASHIER', 'MANAGER', 'OWNER', 'RIDER', 'KITCHEN', 'ADMIN', 'SERVER'];
       if (!validRoles.includes(roleUpper)) {
         return res.status(400).json({ error: `Invalid role. Allowed roles: ${validRoles.join(', ')}` });
       }
-      dataToUpdate.role = roleUpper;
+      if (roleUpper !== existingUser.role) {
+        dataToUpdate.role = roleUpper;
+        roleChanged = true;
+      }
     }
 
     if (phone !== undefined) {
@@ -168,27 +320,47 @@ export async function updateUser(req: Request, res: Response): Promise<Response>
         return res.status(400).json({ error: 'Password / PIN cannot be empty.' });
       }
       dataToUpdate.pin = pin.trim().startsWith('$2') ? pin.trim() : await bcrypt.hash(pin.trim(), 10);
+      pinChanged = true;
     }
 
     if (active !== undefined) {
-      dataToUpdate.active = Boolean(active);
+      const newActive = Boolean(active);
+      if (newActive !== existingUser.active) {
+        dataToUpdate.active = newActive;
+        statusChanged = true;
+      }
     }
 
+    let newBranchMatch: any = null;
     if (branchId !== undefined) {
       if (branchId) {
-        const branchMatch = await prisma.branch.findFirst({
+        newBranchMatch = await prisma.branch.findFirst({
           where: { id: String(branchId), organizationId: tenant.organizationId },
         });
-        if (branchMatch) {
-          dataToUpdate.branchId = branchMatch.id;
+        if (!newBranchMatch) {
+          return res.status(400).json({ error: 'Selected branch does not belong to this organization.' });
+        }
+        if (currentRole === 'MANAGER' && !authorizedBranches.includes(newBranchMatch.id)) {
+          return res.status(403).json({ error: 'Forbidden: Cannot assign user to a branch outside your management scope.' });
+        }
+        dataToUpdate.branchId = newBranchMatch.id;
+        if (newBranchMatch.id !== existingUser.branchId) {
+          branchChanged = true;
         }
       } else {
         dataToUpdate.branchId = null;
+        if (existingUser.branchId !== null) {
+          branchChanged = true;
+        }
       }
     }
 
     if (restrictions !== undefined) {
       dataToUpdate.restrictions = typeof restrictions === 'string' ? restrictions : JSON.stringify(restrictions || []);
+    }
+
+    if (req.body.mustChangePassword !== undefined) {
+      dataToUpdate.mustChangePassword = Boolean(req.body.mustChangePassword);
     }
 
     const updated = await prisma.user.update({
@@ -203,14 +375,126 @@ export async function updateUser(req: Request, res: Response): Promise<Response>
         role: true,
         phone: true,
         active: true,
+        mustChangePassword: true,
         restrictions: true,
         createdAt: true,
         updatedAt: true,
       },
     });
+
+    if (Array.isArray(req.body.branchIds)) {
+      for (const bId of req.body.branchIds) {
+        if (bId) {
+          const bMatch = await prisma.branch.findFirst({
+            where: { id: String(bId), organizationId: tenant.organizationId },
+          });
+          if (!bMatch) {
+            return res.status(400).json({ error: `Branch '${bId}' does not belong to this organization.` });
+          }
+          if (currentRole === 'MANAGER' && !authorizedBranches.includes(bMatch.id)) {
+            return res.status(403).json({ error: `Forbidden: Branch '${bMatch.name}' is outside your management scope.` });
+          }
+        }
+      }
+
+      await prisma.userBranchAssignment.deleteMany({
+        where: { organizationId: tenant.organizationId, userId: existingUser.id },
+      });
+      for (const bId of req.body.branchIds) {
+        if (bId) {
+          await prisma.userBranchAssignment.create({
+            data: {
+              organizationId: tenant.organizationId,
+              userId: existingUser.id,
+              branchId: String(bId),
+            },
+          }).catch(() => {});
+        }
+      }
+    }
     
-    if (pin !== undefined) {
+    // MANDATORY SECURITY SESSION REVOCATION:
+    // If role changed, branch changed, credentials changed, or account disabled -> REVOKE ALL ACTIVE SESSIONS
+    if (roleChanged || branchChanged || pinChanged || (statusChanged && !updated.active)) {
       await revokeAllUserSessions(existingUser.id, tenant.organizationId);
+    }
+
+    if (roleChanged) {
+      await logAuditEvent({
+        organizationId: tenant.organizationId,
+        userId: tenant.userId,
+        branchId: updated.branchId,
+        action: AUDIT_ACTIONS.STAFF_ROLE_CHANGED,
+        entity: 'USER',
+        entityId: existingUser.id,
+        metadata: {
+          targetUser: updated.username,
+          previousRole: existingUser.role,
+          newRole: updated.role,
+        },
+        ipAddress: req.ip,
+      }).catch(() => {});
+    }
+
+    if (branchChanged) {
+      await logAuditEvent({
+        organizationId: tenant.organizationId,
+        userId: tenant.userId,
+        branchId: updated.branchId,
+        action: updated.branchId ? AUDIT_ACTIONS.STAFF_BRANCH_ASSIGNED : AUDIT_ACTIONS.STAFF_BRANCH_UNASSIGNED,
+        entity: 'USER',
+        entityId: existingUser.id,
+        metadata: {
+          targetUser: updated.username,
+          previousBranchId: existingUser.branchId,
+          newBranchId: updated.branchId,
+        },
+        ipAddress: req.ip,
+      }).catch(() => {});
+    }
+
+    if (statusChanged) {
+      await logAuditEvent({
+        organizationId: tenant.organizationId,
+        userId: tenant.userId,
+        branchId: updated.branchId,
+        action: updated.active ? AUDIT_ACTIONS.STAFF_REENABLED : AUDIT_ACTIONS.STAFF_DISABLED,
+        entity: 'USER',
+        entityId: existingUser.id,
+        metadata: {
+          targetUser: updated.username,
+          active: updated.active,
+        },
+        ipAddress: req.ip,
+      }).catch(() => {});
+    }
+
+    if (pinChanged) {
+      await logAuditEvent({
+        organizationId: tenant.organizationId,
+        userId: tenant.userId,
+        branchId: updated.branchId,
+        action: AUDIT_ACTIONS.STAFF_CREDENTIAL_RESET,
+        entity: 'USER',
+        entityId: existingUser.id,
+        metadata: {
+          targetUser: updated.username,
+        },
+        ipAddress: req.ip,
+      }).catch(() => {});
+
+      await logAuditEvent({
+        organizationId: tenant.organizationId,
+        userId: tenant.userId,
+        branchId: updated.branchId,
+        action: AUDIT_ACTIONS.PASSWORD_SETUP_COMPLETED,
+        entity: 'USER',
+        entityId: existingUser.id,
+        metadata: {
+          targetUser: updated.username,
+        },
+        ipAddress: req.ip,
+      }).catch(() => {});
     }
 
     return res.status(200).json({
@@ -235,6 +519,7 @@ export async function updateUser(req: Request, res: Response): Promise<Response>
 export async function deleteUser(req: Request, res: Response): Promise<Response> {
   try {
     const tenant = await resolveTenantContext(req);
+    const currentRole = (tenant.role || '').toUpperCase();
     const { id } = req.params;
 
     if (!id || typeof id !== 'string' || !id.trim()) {
@@ -254,6 +539,36 @@ export async function deleteUser(req: Request, res: Response): Promise<Response>
     if (!existingUser) {
       return sendTenantNotFound(res, 'User', targetId);
     }
+
+    if (currentRole === 'MANAGER' && ['OWNER', 'ADMIN', 'PLATFORM_ADMIN', 'EXECUTIVE_ADMIN'].includes(existingUser.role)) {
+      return res.status(403).json({ error: 'Forbidden: Managers cannot delete administrative or owner accounts' });
+    }
+
+    // Revoke all sessions
+    await revokeAllUserSessions(existingUser.id, tenant.organizationId);
+
+    // Log deactivation / deletion audit
+    await logAuditEvent({
+      organizationId: tenant.organizationId,
+      userId: tenant.userId,
+      branchId: existingUser.branchId,
+      action: AUDIT_ACTIONS.STAFF_DISABLED,
+      entity: 'USER',
+      entityId: existingUser.id,
+      metadata: { targetUser: existingUser.username, role: existingUser.role },
+      ipAddress: req.ip,
+    }).catch(() => {});
+
+    await logAuditEvent({
+      organizationId: tenant.organizationId,
+      userId: tenant.userId,
+      branchId: existingUser.branchId,
+      action: AUDIT_ACTIONS.STAFF_DEACTIVATED,
+      entity: 'USER',
+      entityId: existingUser.id,
+      metadata: { targetUser: existingUser.username, role: existingUser.role },
+      ipAddress: req.ip,
+    }).catch(() => {});
 
     // Unlink relationships and delete user in transaction
     const [
@@ -447,7 +762,7 @@ export async function addMenuItem(req: Request, res: Response): Promise<Response
 
     const io = (req.app as any).get('io');
     if (io) {
-      io.emit('menuItemCreated', createdItem);
+      io.to(`org_${tenant.organizationId}`).emit('menuItemCreated', createdItem);
     }
 
     return res.status(201).json({
@@ -529,7 +844,7 @@ export async function deleteMenuItem(req: Request, res: Response): Promise<Respo
 
     const io = (req.app as any).get('io');
     if (io) {
-      io.emit('menuItemDeleted', { id: realId, title: deletedItem.title });
+      io.to(`org_${tenant.organizationId}`).emit('menuItemDeleted', { id: realId, title: deletedItem.title });
     }
 
     return res.status(200).json({
@@ -674,7 +989,7 @@ export async function updateMenuItem(req: Request, res: Response): Promise<Respo
 
     const io = (req.app as any).get('io');
     if (io) {
-      io.emit('menuItemUpdated', updatedItem);
+      io.to(`org_${tenant.organizationId}`).emit('menuItemUpdated', updatedItem);
     }
 
     return res.status(200).json({

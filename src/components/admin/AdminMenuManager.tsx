@@ -118,12 +118,15 @@ export const AdminMenuManager: React.FC = () => {
 
   // Filtered Menu Items
   const filteredItems = useMemo(() => {
-    return menuItems.filter((item) => {
-      const matchesCategory = selectedCatFilter === 'all' || item.category.toLowerCase() === selectedCatFilter.toLowerCase();
+    const safeItems = Array.isArray(menuItems) ? menuItems : [];
+    return safeItems.filter((item) => {
+      if (!item) return false;
+      const itemCat = item.category || '';
+      const matchesCategory = selectedCatFilter === 'all' || itemCat.toLowerCase() === selectedCatFilter.toLowerCase();
       const matchesSearch =
-        item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.category.toLowerCase().includes(searchQuery.toLowerCase());
+        (item.name && item.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (item.description && item.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (itemCat && itemCat.toLowerCase().includes(searchQuery.toLowerCase()));
       return matchesCategory && matchesSearch;
     });
   }, [menuItems, selectedCatFilter, searchQuery]);
@@ -309,16 +312,17 @@ export const AdminMenuManager: React.FC = () => {
               }`}
             >
               <Layers className="w-3.5 h-3.5" />
-              <span>All Items ({menuItems.length})</span>
+              <span>All Items ({(Array.isArray(menuItems) ? menuItems : []).length})</span>
             </button>
-            {categories.map((c) => {
-              const count = menuItems.filter((m) => m.category.toLowerCase() === c.id.toLowerCase()).length;
+            {(Array.isArray(categories) ? categories : []).map((c) => {
+              const safeItems = Array.isArray(menuItems) ? menuItems : [];
+              const count = safeItems.filter((m) => m && m.category && c && c.id && m.category.toLowerCase() === c.id.toLowerCase()).length;
               return (
                 <button
                   key={c.id}
                   onClick={() => setSelectedCatFilter(c.id)}
                   className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all duration-150 cursor-pointer flex items-center gap-1.5 border ${
-                    selectedCatFilter.toLowerCase() === c.id.toLowerCase()
+                    selectedCatFilter.toLowerCase() === (c.id || '').toLowerCase()
                       ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white border-emerald-500/30 shadow-xs'
                       : theme === 'dark'
                       ? 'bg-[#08090d] text-stone-400 hover:text-white border-white/5 hover:border-white/10'

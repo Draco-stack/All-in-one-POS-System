@@ -1,1 +1,5 @@
-{"serverUrl":"http://localhost:61258","deviceToken":"t_dev_b9b513ac33ef1c88d7d2dc6ee4d74cd090011c19f1a7ee3b7af7b134b9d8f366","deviceId":"cmtw6sgui000370fywcwvh1l3","deviceIdentifier":"POS-01"}
+{
+  "serverUrl": "http://localhost:47554",
+  "deviceId": "cmtym49ac0003v7m5z6j4rj7y",
+  "deviceIdentifier": "POS-01"
+}

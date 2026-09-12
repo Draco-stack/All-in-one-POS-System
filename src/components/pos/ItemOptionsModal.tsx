@@ -14,11 +14,25 @@ export const ItemOptionsModal: React.FC<ItemOptionsModalProps> = ({ item, onClos
   const [selectedChoices, setSelectedChoices] = React.useState<Record<string, { choice: string; extraPrice: number }>>({});
   const [specialInstructions, setSpecialInstructions] = React.useState('');
 
+  const parsedOptions = React.useMemo(() => {
+    if (!item || !item.options) return [];
+    if (Array.isArray(item.options)) return item.options;
+    if (typeof item.options === 'string') {
+      try {
+        const parsed = JSON.parse(item.options);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  }, [item]);
+
   React.useEffect(() => {
-    if (item && item.options) {
+    if (parsedOptions.length > 0) {
       const defaults: Record<string, { choice: string; extraPrice: number }> = {};
-      item.options.forEach((opt: any) => {
-        if (opt.choices && opt.choices.length > 0) {
+      parsedOptions.forEach((opt: any) => {
+        if (opt && opt.choices && Array.isArray(opt.choices) && opt.choices.length > 0) {
           const firstChoice = opt.choices[0];
           defaults[opt.name] = {
             choice: firstChoice.label || firstChoice.name || '',
@@ -31,7 +45,7 @@ export const ItemOptionsModal: React.FC<ItemOptionsModalProps> = ({ item, onClos
       setSelectedChoices({});
     }
     setSpecialInstructions('');
-  }, [item]);
+  }, [parsedOptions]);
 
   if (!item) return null;
 
@@ -89,8 +103,8 @@ export const ItemOptionsModal: React.FC<ItemOptionsModalProps> = ({ item, onClos
 
         {/* Content Body */}
         <div className="p-5 space-y-5 overflow-y-auto flex-1">
-          {item.options && item.options.length > 0 ? (
-            item.options.map((opt) => (
+          {parsedOptions.length > 0 ? (
+            parsedOptions.map((opt) => (
               <div key={opt.name} className="space-y-2">
                 <label className="text-[10px] font-bold uppercase tracking-wider text-slate-700 dark:text-stone-300 flex items-center justify-between">
                   <span>{opt.name}</span>

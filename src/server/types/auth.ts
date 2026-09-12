@@ -10,6 +10,8 @@ export interface AuthUserContext {
   name: string;
   username?: string | null;
   email?: string | null;
+  mustChangePassword?: boolean;
+  authorizedBranchIds?: string[];
 }
 
 export interface TenantContext {
@@ -25,6 +27,8 @@ export interface TenantContext {
   organizationStatus: OrganizationStatus | string;
   branchName?: string | null;
   permissions: string[];
+  mustChangePassword?: boolean;
+  authorizedBranchIds?: string[];
 }
 
 export interface TokenPayload {
@@ -34,6 +38,7 @@ export interface TokenPayload {
   sessionId?: string;
   role: string;
   name?: string;
+  mustChangePassword?: boolean;
   iat?: number;
   exp?: number;
   iss?: string;

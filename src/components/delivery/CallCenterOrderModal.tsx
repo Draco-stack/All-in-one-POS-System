@@ -89,10 +89,14 @@ export const CallCenterOrderModal: React.FC<CallCenterOrderModalProps> = ({
 
   const branches = ['Sargodha', 'Jinnah Colony', 'Eden Garden', 'Gujrat', 'Gojra', 'Gulberg Branch'];
 
-  const filteredMenuItems = menuItems.filter((i) =>
-    i.name.toLowerCase().includes(itemSearch.toLowerCase()) ||
-    i.category.toLowerCase().includes(itemSearch.toLowerCase())
-  );
+  const safeMenuItems = Array.isArray(menuItems) ? menuItems : [];
+  const filteredMenuItems = safeMenuItems.filter((i) => {
+    if (!i) return false;
+    const name = i.name || '';
+    const cat = i.category || '';
+    const search = itemSearch.toLowerCase();
+    return name.toLowerCase().includes(search) || cat.toLowerCase().includes(search);
+  });
 
   const addItemToCart = (item: MenuItem) => {
     setCart((prev) => {

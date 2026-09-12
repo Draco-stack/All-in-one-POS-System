@@ -507,21 +507,25 @@ async function runLocalBridgeTests() {
     });
 
     // Attempt subscription to another tenant's branch
-    kdsSocket.emit('kds:subscribe', { branchId: 'other_tenant_branch' });
     await new Promise<void>((resolve) => {
-      kdsSocket.on('subscription:error', (data: { error: string }) => {
+      const timer = setTimeout(() => resolve(), 3000);
+      kdsSocket.once('subscription:error', (data: { error: string }) => {
+        clearTimeout(timer);
         assert(data.error.includes('Access denied'), 'KDS cross-branch/cross-tenant subscription request is strictly blocked');
         resolve();
       });
+      kdsSocket.emit('kds:subscribe', { branchId: 'other_tenant_branch' });
     });
 
     // Attempt subscription to authorized branch
-    kdsSocket.emit('kds:subscribe', { branchId });
     await new Promise<void>((resolve) => {
-      kdsSocket.on('subscription:success', (data: { channel: string }) => {
+      const timer = setTimeout(() => resolve(), 3000);
+      kdsSocket.once('subscription:success', (data: { channel: string }) => {
+        clearTimeout(timer);
         assert(data.channel === branchId, 'KDS subscription to authorized branch succeeds');
         resolve();
       });
+      kdsSocket.emit('kds:subscribe', { branchId });
     });
 
     kdsSocket.disconnect();

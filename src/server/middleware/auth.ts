@@ -38,12 +38,13 @@ export async function authenticate(req: Request, res: Response, next: NextFuncti
       return res.status(401).json({ error: 'Unauthorized: Invalid or expired authentication token' });
     }
 
-    // 1. Fetch user from DB
+    // 1. Fetch user from DB with branch assignments
     const user = await prisma.user.findUnique({
       where: { id: payload.userId },
       include: {
         organization: true,
         branch: true,
+        branchAssignments: true,
       },
     });
 
@@ -51,7 +52,24 @@ export async function authenticate(req: Request, res: Response, next: NextFuncti
       return res.status(401).json({ error: 'Unauthorized: User account is inactive or not found' });
     }
 
-    // 2. Resolve organization (use user's assigned organization or fallback to payload organization)
+    // 2. Check mustChangePassword constraint (Phase 22)
+    // Rejects regular business operations until temporary password is changed
+    const isPasswordChangeRoute =
+      req.path.includes('/change-password') ||
+      req.originalUrl.includes('/change-password') ||
+      req.path.includes('/auth/logout') ||
+      req.path.includes('/auth/validate-session') ||
+      req.path.includes('/auth/me');
+
+    if (user.mustChangePassword && !isPasswordChangeRoute) {
+      return res.status(403).json({
+        error: 'Password change required before accessing business operations.',
+        code: 'PASSWORD_CHANGE_REQUIRED',
+        mustChangePassword: true,
+      });
+    }
+
+    // 3. Resolve organization (use user's assigned organization or fallback to payload organization)
     let organization = user.organization;
     if (!organization && payload.organizationId) {
       organization = await prisma.organization.findUnique({
@@ -67,7 +85,7 @@ export async function authenticate(req: Request, res: Response, next: NextFuncti
       });
     }
 
-    // 3. Organization Status Enforcement
+    // 4. Organization Status Enforcement
     // ACTIVE and TRIAL are allowed. SUSPENDED and CANCELLED are strictly blocked.
     if (organization.status === 'SUSPENDED') {
       await logAuditEvent({
@@ -92,32 +110,85 @@ export async function authenticate(req: Request, res: Response, next: NextFuncti
       });
     }
 
-    // 4. Branch Resolution & Access Control
+    // 5. Branch Resolution & Branch-Scoped Access Control (Phase 22)
+    const userRole = (user.role || '').toUpperCase();
+    let authorizedBranchIds: string[] = [];
+
+    if (userRole === 'OWNER' || userRole === 'PLATFORM_ADMIN' || userRole === 'EXECUTIVE_ADMIN') {
+      // Owners have multi-branch access across all active branches within their organization
+      const orgBranches = await prisma.branch.findMany({
+        where: { organizationId: organization.id, active: true },
+        select: { id: true },
+      });
+      authorizedBranchIds = orgBranches.map((b) => b.id);
+    } else {
+      // Non-owners (managers, staff) are strictly restricted to assigned branches
+      const assigned = (user.branchAssignments || []).map((ba) => ba.branchId);
+      if (user.branchId) assigned.push(user.branchId);
+      authorizedBranchIds = [...new Set(assigned)];
+    }
+
+    // Check requested branch from client headers, query parameters, or token payload
+    const requestedBranchId =
+      (req.headers['x-branch-id'] as string) ||
+      (req.query.branchId as string) ||
+      payload.branchId ||
+      null;
+
     let branch = user.branch;
-    // If payload specified a branch, verify it belongs to this organization
-    if (payload.branchId && (!branch || branch.id !== payload.branchId)) {
-      const requestedBranch = await prisma.branch.findFirst({
+
+    if (requestedBranchId) {
+      // Verify branch exists and belongs to the user's organization
+      const targetBranch = await prisma.branch.findFirst({
         where: {
-          id: payload.branchId,
+          id: requestedBranchId,
           organizationId: organization.id,
           active: true,
         },
       });
-      if (requestedBranch) {
-        branch = requestedBranch;
-      }
-    }
 
-    if (!branch) {
+      if (!targetBranch) {
+        return res.status(403).json({
+          error: 'Forbidden: Requested branch does not exist or does not belong to your organization.',
+          code: 'INVALID_BRANCH',
+        });
+      }
+
+      // Check if user is authorized for this branch
+      if (!authorizedBranchIds.includes(targetBranch.id)) {
+        await logAuditEvent({
+          organizationId: organization.id,
+          branchId: targetBranch.id,
+          userId: user.id,
+          action: AUDIT_ACTIONS.CROSS_BRANCH_ACCESS_DENIED,
+          entity: 'BRANCH',
+          entityId: targetBranch.id,
+          metadata: {
+            requestedBranchId: targetBranch.id,
+            authorizedBranchIds,
+            userRole,
+          },
+          ipAddress: req.ip,
+        }).catch(() => {});
+
+        return res.status(403).json({
+          error: 'Forbidden: You are not authorized to access this branch.',
+          code: 'CROSS_BRANCH_ACCESS_DENIED',
+        });
+      }
+
+      branch = targetBranch;
+    } else if (!branch && authorizedBranchIds.length > 0) {
       branch = await prisma.branch.findFirst({
         where: {
+          id: { in: authorizedBranchIds },
           organizationId: organization.id,
           active: true,
         },
       });
     }
 
-    // 5. Session Validation (if sessionId is present)
+    // 6. Session Validation (if sessionId is present)
     if (payload.sessionId) {
       const isValidSession = await validateSession(payload.sessionId, rawToken);
       if (!isValidSession) {
@@ -125,15 +196,17 @@ export async function authenticate(req: Request, res: Response, next: NextFuncti
       }
     }
 
-    // 6. Compute Effective Permissions
+    // 7. Compute Effective Permissions
     const permissions = getEffectivePermissions(user.role, user.restrictions);
 
-    // 7. Attach Typed Context
+    // 8. Attach Typed Context
     req.auth = {
       userId: user.id,
       role: user.role,
       name: user.name,
       username: user.username,
+      authorizedBranchIds,
+      mustChangePassword: user.mustChangePassword,
     };
 
     req.tenant = {
@@ -149,6 +222,8 @@ export async function authenticate(req: Request, res: Response, next: NextFuncti
       organizationStatus: organization.status,
       branchName: branch?.name || null,
       permissions,
+      authorizedBranchIds,
+      mustChangePassword: user.mustChangePassword,
     };
 
     // Backward-compatibility for legacy handlers expecting req.user
@@ -257,6 +332,61 @@ export function requireRole(allowedRoles: string[]) {
 
     return next();
   };
+}
+
+/**
+ * Branch-Scoped Authorization Middleware (Phase 22).
+ * Verifies that the client has explicit authorization for the target branch
+ * specified in headers ('x-branch-id'), query (?branchId=), or route params (:branchId).
+ * Owners and Platform Admins have organization-wide multi-branch authorization.
+ * All other roles (Manager, Staff) are strictly confined to their assigned branch(es).
+ */
+export function enforceBranchScope(req: Request, res: Response, next: NextFunction) {
+  if (!req.tenant) {
+    return res.status(401).json({ error: 'Unauthorized: Tenant authentication required' });
+  }
+
+  const role = (req.tenant.role || '').toUpperCase();
+  if (role === 'OWNER' || role === 'PLATFORM_ADMIN' || role === 'EXECUTIVE_ADMIN') {
+    return next();
+  }
+
+  const requestedBranchId =
+    (req.headers['x-branch-id'] as string) ||
+    (req.query.branchId as string) ||
+    (req.params && req.params.branchId) ||
+    (req.body && req.body.branchId) ||
+    null;
+
+  if (!requestedBranchId) {
+    return next();
+  }
+
+  const allowedBranchIds = req.tenant.authorizedBranchIds || (req.tenant.branchId ? [req.tenant.branchId] : []);
+
+  if (!allowedBranchIds.includes(requestedBranchId)) {
+    logAuditEvent({
+      organizationId: req.tenant.organizationId,
+      branchId: requestedBranchId,
+      userId: req.tenant.userId,
+      action: AUDIT_ACTIONS.CROSS_BRANCH_ACCESS_DENIED,
+      entity: 'BRANCH',
+      entityId: requestedBranchId,
+      metadata: {
+        attemptedBranchId: requestedBranchId,
+        authorizedBranchIds: allowedBranchIds,
+        userRole: role,
+      },
+      ipAddress: req.ip,
+    }).catch(() => {});
+
+    return res.status(403).json({
+      error: 'Forbidden: You are not authorized to view or manage this branch.',
+      code: 'CROSS_BRANCH_ACCESS_DENIED',
+    });
+  }
+
+  return next();
 }
 
 /**

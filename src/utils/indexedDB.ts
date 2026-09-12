@@ -148,7 +148,8 @@ class POSIndexedDB {
    */
   async queueOrder(orderData: any, organizationId?: string, branchId?: string): Promise<OfflineOrder> {
     const db = await this.initDB();
-    const effectiveOrgId = organizationId || orderData.organizationId || 'org_default';
+    const effectiveOrgId = organizationId || orderData.organizationId;
+    if (!effectiveOrgId) throw new Error('Tenant isolation violation: Missing organizationId for offline order queue');
     const effectiveBranchId = branchId || orderData.branchId || undefined;
     const nowIso = new Date().toISOString();
 

@@ -1,5 +1,10 @@
 import { createCheckoutSessionHandler } from './src/server/controllers/billingController';
-import { registerHandler } from './src/server/controllers/registerController';
+import {
+  registerHandler,
+  initiateRegistrationHandler,
+  verifyEmailHandler,
+  resendVerificationHandler,
+} from './src/server/controllers/registerController';
 import express, { Request, Response, NextFunction } from 'express';
 import path from 'path';
 import fs from 'fs';
@@ -11,7 +16,9 @@ import cors from 'cors';
 import compression from 'compression';
 import rateLimit from 'express-rate-limit';
 import jwt from 'jsonwebtoken';
+import { verifyTenantToken } from './src/server/auth/jwt';
 import bcrypt from 'bcryptjs';
+import { logAuditEvent, AUDIT_ACTIONS } from './src/server/auth/auditService';
 import { validateRequest } from './src/server/middleware/validate';
 import { OrderPunchSchema, ShiftCloseSchema } from './src/server/validators';
 import { printReceipt, openCashDrawer, formatReceiptEscPos } from './src/server/printer';
@@ -29,6 +36,9 @@ import {
   logoutHandler,
   verifyManagerPinHandler,
   meHandler,
+  changePasswordHandler,
+  getProfileHandler,
+  updateProfileHandler,
 } from './src/server/controllers/authController';
 import {
   authenticate,
@@ -47,6 +57,7 @@ import {
 } from './src/server/financialHelper';
 import { resolveTenantContext, sendTenantNotFound, getTenantOrgId, findTenantOrder } from './src/server/tenantHelper';
 import { assertResourceLimit } from './src/server/billing/billingSystem';
+import { consumeIngredientsForOrder } from './src/server/services/inventoryService';
 import {
   getSubscriptionHandler,
   getUsageHandler,
@@ -58,6 +69,8 @@ import {
 } from './src/server/controllers/billingController';
 import platformAdminRoutes from './src/server/routes/platformAdminRoutes';
 import portalRoutes from './src/server/routes/portalRoutes';
+import menuRoutes from './src/server/routes/menuRoutes';
+import financialApprovalRoutes from './src/server/routes/financialApprovalRoutes';
 import { requireActiveSubscription } from './src/server/middleware/subscriptionMiddleware';
 import { initHardwareSocket } from './src/server/hardware/hardwareSocket';
 import {
@@ -94,8 +107,35 @@ const io = new SocketIOServer(httpServer, {
 app.set('io', io);
 initHardwareSocket(io);
 
+
+io.use((socket, next) => {
+  const authType = socket.handshake.query?.type;
+  if (authType === 'agent') {
+      // hardware agent, let initHardwareSocket handle it
+      return next();
+  }
+
+  const token = socket.handshake.auth?.token || socket.handshake.headers?.authorization;
+  if (!token) return next(new Error('Authentication required'));
+  
+  const rawToken = token.replace('Bearer ', '');
+  const decoded = verifyTenantToken(rawToken);
+  if (!decoded || !decoded.organizationId) {
+    return next(new Error('Invalid token'));
+  }
+  
+  (socket as any).tenant = decoded;
+  socket.join('org_' + decoded.organizationId);
+  if (decoded.branchId) {
+    socket.join('branch_' + decoded.branchId);
+  }
+  next();
+});
+
 io.on('connection', (socket) => {
-  console.log('Client connected:', socket.id);
+  const tenant = (socket as any).tenant;
+  console.log('Client connected:', socket.id, 'Org:', tenant?.organizationId);
+
   socket.on('disconnect', () => {
     console.log('Client disconnected:', socket.id);
   });
@@ -388,14 +428,28 @@ export function parsePagination(req: Request, defaultLimit = 100) {
 // Dedicated Platform Executive Admin Routes
 app.use('/api/platform-admin', platformAdminRoutes);
 
+// Dedicated Phase 20 Production Menu Management Routes
+app.use('/api/menu', menuRoutes);
+
+// Dedicated Phase 26 Financial Controls & Cash Management Routes
+app.use('/api', financialApprovalRoutes);
+
 // Tenant-Aware Authentication Routes (mounted AFTER express.json() & authLimiter)
 app.post('/api/auth/register', registerHandler);
+app.post('/api/auth/register-intent', initiateRegistrationHandler);
+app.post('/api/auth/register-initiate', initiateRegistrationHandler);
+app.post('/api/auth/verify-email', verifyEmailHandler);
+app.post('/api/auth/resend-verification', resendVerificationHandler);
 app.post('/api/auth/login', loginHandler);
 app.post('/api/auth/validate-session', validateSessionHandler);
 app.get('/api/auth/me', meHandler);
 app.post('/api/auth/me', meHandler);
 app.post('/api/auth/logout', logoutHandler);
 app.post('/api/auth/verify-manager-pin', verifyManagerPinHandler);
+app.post('/api/auth/change-password', authenticate, changePasswordHandler);
+app.get('/api/auth/profile', authenticate, getProfileHandler);
+app.put('/api/auth/profile', authenticate, updateProfileHandler);
+app.patch('/api/auth/profile', authenticate, updateProfileHandler);
 
 // User Management (Admin RBAC)
 app.get('/api/users', authenticate, async (req: Request, res: Response) => {
@@ -502,6 +556,229 @@ app.delete('/api/outlets/:name', authenticateManager, requireActiveSubscription,
   }
 });
 
+// REST Branches Endpoints (Tenant Scoped & Resource Limited & Branch Scoped - Phase 22)
+app.get('/api/branches', authenticate, async (req, res) => {
+  try {
+    const tenant = await resolveTenantContext(req);
+    const role = (tenant.role || '').toUpperCase();
+    const isMultiBranch = role === 'OWNER' || role === 'PLATFORM_ADMIN' || role === 'EXECUTIVE_ADMIN';
+
+    const whereClause: any = { organizationId: tenant.organizationId };
+    if (!isMultiBranch && tenant.authorizedBranchIds && tenant.authorizedBranchIds.length > 0) {
+      whereClause.id = { in: tenant.authorizedBranchIds };
+    }
+
+    const branches = await prisma.branch.findMany({
+      where: whereClause,
+      include: {
+        _count: { select: { users: true, devices: true, orders: true } },
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+    return res.json(branches);
+  } catch (error) {
+    console.error('[Prisma] Get branches error:', error);
+    return res.status(500).json({ error: 'Failed to retrieve branches' });
+  }
+});
+
+app.get('/api/branches/:id', authenticate, async (req, res) => {
+  try {
+    const tenant = await resolveTenantContext(req);
+    const branchId = req.params.id;
+    const role = (tenant.role || '').toUpperCase();
+    const isMultiBranch = role === 'OWNER' || role === 'PLATFORM_ADMIN' || role === 'EXECUTIVE_ADMIN';
+
+    const branch = await prisma.branch.findFirst({
+      where: { id: branchId, organizationId: tenant.organizationId },
+      include: {
+        _count: { select: { users: true, devices: true, orders: true } },
+        userAssignments: {
+          include: {
+            user: {
+              select: { id: true, name: true, username: true, role: true, active: true },
+            },
+          },
+        },
+      },
+    });
+
+    if (!branch) {
+      return res.status(404).json({ error: 'Branch not found' });
+    }
+
+    if (!isMultiBranch && tenant.authorizedBranchIds && !tenant.authorizedBranchIds.includes(branch.id)) {
+      await logAuditEvent({
+        organizationId: tenant.organizationId,
+        branchId: branch.id,
+        userId: tenant.userId,
+        action: AUDIT_ACTIONS.CROSS_BRANCH_ACCESS_DENIED,
+        entity: 'BRANCH',
+        entityId: branch.id,
+        metadata: {
+          attemptedBranchId: branch.id,
+          authorizedBranchIds: tenant.authorizedBranchIds,
+          userRole: role,
+        },
+        ipAddress: req.ip,
+      }).catch(() => {});
+
+      return res.status(403).json({
+        error: 'Forbidden: You are not authorized to view or manage this branch.',
+        code: 'CROSS_BRANCH_ACCESS_DENIED',
+      });
+    }
+
+    return res.json(branch);
+  } catch (error) {
+    console.error('[Prisma] Get branch by ID error:', error);
+    return res.status(500).json({ error: 'Failed to retrieve branch details' });
+  }
+});
+
+// User Branch Assignment Endpoints (Phase 22)
+app.post('/api/branches/:id/assign-user', authenticate, requireRole(['OWNER', 'PLATFORM_ADMIN']), async (req, res) => {
+  try {
+    const tenant = await resolveTenantContext(req);
+    const branchId = req.params.id;
+    const { userId } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({ error: 'userId is required' });
+    }
+
+    const branch = await prisma.branch.findFirst({
+      where: { id: branchId, organizationId: tenant.organizationId },
+    });
+    if (!branch) {
+      return res.status(404).json({ error: 'Branch not found in this organization' });
+    }
+
+    const targetUser = await prisma.user.findFirst({
+      where: { id: userId, organizationId: tenant.organizationId },
+    });
+    if (!targetUser) {
+      return res.status(404).json({ error: 'User not found in this organization' });
+    }
+
+    const assignment = await prisma.userBranchAssignment.upsert({
+      where: {
+        userId_branchId: {
+          userId,
+          branchId,
+        },
+      },
+      update: {},
+      create: {
+        organizationId: tenant.organizationId,
+        userId,
+        branchId,
+      },
+    });
+
+    return res.status(200).json({ success: true, assignment });
+  } catch (error: any) {
+    console.error('[Prisma] Assign user to branch error:', error);
+    return res.status(500).json({ error: 'Failed to assign user to branch' });
+  }
+});
+
+app.delete('/api/branches/:id/unassign-user/:userId', authenticate, requireRole(['OWNER', 'PLATFORM_ADMIN']), async (req, res) => {
+  try {
+    const tenant = await resolveTenantContext(req);
+    const branchId = req.params.id;
+    const userId = req.params.userId;
+
+    await prisma.userBranchAssignment.deleteMany({
+      where: {
+        organizationId: tenant.organizationId,
+        branchId,
+        userId,
+      },
+    });
+
+    return res.status(200).json({ success: true, message: 'User unassigned from branch' });
+  } catch (error: any) {
+    console.error('[Prisma] Unassign user error:', error);
+    return res.status(500).json({ error: 'Failed to unassign user from branch' });
+  }
+});
+
+app.get('/api/users/:id/branches', authenticate, async (req, res) => {
+  try {
+    const tenant = await resolveTenantContext(req);
+    const userId = req.params.id;
+
+    // Verify user belongs to organization
+    const targetUser = await prisma.user.findFirst({
+      where: { id: userId, organizationId: tenant.organizationId },
+    });
+    if (!targetUser) {
+      return res.status(404).json({ error: 'User not found in this organization' });
+    }
+
+    const assignments = await prisma.userBranchAssignment.findMany({
+      where: { organizationId: tenant.organizationId, userId },
+      include: {
+        branch: {
+          select: { id: true, name: true, slug: true, active: true },
+        },
+      },
+    });
+
+    return res.json(assignments);
+  } catch (error: any) {
+    console.error('[Prisma] Get user branches error:', error);
+    return res.status(500).json({ error: 'Failed to retrieve user branch assignments' });
+  }
+});
+
+app.post('/api/branches', authenticateManager, requireActiveSubscription, async (req, res) => {
+  try {
+    const tenant = await resolveTenantContext(req);
+    const { name, address, phone } = req.body;
+    if (!name || typeof name !== 'string' || !name.trim()) {
+      return res.status(400).json({ error: 'Branch name is required' });
+    }
+
+    const trimmedName = name.trim();
+    const branchSlug = trimmedName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '-' + Date.now().toString().slice(-4);
+
+    const created = await prisma.$transaction(async (tx) => {
+      await assertResourceLimit(tx, tenant.organizationId, 'branches');
+      const b = await tx.branch.create({
+        data: {
+          organizationId: tenant.organizationId,
+          name: trimmedName,
+          slug: branchSlug,
+          active: true,
+          settings: JSON.stringify({ address: address || '', phone: phone || '' }),
+        },
+      });
+
+      await tx.outlet.create({
+        data: {
+          organizationId: tenant.organizationId,
+          name: trimmedName,
+          address: address || '',
+          phone: phone || '',
+          active: true,
+        },
+      }).catch(() => {});
+
+      return b;
+    });
+
+    return res.status(201).json({ success: true, branch: created, data: created });
+  } catch (error: any) {
+    console.error('[Prisma] Create branch error:', error);
+    if (error?.message && (error.message.includes('LIMIT_EXCEEDED') || error.message.includes('SUBSCRIPTION_RESTRICTED'))) {
+      return res.status(403).json({ error: error.message });
+    }
+    return res.status(500).json({ error: error.message || 'Failed to create branch' });
+  }
+});
+
 // Menu Catalog Management
 app.post('/api/menu-items', authenticateManager, requireActiveSubscription, addMenuItem);
 app.patch('/api/menu-items/:id', authenticateManager, requireActiveSubscription, updateMenuItem);
@@ -580,7 +857,7 @@ app.post('/api/tables', authenticateManager, requireActiveSubscription, async (r
         active: true,
       },
     });
-    io.emit('tablesUpdated');
+    io.to(`org_${tenant.organizationId}`).emit('tablesUpdated');
     return res.status(201).json(table);
   } catch (error: any) {
     console.error('[Prisma] Add table error:', error);
@@ -602,7 +879,7 @@ app.delete('/api/tables/:id', authenticateManager, requireActiveSubscription, as
       where: { id: existingTable.id },
       data: { active: false },
     });
-    io.emit('tablesUpdated');
+    io.to(`org_${tenant.organizationId}`).emit('tablesUpdated');
     return res.json({ success: true });
   } catch (error: any) {
     console.error('[Prisma] Delete table error:', error);
@@ -644,7 +921,7 @@ app.post('/api/categories', authenticateManager, requireActiveSubscription, asyn
 
     const io = (req.app as any).get('io');
     if (io) {
-      io.emit('categoriesUpdated');
+      io.to(`org_${tenant.organizationId}`).emit('categoriesUpdated');
     }
     return res.status(201).json({ success: true, data: category });
   } catch (error: any) {
@@ -676,7 +953,7 @@ app.patch('/api/categories/:id', authenticateManager, requireActiveSubscription,
       where: { id: existingCat.id },
       data: { title: categoryTitle, slug },
     });
-    io.emit('categoriesUpdated');
+    io.to(`org_${tenant.organizationId}`).emit('categoriesUpdated');
     return res.json({ success: true, data: updated });
   } catch (error: any) {
     console.error('[Prisma] Update category error:', error);
@@ -698,7 +975,7 @@ app.delete('/api/categories/:id', authenticateManager, requireActiveSubscription
       where: { id: existingCat.id },
       data: { active: false },
     });
-    io.emit('categoriesUpdated');
+    io.to(`org_${tenant.organizationId}`).emit('categoriesUpdated');
     return res.json({ success: true, message: 'Category deactivated.' });
   } catch (error: any) {
     console.error('[Prisma] Delete category error:', error);
@@ -998,7 +1275,7 @@ app.post('/api/customers/block', authenticateManager, requireActiveSubscription,
 
     const io = req.app.get('io');
     if (io) {
-      io.emit('customer:blocked', { phone: cleanPhone, customer });
+      io.to(`org_${tenant.organizationId}`).emit('customer:blocked', { phone: cleanPhone, customer });
     }
 
     return res.json({ success: true, customer });
@@ -1070,7 +1347,7 @@ app.post('/api/customers/unblock', authenticateManager, requireActiveSubscriptio
 
     const io = req.app.get('io');
     if (io) {
-      io.emit('customer:unblocked', { phone: cleanPhone, customer });
+      io.to(`org_${tenant.organizationId}`).emit('customer:unblocked', { phone: cleanPhone, customer });
     }
 
     return res.json({ success: true, customer });
@@ -1128,7 +1405,7 @@ app.get('/api/orders/:id', authenticate, async (req, res) => {
 });
 
 // Create new order (Financial-grade server-authoritative calculations)
-app.post('/api/orders', validateRequest(OrderPunchSchema), authenticate, requireActiveSubscription, async (req: Request, res: Response) => {
+app.post('/api/orders', authenticate, validateRequest(OrderPunchSchema), requireActiveSubscription, async (req: Request, res: Response) => {
   try {
     const tenant = await resolveTenantContext(req);
     const {
@@ -1157,13 +1434,13 @@ app.post('/api/orders', validateRequest(OrderPunchSchema), authenticate, require
       serverName,
     } = req.body;
 
-    const idempotencyKey = (req.headers['idempotency-key'] as string) || clientOrderNum;
-
+    const idempotencyKey = (req.headers['idempotency-key'] as string);
+    
     if (idempotencyKey) {
       const existingOrder = await prisma.order.findFirst({
         where: {
           organizationId: tenant.organizationId,
-          orderNumber: String(idempotencyKey),
+          idempotencyKey: String(idempotencyKey),
         },
         include: { customer: true, items: true, assignedRider: true, auditLogs: true },
       });
@@ -1197,7 +1474,7 @@ app.post('/api/orders', validateRequest(OrderPunchSchema), authenticate, require
       }
     }
 
-    const orderNumber = idempotencyKey ? String(idempotencyKey) : `ORD-${Math.floor(1000 + Math.random() * 9000)}`;
+    const orderNumber = clientOrderNum ? String(clientOrderNum) : `ORD-${Math.floor(100000 + Math.random() * 900000)}`;
 
     if (!items || !Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ error: 'Order must contain at least one item.' });
@@ -1283,6 +1560,8 @@ app.post('/api/orders', validateRequest(OrderPunchSchema), authenticate, require
           organizationId: tenant.organizationId,
           branchId: tenant.branchId || null,
           orderNumber,
+          idempotencyKey: idempotencyKey || null,
+          shiftId: req.body.shiftId || null,
           orderType: orderType || type || 'takeaway',
           status: 'PUNCHED',
           paymentMethod: (paymentMethod || 'cash').toUpperCase(),
@@ -1329,13 +1608,17 @@ app.post('/api/orders', validateRequest(OrderPunchSchema), authenticate, require
         },
       });
 
+      if (order.status === 'COMPLETED') {
+        await consumeIngredientsForOrder(tx, order.id, tenant.organizationId);
+      }
+
       return order;
     });
 
     const transformedOrder = transformOrder(result);
     const io = req.app.get('io');
     if (io) {
-      io.emit('orderCreated', transformedOrder);
+      io.to(`org_${tenant.organizationId}`).emit('orderCreated', transformedOrder);
     }
     return res.json(transformedOrder);
   } catch (error: any) {
@@ -1350,7 +1633,7 @@ app.post('/api/orders', validateRequest(OrderPunchSchema), authenticate, require
         const idempotencyKey = (req.headers['idempotency-key'] as string) || clientOrderNum;
         if (idempotencyKey) {
           const existingOrder = await prisma.order.findFirst({
-            where: { organizationId: tenant.organizationId, orderNumber: String(idempotencyKey) },
+            where: { organizationId: tenant.organizationId, idempotencyKey: String(idempotencyKey) },
             include: { customer: true, items: true, assignedRider: true, auditLogs: true },
           });
           if (existingOrder) {
@@ -1417,21 +1700,29 @@ app.patch('/api/orders/:id/status', authenticate, requireActiveSubscription, asy
       }
     }
 
-    const updated = await prisma.order.update({
-      where: { id: existing.id },
-      data: dataToUpdate,
-      include: {
-        customer: true,
-        items: true,
-        assignedRider: true,
-        auditLogs: true,
-      },
+    const updated = await prisma.$transaction(async (tx) => {
+      const u = await tx.order.update({
+        where: { id: existing.id },
+        data: dataToUpdate,
+        include: {
+          customer: true,
+          items: true,
+          assignedRider: true,
+          auditLogs: true,
+        },
+      });
+
+      if (u.status === 'COMPLETED') {
+        await consumeIngredientsForOrder(tx, u.id, tenant.organizationId);
+      }
+
+      return u;
     });
     
     const updatedOrder = transformOrder(updated);
     const io = req.app.get('io');
     if (io) {
-      io.emit('orderUpdated', updatedOrder);
+      io.to(`org_${tenant.organizationId}`).emit('orderUpdated', updatedOrder);
     }
     return res.json({ success: true, order: updatedOrder });
   } catch (err) {
@@ -1477,21 +1768,26 @@ app.post('/api/orders/:id/pay', authenticate, requireActiveSubscription, async (
       return res.status(400).json({ error: 'Payment amount must be greater than zero.' });
     }
 
-    const updated = await prisma.order.update({
-      where: { id: existing.id },
-      data: {
-        status: 'COMPLETED',
-        paymentStatus: 'PAID',
-        paymentMethod: (method || paymentMethod || existing.paymentMethod || 'CASH').toUpperCase(),
-        splitPayments: splitPayments ? (typeof splitPayments === 'string' ? splitPayments : JSON.stringify(splitPayments)) : existing.splitPayments,
-      },
-      include: { customer: true, items: true, assignedRider: true, auditLogs: true },
+    const updated = await prisma.$transaction(async (tx) => {
+      const u = await tx.order.update({
+        where: { id: existing.id },
+        data: {
+          status: 'COMPLETED',
+          paymentStatus: 'PAID',
+          paymentMethod: (method || paymentMethod || existing.paymentMethod || 'CASH').toUpperCase(),
+          splitPayments: splitPayments ? (typeof splitPayments === 'string' ? splitPayments : JSON.stringify(splitPayments)) : existing.splitPayments,
+        },
+        include: { customer: true, items: true, assignedRider: true, auditLogs: true },
+      });
+
+      await consumeIngredientsForOrder(tx, u.id, tenant.organizationId);
+      return u;
     });
 
     const updatedOrder = transformOrder(updated);
     const io = req.app.get('io');
     if (io) {
-      io.emit('orderUpdated', updatedOrder);
+      io.to(`org_${tenant.organizationId}`).emit('orderUpdated', updatedOrder);
     }
 
     return res.json({ success: true, order: updatedOrder });
@@ -1596,7 +1892,7 @@ app.post('/api/orders/:id/refund', authenticateManager, requireActiveSubscriptio
     const updatedOrder = transformOrder(updated);
     const io = req.app.get('io');
     if (io) {
-      io.emit('orderUpdated', updatedOrder);
+      io.to(`org_${tenant.organizationId}`).emit('orderUpdated', updatedOrder);
     }
 
     return res.json({ success: true, order: updatedOrder });
@@ -1677,7 +1973,7 @@ app.post('/api/orders/:id/cancel', authenticateManager, requireActiveSubscriptio
     const updatedOrder = transformOrder(updated);
     const io = req.app.get('io');
     if (io) {
-      io.emit('orderUpdated', updatedOrder);
+      io.to(`org_${tenant.organizationId}`).emit('orderUpdated', updatedOrder);
     }
     return res.json({ success: true, order: updatedOrder });
   } catch (err) {
@@ -1806,12 +2102,101 @@ app.post('/api/orders/:id/modify', authenticateManager, requireActiveSubscriptio
     const updatedOrder = transformOrder(updated);
     const io = req.app.get('io');
     if (io) {
-      io.emit('orderUpdated', updatedOrder);
+      io.to(`org_${tenant.organizationId}`).emit('orderUpdated', updatedOrder);
     }
     return res.json({ success: true, order: updatedOrder });
   } catch (err) {
     console.error('Modify order error:', err);
     return res.status(500).json({ error: 'Failed to modify order' });
+  }
+});
+
+// Manager Void Order with Audit Log (Phase 24)
+app.post('/api/orders/:id/void', authenticateManager, requireActiveSubscription, async (req: Request, res: Response) => {
+  try {
+    const tenant = await resolveTenantContext(req);
+    const { id } = req.params;
+    const { reason, managerId, managerName } = req.body;
+
+    const authUser = (req as any).user;
+    const actualManagerId = authUser?.id || managerId;
+    const actualManagerName = authUser?.name || managerName || 'Manager';
+
+    const existing = await prisma.order.findFirst({
+      where: {
+        organizationId: tenant.organizationId,
+        OR: [{ id }, { orderNumber: id }],
+      },
+      include: { items: true, customer: true },
+    });
+
+    if (!existing) {
+      return sendTenantNotFound(res, 'Order', id);
+    }
+
+    if (existing.status === 'VOIDED' || existing.status === 'voided') {
+      return res.status(400).json({ error: 'Order is already voided.' });
+    }
+
+    let resolvedUserId: string | null = null;
+    if (actualManagerId) {
+      const matchedUser = await prisma.user.findFirst({
+        where: {
+          organizationId: tenant.organizationId,
+          OR: [{ id: actualManagerId }, { username: actualManagerId }, { name: actualManagerName }],
+        },
+      });
+      if (matchedUser) resolvedUserId = matchedUser.id;
+    }
+
+    const cleanReason = reason && String(reason).trim() ? String(reason).trim() : 'Voided by manager';
+
+    const updated = await prisma.$transaction(async (tx) => {
+      if (tenant.organizationId) {
+        await tx.auditLog.create({
+          data: {
+            organizationId: tenant.organizationId,
+            branchId: tenant.branchId || null,
+            userId: resolvedUserId,
+            action: AUDIT_ACTIONS.ORDER_VOIDED || 'ORDER_VOIDED',
+            entity: 'ORDER',
+            entityId: existing.id,
+            metadata: JSON.stringify({ reason: cleanReason, previousStatus: existing.status, total: existing.total }),
+          },
+        });
+      }
+
+      return await tx.order.update({
+        where: { id: existing.id },
+        data: {
+          status: 'voided',
+          paymentStatus: 'voided',
+          modifiedById: resolvedUserId,
+          auditLogs: {
+            create: {
+              action: 'VOIDED',
+              reason: cleanReason,
+              performedById: resolvedUserId,
+              managerName: actualManagerName,
+              previousData: JSON.stringify(existing),
+              newData: JSON.stringify({ status: 'voided', paymentStatus: 'voided', voidReason: cleanReason }),
+            },
+          },
+        },
+        include: { items: true, auditLogs: true, customer: true, assignedRider: true },
+      });
+    });
+
+    const updatedOrder = transformOrder(updated);
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`org_${tenant.organizationId}`).emit('orderUpdated', updatedOrder);
+    }
+
+    return res.json({ success: true, order: updatedOrder });
+  } catch (err) {
+    console.error('Void order error:', err);
+    return res.status(500).json({ error: 'Failed to void order' });
   }
 });
 
@@ -1993,12 +2378,12 @@ app.post('/api/shifts/close', authenticate, requireActiveSubscription, validateR
     const shiftOrders = await prisma.order.findMany({
       where: {
         organizationId: tenant.organizationId,
-        createdAt: { gte: shift.openedAt, lte: closeTime },
+        shiftId: shift.id,
         status: { notIn: ['CANCELLED', 'cancelled'] },
       },
       select: { paymentMethod: true, paymentStatus: true, total: true, splitPayments: true },
     });
-
+            
     let systemCashSales = 0, systemCardSales = 0, systemTotalSales = 0;
     for (const ord of shiftOrders) {
       if (ord.paymentStatus === 'PAID' || ord.paymentStatus === 'paid') {
@@ -2029,7 +2414,7 @@ app.post('/api/shifts/close', authenticate, requireActiveSubscription, validateR
       }
     }
 
-    const startingFloat = Number(shift.startingFloat) || 0;
+    const startingFloat = Number(shift.startingPettyCash !== null && shift.startingPettyCash !== undefined ? shift.startingPettyCash : shift.startingFloat) || 0;
     const expectedCashInDrawer = startingFloat + systemCashSales;
     const countedCash = Number(actualCash) || 0;
     const cashVariance = countedCash - expectedCashInDrawer;
@@ -2068,6 +2453,57 @@ app.post('/api/shifts/close', authenticate, requireActiveSubscription, validateR
   } catch (err) {
     console.error('Close shift error:', err);
     return res.status(500).json({ error: 'Server error during shift reconciliation' });
+  }
+});
+
+// Manager Reopen Shift with Audit Log (Phase 24)
+app.post('/api/shifts/:id/reopen', authenticateManager, requireActiveSubscription, async (req: Request, res: Response) => {
+  try {
+    const tenant = await resolveTenantContext(req);
+    const { id } = req.params;
+    const { reason, managerName } = req.body;
+
+    const shift = await prisma.registerShift.findFirst({
+      where: {
+        organizationId: tenant.organizationId,
+        OR: [{ id }, { shiftNumber: id }],
+      },
+    });
+
+    if (!shift) {
+      return sendTenantNotFound(res, 'RegisterShift', id);
+    }
+
+    if (shift.status === 'open') {
+      return res.status(400).json({ error: 'Shift is already open.' });
+    }
+
+    const authUser = (req as any).user;
+    const cleanReason = reason && String(reason).trim() ? String(reason).trim() : 'Reopened by manager';
+
+    const updatedShift = await prisma.registerShift.update({
+      where: { id: shift.id },
+      data: {
+        status: 'open',
+        notes: shift.notes ? `${shift.notes} | [REOPENED]: ${cleanReason}` : `[REOPENED]: ${cleanReason}`,
+      },
+    });
+
+    await logAuditEvent({
+      organizationId: tenant.organizationId,
+      branchId: shift.branchId,
+      userId: authUser?.id,
+      action: AUDIT_ACTIONS.SHIFT_REOPENED || 'SHIFT_REOPENED',
+      entity: 'SHIFT',
+      entityId: shift.id,
+      metadata: { reason: cleanReason, shiftNumber: shift.shiftNumber, authorizedBy: authUser?.name || managerName || 'Manager' },
+      ipAddress: req.ip,
+    }).catch(() => {});
+
+    return res.json({ success: true, message: 'Shift successfully reopened', shift: updatedShift });
+  } catch (err) {
+    console.error('Reopen shift error:', err);
+    return res.status(500).json({ error: 'Failed to reopen shift' });
   }
 });
 
@@ -2326,9 +2762,11 @@ async function startServer() {
   })();
 }
 
-startServer().catch((err) => {
-  console.error('Failed to start server:', err);
-});
+if (process.env.NODE_ENV !== 'test') {
+  startServer().catch((err) => {
+    console.error('Failed to start server:', err);
+  });
+}
 
 export default app;
 

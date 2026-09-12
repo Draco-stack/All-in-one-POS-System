@@ -15,6 +15,7 @@ import { OnboardingWizard } from './components/auth/OnboardingWizard';
 import { POSDashboard } from './components/pos/POSDashboard';
 import { PlatformAdminDashboard } from './components/platform/PlatformAdminDashboard';
 import { CustomerPortalDashboard } from './components/portal/CustomerPortalDashboard';
+import { WebsiteLoginPage } from './components/auth/WebsiteLoginPage';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
 export const App: React.FC = () => {
@@ -51,10 +52,12 @@ export const App: React.FC = () => {
             <Route path="/signup" element={<OnboardingWizard />} />
             <Route path="/onboarding" element={<OnboardingWizard />} />
 
+            {/* Dedicated Website Management Dashboard Login */}
+            <Route path="/login" element={<WebsiteLoginPage />} />
+
             {/* POS Application & Terminal Routes */}
             <Route path="/app/*" element={<POSDashboard />} />
             <Route path="/pos/*" element={<POSDashboard />} />
-            <Route path="/login" element={<POSDashboard />} />
             <Route path="/demo" element={<POSDashboard />} />
             
             {/* Fallback Route */}

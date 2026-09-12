@@ -39,11 +39,18 @@ export const MenuManagerView: React.FC = () => {
   const [prepTime, setPrepTime] = useState(12);
   const [dietary, setDietary] = useState<string[]>(['non-veg']);
 
-  const filteredItems = menuItems.filter((i) => {
-    const matchCat = selectedCat === 'all' || i.category === selectedCat;
+  const safeMenuItems = Array.isArray(menuItems) ? menuItems : [];
+  const safeCategories = Array.isArray(categories) ? categories : [];
+
+  const filteredItems = safeMenuItems.filter((i) => {
+    if (!i) return false;
+    const itemCat = i.category || '';
+    const matchCat = selectedCat === 'all' || itemCat === selectedCat;
+    const name = i.name || '';
+    const desc = i.description || '';
     const matchSearch =
-      i.name.toLowerCase().includes(search.toLowerCase()) ||
-      i.description.toLowerCase().includes(search.toLowerCase());
+      name.toLowerCase().includes(search.toLowerCase()) ||
+      desc.toLowerCase().includes(search.toLowerCase());
     return matchCat && matchSearch;
   });
 
@@ -151,10 +158,10 @@ export const MenuManagerView: React.FC = () => {
           }`}
         >
           <Layers className="w-3.5 h-3.5" />
-          <span>All Dishes ({menuItems.length})</span>
+          <span>All Dishes ({safeMenuItems.length})</span>
         </button>
-        {categories.map((c) => {
-          const count = menuItems.filter((m) => m.category === c.id || m.category === c.name).length;
+        {safeCategories.map((c) => {
+          const count = safeMenuItems.filter((m) => m && (m.category === c.id || m.category === c.name)).length;
           return (
             <button
               key={c.id}

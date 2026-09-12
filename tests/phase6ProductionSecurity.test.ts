@@ -187,10 +187,19 @@ async function runProductionSecurityTests() {
       });
     }
 
+    const orderToken = signTenantToken({
+      userId: user.id,
+      username: user.username,
+      role: user.role,
+      organizationId: 'org_test_p6',
+      branchId: user.branchId || 'branch_test_p6',
+    });
+
     const resOversizedOrder = await fetch(`${baseUrl}/api/orders`, {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${orderToken}`,
         'x-organization-slug': 'org-test-p6',
       },
       body: JSON.stringify({

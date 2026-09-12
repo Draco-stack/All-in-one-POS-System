@@ -213,9 +213,19 @@ async function runTests() {
     // List Organizations
     const orgsRes = await request('/api/platform-admin/organizations', { token: tokenPlatformAdmin });
     assert(orgsRes.status === 200, 'GET /api/platform-admin/organizations returned 200 OK');
-    assert(Array.isArray(orgsRes.data.data), 'Returned organizations list array');
-    const hasAlpha = orgsRes.data.data.some((o: any) => o.id === orgAlpha.id);
-    const hasBeta = orgsRes.data.data.some((o: any) => o.id === orgBeta.id);
+    const pList = Array.isArray(orgsRes.data.data) ? orgsRes.data.data : (orgsRes.data.data.organizations || []);
+    assert(Array.isArray(pList), 'Returned organizations list array');
+    let hasAlpha = pList.some((o: any) => o.id === orgAlpha.id);
+    let hasBeta = pList.some((o: any) => o.id === orgBeta.id);
+    let page = 1;
+    while (!(hasAlpha && hasBeta) && page <= 5) {
+      const pRes = await request(`/api/platform-admin/organizations?page=${page}&limit=50`, { token: tokenPlatformAdmin });
+      const pList = Array.isArray(pRes.data.data) ? pRes.data.data : (pRes.data.data.organizations || []);
+      if (pList.some((o: any) => o.id === orgAlpha.id)) hasAlpha = true;
+      if (pList.some((o: any) => o.id === orgBeta.id)) hasBeta = true;
+      if (pList.length < 50) break;
+      page++;
+    }
     assert(hasAlpha && hasBeta, 'Organization list accurately contains Alpha and Beta tenants');
 
     // Get Organization Drilldown

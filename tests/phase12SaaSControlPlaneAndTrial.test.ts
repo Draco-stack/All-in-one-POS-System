@@ -7,6 +7,7 @@ import prisma from '../src/server/prisma';
 import app from '../server';
 import { signTenantToken } from '../src/server/auth/jwt';
 import { runSubscriptionReminderScheduler } from '../src/server/billing/reminderService';
+import { getVerificationCodeForTest } from '../src/server/auth/emailVerificationService';
 
 async function runPhase12Tests() {
   console.log('======================================================================');
@@ -47,9 +48,24 @@ async function runPhase12Tests() {
     body: JSON.stringify(regPayload1),
   });
 
-  const regData1 = await regRes1.json();
-  if ((regRes1.status !== 200 && regRes1.status !== 201) || !regData1.token) {
-    throw new Error(`Failed to register initial organization: ${JSON.stringify(regData1)}`);
+  const regInitData1 = await regRes1.json();
+  if (!regInitData1.requiresVerification && !regInitData1.token) {
+    throw new Error(`Failed to initiate registration: ${JSON.stringify(regInitData1)}`);
+  }
+
+  const code = getVerificationCodeForTest(testEmail1);
+  const verifyRes1 = await fetch(`${baseUrl}/api/auth/verify-email`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      email: testEmail1,
+      code,
+    }),
+  });
+
+  const regData1 = await verifyRes1.json();
+  if ((verifyRes1.status !== 200 && verifyRes1.status !== 201) || !regData1.token) {
+    throw new Error(`Failed to verify and register initial organization: ${JSON.stringify(regData1)}`);
   }
   console.log('  ✅ PASS: Successfully registered new tenant organization');
 

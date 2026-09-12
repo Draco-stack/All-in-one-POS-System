@@ -11,12 +11,14 @@ export const Navbar: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
   const { isLoggedIn, currentUser } = useRestaurant();
+  const [hasPortalSession, setHasPortalSession] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
     window.addEventListener('scroll', handleScroll);
+    setHasPortalSession(!!localStorage.getItem('tillora_token'));
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [location.pathname]);
 
   const navLinks = [
     { name: 'Features', href: '/features' },
@@ -58,6 +60,16 @@ export const Navbar: React.FC = () => {
         </div>
 
         <div className="hidden md:flex items-center gap-4">
+          {hasPortalSession && (
+            <Link
+              to="/portal"
+              className="text-xs font-bold text-amber-400 hover:text-amber-300 transition-colors px-3 py-2 flex items-center gap-1.5"
+            >
+              <LayoutDashboard className="w-3.5 h-3.5" />
+              <span>Dashboard</span>
+            </Link>
+          )}
+
           {isLoggedIn ? (
             <Link
               to="/app"
@@ -68,13 +80,15 @@ export const Navbar: React.FC = () => {
             </Link>
           ) : (
             <>
-              <Link 
-                to="/login" 
-                onClick={() => analytics.track('nav_signin')}
-                className="text-xs font-bold text-stone-400 hover:text-stone-100 transition-colors px-3 py-2"
-              >
-                Sign In
-              </Link>
+              {!hasPortalSession && (
+                <Link 
+                  to="/login" 
+                  onClick={() => analytics.track('nav_signin')}
+                  className="text-xs font-bold text-stone-400 hover:text-stone-100 transition-colors px-3 py-2"
+                >
+                  Sign In
+                </Link>
+              )}
               <Link 
                 to="/get-started" 
                 onClick={() => analytics.trackConversion('signup')}
@@ -122,6 +136,17 @@ export const Navbar: React.FC = () => {
             <hr className="border-white/5 my-2" />
             
             <div className="flex flex-col gap-3">
+              {hasPortalSession && (
+                <Link
+                  to="/portal"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="bg-stone-900 border border-stone-800 text-amber-400 text-center py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2"
+                >
+                  <LayoutDashboard className="w-4 h-4" />
+                  <span>Open Management Dashboard</span>
+                </Link>
+              )}
+
               {isLoggedIn ? (
                 <Link
                   to="/app"
@@ -133,16 +158,18 @@ export const Navbar: React.FC = () => {
                 </Link>
               ) : (
                 <>
-                  <Link 
-                    to="/login" 
-                    onClick={() => {
-                      analytics.track('nav_signin_mobile');
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className="text-center text-sm font-bold text-stone-400 py-2"
-                  >
-                    Sign In to Terminal
-                  </Link>
+                  {!hasPortalSession && (
+                    <Link 
+                      to="/login" 
+                      onClick={() => {
+                        analytics.track('nav_signin_mobile');
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className="text-center text-sm font-bold text-stone-400 py-2"
+                    >
+                      Sign In to Dashboard
+                    </Link>
+                  )}
                   <Link 
                     to="/get-started" 
                     onClick={() => {

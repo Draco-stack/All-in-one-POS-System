@@ -1,3 +1,4 @@
+import { v4 as uuidv4 } from 'uuid';
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { io } from 'socket.io-client';
 import { posDB } from '../utils/indexedDB';
@@ -27,6 +28,7 @@ import {
   INITIAL_STOCK,
   HistoricalShiftRecord,
 } from '../data/mockData';
+import { getEffectivePermissions, hasPermission as checkPermission, RESTAURANT_PERMISSIONS } from '../server/auth/permissions';
 
 interface RestaurantContextType {
   outlets: string[];
@@ -178,6 +180,8 @@ interface RestaurantContextType {
   showToast: (msg: string) => void;
   syncFromServer: () => Promise<void>;
   isRestricted: (capability: string) => boolean;
+  effectivePermissions: string[];
+  hasPermission: (permission: string) => boolean;
 }
 
 const DEFAULT_EMPTY_CART: PosCartState = {
@@ -440,9 +444,34 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   const logoutUser = useCallback(() => {
     setIsLoggedIn(false);
+    
+    // Clear tenant identity
     saveToStorage('pos_is_logged_in_v5', false);
     saveToStorage('pos_jwt_token_v5', null);
-    showToast('🔒 Logged out. Return to login screen.');
+    saveToStorage('pos_current_user_v5', null);
+    
+    // Clear all tenant-specific cached state to prevent cross-tenant leakage
+    saveToStorage('pos_orders_cache', []);
+    saveToStorage('pos_shifts_cache', []);
+    saveToStorage('pos_customers_cache', []);
+    saveToStorage('pos_categories_cache', []);
+    saveToStorage('pos_menu_items_cache', []);
+    saveToStorage('pos_sales_adjustments_cache', []);
+    saveToStorage('pos_current_shift', null);
+    saveToStorage('pos_parked_orders_cache', []);
+    
+    // Reset state in memory
+    setCurrentUser(null);
+    setOrders([]);
+    setHistoricalShifts([]);
+    setCustomers([]);
+    setCategories([]);
+    setMenuItems([]);
+    setSalesAdjustments([]);
+    setCurrentShift(null);
+    setParkedOrders([]);
+    
+    showToast('🔒 Logged out. Cache cleared securely.');
   }, [showToast]);
 
   const loginUser = useCallback(
@@ -1439,7 +1468,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
     try {
       const token = loadFromStorage<string | null>('pos_jwt_token_v5', null) || localStorage.getItem('pos_jwt_token_v5');
-      const activeOrgId = currentUser?.organizationId || 'org_default';
+      const activeOrgId = currentUser?.organizationId || '';
       const activeBranchId = currentUser?.branchId;
 
       const pending = await posDB.getQueuedOrders(activeOrgId, activeBranchId);
@@ -2284,7 +2313,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
                 blockedBy: data.customer.blockedBy,
               },
             }));
-            posDB.cacheCustomer(currentUser?.organizationId || 'org_default', data.customer).catch(() => {});
+            posDB.cacheCustomer(currentUser?.organizationId || '', data.customer).catch(() => {});
             return { found: true, customer: data.customer, pastOrders: data.pastOrders || [] };
           }
         }
@@ -2294,7 +2323,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
       // Check IndexedDB cache
       try {
-        const cachedInDB = await posDB.getCachedCustomer(currentUser?.organizationId || 'org_default', clean);
+        const cachedInDB = await posDB.getCachedCustomer(currentUser?.organizationId || '', clean);
         if (cachedInDB) {
           setPosCart((prev) => ({
             ...prev,
@@ -2432,7 +2461,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       });
 
       if (updatedCustomer) {
-        posDB.cacheCustomer(currentUser?.organizationId || 'org_default', updatedCustomer).catch(() => {});
+        posDB.cacheCustomer(currentUser?.organizationId || '', updatedCustomer).catch(() => {});
       }
 
       try {
@@ -2456,7 +2485,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           if (data.customer) {
             updatedCustomer = data.customer;
             setCustomers((prev) => prev.map((c) => (c.id === data.customer.id || matchPhone(c.phone, phone) ? data.customer : c)));
-            posDB.cacheCustomer(currentUser?.organizationId || 'org_default', data.customer).catch(() => {});
+            posDB.cacheCustomer(currentUser?.organizationId || '', data.customer).catch(() => {});
           }
         }
       } catch (e) {
@@ -2520,7 +2549,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       });
 
       if (updatedCustomer) {
-        posDB.cacheCustomer(currentUser?.organizationId || 'org_default', updatedCustomer).catch(() => {});
+        posDB.cacheCustomer(currentUser?.organizationId || '', updatedCustomer).catch(() => {});
       }
 
       try {
@@ -2546,7 +2575,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
               }
               return [data.customer, ...prev];
             });
-            posDB.cacheCustomer(currentUser?.organizationId || 'org_default', data.customer).catch(() => {});
+            posDB.cacheCustomer(currentUser?.organizationId || '', data.customer).catch(() => {});
           }
         }
       } catch (e) {
@@ -2635,9 +2664,9 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     });
 
     try {
-      await posDB.cacheCustomer(currentUser?.organizationId || 'org_default', resultCustomer);
+      await posDB.cacheCustomer(currentUser?.organizationId || '', resultCustomer);
       if (cleanPhone) {
-        await posDB.cacheCustomer(currentUser?.organizationId || 'org_default', { ...resultCustomer, phone: cleanPhone });
+        await posDB.cacheCustomer(currentUser?.organizationId || '', { ...resultCustomer, phone: cleanPhone });
       }
     } catch (err) {}
 
@@ -2702,8 +2731,9 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         throw new Error(`Blocked customer cannot place an order. Reason: ${reason}`);
       }
 
-      const orderSeq = 100 + orders.length + 1;
-      const orderNumber = `ORD-${orderSeq}`;
+      const idempotencyKey = uuidv4();
+    const orderSeq = 100 + orders.length + 1;
+    const orderNumber = `ORD-${orderSeq}`;
       const effectiveBranch = outletName || currentUser?.outlet || 'Gulberg Branch';
       const effectiveDriver = (posCart.orderType === 'delivery' || posCart.orderType === 'takeaway')
         ? (posCart.deliveryDriver || (posCart.orderType === 'delivery' ? 'Unassigned Rider' : 'Self Pickup'))
@@ -2787,8 +2817,9 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           headers: {
             'Content-Type': 'application/json',
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            'idempotency-key': idempotencyKey
           },
-          body: JSON.stringify(newOrder),
+          body: JSON.stringify({...newOrder, shiftId: currentShift?.id}),
         });
         if (response.ok) {
           const serverOrder = await response.json();
@@ -3275,6 +3306,16 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     showToast('Inventory stock updated');
   };
 
+  const effectivePermissions = useMemo(() => {
+    if (!currentUser) return [];
+    return getEffectivePermissions(currentUser.role, currentUser.restrictions);
+  }, [currentUser]);
+
+  const hasPermissionUser = useCallback((permission: string): boolean => {
+    if (!currentUser) return false;
+    return checkPermission(effectivePermissions, permission);
+  }, [currentUser, effectivePermissions]);
+
   const isRestricted = useCallback((capability: string): boolean => {
     try {
       if (!currentUser || !currentUser.restrictions) return false;
@@ -3297,6 +3338,8 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         loginUser,
         logoutUser,
         isRestricted,
+        effectivePermissions,
+        hasPermission: hasPermissionUser,
         loginTheme,
         setLoginTheme,
         outlets,
@@ -3431,6 +3474,8 @@ export const useRestaurant = (): RestaurantContextType => {
       loginUser: () => ({ success: true }),
       logoutUser: () => {},
       isRestricted: () => false,
+      effectivePermissions: [],
+      hasPermission: () => true,
       loginTheme: 'dark',
       setLoginTheme: () => {},
       outlets: [],

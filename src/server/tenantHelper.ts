@@ -21,6 +21,8 @@ export async function resolveTenantContext(req: Request): Promise<{
   branchId: string | null;
   userId?: string | null;
   role?: string | null;
+  authorizedBranchIds?: string[];
+  mustChangePassword?: boolean;
 }> {
   // 1. Check req.tenant if already authenticated by middleware
   if (req.tenant && req.tenant.organizationId) {
@@ -29,6 +31,8 @@ export async function resolveTenantContext(req: Request): Promise<{
       branchId: req.tenant.branchId || null,
       userId: req.tenant.userId || null,
       role: req.tenant.role ? String(req.tenant.role) : null,
+      authorizedBranchIds: req.tenant.authorizedBranchIds,
+      mustChangePassword: req.tenant.mustChangePassword,
     };
   }
 
@@ -43,6 +47,7 @@ export async function resolveTenantContext(req: Request): Promise<{
         branchId: payload.branchId || null,
         userId: payload.userId || null,
         role: payload.role || null,
+        mustChangePassword: payload.mustChangePassword,
       };
     }
   }

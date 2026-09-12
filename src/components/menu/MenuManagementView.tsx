@@ -104,9 +104,13 @@ export const MenuManagementView: React.FC = () => {
     setIsAddModalOpen(false);
   };
 
-  const filteredMenuItems = menuItems.filter((i) => {
+  const safeMenuItems = Array.isArray(menuItems) ? menuItems : [];
+  const filteredMenuItems = safeMenuItems.filter((i) => {
+    if (!i) return false;
     const q = search.toLowerCase();
-    return i.name.toLowerCase().includes(q) || i.category.toLowerCase().includes(q);
+    const name = i.name || '';
+    const cat = i.category || '';
+    return name.toLowerCase().includes(q) || cat.toLowerCase().includes(q);
   });
 
   return (
@@ -133,7 +137,7 @@ export const MenuManagementView: React.FC = () => {
                   : 'text-slate-500 dark:text-stone-400 hover:text-stone-200'
               }`}
             >
-              Menu Items ({menuItems.length})
+              Menu Items ({safeMenuItems.length})
             </button>
             <button
               onClick={() => setActiveTab('stock')}

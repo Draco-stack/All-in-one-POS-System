@@ -394,6 +394,7 @@ async function runPhase5Tests() {
       headers: headersA_Cashier,
       body: {
         orderNumber: `P5-SHIFT-SALES-${Date.now()}`,
+        shiftId: reconShiftId,
         items: [{ menuItemId: menuItemA1.id, name: 'Burger', price: 12.50, quantity: 2 }],
       },
     });

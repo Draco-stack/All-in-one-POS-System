@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import prisma from '../prisma';
 import { signTenantToken, verifyTenantToken } from '../auth/jwt';
-import { createSession, revokeSession, validateSession } from '../auth/sessionService';
+import { createSession, revokeSession, revokeAllUserSessions, validateSession } from '../auth/sessionService';
 import { logAuditEvent, AUDIT_ACTIONS } from '../auth/auditService';
 import { DEFAULT_ORG_ID, DEFAULT_ORG_SLUG } from '../seed';
 
@@ -269,9 +269,23 @@ export async function loginHandler(req: Request, res: Response) {
       sessionId: session?.id,
       role: matchedUser.role,
       name: matchedUser.name,
+      mustChangePassword: matchedUser.mustChangePassword,
     });
 
-    // 9. Record Successful Login Audit Log
+    // 9. Record Successful Login Audit Log (and FIRST_LOGIN if mustChangePassword)
+    if (matchedUser.mustChangePassword) {
+      logAuditEvent({
+        organizationId: organization.id,
+        branchId: branch?.id || null,
+        userId: matchedUser.id,
+        action: AUDIT_ACTIONS.FIRST_LOGIN,
+        entity: 'USER',
+        entityId: matchedUser.id,
+        metadata: { username: matchedUser.username, role: matchedUser.role },
+        ipAddress: req.ip,
+      }).catch(() => {});
+    }
+
     logAuditEvent({
       organizationId: organization.id,
       branchId: branch?.id || null,
@@ -306,6 +320,7 @@ export async function loginHandler(req: Request, res: Response) {
       user: safeUser,
       organization: safeOrg,
       branch: safeBranch,
+      mustChangePassword: matchedUser.mustChangePassword,
     });
   } catch (error) {
     console.error('[LoginHandler] Error:', error);
@@ -676,3 +691,271 @@ export async function verifyManagerPinHandler(req: Request, res: Response) {
     return res.status(500).json({ valid: false, error: 'Error validating manager PIN' });
   }
 }
+
+/**
+ * Password / Credential Change Handler (Phase 22).
+ * Enables first-time temporary password change or authenticated password updates.
+ * Resets mustChangePassword = false, revokes stale sessions, issues clean JWT,
+ * and records TEMPORARY_PASSWORD_CHANGED audit log without logging credentials.
+ */
+export async function changePasswordHandler(req: Request, res: Response) {
+  try {
+    const userId = req.auth?.userId || req.tenant?.userId || req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized: Authentication token required' });
+    }
+
+    const { currentPassword, newPassword, confirmPassword } = req.body;
+    if (!newPassword || typeof newPassword !== 'string' || newPassword.trim().length < 8) {
+      return res.status(400).json({ error: 'New password must be at least 8 characters long' });
+    }
+
+    if (confirmPassword && newPassword !== confirmPassword) {
+      return res.status(400).json({ error: 'Password confirmation does not match' });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: { organization: true, branch: true },
+    });
+
+    if (!user || !user.active) {
+      return res.status(404).json({ error: 'User not found or inactive' });
+    }
+
+    // If currentPassword provided, verify it
+    if (currentPassword) {
+      const isMatch = user.pin.startsWith('$2')
+        ? await bcrypt.compare(String(currentPassword).trim(), user.pin)
+        : String(currentPassword).trim() === user.pin;
+
+      if (!isMatch) {
+        return res.status(400).json({ error: 'Current password is incorrect' });
+      }
+
+      const isSame = user.pin.startsWith('$2')
+        ? await bcrypt.compare(String(newPassword).trim(), user.pin)
+        : String(newPassword).trim() === user.pin;
+
+      if (isSame) {
+        return res.status(400).json({ error: 'New password must be different from current password' });
+      }
+    }
+
+    // Hash new password
+    const hashedPin = await bcrypt.hash(String(newPassword).trim(), 10);
+
+    // Update user record: set mustChangePassword = false
+    const updatedUser = await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        pin: hashedPin,
+        mustChangePassword: false,
+      },
+      include: { organization: true, branch: true },
+    });
+
+    // Invalidate all existing sessions on other devices/tabs upon password change
+    await revokeAllUserSessions(updatedUser.id, updatedUser.organizationId || DEFAULT_ORG_ID).catch(() => {});
+
+    const newSession = await createSession({
+      userId: updatedUser.id,
+      organizationId: updatedUser.organizationId || DEFAULT_ORG_ID,
+      branchId: updatedUser.branchId,
+      deviceInfo: req.headers['user-agent'] || 'Post-Password-Change Session',
+      ipAddress: req.ip || '',
+    });
+
+    const freshToken = signTenantToken({
+      userId: updatedUser.id,
+      organizationId: updatedUser.organizationId || DEFAULT_ORG_ID,
+      branchId: updatedUser.branchId,
+      sessionId: newSession?.id,
+      role: updatedUser.role,
+      name: updatedUser.name,
+      mustChangePassword: false,
+    });
+
+    // Audit events without credential data
+    await logAuditEvent({
+      organizationId: updatedUser.organizationId || DEFAULT_ORG_ID,
+      branchId: updatedUser.branchId,
+      userId: updatedUser.id,
+      action: AUDIT_ACTIONS.TEMPORARY_PASSWORD_CHANGED,
+      entity: 'USER',
+      entityId: updatedUser.id,
+      metadata: { username: updatedUser.username, role: updatedUser.role },
+      ipAddress: req.ip,
+    }).catch(() => {});
+
+    await logAuditEvent({
+      organizationId: updatedUser.organizationId || DEFAULT_ORG_ID,
+      branchId: updatedUser.branchId,
+      userId: updatedUser.id,
+      action: AUDIT_ACTIONS.PASSWORD_SETUP_COMPLETED,
+      entity: 'USER',
+      entityId: updatedUser.id,
+      metadata: { username: updatedUser.username, role: updatedUser.role },
+      ipAddress: req.ip,
+    }).catch(() => {});
+
+    return res.status(200).json({
+      success: true,
+      message: 'Password successfully updated. Your account is now fully operational.',
+      token: freshToken,
+      user: sanitizeUser(updatedUser),
+      mustChangePassword: false,
+    });
+  } catch (error: any) {
+    console.error('[ChangePasswordHandler] Error:', error);
+    return res.status(500).json({ error: 'Internal server error while changing password' });
+  }
+}
+
+/**
+ * Staff Self-Service Profile Retrieval (Phase 24).
+ * Returns the authenticated user's profile and authorized branches.
+ */
+export async function getProfileHandler(req: Request, res: Response) {
+  try {
+    const userId = req.auth?.userId || req.tenant?.userId || req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized: Authentication token required' });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        organization: { select: { id: true, name: true, slug: true, status: true } },
+        branch: { select: { id: true, name: true, slug: true, active: true } },
+        branchAssignments: {
+          include: {
+            branch: { select: { id: true, name: true, slug: true, active: true } },
+          },
+        },
+      },
+    });
+
+    if (!user || !user.active) {
+      return res.status(404).json({ error: 'User account not found or inactive' });
+    }
+
+    const safeUser = sanitizeUser(user);
+    return res.json({
+      success: true,
+      data: safeUser,
+      user: safeUser,
+    });
+  } catch (error: any) {
+    console.error('[GetProfileHandler] Error:', error);
+    return res.status(500).json({ error: 'Failed to retrieve user profile' });
+  }
+}
+
+/**
+ * Staff Self-Service Profile Update (Phase 24).
+ * Allows authenticated staff to update safe profile details (name, phone).
+ * Strictly PREVENTS role escalation, tenant jumping, branch reassignment, or status alteration.
+ */
+export async function updateProfileHandler(req: Request, res: Response) {
+  try {
+    const userId = req.auth?.userId || req.tenant?.userId || req.user?.id;
+    const organizationId = req.tenant?.organizationId || DEFAULT_ORG_ID;
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized: Authentication token required' });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: { organization: true, branch: true },
+    });
+
+    if (!user || !user.active) {
+      return res.status(404).json({ error: 'User account not found or inactive' });
+    }
+
+    const { name, phone, currentPassword, newPassword, confirmPassword } = req.body;
+
+    const dataToUpdate: any = {};
+    if (name !== undefined) {
+      if (typeof name !== 'string' || !name.trim()) {
+        return res.status(400).json({ error: 'Name cannot be empty' });
+      }
+      dataToUpdate.name = name.trim();
+    }
+
+    if (phone !== undefined) {
+      dataToUpdate.phone = phone ? String(phone).trim() : null;
+    }
+
+    // Password update via self-service
+    let passwordUpdated = false;
+    if (newPassword) {
+      if (typeof newPassword !== 'string' || newPassword.trim().length < 8) {
+        return res.status(400).json({ error: 'New password must be at least 8 characters long' });
+      }
+      if (confirmPassword && newPassword !== confirmPassword) {
+        return res.status(400).json({ error: 'Password confirmation does not match' });
+      }
+
+      if (!currentPassword) {
+        return res.status(400).json({ error: 'Current password is required to change password' });
+      }
+
+      const isMatch = user.pin.startsWith('$2')
+        ? await bcrypt.compare(String(currentPassword).trim(), user.pin)
+        : String(currentPassword).trim() === user.pin;
+
+      if (!isMatch) {
+        return res.status(400).json({ error: 'Current password is incorrect' });
+      }
+
+      dataToUpdate.pin = await bcrypt.hash(String(newPassword).trim(), 10);
+      dataToUpdate.mustChangePassword = false;
+      passwordUpdated = true;
+    }
+
+    if (Object.keys(dataToUpdate).length === 0) {
+      return res.status(400).json({ error: 'No valid update fields provided' });
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: user.id },
+      data: dataToUpdate,
+      include: {
+        organization: { select: { id: true, name: true, slug: true, status: true } },
+        branch: { select: { id: true, name: true, slug: true, active: true } },
+      },
+    });
+
+    if (passwordUpdated) {
+      await revokeAllUserSessions(user.id, organizationId).catch(() => {});
+    }
+
+    await logAuditEvent({
+      organizationId,
+      branchId: updatedUser.branchId,
+      userId: updatedUser.id,
+      action: AUDIT_ACTIONS.STAFF_UPDATED,
+      entity: 'USER',
+      entityId: updatedUser.id,
+      metadata: {
+        updatedSelf: true,
+        updatedFields: Object.keys(dataToUpdate).filter((k) => k !== 'pin'),
+        passwordUpdated,
+      },
+      ipAddress: req.ip,
+    }).catch(() => {});
+
+    return res.json({
+      success: true,
+      message: 'Profile updated successfully',
+      data: sanitizeUser(updatedUser),
+      user: sanitizeUser(updatedUser),
+    });
+  } catch (error: any) {
+    console.error('[UpdateProfileHandler] Error:', error);
+    return res.status(500).json({ error: 'Failed to update user profile' });
+  }
+}
+

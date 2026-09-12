@@ -43,6 +43,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
     logoutUser,
     showToast,
     isRestricted,
+    hasPermission,
     orders,
     currentShift,
   } = useRestaurant();
@@ -305,8 +306,8 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             </button>
           )}
 
-          {/* ADMIN & STAFF (Restricted to Owner, Admin & Manager users) */}
-          {!isRestricted('staff') && (currentUser.role === 'owner' || currentUser.role === 'admin' || currentUser.role === 'manager') && (
+          {/* ADMIN & STAFF (Restricted to Authorized Staff: Owner, Admin & Manager users) */}
+          {!isRestricted('staff') && (hasPermission('staff.view') || hasPermission('organization.view') || currentUser.role === 'owner' || currentUser.role === 'admin' || currentUser.role === 'manager') && (
             <button
               onClick={() => setActiveView('admin')}
               className={`h-7 sm:h-8 px-1.5 sm:px-2.5 lg:px-3 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-bold transition-all duration-200 inline-flex items-center gap-1 sm:gap-1.5 cursor-pointer active:scale-95 shrink-0 whitespace-nowrap ${

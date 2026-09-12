@@ -21,6 +21,7 @@ export function signTenantToken(payload: {
   sessionId?: string;
   role: string;
   name?: string;
+  mustChangePassword?: boolean;
 }): string {
   const secret = getJwtSecret();
   return jwt.sign(
@@ -32,6 +33,7 @@ export function signTenantToken(payload: {
       sessionId: payload.sessionId || null,
       role: payload.role,
       name: payload.name || '',
+      mustChangePassword: payload.mustChangePassword ?? false,
     },
     secret,
     {
@@ -60,6 +62,7 @@ export function verifyTenantToken(token: string): TokenPayload | null {
       sessionId: decoded.sessionId || null,
       role: decoded.role,
       name: decoded.name,
+      mustChangePassword: decoded.mustChangePassword ?? false,
       iat: decoded.iat,
       exp: decoded.exp,
       iss: decoded.iss,
@@ -77,6 +80,7 @@ export function verifyTenantToken(token: string): TokenPayload | null {
         sessionId: decodedFallback.sessionId || null,
         role: decodedFallback.role,
         name: decodedFallback.name,
+        mustChangePassword: decodedFallback.mustChangePassword ?? false,
         iat: decodedFallback.iat,
         exp: decodedFallback.exp,
       };

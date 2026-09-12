@@ -95,12 +95,24 @@ export async function recalculateAuthoritativeOrderTotals(
     .map((i) => i.menuItemId || i.id)
     .filter((id): id is string => typeof id === 'string' && !!id && !id.startsWith('cart-'));
 
-  // Load authoritative database menu items for this organization
+  // Load authoritative database menu items for this organization with variants and modifier groups
   const dbMenuItems = itemIdsToCheck.length > 0
     ? await tx.menuItem.findMany({
         where: {
           organizationId,
           id: { in: itemIdsToCheck },
+        },
+        include: {
+          variants: true,
+          modifierGroups: {
+            include: {
+              modifierGroup: {
+                include: {
+                  options: true,
+                },
+              },
+            },
+          },
         },
       })
     : [];
@@ -121,10 +133,32 @@ export async function recalculateAuthoritativeOrderTotals(
     const targetId = item.menuItemId || (item.id && !item.id.startsWith('cart-') ? item.id : null);
     const dbItem = targetId ? dbMenuMap.get(targetId) : null;
 
-    // Use authoritative database price if menu item found; otherwise sanitize client price
+    if (dbItem) {
+      if (dbItem.archived) {
+        throw new Error(`Item '${dbItem.title}' is archived and cannot be ordered.`);
+      }
+      if (dbItem.active === false) {
+        throw new Error(`Item '${dbItem.title}' is inactive and cannot be ordered.`);
+      }
+    }
+
+    // Determine Base Price & Variant
     let unitPrice = 0;
+    let selectedVariant: any = null;
+
     if (dbItem) {
       unitPrice = roundMoney(dbItem.price);
+
+      // Check for variant selection
+      const variantIdentifier = item.variantId || item.variant || item.variantName;
+      if (variantIdentifier && Array.isArray(dbItem.variants) && dbItem.variants.length > 0) {
+        selectedVariant = dbItem.variants.find(
+          (v: any) => v.id === variantIdentifier || v.name.toLowerCase() === String(variantIdentifier).toLowerCase()
+        );
+        if (selectedVariant) {
+          unitPrice = roundMoney(selectedVariant.price);
+        }
+      }
     } else {
       const rawPrice = Number(item.price);
       if (!Number.isFinite(rawPrice) || rawPrice < 0) {
@@ -133,17 +167,106 @@ export async function recalculateAuthoritativeOrderTotals(
       unitPrice = roundMoney(rawPrice);
     }
 
+    // Process Modifiers authoritatively and validate Modifier Group Rules
+    let mods: any[] = [];
+    if (typeof item.modifiers === 'string') {
+      try { mods = JSON.parse(item.modifiers); } catch (e) {}
+    } else if (Array.isArray(item.modifiers)) {
+      mods = item.modifiers;
+    }
+
+    let modifierTotal = 0;
+    const resolvedSnapshotModifiers: any[] = [];
+
+    if (dbItem) {
+      // Validate Modifier Groups if defined in database
+      const attachedGroups = dbItem.modifierGroups || [];
+      for (const mgLink of attachedGroups) {
+        const group = mgLink.modifierGroup;
+        if (!group || !group.active) continue;
+
+        const groupOptions = group.options || [];
+        // Count how many options from this group were selected by client
+        const selectedGroupMods = mods.filter((m: any) => {
+          return groupOptions.some(
+            (opt: any) => opt.id === m.id || opt.id === m.optionId || opt.name.toLowerCase() === (m.name || '').toLowerCase()
+          );
+        });
+
+        const selectedCount = selectedGroupMods.length;
+        if (group.required && selectedCount < (group.minSelections || 1)) {
+          throw new Error(`Missing required modifier selection for group '${group.name}'. Minimum required: ${group.minSelections || 1}`);
+        }
+        if (group.maxSelections > 0 && selectedCount > group.maxSelections) {
+          throw new Error(`Too many selections for modifier group '${group.name}'. Maximum allowed: ${group.maxSelections}`);
+        }
+      }
+
+      // Calculate authoritative modifier price additions
+      for (const mod of mods) {
+        let matchedOption: any = null;
+        for (const mgLink of attachedGroups) {
+          const groupOptions = mgLink.modifierGroup?.options || [];
+          matchedOption = groupOptions.find(
+            (o: any) => o.id === mod.id || o.id === mod.optionId || o.name.toLowerCase() === (mod.name || '').toLowerCase()
+          );
+          if (matchedOption) break;
+        }
+
+        if (matchedOption) {
+          const modPrice = roundMoney(matchedOption.price);
+          modifierTotal += modPrice;
+          resolvedSnapshotModifiers.push({
+            id: matchedOption.id,
+            name: matchedOption.name,
+            kitchenName: matchedOption.kitchenName || matchedOption.name,
+            price: modPrice,
+          });
+        } else if (dbItem.options) {
+          // Fallback to legacy JSON options
+          let dbOptions: any[] = [];
+          try { dbOptions = JSON.parse(dbItem.options); } catch (e) {}
+          const dbMod = dbOptions.find((o: any) => o.name === mod.name);
+          if (dbMod) {
+            const modPrice = roundMoney(Number(dbMod.price) || 0);
+            modifierTotal += modPrice;
+            resolvedSnapshotModifiers.push({
+              name: dbMod.name,
+              price: modPrice,
+            });
+          }
+        }
+      }
+    } else {
+      // Custom item fallback: use client provided modifier prices
+      for (const mod of mods) {
+        const modPrice = roundMoney(Number(mod.price) || 0);
+        modifierTotal += modPrice;
+        resolvedSnapshotModifiers.push({
+          name: mod.name || 'Modifier',
+          price: modPrice,
+        });
+      }
+    }
+
+    unitPrice = roundMoney(unitPrice + modifierTotal);
     const itemSubtotal = roundMoney(unitPrice * quantity);
     calculatedSubtotal = roundMoney(calculatedSubtotal + itemSubtotal);
 
+    const displayName = selectedVariant
+      ? `${dbItem.title} (${selectedVariant.name})`
+      : dbItem ? dbItem.title : (String(item.name || 'Custom Item').trim() || 'Item');
+
     return {
       menuItemId: dbItem ? dbItem.id : null,
-      name: dbItem ? dbItem.title : (String(item.name || 'Custom Item').trim() || 'Item'),
+      name: displayName,
       price: unitPrice,
       quantity,
-      flavor: item.flavor ? String(item.flavor).trim() : '',
+      flavor: selectedVariant ? selectedVariant.name : (item.flavor ? String(item.flavor).trim() : ''),
       itemNote: item.itemNote ? String(item.itemNote).trim() : '',
-      modifiers: typeof item.modifiers === 'string' ? item.modifiers : JSON.stringify(item.modifiers || []),
+      modifiers: JSON.stringify(resolvedSnapshotModifiers),
+      kitchenStation: dbItem?.kitchenStation || 'Kitchen',
+      kitchenName: dbItem?.kitchenName || dbItem?.title || item.name,
     };
   });
 

@@ -476,14 +476,17 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
 
   // Filter menu items by selected category and search
   const filteredMenuItems = useMemo(() => {
-    return menuItems.filter((item) => {
+    const safeItems = Array.isArray(menuItems) ? menuItems : [];
+    return safeItems.filter((item) => {
+      if (!item) return false;
+      const itemCat = item.category || '';
       const matchesCat =
         selectedCategory === 'all' ||
-        item.category.toLowerCase().replace(/[-_ ]/g, '') ===
+        itemCat.toLowerCase().replace(/[-_ ]/g, '') ===
           selectedCategory.toLowerCase().replace(/[-_ ]/g, '');
       const matchesSearch =
         !searchQuery ||
-        item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (item.name && item.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
         (item.description && item.description.toLowerCase().includes(searchQuery.toLowerCase()));
       return matchesCat && matchesSearch;
     });
@@ -494,7 +497,8 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
     const list: { id: string; name: string }[] = [];
     const seen = new Set<string>();
 
-    categories.forEach((cat) => {
+    const safeCategories = Array.isArray(categories) ? categories : [];
+    safeCategories.forEach((cat) => {
       if (!cat || !cat.id) return;
       const norm = cat.id.toLowerCase().replace(/[-_ ]/g, '');
       if (norm === 'all') return;
@@ -505,8 +509,9 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
     });
 
     // Also include any categories defined on menuItems that might not be in categories list
-    menuItems.forEach((item) => {
-      if (!item.category) return;
+    const safeMenuItems = Array.isArray(menuItems) ? menuItems : [];
+    safeMenuItems.forEach((item) => {
+      if (!item || !item.category) return;
       const norm = item.category.toLowerCase().replace(/[-_ ]/g, '');
       if (norm === 'all') return;
       if (!seen.has(norm)) {
@@ -1460,7 +1465,7 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
             <button
               type="button"
               onClick={() => setSelectedCategory('all')}
-              title={`All Items (${menuItems.length})`}
+              title={`All Items (${(Array.isArray(menuItems) ? menuItems : []).length})`}
               className={`pos-category-chip group rounded-lg cursor-pointer transition-all duration-150 border flex items-center justify-between gap-1.5 px-2.5 select-none ${
                 (displayCategories.length + 1) % 7 === 6 ? 'xl:col-span-2' : 'col-span-1'
               } ${
@@ -1484,19 +1489,22 @@ export const POSWorkstation: React.FC<POSWorkstationProps> = ({
                   ? 'bg-white/5 text-stone-400 group-hover:bg-white/10 group-hover:text-stone-200'
                   : 'bg-slate-100 text-slate-600 group-hover:bg-slate-200 group-hover:text-slate-900'
               }`}>
-                {menuItems.length}
+                {(Array.isArray(menuItems) ? menuItems : []).length}
               </span>
             </button>
 
             {displayCategories.map((cat) => {
-              const catCount = menuItems.filter(
+              const safeItems = Array.isArray(menuItems) ? menuItems : [];
+              const catCount = safeItems.filter(
                 (i) =>
-                  i.category.toLowerCase().replace(/[-_ ]/g, '') === cat.id.toLowerCase().replace(/[-_ ]/g, '') ||
-                  i.category.toLowerCase().replace(/[-_ ]/g, '') === cat.name.toLowerCase().replace(/[-_ ]/g, '')
+                  i && i.category && (
+                    i.category.toLowerCase().replace(/[-_ ]/g, '') === cat.id.toLowerCase().replace(/[-_ ]/g, '') ||
+                    i.category.toLowerCase().replace(/[-_ ]/g, '') === (cat.name || '').toLowerCase().replace(/[-_ ]/g, '')
+                  )
               ).length;
               const isSelected =
                 selectedCategory.toLowerCase().replace(/[-_ ]/g, '') === cat.id.toLowerCase().replace(/[-_ ]/g, '') ||
-                selectedCategory.toLowerCase().replace(/[-_ ]/g, '') === cat.name.toLowerCase().replace(/[-_ ]/g, '');
+                selectedCategory.toLowerCase().replace(/[-_ ]/g, '') === (cat.name || '').toLowerCase().replace(/[-_ ]/g, '');
 
               return (
                 <button

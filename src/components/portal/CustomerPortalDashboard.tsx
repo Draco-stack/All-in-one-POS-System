@@ -1,4 +1,9 @@
+import { ProcurementControlCenter } from './ProcurementControlCenter';
+import { FinancialControlsCenter } from './FinancialControlsCenter';
 import React, { useState, useEffect } from 'react';
+import { getAuthToken } from '../../utils/apiConfig';
+import { OnboardingCenter } from './OnboardingCenter';
+import { InventoryControlCenter } from './InventoryControlCenter';
 import {
   Building2,
   CreditCard,
@@ -9,6 +14,7 @@ import {
   AlertTriangle,
   CheckCircle2,
   ExternalLink,
+  DollarSign,
   LogOut,
   RefreshCw,
   Sparkles,
@@ -19,6 +25,10 @@ import {
   Mail,
   ShieldAlert,
   Sliders,
+  Lock,
+  ArrowRight,
+  Rocket,
+  Package, Truck,
 } from 'lucide-react';
 
 interface PortalData {
@@ -29,6 +39,10 @@ interface PortalData {
     status: string;
     trialUsedAt?: string | null;
     settings?: string;
+    onboardingStatus?: string;
+    onboardingStartedAt?: string | null;
+    onboardingCompletedAt?: string | null;
+    serviceModel?: string;
     createdAt: string;
   };
   subscription: {
@@ -84,7 +98,8 @@ interface Session {
 }
 
 export function CustomerPortalDashboard() {
-  const [activeTab, setActiveTab] = useState<'overview' | 'subscription' | 'restaurant' | 'team' | 'devices' | 'security'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'onboarding' | 'subscription' | 'restaurant' | 'team' | 'devices' | 'security' | 'inventory' | 'procurement' | 'financial'>('overview');
+  const [pendingApprovalsCount, setPendingApprovalsCount] = useState<number>(0);
   const [portalData, setPortalData] = useState<PortalData | null>(null);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [devices, setDevices] = useState<Device[]>([]);
@@ -93,17 +108,69 @@ export function CustomerPortalDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [upgradingPlan, setUpgradingPlan] = useState<string | null>(null);
   const [upgradeSuccess, setUpgradeSuccess] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<{
+    id: string;
+    name: string;
+    username: string;
+    role: string;
+  } | null>(null);
+  const [authRestricted, setAuthRestricted] = useState<{
+    role?: string;
+    name?: string;
+    message: string;
+  } | null>(null);
 
-  const token = localStorage.getItem('tillora_token') || localStorage.getItem('token') || '';
+  const token = getAuthToken() || localStorage.getItem('tillora_token') || localStorage.getItem('token') || '';
 
   const fetchPortalData = async () => {
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError(null);
+    setAuthRestricted(null);
     try {
+      // First verify session and current user
+      const meRes = await fetch('/api/auth/me', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (meRes.status === 401) {
+        localStorage.removeItem('tillora_token');
+        localStorage.removeItem('token');
+        window.location.href = '/login?expired=1';
+        return;
+      }
+      if (meRes.ok) {
+        const meJson = await meRes.json();
+        if (meJson.user) {
+          setCurrentUser(meJson.user);
+        }
+      }
+
       const res = await fetch('/api/portal/overview', {
         headers: { Authorization: `Bearer ${token}` },
       });
       const json = await res.json();
+
+      if (res.status === 401) {
+        localStorage.removeItem('tillora_token');
+        localStorage.removeItem('token');
+        window.location.href = '/login?expired=1';
+        return;
+      }
+
+      if (res.status === 403) {
+        setAuthRestricted({
+          role: currentUser?.role || 'Operational Role',
+          name: currentUser?.name || 'Staff Member',
+          message: json.error || 'Your account does not have permission to access the website management portal.',
+        });
+        setLoading(false);
+        return;
+      }
+
       if (res.ok && json.success) {
         setPortalData(json.data);
       } else {
@@ -201,11 +268,95 @@ export function CustomerPortalDashboard() {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('tillora_token');
-    localStorage.removeItem('token');
-    window.location.href = '/login';
+  const handleLogout = async () => {
+    try {
+      if (token) {
+        await fetch('/api/auth/logout', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      }
+    } catch (err) {
+      console.error('Logout error:', err);
+    } finally {
+      localStorage.removeItem('tillora_token');
+      localStorage.removeItem('token');
+      localStorage.removeItem('tillora_platform_token');
+      window.location.href = '/login';
+    }
   };
+
+  if (!token) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-center p-6">
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 max-w-md w-full text-center shadow-2xl">
+          <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center mx-auto mb-4">
+            <Lock className="w-6 h-6" />
+          </div>
+          <h2 className="text-xl font-bold text-white mb-2">Sign In Required</h2>
+          <p className="text-sm text-slate-400 mb-6">
+            Please sign in with your restaurant owner or administrator account to access the Tillora Business Portal.
+          </p>
+          <div className="flex flex-col gap-3">
+            <a
+              href="/login"
+              className="w-full bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold py-2.5 px-4 rounded-xl transition text-sm flex items-center justify-center gap-2"
+            >
+              <span>Go to Website Login</span>
+              <ArrowRight className="w-4 h-4" />
+            </a>
+            <a
+              href="/app"
+              className="text-xs text-slate-400 hover:text-slate-200 py-1"
+            >
+              Looking for POS terminal? Launch Workstation →
+            </a>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (authRestricted) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-center p-6">
+        <div className="bg-slate-900 border border-amber-500/30 rounded-2xl p-8 max-w-lg w-full text-left shadow-2xl">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center">
+              <ShieldAlert className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-white">Management Access Restricted</h2>
+              <span className="text-xs text-amber-400 font-mono uppercase">Operational Terminal Role</span>
+            </div>
+          </div>
+          <p className="text-sm text-slate-300 mb-4 leading-relaxed">
+            {authRestricted.message}
+          </p>
+          <div className="bg-slate-950 border border-slate-800 rounded-xl p-3.5 mb-6 text-xs text-slate-400 space-y-1">
+            <div>Signed in as: <strong className="text-slate-200">{currentUser?.name || authRestricted.name}</strong></div>
+            <div>Current role: <span className="text-amber-400 font-mono font-bold uppercase">{currentUser?.role || authRestricted.role}</span></div>
+            <div className="text-slate-500 pt-1">The Customer Portal is reserved for Owners, Business Admins, and General Managers.</div>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <a
+              href="/app"
+              className="flex-1 bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold py-2.5 px-4 rounded-xl transition text-sm flex items-center justify-center gap-2"
+            >
+              <span>Launch POS Terminal</span>
+              <ExternalLink className="w-4 h-4" />
+            </a>
+            <button
+              onClick={handleLogout}
+              className="bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold py-2.5 px-4 rounded-xl transition text-sm"
+            >
+              Sign In with Different Account
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (loading && !portalData) {
     return (
@@ -264,6 +415,18 @@ export function CustomerPortalDashboard() {
         </div>
 
         <div className="flex items-center space-x-4">
+          {currentUser && (
+            <div className="hidden md:flex items-center space-x-2.5 bg-slate-800/60 border border-slate-700/60 rounded-lg px-3 py-1.5">
+              <div className="w-7 h-7 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center text-xs font-bold">
+                {currentUser.name?.charAt(0) || 'U'}
+              </div>
+              <div className="text-left">
+                <div className="text-xs font-semibold text-slate-200">{currentUser.name}</div>
+                <div className="text-[10px] text-amber-400 font-mono uppercase">{currentUser.role}</div>
+              </div>
+            </div>
+          )}
+
           {sub && (
             <div
               className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider flex items-center space-x-1.5 ${
@@ -306,8 +469,12 @@ export function CustomerPortalDashboard() {
           </div>
           {[
             { id: 'overview', label: 'Overview', icon: Building2 },
+            { id: 'onboarding', label: 'Go-Live Readiness', icon: Rocket, badge: org?.onboardingStatus !== 'COMPLETED' ? 'Setup' : null },
             { id: 'subscription', label: 'Subscription & Billing', icon: CreditCard, badge: sub?.showCriticalWarning ? '!' : null },
             { id: 'restaurant', label: 'Restaurant Settings', icon: Store },
+            { id: 'financial', label: 'Financial & Approvals', icon: DollarSign, badge: pendingApprovalsCount > 0 ? String(pendingApprovalsCount) : null },
+            { id: 'inventory', label: 'Inventory & Recipes', icon: Package },
+            { id: 'procurement', label: 'Procurement & Suppliers', icon: Truck },
             { id: 'team', label: 'Team Directory', icon: Users },
             { id: 'devices', label: 'Hardware & POS Terminals', icon: HardDrive },
             { id: 'security', label: 'Security & Sessions', icon: Shield },
@@ -354,9 +521,45 @@ export function CustomerPortalDashboard() {
             </div>
           )}
 
+          {/* ONBOARDING & GO-LIVE READINESS TAB */}
+          {activeTab === 'onboarding' && (
+            <OnboardingCenter
+              onNavigateTab={(tab) => setActiveTab(tab as any)}
+              onRefreshOverview={fetchPortalData}
+            />
+          )}
+
+          {/* TAB: INVENTORY & RECIPES */}
+          {activeTab === 'procurement' && (
+            <ProcurementControlCenter />
+          )}
+
+          {activeTab === 'inventory' && (
+            <InventoryControlCenter />
+          )}
+
           {/* TAB 1: OVERVIEW */}
           {activeTab === 'overview' && (
             <div className="space-y-6">
+              {org?.onboardingStatus !== 'COMPLETED' && (
+                <div className="bg-gradient-to-r from-amber-950/80 to-slate-900 border border-amber-500/40 rounded-xl p-4 flex items-center justify-between text-amber-200">
+                  <div className="flex items-center space-x-3">
+                    <Rocket className="w-6 h-6 text-amber-400 shrink-0 animate-pulse" />
+                    <div>
+                      <h3 className="font-bold text-sm text-white">First-Run Setup & Readiness Checklist</h3>
+                      <p className="text-xs text-amber-300/80">Complete your restaurant menu, tax, staff, and hardware parameters for go-live certification.</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setActiveTab('onboarding')}
+                    className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold rounded-lg text-xs transition shrink-0 flex items-center gap-1.5"
+                  >
+                    <span>Open Setup Center</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
+
               <div>
                 <h2 className="text-xl font-bold text-white">Welcome, {org?.name}</h2>
                 <p className="text-slate-400 text-sm mt-1">
@@ -753,6 +956,15 @@ export function CustomerPortalDashboard() {
                 ))}
               </div>
             </div>
+          )}
+
+          {/* FINANCIAL & APPROVALS TAB */}
+          {activeTab === 'financial' && (
+            <FinancialControlsCenter
+              currentUserId={currentUser?.id}
+              currentUserRole={currentUser?.role}
+              onApprovalCountChange={(cnt) => setPendingApprovalsCount(cnt)}
+            />
           )}
         </main>
       </div>
